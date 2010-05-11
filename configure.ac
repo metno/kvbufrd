@@ -1,5 +1,5 @@
 AC_PREREQ([2.59])
-AC_INIT([kvsynopd], [2.1.0], [kvoss@met.no])
+AC_INIT([kvbufferd], [2.1.0], [kvoss@met.no])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -35,8 +35,8 @@ if test -z $BOOST_PROGRAM_OPTIONS_LIB; then AC_MSG_ERROR([Unable to find boost p
 
 
 AC_CONFIG_FILES([Makefile
-                 check_kvsynopd.sh
-                 src/kvsynopd_initdb
+                 check_kvbufferd.sh
+                 src/kvbufferd_initdb
                  src/Makefile
 ])
 

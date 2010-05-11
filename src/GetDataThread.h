@@ -28,10 +28,10 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-/* $Header: /var/lib/cvs/kvalobs/src/kvsynopd/GetDataThread.h,v 1.4.2.3 2007/09/27 09:02:22 paule Exp $ */
+/* $Header: /var/lib/cvs/kvalobs/src/kvbufferd/GetDataThread.h,v 1.4.2.3 2007/09/27 09:02:22 paule Exp $ */
 
-#ifndef __kvsynop_getdatathread_h__
-#define __kvsynop_getdatathread_h__
+#ifndef __kvbuffer_getdatathread_h__
+#define __kvbuffer_getdatathread_h__
 
 #include <boost/thread/thread.hpp>
 
@@ -47,10 +47,10 @@ class GetData {
   	int                      hours;
 
   	void reloadAll(kvalobs::kvDbGate &gate,
-		 		   const miutil::miTime &synopFromTime);
+		 		   const miutil::miTime &bufferFromTime);
 
   	void reloadOne(kvalobs::kvDbGate &gate,
-		           const miutil::miTime &synopFromTime);
+		           const miutil::miTime &bufferFromTime);
 
  	public:
   		GetData(App &app,

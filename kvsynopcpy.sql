@@ -1,5 +1,5 @@
 -- 
--- This sql script is used to make a copy of a kvsynopd database.
+-- This sql script is used to make a copy of a kvbufferd database.
 -- 
 
 .mode insert data

@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvsynopCltApp.h,v 1.3.2.3 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: kvbufferCltApp.h,v 1.3.2.3 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -28,14 +28,14 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvsynopCltApp_h__
-#define __kvsynopCltApp_h__
+#ifndef __kvbufferCltApp_h__
+#define __kvbufferCltApp_h__
 
 #include <puTools/miTime.h>
 #include <map>
 #include <list>
 #include <miconfparser/miconfparser.h>
-#include "kvsynopCorbaThread.h"
+#include "kvbufferCorbaThread.h"
 
 typedef std::map<std::string, std::string>                   TKeyVal;
 typedef std::map<std::string, std::string>::iterator        ITKeyVal;
@@ -46,7 +46,7 @@ use(int exitcode);
 
 
 struct Options{
-  typedef enum{ Synop, Uptime, StationList, Delays, Reload, Help, 
+  typedef enum{ Buffer, Uptime, StationList, Delays, Reload, Help,
 		CacheReload, Undef} Cmd;
   typedef std::list<int>           IntList;
   typedef std::list<int>::iterator IIntList;
@@ -83,42 +83,42 @@ struct Options{
 };  
 
 
-class SynopCltApp 
+class BufferCltApp
 {
   bool getOptions(int argn, char **argv, miutil::conf::ConfSection *conf, Options &opt);
   Options opt;
-  SynopCltCorbaThread   *corbaThread;
-  kvsynopd::synopcb_var synopcb;
-  static SynopCltApp    *app;
+  BufferCltCorbaThread   *corbaThread;
+  kvbufferd::buffercb_var buffercb;
+  static BufferCltApp    *app;
   bool                  shutdown_;
   CorbaHelper::CorbaApp *capp; 
-  kvsynopd::synop_var   synop;
+  kvbufferd::buffer_var   buffer;
   bool                  wait_;
-  kvsynopd::SynopData   result;
+  kvbufferd::BufferData   result;
  public:
-  SynopCltApp(int argn, char **argv, miutil::conf::ConfSection *conf );
-  ~SynopCltApp();
+  BufferCltApp(int argn, char **argv, miutil::conf::ConfSection *conf );
+  ~BufferCltApp();
 
   Options options() const{ return opt;}
   void doShutdown();
   bool shutdown()const;
 
   bool uptime(miutil::miTime &startTime, long &uptime);
-  bool stationsList(kvsynopd::StationInfoList &infoList);
+  bool stationsList(kvbufferd::StationInfoList &infoList);
   bool wait()const;
   void wait(bool w);
 
-  void setResult(const kvsynopd::SynopData &d){ result=d;}
+  void setResult(const kvbufferd::BufferData &d){ result=d;}
 
-  bool createSynop(int wmono, 
+  bool createBuffer(int wmono,
 		   const miutil::miTime &obstime,
 		   const TKeyVal &keyvals,
 		   int timeoutInSeconds,
-		   kvsynopd::SynopData &result);
+		   kvbufferd::BufferData &result);
 
-  bool delayList(kvsynopd::DelayList &delayList, miutil::miTime &nowTime);
+  bool delayList(kvbufferd::DelayList &delayList, miutil::miTime &nowTime);
   
-  kvsynopd::ReloadList* cacheReloadList(std::string &message);
+  kvbufferd::ReloadList* cacheReloadList(std::string &message);
 
   bool reloadConf();
 

@@ -28,22 +28,22 @@ db_get kvalobs/homedir && KV_HOME="$RET"
 #BINDIR, BIN and DIR must be in sync with the respectives variables in postrm.
 BINDIR="/usr/bin"
 BIN="check_kvsynopd.sh kvsynopclt kvsynopd kvsynopdbadmin kvsynopdbclt
-     kvsynopd_initdb kvsynopdparse"
+     kvbuffer_initdb kvbufferdparse"
 
 KVBINDIR=""
 KVBIN=""
 
 ETC_FILES=" "
 
-DIRS="/usr/share/kvsynopd 
-      /var/lib/kvsynopd
-      /var/log/kvalobs/kvsynop/debug
-      /var/log/kvalobs/kvsynop
+DIRS="/usr/share/kvbufferd 
+      /var/lib/kvbufferd
+      /var/log/kvalobs/kvbuffer/debug
+      /var/log/kvalobs/kvbuffer
       /var/lib/kvalobs/run
       /var/lib/kvalobs/service
       /var/lib/kvalobs/service/subscribers"     
 
-SQLLITE_DB="/var/lib/kvsynopd/kvsynopd.sqlite"
+SQLLITE_DB="/var/lib/kvbufferd/kvbufferd.sqlite"
 
 case "$1" in
   configure)
@@ -88,8 +88,8 @@ case "$1" in
     #Setup the agregator and kvsynop cache databases if they 
     #do not exist.
 
-    if [ ! -f /var/lib/kvsynopd/kvsynopd.sqlite ]; then
-	/usr/bin/kvsynopd_initdb
+    if [ ! -f /var/lib/kvbufferd/kvbufferd.sqlite ]; then
+	/usr/bin/kvbufferd_initdb
     fi
 
     

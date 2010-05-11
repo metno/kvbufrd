@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvsynopdImpl.h,v 1.5.2.4 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: kvbufferdImpl.h,v 1.5.2.4 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -28,16 +28,16 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvsynopdImpl_h__
-#define __kvsynopdImpl_h__
+#ifndef __kvbufferdImpl_h__
+#define __kvbufferdImpl_h__
 
-#include "kvsynopd.hh"
+#include "kvbufferd.hh"
 #include "obsevent.h"
 #include <kvskel/adminInterface.h>
 
 class App;
 
-class kvSynopdImpl: public virtual POA_kvsynopd::synop,
+class kvBufferdImpl: public virtual POA_kvbufferd::buffer,
 		    public virtual micutil::AdminInterface,
 		    public PortableServer::RefCountServantBase 
 {
@@ -46,29 +46,29 @@ class kvSynopdImpl: public virtual POA_kvsynopd::synop,
 
 public:
   // standard constructor
-  kvSynopdImpl(App &app_, dnmi::thread::CommandQue &que_);
-  virtual ~kvSynopdImpl();
+  kvBufferdImpl(App &app_, dnmi::thread::CommandQue &que_);
+  virtual ~kvBufferdImpl();
 
 
-  CORBA::Boolean createSynop(CORBA::Short wmono, 
+  CORBA::Boolean createBuffer(CORBA::Short wmono,
 			     const char* obstime, 
 			     const micutil::KeyValList& keyVals,
-			     kvsynopd::synopcb_ptr callback);
-  CORBA::Boolean stations(kvsynopd::StationInfoList_out infoList);
+			     kvbufferd::buffercb_ptr callback);
+  CORBA::Boolean stations(kvbufferd::StationInfoList_out infoList);
   CORBA::Boolean uptime(CORBA::String_out startTime, 
 			CORBA::Long& uptimeInSeconds);
   CORBA::Boolean delays(CORBA::String_out nowTime, 
-			kvsynopd::DelayList_out dl);
+			kvbufferd::DelayList_out dl);
   CORBA::Boolean reloadConf(CORBA::String_out message);
   CORBA::Boolean reloadCache(const char* fromTime, 
-			     kvsynopd::ReloadList_out wmonolist, 
+			     kvbufferd::ReloadList_out wmonolist,
 			     CORBA::String_out message);
-  CORBA::Boolean getsynop(const kvsynopd::WmoNoList& wmoList, 
+  CORBA::Boolean getbuffer(const kvbufferd::WmoNoList& wmoList,
 			  const char* fromtime, const char* totime, 
-			  kvsynopd::SynopList_out synops,
+			  kvbufferd::BufferList_out buffers,
 			  CORBA::String_out message);
   CORBA::Boolean getdata(CORBA::Short wmono, const char* obstime, 
-			 kvsynopd::DataElementList_out datalist,
+			 kvbufferd::DataElementList_out datalist,
 			 CORBA::String_out message);
 
 

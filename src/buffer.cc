@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: synop.cc,v 1.34.2.20 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: buffer.cc,v 1.34.2.20 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -34,7 +34,7 @@
 #include <float.h>
 #include <milog/milog.h>
 #include <decodeutility/decodeutility.h>
-#include "synop.h"
+#include "buffer.h"
 
 /*CHANGES
  *
@@ -111,36 +111,36 @@ using namespace std;
 #define FEQ(f1, f2, d) ((fabsf((f1)-(f2)))<(d)?true:false)
 
 bool
-Synop::
-doSynop( StationInfoPtr       info,
-    	 SynopDataList        &synopData,
-    	 std::string          &synop,
+Buffer::
+doBuffer( StationInfoPtr       info,
+    	 BufferDataList        &bufferData,
+    	 std::string          &buffer,
     	 bool                 create_CCA_template )
 {
-	milog::LogContext context("synop");
+	milog::LogContext context("buffer");
 
 	if( !info ) {
-		LOGERROR( "Cant create synop. Missing station information.");
+		LOGERROR( "Cant create buffer. Missing station information.");
 		return false;
 	}
 
-	return doSynop( info->wmono(),
+	return doBuffer( info->wmono(),
 			        info->owner(),
 			        atoi(info->list().c_str()),
-			        synop,
+			        buffer,
 			        info,
-			        synopData,
+			        bufferData,
 			        create_CCA_template );
 }
 
 bool
-Synop::
-doSynop(int           synopno,
+Buffer::
+doBuffer(int           bufferno,
 	const std::string &utsteder,
 	int               listenummer,
-	std::string       &synop,
+	std::string       &buffer,
 	StationInfoPtr    info,
-	SynopDataList     &synopData,
+	BufferDataList     &bufferData,
 	bool              create_CCA_template)
 {
     using std::string;
@@ -150,7 +150,7 @@ doSynop(int           synopno,
     char   tmp[512];
     string buf;
     string dato_tid;
-    string synopStr;
+    string bufferStr;
     string tempStr;
     string tidsKode;
     string luftTempKode;
@@ -182,26 +182,26 @@ doSynop(int           synopno,
     string rr24Kode;
     int    ITR;
     string tmpUtsteder(utsteder);
-    SynopData sisteTid;
+    BufferData sisteTid;
     int       nTimeStr=0;
     
 
-    synop.erase();
-    milog::LogContext context("synop");
+    buffer.erase();
+    milog::LogContext context("buffer");
     
     verGenerelt    = false;
      
     errorMsg.erase();
 
-    if(synopData.size()==0){
+    if(bufferData.size()==0){
       errorMsg="No data!";
       return false;
     }
 
-    nTimeStr=synopData.nContinuesTimes();
+    nTimeStr=bufferData.nContinuesTimes();
     
-    sisteTid=*synopData.begin();
-    ISynopDataList it=synopData.end();
+    sisteTid=*bufferData.begin();
+    IBufferDataList it=bufferData.end();
     it--;
 
 	 {
@@ -233,7 +233,7 @@ doSynop(int           synopno,
 
   
     LOGDEBUG("nTimeStr (cont): " << nTimeStr << endl <<
-	    	 "Tot times:       " << synopData.size() << endl <<
+	    	 "Tot times:       " << bufferData.size() << endl <<
 	     	 "sisteTid:        " << sisteTid.time() << endl <<
 	    	 "fï¿½rsteTid:       " << it->time() << endl <<
 	    	 "nedbor12t:       " << sisteTid.nedboer12Time << endl <<
@@ -252,7 +252,7 @@ doSynop(int           synopno,
 				      verTilleggKode,
 		   			  rr24Kode,
 		   			  ITR,
-		    		  synopData);
+		    		  bufferData);
     }
 
     LOGDEBUG("Etter doNedboerKode:"
@@ -268,17 +268,17 @@ doSynop(int           synopno,
     /* Lagar tidskoda SM|SI|SN */
     Tid_Kode(tidsKode, sisteTid.time().hour());
     
-    /* Lufttemperatur i synop */
+    /* Lufttemperatur i buffer */
     Temp_Kode(luftTempKode, sisteTid.tempNaa);
 
     /* Reknar ut duggtemp. vha. lufttemp. og fuktigheit */
     Dugg_Kode(duggTempKode, sisteTid.tempNaa, sisteTid.fuktNaa);
  
     /* Reknar ut nattens min.temp ELLER dagens max.temp  */
-    Min_Max_Kode(minMaxKode, synopData);
+    Min_Max_Kode(minMaxKode, bufferData);
 
     /* Reknar ut nattens max ELLER dagens min */
-    Max_Min_Kode(maxMinKode, synopData);
+    Max_Min_Kode(maxMinKode, bufferData);
 
     if(sisteTid.vindRetnNaa!=FLT_MAX && sisteTid.vindHastNaa!=FLT_MAX){
       	Naa_Vind_Kode(naaVindKode, 
@@ -289,13 +289,13 @@ doSynop(int           synopno,
     }
     
     /* Reknar ut max. vindgust kode sidan forrige hovud obs. (12t int.) */
-    Max_Vind_Gust_Kode(maxVindGustKode, synopData);
+    Max_Vind_Gust_Kode(maxVindGustKode, bufferData);
 
     /* Reknar ut max. vindkast kode sidan forrige hovud obs. (6t int.) */
-    Max_Vind_Max_Kode(maxVindMaxKode, synopData);
+    Max_Vind_Max_Kode(maxVindMaxKode, bufferData);
 
       //Regner ut gressTempereaturen
-    GressTempKode(gressTemp, synopData);
+    GressTempKode(gressTemp, bufferData);
 
     Trykk_Kode(4,trykkQFFKode, sisteTid.trykkQFFNaa);
     Trykk_Kode(3,trykkQFEKode, sisteTid.trykkQFENaa);
@@ -305,9 +305,9 @@ doSynop(int           synopno,
     }else if(nTimeStr>=4){
 		Tendens_Kode(tendensKode,
 				     sisteTid.time().hour(),
-		    		 synopData[3].trykkQFENaa,
-		    		 synopData[2].trykkQFENaa,
-		    		 synopData[1].trykkQFENaa,
+		    		 bufferData[3].trykkQFENaa,
+		    		 bufferData[2].trykkQFENaa,
+		    		 bufferData[1].trykkQFENaa,
 		    		 sisteTid.trykkQFENaa);
     }
 
@@ -324,22 +324,22 @@ doSynop(int           synopno,
     Sjekk_Gruppe(0, sjoeTempKode, sisteTid.sjoeTemp);
     
     if( ! test ) {
-    	synop="\r\r\nZCZC\r\r\n";
-    	synop+=tidsKode;
-    	synop+="NO";
+    	buffer="\r\r\nZCZC\r\r\n";
+    	buffer+=tidsKode;
+    	buffer+="NO";
     	sprintf(tmp,"%02d ", listenummer);
-    	synop+=tmp;
+    	buffer+=tmp;
     
     	while(tmpUtsteder.length()<4)
     		tmpUtsteder.insert(0," ");
 
 		tmpUtsteder+=" ";
-		synop+=tmpUtsteder;
-		synop+=dato_tid;
-		synop.append("00");
+		buffer+=tmpUtsteder;
+		buffer+=dato_tid;
+		buffer.append("00");
 
 		if(create_CCA_template)
-			synop+=" CCCXXX";
+			buffer+=" CCCXXX";
     }
 
     if(ir==1){
@@ -365,38 +365,38 @@ doSynop(int           synopno,
      *          W = 4 - knop
      *          W = 1 - m/s
      * 
-     * IW is defined in synop.h
+     * IW is defined in buffer.h
      */
     sprintf(tmp,"\r\nAAXX %s%1d", dato_tid.c_str(), IW);
-    synop+=tmp;
+    buffer+=tmp;
       
-    sprintf(tmp, "\r\n%05d %1d%1d", synopno, ir, ix);
-    synop+=tmp;
-    synop+=hoyde_siktKode;
-    synop+=string(" ")+skydekkeKode+naaVindKode;
-    synop+=" 1";
-    synop+=luftTempKode+duggTempKode;
+    sprintf(tmp, "\r\n%05d %1d%1d", bufferno, ir, ix);
+    buffer+=tmp;
+    buffer+=hoyde_siktKode;
+    buffer+=string(" ")+skydekkeKode+naaVindKode;
+    buffer+=" 1";
+    buffer+=luftTempKode+duggTempKode;
 
-    synop+= trykkQFEKode+trykkQFFKode+tendensKode;
+    buffer+= trykkQFEKode+trykkQFFKode+tendensKode;
     
     if(ir==1 && !nedboerKodeSect1.empty())
-      	synopStr+=nedboerKodeSect1;
+      	bufferStr+=nedboerKodeSect1;
     
     if(verGenerelt)
-		synopStr+=verGenereltKode;
+		bufferStr+=verGenereltKode;
     
     if(skyerKode.length()>0 && 
        skydekkeKode[0]!='0' && 
        skydekkeKode[0]!='9')
-		synopStr+=skyerKode;
+		bufferStr+=skyerKode;
     
     
     //Seksjon 222
     //Kyststajoner som fï¿½r beskjed
     if(sisteTid.time().hour()==12){
       	if(SjoeTempKode(sjoeTempKode, sisteTid)){
-			synopStr+=" 222// ";
-			synopStr+=sjoeTempKode;
+			bufferStr+=" 222// ";
+			bufferStr+=sjoeTempKode;
       	}
     }
     
@@ -416,16 +416,16 @@ doSynop(int           synopno,
        !skyerEkstraKode3.empty() ||
        !skyerEkstraKode4.empty()){
       	/* Gruppe 333 */
-      	synopStr+=" 333 ";
-      	synopStr+=minMaxKode;
-      	synopStr+=snoeMarkKode;
-      	synopStr+=nedboerKodeSect3;
-      	synopStr+=rr24Kode;
-      	synopStr+=skyerEkstraKode1;
-      	synopStr+=skyerEkstraKode2;
-      	synopStr+=skyerEkstraKode3;
-      	synopStr+=skyerEkstraKode4;
-      	synopStr+=maxVindGustKode;
+      	bufferStr+=" 333 ";
+      	bufferStr+=minMaxKode;
+      	bufferStr+=snoeMarkKode;
+      	bufferStr+=nedboerKodeSect3;
+      	bufferStr+=rr24Kode;
+      	bufferStr+=skyerEkstraKode1;
+      	bufferStr+=skyerEkstraKode2;
+      	bufferStr+=skyerEkstraKode3;
+      	bufferStr+=skyerEkstraKode4;
+      	bufferStr+=maxVindGustKode;
     }
     
     if(!maxVindMaxKode.empty() || 
@@ -433,23 +433,23 @@ doSynop(int           synopno,
        !verTilleggKode.empty() ||
        !gressTemp.empty()){
       	/* Gruppe 555 */
-      	synopStr+=" 555 ";
-      	synopStr+=maxVindMaxKode;
-      	synopStr+=maxMinKode;
-      	synopStr+=gressTemp;
-      	synopStr+=verTilleggKode;
+      	bufferStr+=" 555 ";
+      	bufferStr+=maxVindMaxKode;
+      	bufferStr+=maxMinKode;
+      	bufferStr+=gressTemp;
+      	bufferStr+=verTilleggKode;
     }
 
     // Avslutting av data-streng 
-    synopStr+="=";
+    bufferStr+="=";
    
     // Datastrengen kan ikke vere lenger enn 69 karakterar 
-    SplittStreng(synopStr, 69);
+    SplittStreng(bufferStr, 69);
     
-    synop+=synopStr;
+    buffer+=bufferStr;
     
     if( ! test ) {
-    	synop+="\r\n\r\r\n\n\n\n\n\n\n\nNNNN\r\n";
+    	buffer+="\r\n\r\r\n\n\n\n\n\n\n\nNNNN\r\n";
     }
 
     return true;
@@ -464,7 +464,7 @@ doSynop(int           synopno,
 ** Returnerar  ein streng ; anten "SM","SI",el. "SN"
 */
 void 
-Synop::Tid_Kode(std::string &kode, int time)
+Buffer::Tid_Kode(std::string &kode, int time)
 {
    switch(time){
    case 0:
@@ -521,7 +521,7 @@ Synop::Tid_Kode(std::string &kode, int time)
  *  vindhastighet: [0,98]  (m/s)
  *  vindretning:   [0,360] (grader)
  *
- * Synopkode gruppe 3 har foelgende form:
+ * Bufferkode gruppe 3 har foelgende form:
  *   Nddff 
  *   Hvor:
  *     N - Samlet skydekke. Angis ikke for automatstasjoner.
@@ -530,17 +530,17 @@ Synop::Tid_Kode(std::string &kode, int time)
  *    dd - Vindretningen. Angis i nermeste 10'de grad. 
  *         Gyldige verdier [00,36]. Verdien 00 gis for vindstille.
  *    ff - Vindhastighet i knop. Gyldige verdier [0,99]. Hvis vindhastigheten
- *         er mindre enn 1 knop settes dd=00. slik at synopen blir /0000.
+ *         er mindre enn 1 knop settes dd=00. slik at bufferen blir /0000.
  *         Hvis vindhastigheten er stoerre enn 99 knop. Faar vi en ekstra
- *         gruppe umiddelbart etter. Synopen blir da /dd99 00fff, fff er 
+ *         gruppe umiddelbart etter. Bufferen blir da /dd99 00fff, fff er
  *         vinden i knop.
  *
  * Parameterene 'retn' og 'hast' til funksjonen er gitt i grader og m/s.
- * 'hast' maa omregnes til knop foer den settes i synop koden.
+ * 'hast' maa omregnes til knop foer den settes i buffer koden.
  *  
  ******/
 void 
-Synop::Naa_Vind_Kode(std::string &kode, float retn, float hast)
+Buffer::Naa_Vind_Kode(std::string &kode, float retn, float hast)
 {  
    char tmp[30];
    string ffCode="//";
@@ -580,7 +580,7 @@ Synop::Naa_Vind_Kode(std::string &kode, float retn, float hast)
 
 #if 0
 void
-Synop::Naa_Vind_Kode(std::string &kode, float retn, float hast)
+Buffer::Naa_Vind_Kode(std::string &kode, float retn, float hast)
 {
   	char tmp[30];
   	
@@ -641,7 +641,7 @@ Synop::Naa_Vind_Kode(std::string &kode, float retn, float hast)
 ** Lagar temperaturkode pï¿½ format SnTTT der Sn er forteikn
 */
 void 
-Synop::Temp_Kode(std::string &kode, float temp)
+Buffer::Temp_Kode(std::string &kode, float temp)
 {
  	char stmp[30];
   
@@ -689,7 +689,7 @@ Synop::Temp_Kode(std::string &kode, float temp)
  *  
  */
 void 
-Synop::Dugg_Kode(std::string &kode, float temp, float fukt)
+Buffer::Dugg_Kode(std::string &kode, float temp, float fukt)
 {
 	char stmp[30];
    int index;
@@ -775,7 +775,7 @@ Synop::Dugg_Kode(std::string &kode, float temp, float fukt)
  * i tid med data.
  */
 void 
-Synop::Min_Max_Kode(std::string &kode, SynopDataList &sd)
+Buffer::Min_Max_Kode(std::string &kode, BufferDataList &sd)
 {
     int         nTimeStr=sd.nContinuesTimes();
     float       min;
@@ -876,7 +876,7 @@ Synop::Min_Max_Kode(std::string &kode, SynopDataList &sd)
  *
  */
 void 
-Synop::Max_Min_Kode(std::string &kode, SynopDataList &sd)
+Buffer::Max_Min_Kode(std::string &kode, BufferDataList &sd)
 {
     int nTimeStr=sd.nContinuesTimes();
     float min;
@@ -966,13 +966,13 @@ Synop::Max_Min_Kode(std::string &kode, SynopDataList &sd)
  * Bxrge Moe
  *
  * Beregning av Maksimalt vindkast (FG), maksimalvind (FX) 
- * siden forrige hovedobservasjon og vinden ved synoptidspunkt (FF).
+ * siden forrige hovedobservasjon og vinden ved buffertidspunkt (FF).
  * ( FG - Seksjon 333 911, FX - Seksjon 555 0 og FF - alle stasjoner Nddff )
  * -------------------------------------------------------------------------
  * 
  * Noen definisjoner.
  *    Automatstasjonene leverer parameterene ff, fx og fg hver time.
- *    Tilsvarende verdier for synoptidspunktene er FF, FX og FG.
+ *    Tilsvarende verdier for buffertidspunktene er FF, FX og FG.
  *
  *    hvor
  *       ff - 10 minutters middel. Beregnet 10 minutter foer hver hele time.
@@ -981,7 +981,7 @@ Synop::Max_Min_Kode(std::string &kode, SynopDataList &sd)
  *       fg - er hoeyeste glidende 3 sekunders middelverdi i loepet av en
  *            60 minutters periode. ((tt-1):00-tt:00, tt - timen for beregn.)
  *
- *    Synoptidene er 0, 3, 6, 9, 12, 15, 18, og 21. Hvor hovedtidene er
+ *    Buffertidene er 0, 3, 6, 9, 12, 15, 18, og 21. Hvor hovedtidene er
  *    0, 6, 12 og 18. Mellomtidene er 3, 9, 15 og 21.
  *
  *    La XX representere hovedtidene, og xx mellomtidene. 
@@ -1003,9 +1003,9 @@ Synop::Max_Min_Kode(std::string &kode, SynopDataList &sd)
 /* 16.01.98
  * Bxrge Moe
  *
- * Synopgruppe: 333 911ff  (FG)
+ * Buffergruppe: 333 911ff  (FG)
  *
- * Beregner maksimalt vindkast siden forrige hovedsynoptid.
+ * Beregner maksimalt vindkast siden forrige hovedbuffertid.
  *
  * nTimeStr er en global variabel som holder antall timer med data vi har.
  * nTimeStr settes  i rutinen LagTabell.
@@ -1029,7 +1029,7 @@ Synop::Max_Min_Kode(std::string &kode, SynopDataList &sd)
  * Rettet bugg for generering av Gust for 'pio'.
  */ 
 void 
-Synop::Max_Vind_Gust_Kode(std::string &kode, SynopDataList &sd)
+Buffer::Max_Vind_Gust_Kode(std::string &kode, BufferDataList &sd)
 {
     int   nTimeStr=sd.nContinuesTimes();
     float fMax;
@@ -1089,7 +1089,7 @@ Synop::Max_Vind_Gust_Kode(std::string &kode, SynopDataList &sd)
 /* 16.01.98
  * Bxrge Moe
  *
- * Synopgruppe 555 0STzFxFx
+ * Buffergruppe 555 0STzFxFx
  *
  * Regner ut maksimal middelvind siden forrige hovedtermin,
  * dvs. kl. 0, 6, 12  eller 18, og hvor mange timer siden det inntraff. 
@@ -1112,7 +1112,7 @@ Synop::Max_Vind_Gust_Kode(std::string &kode, SynopDataList &sd)
  * Lagt inn stÃ¸tte for FX_3.
  */
 void 
-Synop::Max_Vind_Max_Kode(std::string &kode, SynopDataList &sd)
+Buffer::Max_Vind_Max_Kode(std::string &kode, BufferDataList &sd)
 {
    int   nTimeStr=sd.nContinuesTimes();
    int   nNeedTimes;
@@ -1154,7 +1154,7 @@ Synop::Max_Vind_Max_Kode(std::string &kode, SynopDataList &sd)
          if((sd[0].time().hour()%6)==0){ //Hovedtermin!
             miutil::miTime prevTime=sd[0].time();
             prevTime.addHour(-3);
-            CISynopDataList it=sd.find(prevTime);
+            CIBufferDataList it=sd.find(prevTime);
     			
             if(it!=sd.end() && it->time()==prevTime &&
                it->FX_3!=FLT_MAX && it->FX_3>=0){
@@ -1289,12 +1289,12 @@ Synop::Max_Vind_Max_Kode(std::string &kode, SynopDataList &sd)
  * 22.01.98
  * Bxrge Moe
  *
- * Rettet bugg i koden for generering av synopkoden for trykk.
+ * Rettet bugg i koden for generering av bufferkoden for trykk.
  * Har ogsaa lagt til test for aa se om trykkverdien er 'mulig'.
  * trykk maa vaere element i [800,1100]. (jfr. klimaavdelingen)
  */
 void 
-Synop::Trykk_Kode(int prefix, std::string &kode, float trykk)
+Buffer::Trykk_Kode(int prefix, std::string &kode, float trykk)
 {
    	double dTrykk;
   	char   stmp[30];
@@ -1326,7 +1326,7 @@ Synop::Trykk_Kode(int prefix, std::string &kode, float trykk)
  *
  */
 void 
-Synop::Tendens_Kode(std::string &kode, 
+Buffer::Tendens_Kode(std::string &kode,
 		  int time, 
 		  float trykk1, 
 		  float trykk2, 
@@ -1414,7 +1414,7 @@ Synop::Tendens_Kode(std::string &kode,
  * trykkarakteristikk er gitt med DATASTRUCTTYPE1._aa
  */
 void 
-Synop::Tendens_Kode(std::string &kode, const SynopData &data)
+Buffer::Tendens_Kode(std::string &kode, const BufferData &data)
 {
   	char karakter;
   	char stmp[30];
@@ -1461,7 +1461,7 @@ Synop::Tendens_Kode(std::string &kode, const SynopData &data)
 **
 */
 void 
-Synop::Skydekke_Kode(std::string &kode, const std::string &str)
+Buffer::Skydekke_Kode(std::string &kode, const std::string &str)
 {
    	if(str.length()!= 1)
       	kode="/";
@@ -1476,7 +1476,7 @@ Synop::Skydekke_Kode(std::string &kode, const std::string &str)
 **
 */
 void 
-Synop::Hoyde_Sikt_Kode(std::string &kode, const SynopData &data)
+Buffer::Hoyde_Sikt_Kode(std::string &kode, const BufferData &data)
 {
    float Vmor=data.Vmor;
    float VV=data.VV;
@@ -1509,7 +1509,7 @@ Synop::Hoyde_Sikt_Kode(std::string &kode, const SynopData &data)
 **
 */
 int 
-Synop::ix_Kode(const std::string &str)
+Buffer::ix_Kode(const std::string &str)
 {
   	if(str.length()!=2 || !(isdigit(str[1])))
     	return 6;
@@ -1528,7 +1528,7 @@ Synop::ix_Kode(const std::string &str)
  *  
  */
 bool 
-Synop::doVerGenerelt(std::string &kode, int &ix, const SynopData &data)
+Buffer::doVerGenerelt(std::string &kode, int &ix, const BufferData &data)
 {
 	bool verGenerelt;
 	
@@ -1565,14 +1565,14 @@ Synop::doVerGenerelt(std::string &kode, int &ix, const SynopData &data)
  * 1999.06.10
  *
  * Endringer av tolkning av Esss gitt av klimaavdelingen.
- * En Esss kode pï¿½ formen /000 skal ikke tas med i synopen
- * men den angir en lovlig verdi for koden. I fï¿½lge synop 
+ * En Esss kode pï¿½ formen /000 skal ikke tas med i bufferen
+ * men den angir en lovlig verdi for koden. I fï¿½lge buffer
  * kodingen (spec) er ikke sss=0 en lovlig verdi, men er tillatt
  * slik at man kan sende Esss hele ï¿½ret, ogsï¿½ nï¿½r det ikke er
  * snï¿½.
  */
 bool 
-Synop::SjekkEsss(std::string &kode, const std::string &str)
+Buffer::SjekkEsss(std::string &kode, const std::string &str)
 {
   	std::string::const_iterator it;
   
@@ -1609,9 +1609,9 @@ Synop::SjekkEsss(std::string &kode, const std::string &str)
  * Når en værstasjon sender 998 vil de enten også sende E'= 1. (Hvis de har
  * utelatt E' må vi dekode E' til 1 siden 998 er en såpass bevisst handling.)
  *
- * Altså, det er E' som bestemmer om SA=-1 er flekkvis snø. I koding av synop
+ * Altså, det er E' som bestemmer om SA=-1 er flekkvis snø. I koding av buffer
  * må en altså for alle typeid bruke kombinasjonen av SA og E' eller SA og SD 
- * for å kunne angi 998 i synop.
+ * for å kunne angi 998 i buffer.
  * SA=-1 når snødybde raporteres som "blank", utelatt (gruppe) eller "0" (Ingen
  * snø)
  * SA=-1 når snødybde raporteres som 998             (flekkvis snø)
@@ -1621,16 +1621,16 @@ Synop::SjekkEsss(std::string &kode, const std::string &str)
  * EM=0  er is-lag
  * EM= 1 - 9 er andel snødekke og type
  *
- * Synop enkoding fra Kvalobs
- * Når det skal lages synop fra kvalobs så må det kanskje ut fra dette til en 
+ * Buffer enkoding fra Kvalobs
+ * Når det skal lages buffer fra kvalobs så må det kanskje ut fra dette til en
  * justering av dagens enkoder slik at koding av SA og EM blir riktig? (For 302
- * må kun SA benyttes i synop - ikke SD.) 
+ * må kun SA benyttes i buffer - ikke SD.)
  * 
  */
 
 void 
-Synop::
-doEsss( std::string &kode, const SynopData &data )
+Buffer::
+doEsss( std::string &kode, const BufferData &data )
 {
    kode.erase();
    
@@ -1683,7 +1683,7 @@ doEsss( std::string &kode, const SynopData &data )
 ** maa innehalde anten tal eller '/'
 */
 bool
-Synop::Sjekk_Gruppe(int grpNr, std::string &kode, const std::string &str)
+Buffer::Sjekk_Gruppe(int grpNr, std::string &kode, const std::string &str)
 {
   	std::string::const_iterator it;
   	char tmp[30];
@@ -1719,7 +1719,7 @@ Synop::Sjekk_Gruppe(int grpNr, std::string &kode, const std::string &str)
 ** Sjekkar den manuelt inntasta koda "ir"
 */
 int 
-Synop::Vis_ir_Kode(const std::string &str)
+Buffer::Vis_ir_Kode(const std::string &str)
 {
    	std::string s;
    	std::string::iterator it;
@@ -1740,7 +1740,7 @@ Synop::Vis_ir_Kode(const std::string &str)
 } /* Vis_ir_Kode */
 
 bool 
-Synop::SjoeTempKode(std::string &kode, const SynopData &data)
+Buffer::SjoeTempKode(std::string &kode, const BufferData &data)
 {
   	kode="";
   
@@ -1783,7 +1783,7 @@ Synop::SjoeTempKode(std::string &kode, const SynopData &data)
  * vi trenger bare en timestreng.
  */
 void 
-Synop::GressTempKode(std::string &kode, SynopDataList &sd)
+Buffer::GressTempKode(std::string &kode, BufferDataList &sd)
 {
   	int nTimeStr=sd.nContinuesTimes();
   	float min;
@@ -1837,7 +1837,7 @@ Synop::GressTempKode(std::string &kode, SynopDataList &sd)
  */
 
 void
-Synop::Nedboer_Kode(std::string &kode,  //RRRtr
+Buffer::Nedboer_Kode(std::string &kode,  //RRRtr
 		    		std::string &verTilleggKode, //555 ... 4RtWdWdWd
 		    		std::string &rr24Kode,       //333 ... 7RR24
 		    		float totalNedboer, 
@@ -1929,13 +1929,13 @@ Synop::Nedboer_Kode(std::string &kode,  //RRRtr
 
 
 void
-Synop::doNedboerKode(std::string &nedboerKode,
+Buffer::doNedboerKode(std::string &nedboerKode,
 		     		 std::string &verTilleggKode,
 		     		 std::string &rr24Kode,
 		     		 int         &tr,
-		     		 SynopDataList &sd)
+		     		 BufferDataList &sd)
 {
-  	SynopData     sisteTid;
+  	BufferData     sisteTid;
   	ostringstream ost;
   	int           ir;
   	float         nedboerTotal=0.0;
@@ -1986,15 +1986,15 @@ Synop::doNedboerKode(std::string &nedboerKode,
  * 2003.03.12 Bxrge Moe
  *
  * nedborFromRA, beregner nedbï¿½ren fra RA (Akumulert nedbï¿½r).
- * Nedbï¿½ren beregnes ved ï¿½ ta differansen mellom  RA fra synoptidspunktet og
+ * Nedbï¿½ren beregnes ved ï¿½ ta differansen mellom  RA fra buffertidspunktet og
  * RA 12 (evt 24) timer tilbake. Dette betyr at nedbï¿½ren bergnes pï¿½ fï¿½lgende
- * mï¿½te for synoptidspunktene 06, 12, 18 og 24. Bruke notasjonen RA(t) for ï¿½
+ * mï¿½te for buffertidspunktene 06, 12, 18 og 24. Bruke notasjonen RA(t) for ï¿½
  * angi bï¿½tteinholdet ved timen t. Eks RA(12) er bï¿½tteinnholdet kl 12.
  * 
- * synoptidspunkt kl 00 og 12,  6 timers nedbï¿½r:
+ * buffertidspunkt kl 00 og 12,  6 timers nedbï¿½r:
  *    nedbï¿½r= RA(t)-RA(t-6)
  *
- * synoptidspunkt kl 6 og 18,  12 timers nedbï¿½r:
+ * buffertidspunkt kl 6 og 18,  12 timers nedbï¿½r:
  *    nedbï¿½r=RA(t)-RA(t-12)
  *
  * Nedbï¿½ren raporteres bare dersom den er over en gitt grense. For
@@ -2010,16 +2010,16 @@ Synop::doNedboerKode(std::string &nedboerKode,
  * \return ir
  */
 int
-Synop::nedborFromRA(float &nedbor, float &fRR24, int &tr, SynopDataList &sd)
+Buffer::nedborFromRA(float &nedbor, float &fRR24, int &tr, BufferDataList &sd)
 {
   	const float limit=0.2;
   	const float bucketFlush=-10.0;
   	int   nTimes;
   	miutil::miTime t=sd.begin()->time();
   	miutil::miTime t2;
-  	SynopData d1;
-  	SynopData d2;
-  	ISynopDataList it;
+  	BufferData d1;
+  	BufferData d2;
+  	IBufferDataList it;
 
   	int   time=t.hour();
 
@@ -2082,11 +2082,11 @@ Synop::nedborFromRA(float &nedbor, float &fRR24, int &tr, SynopDataList &sd)
 
   	nedbor=d1.nedboerTot-d2.nedboerTot;
 
-  	LOGDEBUG("synopTidspunkt:          " << d1.time() << endl
+  	LOGDEBUG("bufferTidspunkt:          " << d1.time() << endl
 			 << "nedbor=" <<  nedbor << endl
 	   		 << " RR_24=" <<  fRR24 << endl
 	   		 << "    RA=" <<  d1.nedboerTot << endl 
-  	   		 << "synopTidspunkt-" << nTimes << " timer : " << d2.time() << endl 
+  	   		 << "bufferTidspunkt-" << nTimes << " timer : " << d2.time() << endl
 	   		 << "    RA=" <<  d2.nedboerTot << endl);
 
   
@@ -2104,24 +2104,24 @@ Synop::nedborFromRA(float &nedbor, float &fRR24, int &tr, SynopDataList &sd)
 }
 
 int
-Synop::RR_24_from_RR_N(SynopDataList &sd, float &fRR24)
+Buffer::RR_24_from_RR_N(BufferDataList &sd, float &fRR24)
 {
   	return 4;
 }
 
 
 /*
- * synoptidspunkt kl 00 og 12,  6 timers nedbï¿½r: RR_6
- * synoptidspunkt kl 6 og 18,  12 timers nedbï¿½r: RR_12
+ * buffertidspunkt kl 00 og 12,  6 timers nedbï¿½r: RR_6
+ * buffertidspunkt kl 6 og 18,  12 timers nedbï¿½r: RR_12
  * 
  * Sï¿½ker i nedbï¿½rparametrene RR_N, hvor N=1, 3, 6, 12, 24
  * Sï¿½ker nedbï¿½ren fra den fï¿½rste som er gitt, sï¿½ker fra 24, 12, .. ,1
  */
 int  
-Synop::nedborFromRR_N(float &nedbor,
+Buffer::nedborFromRR_N(float &nedbor,
 		      		  float &fRR24,
 		      		  int &tr,
-		      		  SynopDataList &sd)
+		      		  BufferDataList &sd)
 {
   	int t=sd.begin()->time().hour();
 
@@ -2174,12 +2174,12 @@ Synop::nedborFromRR_N(float &nedbor,
     	return 4;
 
   	if(t==6 && fRR24==FLT_MAX && sd.size()>1){
-    	CISynopDataList it=sd.begin();
+    	CIBufferDataList it=sd.begin();
     	miutil::miTime tt=it->time();
     	
     	tt.addHour(-12);	
     
-    	CISynopDataList it2=sd.find(tt);	
+    	CIBufferDataList it2=sd.find(tt);
     	
     	if(it2!=sd.end() && it2->time()==tt){
     		bool hasPrecip=true;
@@ -2240,21 +2240,21 @@ Synop::nedborFromRR_N(float &nedbor,
  * Hvis ITR har en gyldig verdi og nedbï¿½ren er -1 angir dette tï¿½rt.
  */
 int  
-Synop::nedborFromRRRtr(float &nedbor, 
+Buffer::nedborFromRRRtr(float &nedbor,
 		       float &fRR24, 
 		       int   &tr, 
-		       SynopDataList &sd)
+		       BufferDataList &sd)
 {
 	nedbor=FLT_MAX;
   	fRR24 =FLT_MAX;
 
   	if(sd.begin()->time().hour()==6) {
-  		CISynopDataList it=sd.begin();
+  		CIBufferDataList it=sd.begin();
     	miutil::miTime tt=it->time();
 	
     	tt.addHour(-12);	
     
-    	CISynopDataList it2=sd.find(tt);	
+    	CIBufferDataList it2=sd.find(tt);
     	
     	if( it2 != sd.end() && it2->time() == tt ){
     		bool hasPrecip=true;
@@ -2388,13 +2388,13 @@ Synop::nedborFromRRRtr(float &nedbor,
  * 2003.03.14 Bxrge Moe
  *
  * nedborFromRR, beregner nedbï¿½ren fra RR (Times nedbï¿½r).
- * Nedbï¿½ren beregnes ved ï¿½ summere RR fra synoptidspunktet og
+ * Nedbï¿½ren beregnes ved ï¿½ summere RR fra buffertidspunktet og
  * 12 (evt 6) timer tilbake. 
 
- * synoptidspunkt kl 00 og 12,  6 timers nedbï¿½r:
+ * buffertidspunkt kl 00 og 12,  6 timers nedbï¿½r:
  *    nedbï¿½r= RR(t)+RR(t-1)+ .... +RR(t-6)
  *
- * synoptidspunkt kl 6 og 18,  12 timers nedbï¿½r:
+ * buffertidspunkt kl 6 og 18,  12 timers nedbï¿½r:
  *    nedbï¿½r=RR(t)+RR(t-1)+ .... +RR(t-12)
  *
  * Nedbï¿½ren raporteres bare dersom den er over en gitt grense. For
@@ -2411,7 +2411,7 @@ Synop::nedborFromRRRtr(float &nedbor,
  */
 
 int  
-Synop::nedborFromRR(float &nedbor, float &fRR24, int &tr, SynopDataList &sd)
+Buffer::nedborFromRR(float &nedbor, float &fRR24, int &tr, BufferDataList &sd)
 {
   	const float limit=0.2;
   	int   nTimeStr=sd.nContinuesTimes();
@@ -2461,9 +2461,9 @@ Synop::nedborFromRR(float &nedbor, float &fRR24, int &tr, SynopDataList &sd)
     		fRR24=sum;
   	}
   
-  	LOGDEBUG("synopTidspunkt:          " << sd[0].time() 
+  	LOGDEBUG("bufferTidspunkt:          " << sd[0].time()
 			 << "  RR=" <<  sd[0].nedboer1Time << endl
-			 << "synopTidspunkt-" << nTimes << " timer : " 
+			 << "bufferTidspunkt-" << nTimes << " timer : "
 			 << sd[nTimes-1].time() 
 			 << "  RR=" <<  sd[nTimes-1].nedboer1Time << endl);
 
@@ -2482,7 +2482,7 @@ Synop::nedborFromRR(float &nedbor, float &fRR24, int &tr, SynopDataList &sd)
 ** og legg inn linefeed og 6 space'ar ved denne.
 */
 void 
-Synop::SplittStreng(std::string &streng, std::string::size_type index)
+Buffer::SplittStreng(std::string &streng, std::string::size_type index)
 {
   	std::string tmp;
   	int         i;
@@ -2525,25 +2525,25 @@ Synop::SplittStreng(std::string &streng, std::string::size_type index)
 
 
 
-Synop::Synop(EPrecipitation pre)
+Buffer::Buffer(EPrecipitation pre)
   :debug(false), test( false), precipitationParam(pre)
     
 {
 }
 
-Synop::Synop():debug(false), test( false ), precipitationParam(PrecipitationRA)
+Buffer::Buffer():debug(false), test( false ), precipitationParam(PrecipitationRA)
 {
 }
 
-Synop::~Synop()
+Buffer::~Buffer()
 {
 }
 
 void 
-Synop::replaceCCCXXX(std::string &synop, int ccx)
+Buffer::replaceCCCXXX(std::string &buffer, int ccx)
 {
   	char tmp[10];
-  	std::string::size_type i=synop.find(" CCCXXX");
+  	std::string::size_type i=buffer.find(" CCCXXX");
 
   	if(i==std::string::npos)
     	return;
@@ -2553,7 +2553,7 @@ Synop::replaceCCCXXX(std::string &synop, int ccx)
   	if(ccx>0)
     	sprintf(tmp, " CC%c", 'A'+(ccx-1));
   
-  	synop.replace(i, 7, tmp);
+  	buffer.replace(i, 7, tmp);
 }
 
 

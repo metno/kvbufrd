@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvsynopdbclt.cc,v 1.4.6.5 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: kvbufferdbclt.cc,v 1.4.6.5 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -41,7 +41,7 @@
 #include <kvdb/dbdrivermgr.h>
 #include <fstream>
 #include <kvalobs/kvDbGate.h>
-#include "tblSynop.h"
+#include "tblBuffer.h"
 #include <puTools/miTime.h>
 #include <sstream>
 #include <fstream>
@@ -85,7 +85,7 @@ readStationNames(const std::string &file, IntStringMap &map);
 
 
 struct Options{
-  bool           onlySynoptimes;
+  bool           onlyBuffertimes;
   bool           allTimes;
   miutil::miTime ftime; //from time
   miutil::miTime ttime; //To time. Empty, use only the ftime. 
@@ -108,7 +108,7 @@ getOptions(int argn, char **argv, Options &opt);
 
 
 void
-getSynopAndOutput(Options &opt, 
+getBufferAndOutput(Options &opt,
 		  const std::string &query,
 		  IntStringMap      &nameMap,
 		  dnmi::db::Connection *dbCon);
@@ -127,9 +127,9 @@ main(int argn, char **argv)
   miutil::miTime obt;
 
   
-  cerr << "Configurationfile: " << kvPath("sysconfdir")+"/kvsynopd.conf" << endl;
+  cerr << "Configurationfile: " << kvPath("sysconfdir")+"/kvbufferd.conf" << endl;
 
-  conf=readConf( kvPath("sysconfdir") + "/kvsynopd.conf");
+  conf=readConf( kvPath("sysconfdir") + "/kvbufferd.conf");
 
   if(!conf){
     return 1;
@@ -161,7 +161,7 @@ main(int argn, char **argv)
     if(options.allTimes){
         ost << "ORDER BY obstime";
         //cerr << "Query: <" << ost.str() << ">!" << endl;
-        getSynopAndOutput(options,  ost.str(), nameMap, dbCon);
+        getBufferAndOutput(options,  ost.str(), nameMap, dbCon);
     }else{
         obt=options.ftime;
   
@@ -169,7 +169,7 @@ main(int argn, char **argv)
             ost.str("");
             ost << "WHERE obstime=\'" << obt.isoTime() << "\'";
             //cerr << "Query: <" << ost.str() << ">!" << endl;
-            getSynopAndOutput(options,  ost.str(), nameMap, dbCon);
+            getBufferAndOutput(options,  ost.str(), nameMap, dbCon);
             obt.addHour(options.tstep);
         }
     }
@@ -191,7 +191,7 @@ main(int argn, char **argv)
 	ost.str("");
 	ost << "WHERE obstime=\'" << obt.isoTime() << "\' AND wmono=" 
 	    << wmono;
-	getSynopAndOutput(options,  ost.str(), nameMap, dbCon);
+	getBufferAndOutput(options,  ost.str(), nameMap, dbCon);
 	obt.addHour(options.tstep);
       }
     }
@@ -199,33 +199,33 @@ main(int argn, char **argv)
 }
 
 void
-getSynopAndOutput(Options &opt, 
+getBufferAndOutput(Options &opt,
 		  const std::string &query,
 		  IntStringMap      &nameMap,
 		  dnmi::db::Connection *dbCon
 		  )
 {
   char         buf[30];
-  list<TblSynop> synopList;
+  list<TblBuffer> bufferList;
   IIntStringMap tit;
   kvalobs::kvDbGate gate(dbCon);
-  list<TblSynop>::iterator it;
+  list<TblBuffer>::iterator it;
   ostringstream ost;
 
-  if(!gate.select(synopList, query)){
+  if(!gate.select(bufferList, query)){
     cerr << "ERROR: " << gate.getErrorStr() << endl;
     return;
   }
    
-  it=synopList.begin();
+  it=bufferList.begin();
 
-  for(; it!=synopList.end(); it++){
+  for(; it!=bufferList.end(); it++){
     tit=nameMap.find(it->wmono());
     
     if(tit==nameMap.end()){
       cerr << it->wmono() << "= <NO NAME>" << endl;
       
-      //If the namefile is given. Write only synops for 
+      //If the namefile is given. Write only buffers for
       //stations in the file.
       if(!opt.namefile.empty())
 	continue;
@@ -239,7 +239,7 @@ getSynopAndOutput(Options &opt,
     ost.str("");
     ost << opt.outputdir << "/";
     
-    if(opt.onlySynoptimes && (it->obstime().hour()%3)!=0)
+    if(opt.onlyBuffertimes && (it->obstime().hour()%3)!=0)
         continue;
 
     sprintf(buf, "-%04d%02d%02d%02d.syn", 
@@ -414,7 +414,7 @@ void
 getOptions(int argn, char **argv, Options &opt)
 {
     struct option long_options[]={{"help", 0, 0, 0},
-                                  {"only-synoptimes", 0, 0, 0},
+                                  {"only-buffertimes", 0, 0, 0},
 				                  {0,0,0,0}};
                                   
     int c;
@@ -422,7 +422,7 @@ getOptions(int argn, char **argv, Options &opt)
     std::string sWmo;
   
     opt.allTimes=false;
-    opt.onlySynoptimes=false;
+    opt.onlyBuffertimes=false;
   
     while(true){
         c=getopt_long(argn, argv, "o:f:t:n:i:s:c:", long_options, &index);
@@ -487,8 +487,8 @@ getOptions(int argn, char **argv, Options &opt)
             if(strcmp(long_options[index].name,"help")==0){
 	           use(0);
             }
-            if(strcmp(long_options[index].name,"only-synoptimes")==0){
-                opt.onlySynoptimes=true;
+            if(strcmp(long_options[index].name,"only-buffertimes")==0){
+                opt.onlyBuffertimes=true;
             }
             break;
         case '?':
@@ -541,9 +541,9 @@ void
 use(int exitstatus)
 {
   cerr << "\n\tuse" << endl
-       <<"\t   kvsynopdbclt -f timestamp [-t timestamp] [-s step] " << endl
+       <<"\t   kvbufferdbclt -f timestamp [-t timestamp] [-s step] " << endl
        << "\t\t[-i stationnames] [-o outdir] [-n wmonolist] [-c dbconnect]" << endl 
-       << "\t\t[--only-synoptimes]" << endl << endl
+       << "\t\t[--only-buffertimes]" << endl << endl
        << "\t-f timestamp  From time. Use 'all' to ignore fromtime!" << endl
        << "\t-t timestamp  To time" << endl
        << "\t-s step       Increment the fromtime with this step until totime"

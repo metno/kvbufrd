@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvsynopd.cc,v 1.12.2.11 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: kvbufferd.cc,v 1.12.2.11 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -34,7 +34,7 @@
 #include <milog/milog.h>
 #include <fileutil/pidfileutil.h>
 #include <kvalobs/kvapp.h>
-#include "SynopWorker.h"
+#include "BufferWorker.h"
 #include "DataReceiver.h"
 #include "App.h"
 #include "Replay.h"
@@ -53,11 +53,11 @@ main(int argn, char **argv)
   std::string pidfile;
   std::string confFile;
 
-  InitLogger(argn, argv, "kvsynopd");
+  InitLogger(argn, argv, "kvbufferd");
 
-  confFile = kvPath("sysconfdir")+"/kvsynopd.conf";
+  confFile = kvPath("sysconfdir")+"/kvbufferd.conf";
   pidfile = dnmi::file::createPidFileName( kvPath("rundir"),
-		                                     "kvsynopd" );
+		                                     "kvbufferd" );
 
   dnmi::file::PidFileHelper pidFile;
   miutil::conf::ConfSection *conf;
@@ -75,7 +75,7 @@ main(int argn, char **argv)
   dnmi::thread::CommandQue newObsQue;  
   dnmi::thread::CommandQue replayQue;  
   DataReceiver        dataReceiver(app, newDataQue, newObsQue);
-  SynopWorker         synopWorker(app, newObsQue, replayQue);
+  BufferWorker         bufferWorker(app, newObsQue, replayQue);
   Replay              replay(app, replayQue);
   DelayControl        delayControl(app, newDataQue);
   miTime              startTime;
@@ -85,12 +85,12 @@ main(int argn, char **argv)
     if(error){
       LOGFATAL("An error occured while reading the pidfile:" << endl
 	       << pidfile << " remove the file if it exist and"
-	       << endl << "kvsynopd is not running. " << 
-	       "If it is running and there is problems. Kill kvsynopd and"
+	       << endl << "kvbufferd is not running. " <<
+	       "If it is running and there is problems. Kill kvbufferd and"
 	       << endl << "restart it." << endl << endl);
       return 1;
     }else{
-      LOGFATAL("Is kvsynopd allready running?" << endl
+      LOGFATAL("Is kvbufferd allready running?" << endl
 	       << "If not remove the pidfile: " << pidfile);
       return 1;
     }
@@ -125,8 +125,8 @@ main(int argn, char **argv)
   }
       
   
-  if( ! app.initKvSynopInterface(  newObsQue ) ){
-    LOGFATAL("Cant initialize the interface to <kvsynopd>.");
+  if( ! app.initKvBufferInterface(  newObsQue ) ){
+    LOGFATAL("Cant initialize the interface to <kvbufferd>.");
     return 1;
   }
   
@@ -138,10 +138,10 @@ main(int argn, char **argv)
   }
 
 
-  //Write the subscriber id to the file $KVALOBS/var/kvsynop/datasubscriber.id
+  //Write the subscriber id to the file $KVALOBS/var/kvbuffer/datasubscriber.id
   ofstream subidfile;
 
-  subidfile.open( string(kvPath("localstatedir", "kvsynopd")+"/datasubscriber.id").c_str());
+  subidfile.open( string(kvPath("localstatedir", "kvbufferd")+"/datasubscriber.id").c_str());
 
   if(subidfile.is_open()){
     subidfile << id << endl;
@@ -150,8 +150,8 @@ main(int argn, char **argv)
 
   pidFile.createPidFile(pidfile);
 
-  boost::thread synopWorkerThread(synopWorker);
-  IDLOGDEBUG("main","Started <SynopWorkerThread>!");
+  boost::thread bufferWorkerThread(bufferWorker);
+  IDLOGDEBUG("main","Started <BufferWorkerThread>!");
 
   if(!startTime.undef()){
     miTime now(miTime::nowTime());
@@ -186,8 +186,8 @@ main(int argn, char **argv)
   dataReceiverThread.join();
   IDLOGDEBUG("main","Joined <dataReceiverThread>!");
 
-  synopWorkerThread.join();
-  IDLOGDEBUG("main","Joined <synopWorkerThread>!");
+  bufferWorkerThread.join();
+  IDLOGDEBUG("main","Joined <bufferWorkerThread>!");
 
   replayThread.join();
   IDLOGDEBUG("main","Joined <replayThread>!");

@@ -28,12 +28,12 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvsynop_tblSynop_h__
-#define __kvsynop_tblSynop_h__
+#ifndef __kvbuffer_tblBuffer_h__
+#define __kvbuffer_tblBuffer_h__
 
 #include <kvalobs/kvDbBase.h>
 
-class TblSynop : public kvalobs::kvDbBase {
+class TblBuffer : public kvalobs::kvDbBase {
 private:
   int              wmono_;
   miutil::miTime   obstime_;
@@ -45,10 +45,10 @@ private:
   void createSortIndex();
 
 public:
-  TblSynop() {clean();}
-  TblSynop(const TblSynop &synop){ set(synop);}
-  TblSynop(const dnmi::db::DRow &r){set(r);}
-  TblSynop(int                  wmono,
+  TblBuffer() {clean();}
+  TblBuffer(const TblBuffer &buffer){ set(buffer);}
+  TblBuffer(const dnmi::db::DRow &r){set(r);}
+  TblBuffer(int                  wmono,
 	   const miutil::miTime &obtime,
 	   const miutil::miTime &createtime,
 	   int                  crc,
@@ -64,9 +64,9 @@ public:
 	   const std::string    &wmomsg);
 
   bool set(const dnmi::db::DRow&);
-  bool set(const TblSynop &synop);
+  bool set(const TblBuffer &buffer );
 
-  TblSynop& operator=(const TblSynop &ts){
+  TblBuffer& operator=(const TblBuffer &ts){
                   if(&ts!=this)
 		    set(ts);
 		  return *this;
@@ -74,7 +74,7 @@ public:
 
   void clean();
 
-  const char* tableName()            const {return "synop";}
+  const char* tableName()            const {return "buffer";}
   miutil::miString toSend()    const;
   miutil::miString toUpdate()  const;
   miutil::miString uniqueKey() const;

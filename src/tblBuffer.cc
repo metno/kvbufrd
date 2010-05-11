@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: tblSynop.cc,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: tblBuffer.cc,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -31,7 +31,7 @@
 #include <list>
 #include <stdlib.h>
 #include <stdio.h>
-#include "tblSynop.h"
+#include "tblBuffer.h"
 #include <milog/milog.h>
 
 using namespace std;
@@ -39,7 +39,7 @@ using namespace miutil;
 using namespace dnmi;
 
 void 
-TblSynop::
+TblBuffer::
 createSortIndex() 
 {
   sortBy_=miString(wmono_)+obstime_.isoTime()+createtime_.isoTime()+
@@ -47,7 +47,7 @@ createSortIndex()
 }
   
 void 
-TblSynop::
+TblBuffer::
 clean()
 {
   wmono_      = 0;  
@@ -62,7 +62,7 @@ clean()
 
 
 bool 
-TblSynop::
+TblBuffer::
 set(const dnmi::db::DRow &r_)
 {
   db::DRow               &r=const_cast<db::DRow&>(r_);
@@ -87,11 +87,11 @@ set(const dnmi::db::DRow &r_)
       }else if(*it=="wmomsg"){
 	wmomsg_=buf;
       }else{
-	LOGWARN("TblSynop::set .. unknown entry:" << *it << std::endl);
+	LOGWARN("TblBuffer::set .. unknown entry:" << *it << std::endl);
       }
     }
     catch(...){
-      LOGWARN("TblSynop: unexpected exception ..... \n");
+      LOGWARN("TblBuffer: unexpected exception ..... \n");
     }  
   }
  
@@ -100,8 +100,8 @@ set(const dnmi::db::DRow &r_)
 }
 
 bool 
-TblSynop::
-set(const TblSynop &s)
+TblBuffer::
+set(const TblBuffer &s)
 {
   wmono_      = s.wmono_;  
   obstime_    = s.obstime_;  
@@ -118,7 +118,7 @@ set(const TblSynop &s)
 
 
 bool 
-TblSynop::
+TblBuffer::
 set(int                  wmono, 
     const miutil::miTime &obtime,    
     const miutil::miTime &createtime,    
@@ -139,7 +139,7 @@ set(int                  wmono,
 }
 
 miutil::miString 
-TblSynop::
+TblBuffer::
 toSend() const
 {
   ostringstream ost;
@@ -158,7 +158,7 @@ toSend() const
 
 
 miutil::miString 
-TblSynop::
+TblBuffer::
 uniqueKey()const
 {
   ostringstream ost;
@@ -172,7 +172,7 @@ uniqueKey()const
 
 
 miutil::miString 
-TblSynop::
+TblBuffer::
 toUpdate()const
 {
   ostringstream ost;

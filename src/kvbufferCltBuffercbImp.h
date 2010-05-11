@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvsynopCltSynopcbImp.cc,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: kvbufferCltBuffercbImp.h,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -28,19 +28,26 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include <dnmithread/mtcout.h>
-#include "kvsynopCltSynopcbImp.h"
+#ifndef __kvbufferCltBuffercbImpl_h__
+#define __kvbufferCltBuffercbImpl_h__
 
-
-SynopcbImpl::~SynopcbImpl()
+#include "kvbufferd.hh"
+#include "kvbufferCltApp.h"
+//
+// Example class implementing IDL interface kvbufferd::buffercb
+//
+class BuffercbImpl: public POA_kvbufferd::buffercb,
+		   public PortableServer::RefCountServantBase 
 {
-  CERR("INFO: A SynopcbImpl DELETED!\n");
-}
+  BufferCltApp &app;
+
+public:
+  BuffercbImpl(BufferCltApp &app_): app(app_){};
+  virtual ~BuffercbImpl();
 
 
-void 
-SynopcbImpl::synop(const kvsynopd::SynopData& data)
-{
-  app.setResult(data);
-  app.wait(false);
-}
+  void buffer(const kvbufferd::BufferData& data);
+
+};
+
+#endif

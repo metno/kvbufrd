@@ -28,8 +28,8 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvsynopd_waiting_h__
-#define __kvsynopd_waiting_h__
+#ifndef __kvbufferd_waiting_h__
+#define __kvbufferd_waiting_h__
 
 #include <list>
 #include <boost/shared_ptr.hpp>

@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvsynopdparse.cc,v 1.5.6.1 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: kvbufferdparse.cc,v 1.5.6.1 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -115,7 +115,7 @@ main(int argn, char **argv)
     }
   }
   
-  file = kvPath("sysconfdir")+"/kvsynopd.conf";
+  file = kvPath("sysconfdir")+"/kvbufferd.conf";
   
   cerr << "Reading file: " << file << endl;
 
@@ -230,9 +230,9 @@ void
 use(int retval)
 {
   cerr << endl << endl 
-       <<"\tkvsynopdparse [-f confile]  [-l|-w|-t] filename" << endl
+       <<"\tkvbufferdparse [-f confile]  [-l|-w|-t] filename" << endl
        <<"\t\t-f confile Use confile instead of the default file" << endl
-       <<"\t\t           $KVALOBS/etc/kvsynopd.conf" << endl
+       <<"\t\t           $KVALOBS/etc/kvbufferd.conf" << endl
        <<"\t\t-w list all wmonumbers that is configured!" << endl
        <<"\t\t-t list the configuration for all station (tabulated)!" << endl
        <<"\t\t-l list the configuration for all station!" << endl

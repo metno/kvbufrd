@@ -33,7 +33,7 @@
 #include "Data.h"
 #include <kvalobs/kvDbGate.h>
 #include "DataReceiver.h"
-#include "tblSynop.h"
+#include "tblBuffer.h"
 #include <kvalobs/kvPath.h>
 
 using namespace std;
@@ -115,8 +115,8 @@ DataReceiver::doCheckReceivedData(ObsEvent *obsevent)
 
   	setDefaultLogger(obsevent->stationInfo());
 
-	if(!obsevent->stationInfo()->synopForTime(obsevent->obstime().hour())){
-   		LOGINFO("Skip SYNOP for this hour: " << obsevent->obstime() << endl <<
+	if(!obsevent->stationInfo()->bufferForTime(obsevent->obstime().hour())){
+   		LOGINFO("Skip BUFFER for this hour: " << obsevent->obstime() << endl <<
 				" wmono: " << obsevent->stationInfo()->wmono() );
 		delete obsevent;
 		Logger::resetDefaultLogger();
@@ -276,12 +276,12 @@ DataReceiver::newData(kvservice::KvObsDataListPtr data)
       		continue;
     	}
 
-		if(!station->synopForTime(dit->obstime().hour())){
-			LOGINFO("Skip SYNOP for this hour: " << dit->obstime() << endl
+		if(!station->bufferForTime(dit->obstime().hour())){
+			LOGINFO("Skip BUFFER for this hour: " << dit->obstime() << endl
 				<<  " stationid: " << dit->stationID() << endl
 				<<  " typeid: " << dit->typeID());
 			Logger::resetDefaultLogger();
-			LOGINFO("Skip SYNOP for this hour: " << dit->obstime() << endl
+			LOGINFO("Skip BUFFER for this hour: " << dit->obstime() << endl
 				<<  " stationid: " << dit->stationID() << endl
 				<<  " typeid: " << dit->typeID());
 			continue;
@@ -330,9 +330,9 @@ DataReceiver::newData(kvservice::KvObsDataListPtr data)
     	}
     
     	//if(app.isContinuesType(dataIt->typeID())){
-      		//We dont need to regenerate SYNOP for typeid that
+      		//We dont need to regenerate BUFFER for typeid that
       		//are not continues in time.
-      		prepareToProcessAnySynopBasedOnThisObs(dataIt->obstime(),
+      		prepareToProcessAnyBufferBasedOnThisObs(dataIt->obstime(),
 									     		   station);
     	//}
     
@@ -344,10 +344,10 @@ DataReceiver::newData(kvservice::KvObsDataListPtr data)
 
 void
 DataReceiver::
-prepareToProcessAnySynopBasedOnThisObs(const miutil::miTime &obstime,
+prepareToProcessAnyBufferBasedOnThisObs(const miutil::miTime &obstime,
 				       StationInfoPtr station)
 {
-  	std::list<TblSynop> synopData;
+  	std::list<TblBuffer> bufferData;
   	miutil::miTime      now(miutil::miTime::nowTime());
   	miutil::miTime      maxTime;
   	miutil::miTime      time=obstime;
@@ -365,14 +365,14 @@ prepareToProcessAnySynopBasedOnThisObs(const miutil::miTime &obstime,
   	int hour=obstime.hour();
   	int r=hour%3;
   
-  	//Nermest SYNOP tid som er st�rre enn obstime;
+  	//Nermest BUFFER tid som er st�rre enn obstime;
   	if(r==0)
     	time.addHour(3);
   	else
     	time.addHour(3-r); 
  
   	while(time<=maxTime){
-    	LOGINFO("Posibly regenerating SYNOP for: " <<
+    	LOGINFO("Posibly regenerating BUFFER for: " <<
 	    		"  wmono: " << station->wmono() << " obstime: " << time<<endl);
     
     	try{
@@ -500,7 +500,7 @@ typeidReceived(ObsEvent &event)
     	delete rs;
 
     	//We clear the list. An empty list means "accept all", when the data
-    	//is used i SYNOP generation!
+    	//is used i BUFFER generation!
     	event.clearTypeidReceived();
     	return false;
   	}
@@ -515,7 +515,7 @@ DataReceiver::setDefaultLogger(StationInfoPtr station)
     	FLogStream *logs=new FLogStream(1, 204800); //200k
     	std::ostringstream ost;
     
-    	ost << kvPath("logdir") << "/kvsynop/dr-"
+    	ost << kvPath("logdir") << "/kvbuffer/dr-"
 			<< station->wmono() << ".log";
     
     	if(logs->open(ost.str())){

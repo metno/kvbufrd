@@ -31,15 +31,15 @@ KVBIN=""
 
 ETC_FILES=" "
 
-DIRS="/usr/share/kvsynopd 
-      /var/lib/kvsynopd
-      /var/log/kvalobs/kvsynop/debug
-      /var/log/kvalobs/kvsynop
+DIRS="/usr/share/kvbufferd 
+      /var/lib/kvbufferd
+      /var/log/kvalobs/kvbuffer/debug
+      /var/log/kvalobs/kvbuffer
       /var/lib/kvalobs/run
       /var/lib/kvalobs/service
       /var/lib/kvalobs/service/subscribers"     
 
-SQLLITE_DB="/var/lib/kvsynopd/kvsynopd.sqlite"
+SQLLITE_DB="/var/lib/kvbufferd/kvbufferd.sqlite"
 
 case "$1" in
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
@@ -69,9 +69,6 @@ case "$1" in
      
      #Delete my debconf entries in the database.
      db_purge || true
-
-     update-rc.d kvalobs remove || true
-   
      ;;
    
     *)

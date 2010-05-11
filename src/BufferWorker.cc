@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: SynopWorker.cc,v 1.27.2.21 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: BufferWorker.cc,v 1.27.2.21 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -42,11 +42,11 @@
 #include <boost/crc.hpp>
 #include <boost/cstdint.hpp>
 #include "StationInfo.h"
-#include "SynopWorker.h"
+#include "BufferWorker.h"
 #include "obsevent.h"
-#include "synop.h"
+#include "buffer.h"
 #include <kvalobs/kvPath.h>
-#include "LoadSynopData.h"
+#include "LoadBufferData.h"
 
 using namespace std;
 using namespace kvalobs;
@@ -55,7 +55,7 @@ using namespace milog;
 
 
 
-SynopWorker::SynopWorker(App &app_, 
+BufferWorker::BufferWorker(App &app_,
 			 dnmi::thread::CommandQue &que_,
 			 dnmi::thread::CommandQue &replayQue_)
   : app(app_), que(que_), replayQue(replayQue_), con(0), 
@@ -64,12 +64,12 @@ SynopWorker::SynopWorker(App &app_,
 }
   
 void 
-SynopWorker::operator()()
+BufferWorker::operator()()
 {
   	dnmi::thread::CommandBase *com;
   	ObsEvent                  *event;
 
-  	milog::LogContext context("SynopWorker");
+  	milog::LogContext context("BufferWorker");
 
   	while(!app.shutdown()){
     	try{
@@ -114,7 +114,7 @@ SynopWorker::operator()()
       	FLogStream *logs=new FLogStream(2, 307200); //300k
       	std::ostringstream ost;
 
-      	ost << kvPath("logdir") << "/kvsynop/"
+      	ost << kvPath("logdir") << "/kvbuffer/"
 	  			 << event->stationInfo()->wmono() << ".log";
 
       	if(logs->open(ost.str())){
@@ -144,7 +144,7 @@ SynopWorker::operator()()
     	}
     	catch(...){
       	LOGERROR("EXCEPTION(Unknown): Unexpected exception from " <<
-	      			"SynopWorker::newObs" << endl);
+	      			"BufferWorker::newObs" << endl);
     	}
 
 		if(event->hasCallback()){
@@ -167,8 +167,8 @@ SynopWorker::operator()()
 
 
 bool
-SynopWorker::
-readyForSynop(const DataEntryList &data, 
+BufferWorker::
+readyForBuffer(const DataEntryList &data,
 	                  ObsEvent      &e   )const
 {
   	bool haveAllTypes;
@@ -181,7 +181,7 @@ readyForSynop(const DataEntryList &data,
   	miTime obstime=e.obstime();
   	StationInfoPtr info=e.stationInfo();
 
-  	milog::LogContext context("readyForSynop");
+  	milog::LogContext context("readyForBuffer");
 
   	miTime delayTime;
   	miTime nowTime(miTime::nowTime());
@@ -199,7 +199,7 @@ readyForSynop(const DataEntryList &data,
 
   	if(!haveAllTypes && !mustHaveTypes){
     	//We do not have all types we need, we are also missing
-    	//the types we need to make an incomplete synop. Just
+    	//the types we need to make an incomplete buffer. Just
     	//drop this event, dont make a waiting element for it, it is 
     	//useless;
     
@@ -310,19 +310,19 @@ readyForSynop(const DataEntryList &data,
   message that can be returned to the celler.
  */
 void 
-SynopWorker::newObs(ObsEvent &event)
+BufferWorker::newObs(ObsEvent &event)
 {
 	EReadData      dataRes;
   	DataEntryList  data;   
-  	SynopDataList  synopData;
-  	Synop          synop;
-  	string         sSynop;
+  	BufferDataList  bufferData;
+  	Buffer          buffer;
+  	string         sBuffer;
   	StationInfoPtr info;
   	ostringstream  ost;
 
   	info=event.stationInfo();
   
-  	if(!info->synopForTime(event.obstime().hour())){
+  	if(!info->bufferForTime(event.obstime().hour())){
   		LOGINFO("Skip SYNOP for time: " << event.obstime() << "  wmono: " << 
   				  info->wmono());
   		swmsg << "Skip SYNOP for time: " << event.obstime() << "  wmono: " << 
@@ -331,7 +331,7 @@ SynopWorker::newObs(ObsEvent &event)
   		if(event.hasCallback()){
   			event.msg() << "Skip SYNOP for time: " << event.obstime() << 
   						   "  wmono: " << info->wmono();
-  			event.synop("");
+  			event.buffer("");
       	event.isOk(false);
   		}
   		
@@ -339,29 +339,29 @@ SynopWorker::newObs(ObsEvent &event)
   	}
 
   	//We check if this is a event for regeneraiting a SYNOP
-  	//due to changed data. If it is, the synop for this time
+  	//due to changed data. If it is, the buffer for this time
   	//must allready exist. If it don't exist we could generate 
   	//a SYNOP that is incomplete because of incomplete data.
 
   	if(event.regenerate()){
-    	list<TblSynop> tblSynopList;
+    	list<TblBuffer> tblBufferList;
 
     	LOGINFO("Regenerate event: wmono " << info->wmono() << ", obstime " <<
 	    		  event.obstime());
     
-    	if(app.getSavedSynopData(info->wmono(), 
+    	if(app.getSavedBufferData(info->wmono(),
 							          event.obstime(), 
-			     				       tblSynopList, *con)){
-			if(tblSynopList.size()>0){
+			     				       tblBufferList, *con)){
+			if(tblBufferList.size()>0){
 				LOGINFO("Regenerate event: Regenerate SYNOP.");
       	}else{
 				LOGINFO("Regenerate event: No SYNOP exist, don't regenerate!");
-				swmsg << "Regenerate: No synop exist.";
+				swmsg << "Regenerate: No buffer exist.";
 
 				return;
      		}
 		}else{
-      	LOGERROR("DBERROR: Regenerate event: Cant look up the synop!");
+      	LOGERROR("DBERROR: Regenerate event: Cant look up the buffer!");
       	swmsg << "Regenerate: DB error!";
 
       	return;
@@ -398,15 +398,15 @@ SynopWorker::newObs(ObsEvent &event)
 
   	//If this event comes frrom the DelayControll and
   	//is for data waiting on continues types don't run
-  	//it through the readyForSynop test. We know that 
-  	//the readyForSynop has previously returned true for
+  	//it through the readyForBuffer test. We know that
+  	//the readyForBuffer has previously returned true for
   	//this event.
  
   	if(!event.waitingOnContinuesData()){
     	//Don't delay a observation that is explicit asked for.
     	//A SYNOP that is explicit asked for has a callback.
 
-    	if(!event.hasCallback() && !readyForSynop(data, event)){
+    	if(!event.hasCallback() && !readyForBuffer(data, event)){
       	return;
     	}
   	}
@@ -424,130 +424,130 @@ SynopWorker::newObs(ObsEvent &event)
 			  event.obstime() << " # " << data.size());
   
   	try{
-    	loadSynopData(data, synopData, event.stationInfo());
+    	loadBufferData(data, bufferData, event.stationInfo());
   	}
   	catch(...){
     	LOGDEBUG("EXCEPTION(Unknown): Unexpected exception from "<< endl <<
-	     		   "SynopWorker::loadSynopData" << endl);
+	     		   "BufferWorker::loadBufferData" << endl);
   	}
   
-  	CISynopDataList it=synopData.begin();
+  	CIBufferDataList it=bufferData.begin();
   	ost.str("");
 
-  	for(int i=0;it!=synopData.end(); i++, it++)
-    	ost << it->time() << "  [" << i << "] " << synopData[i].time() <<endl;
+  	for(int i=0;it!=bufferData.end(); i++, it++)
+    	ost << it->time() << "  [" << i << "] " << bufferData[i].time() <<endl;
   
-  	LOGINFO("# number of synopdata: " << synopData.size() << endl<<
-   		  "Continues: " << synopData.nContinuesTimes() << endl <<
+  	LOGINFO("# number of bufferdata: " << bufferData.size() << endl<<
+   		  "Continues: " << bufferData.nContinuesTimes() << endl <<
 	   	  "Time(s): " << endl << ost.str());
   
-  	LOGDEBUG6(synopData);
+  	LOGDEBUG6(bufferData);
 
-  	bool synopOk;
+  	bool bufferOk;
 
   	try{
-    	synopOk=synop.doSynop(info->wmono(),
+    	bufferOk=buffer.doBuffer(info->wmono(),
 			  				   	 info->owner(),
 									 atoi(info->list().c_str()),
-			  				  		 sSynop, 
+			  				  		 sBuffer,
 			  				  		 info,
-			  				  		 synopData,
+			  				  		 bufferData,
 			  				  		 true);
   	}
   	catch(std::out_of_range &e){
     	LOGWARN("EXCEPTION: out_of_range: wmono: " << info->wmono() <<
 	    		  " obstime: "  <<
-	    		  ((synopData.begin()!=synopData.end())?
-					synopData.begin()->time():"(NULL)") << endl <<
+	    		  ((bufferData.begin()!=bufferData.end())?
+					bufferData.begin()->time():"(NULL)") << endl <<
 	    		  "what: " << e.what() << endl);
-    	synopOk=false;
-    	swmsg << "Cant create a synop!" << endl;
+    	bufferOk=false;
+    	swmsg << "Cant create a buffer!" << endl;
   	}
   	catch(DataListEntry::TimeError &e){
      	LOGWARN("Exception: TimeError: wmono: " << info->wmono() << " obstime: "  <<
-    			  ((synopData.begin()!=synopData.end())?
-				  synopData.begin()->time():"(NULL)") << endl<<
+    			  ((bufferData.begin()!=bufferData.end())?
+				  bufferData.begin()->time():"(NULL)") << endl<<
 				  "what: " << e.what() << endl);
-    	synopOk=false;
-    	swmsg << "Cant create a synop!" << endl;
+    	bufferOk=false;
+    	swmsg << "Cant create a buffer!" << endl;
   	}
   	catch(...){
-    	LOGWARN("EXCEPTION(Unknown): Unexpected exception in Synop::doSynop:" <<
+    	LOGWARN("EXCEPTION(Unknown): Unexpected exception in Buffer::doBuffer:" <<
 	    		  endl << "wmono: " << info->wmono() << " obstime: "  <<
-	   		  ((synopData.begin()!=synopData.end())?
-				  synopData.begin()->time():"(NULL)") << endl);
-    	synopOk=false;
-    	swmsg << "Cant create a synop!" << endl;
+	   		  ((bufferData.begin()!=bufferData.end())?
+				  bufferData.begin()->time():"(NULL)") << endl);
+    	bufferOk=false;
+    	swmsg << "Cant create a buffer!" << endl;
   	}
   
-  	if(!synopOk){
+  	if(!bufferOk){
     	if(event.hasCallback()){
       	event.isOk(false);
       
-      	if(synopData.size()==0)
-				event.msg() << "NODATA:(" << event.obstime() <<") cant create synop!";
+      	if(bufferData.size()==0)
+				event.msg() << "NODATA:(" << event.obstime() <<") cant create buffer!";
       	else
-				event.msg() << "SYNOPERROR:(" << event.obstime() <<") cant create synop!";
+				event.msg() << "SYNOPERROR:(" << event.obstime() <<") cant create buffer!";
     	}
 
     	LOGERROR("Cant create SYNOP for <"<< info->wmono()<<"> obstime: " <<
 	     		   event.obstime());
-    	swmsg << "Cant create a synop!" << endl;
+    	swmsg << "Cant create a buffer!" << endl;
   	}else{
     	boost::crc_ccitt_type crcChecker;
     	boost::uint16_t       crc;
     	boost::uint16_t       oldcrc=0;
     	int                   ccx=0;
-    	list<TblSynop>        tblSynopList;
-    	bool                  newSynop=true;
+    	list<TblBuffer>        tblBufferList;
+    	bool                  newBuffer=true;
     	bool                  bccx=false;
-    	string                mySynop;
+    	string                myBuffer;
 
-    	crcChecker.process_bytes(sSynop.c_str(), sSynop.length());
+    	crcChecker.process_bytes(sBuffer.c_str(), sBuffer.length());
     	crc=crcChecker.checksum();
     
-    	if(app.getSavedSynopData(info->wmono(), event.obstime(), tblSynopList, *con)){
-      	if(tblSynopList.size()>0){
-				ccx=tblSynopList.front().ccx();
-				oldcrc=tblSynopList.front().crc();
+    	if(app.getSavedBufferData(info->wmono(), event.obstime(), tblBufferList, *con)){
+      	if(tblBufferList.size()>0){
+				ccx=tblBufferList.front().ccx();
+				oldcrc=tblBufferList.front().crc();
 	
 				if(oldcrc!=crc){
-	  				mySynop=tblSynopList.front().wmomsg();
-	  				mySynop+="\n\n";
+	  				myBuffer=tblBufferList.front().wmomsg();
+	  				myBuffer+="\n\n";
 	  				ccx++;
 	  				bccx=true;
 				}else{
-	  				newSynop=false;
+	  				newBuffer=false;
 				}
       	}
     	}
 
-    	Synop::replaceCCCXXX(sSynop, ccx);
+    	Buffer::replaceCCCXXX(sBuffer, ccx);
 
-    	if(newSynop){
+    	if(newBuffer){
       	miTime createTime(miTime::nowTime());
-      	ostringstream myost(mySynop);
+      	ostringstream myost(myBuffer);
       
       	myost << "[Created: " << createTime << "]" << endl;
-      	myost << sSynop;
+      	myost << sBuffer;
 
-      	if(app.saveSynopData(TblSynop(info->wmono(), event.obstime(), 
+      	if(app.saveBufferData(TblBuffer(info->wmono(), event.obstime(),
 				 				 		createTime, crc, ccx, myost.str()), 
 			   					 	*con))
-				LOGINFO("Synop information saved to database!");
+				LOGINFO("Buffer information saved to database!");
 
-     		saveTo(info, event.obstime(), sSynop, ccx);
+     		saveTo(info, event.obstime(), sBuffer, ccx);
       
      		if(!bccx)
-				swmsg << "New synop created!" << endl;
+				swmsg << "New buffer created!" << endl;
      		else
-				swmsg << "New synop created (CC" << ('A'+(ccx-1)) << ")!" << endl;
+				swmsg << "New buffer created (CC" << ('A'+(ccx-1)) << ")!" << endl;
 
     	}else{
      		LOGINFO("DUPLICATE: wmono=" << info->wmono() << " obstime: " 
        			 << event.obstime());
       
-     		swmsg << "Duplicate synop created!" << endl;
+     		swmsg << "Duplicate buffer created!" << endl;
       
      		if(event.hasCallback())
 				event.msg() << "DUPLICATE: wmono=" << info->wmono() << " obstime: " 
@@ -561,18 +561,18 @@ SynopWorker::newObs(ObsEvent &event)
       	ost << " (CC" << ('A'+(ccx-1)) << ")";
     	
     	LOGINFO("SYNOP "<< info->wmono() << " crc=" << crc << " oldcrc=" << oldcrc
-	    		  << ost.str() << " : " << endl << sSynop << endl);
+	    		  << ost.str() << " : " << endl << sBuffer << endl);
     
     	if(event.hasCallback()){
-      	//If we have a callback registred. Return the synop
-      	event.synop(sSynop);
+      	//If we have a callback registred. Return the buffer
+      	event.buffer(sBuffer);
       	event.isOk(true);
     	}
   	}
 }
 
-SynopWorker::EReadData 
-SynopWorker::readData(dnmi::db::Connection &con,
+BufferWorker::EReadData
+BufferWorker::readData(dnmi::db::Connection &con,
 		      			 ObsEvent             &event,
 		      			 DataEntryList        &data)const
 {
@@ -666,17 +666,17 @@ SynopWorker::readData(dnmi::db::Connection &con,
 }
 
 void 
-SynopWorker::loadSynopData(const DataEntryList &dl, 
-			   SynopDataList       &sd, 
+BufferWorker::loadBufferData(const DataEntryList &dl,
+			   BufferDataList       &sd,
 			   StationInfoPtr      info)const
 {
    kvdatacheck::Validate validate( kvdatacheck::Validate::UseOnlyUseInfo );
-	::loadSynopData( dl, sd, info, validate );
+	::loadBufferData( dl, sd, info, validate );
 }
 
 
 bool
-SynopWorker::
+BufferWorker::
 checkTypes(const DataEntryList  &data, 
 	   	         StationInfoPtr stInfo,
 	        const miutil::miTime obstime,
@@ -736,7 +736,7 @@ checkTypes(const DataEntryList  &data,
 
 
 void
-SynopWorker::
+BufferWorker::
 saveTo(StationInfoPtr info, 
        const miutil::miTime &obstime, 
        const std::string &wmomsg,
@@ -770,12 +770,12 @@ saveTo(StationInfoPtr info,
     ost << info->copyto() << "/" <<  info->wmono() << "-" 
 	<< setfill('0') << setw(2) << obstime.day() << setw(2) 
 	<< obstime.hour()
-	<< ".synop";
+	<< ".buffer";
   }else{ 
     ost << info->copyto() << "/" <<  info->wmono() << "-" 
 	<< setfill('0') << setw(2) << obstime.day() << setw(2) 
 	<< obstime.hour() << "-" << static_cast<char>('A'+(ccx-1))
-	<< ".synop";
+	<< ".buffer";
   }
 
   f.open(ost.str().c_str());
@@ -791,7 +791,7 @@ saveTo(StationInfoPtr info,
     
 
 bool 
-SynopWorker::
+BufferWorker::
 checkContinuesTypes(ObsEvent &event, 
 		    const DataEntryList &data)const
 {
@@ -800,13 +800,13 @@ checkContinuesTypes(ObsEvent &event,
 
   if(event.waitingOnContinuesData()){
     //We have waited on this event in the predefined time,
-    //just generate a synop for this event.
+    //just generate a buffer for this event.
     swmsg << "Expired waiting on continues data!" << endl;
     return true;
   }
 
   if((event.obstime().hour()%3)!=0){
-    //Just interested in synoptimes that use data from 
+    //Just interested in buffertimes that use data from
     //multiple hours.
        
     return true;

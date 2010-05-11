@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvsynopclt.cc,v 1.5.2.3 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: kvbufferclt.cc,v 1.5.2.3 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -32,12 +32,12 @@
 #include <getopt.h>
 #include <iostream>
 #include <sstream>
-#include "kvsynopd.hh"
+#include "kvbufferd.hh"
 #include <kvalobs/kvPath.h>
 #include <miconfparser/miconfparser.h>
 #include <list>
 #include <dnmithread/mtcout.h>
-#include "kvsynopCltApp.h"
+#include "kvbufferCltApp.h"
 
 using namespace std;
 
@@ -48,7 +48,7 @@ main(int argn, char **argv)
   std::string confFile;
   miutil::conf::ConfSection *conf;
   
-  confFile = kvPath("sysconfdir")+"/kvsynopd.conf";
+  confFile = kvPath("sysconfdir")+"/kvbufferd.conf";
 
   try{
       conf=miutil::conf::ConfParser::parse(confFile);
@@ -58,7 +58,7 @@ main(int argn, char **argv)
      return 1;
   }
   
-  SynopCltApp app(argn, argv, conf );
+  BufferCltApp app(argn, argv, conf );
 
   opt=app.options();
 
@@ -71,14 +71,14 @@ main(int argn, char **argv)
       int hours=(u%86400)/3600;
       int min=((u%86400)%3600)/60;
       int sec=((u%86400)%3600)%60;
-      COUT("kvsynopd:\n\tStarted: " << startTime << "\n\tuptime: "
+      COUT("kvbufferd:\n\tStarted: " << startTime << "\n\tuptime: "
 	   << days << " days " << hours << " hours " <<
 	   min << " minutes " << sec << " seconds!\n");
     }else{
-      CERR("Cant get uptime from <kvsynopd>!\n");
+      CERR("Cant get uptime from <kvbufferd>!\n");
     }
   }else if(opt.cmd==Options::StationList){
-    kvsynopd::StationInfoList list; 
+    kvbufferd::StationInfoList list;
 
     if(app.stationsList(list)){
       for(CORBA::ULong i=0; i<list.length(); i++){
@@ -103,14 +103,14 @@ main(int argn, char **argv)
 	COUT(info << endl << endl);
       }
     }else{
-      CERR("Cant get station list from <kvsynopd>!");
+      CERR("Cant get station list from <kvbufferd>!");
     }
   }else if(opt.cmd==Options::Delays){
     miutil::miTime t;
-    kvsynopd::DelayList dl;
+    kvbufferd::DelayList dl;
 
     if(!app.delayList(dl, t)){
-      CERR("Cant get delay list from <kvsynopd>!");
+      CERR("Cant get delay list from <kvbufferd>!");
     }else{
       COUT("Delay list at: " << t << endl <<
 	   "---------------------------------------------------" << endl);
@@ -121,34 +121,34 @@ main(int argn, char **argv)
       }
       COUT(endl);
     }
-  }else if(opt.cmd==Options::Synop){
+  }else if(opt.cmd==Options::Buffer){
      
     if(opt.time.undef()){
       CERR("Invalid time <" << opt.time << ">!");
     }else{
       Options::IIntList it=opt.wmonoList.begin();
-      kvsynopd::SynopData d;
+      kvbufferd::BufferData d;
       TKeyVal keyvals;
       
       for(; it!=opt.wmonoList.end(); it++){
-	if(!app.createSynop(*it, opt.time, keyvals, 20, d)){
+	if(!app.createBuffer(*it, opt.time, keyvals, 20, d)){
 	  if(app.shutdown()){
 	    break;
 	  }else{
-	    CERR("Create synop failed!\n");
+	    CERR("Create buffer failed!\n");
 	  }
 	continue;
 	}
 	
 	if(!d.isOk){
-	  CERR("Cant create synop for <" << d.stationid << ">!\n"
+	  CERR("Cant create buffer for <" << d.stationid << ">!\n"
 	       << "Reason: " << d.message << endl);
 	  continue;
 	}
 	
-	CERR("Created synop for <" << d.stationid << "> termin: " << d.termin
-	     << endl << "Message: " << d.message << endl << "Synop: " << endl
-	     << d.synop << endl << endl);
+	CERR("Created buffer for <" << d.stationid << "> termin: " << d.termin
+	     << endl << "Message: " << d.message << endl << "Buffer: " << endl
+	     << d.buffer << endl << endl);
       }
 
     }
@@ -159,10 +159,10 @@ main(int argn, char **argv)
     string msg;
     int  count;
 
-    kvsynopd::ReloadList *reloadlist=app.cacheReloadList(msg);
+    kvbufferd::ReloadList *reloadlist=app.cacheReloadList(msg);
 
     if(!reloadlist){
-      CERR("Cant get station list from <kvsynopd>!");
+      CERR("Cant get station list from <kvbufferd>!");
     }else{
       COUT("wmono: ");
       count=0;

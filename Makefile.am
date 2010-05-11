@@ -1,24 +1,24 @@
 SUBDIRS = src 
 ACLOCAL_AMFLAGS = -I m4
-sqldir = $(datadir)/kvsynopd
-sql_DATA = cleansynopdb.sql 
-bin_SCRIPTS = kvsynopdbadmin check_kvsynopd.sh
+sqldir = $(datadir)/kvbufferd
+sql_DATA = cleanbufferdb.sql 
+bin_SCRIPTS = kvbufferdbadmin check_kvbufferd.sh
 
 SED_SUBST = sed s,KVCONFIG,$(bindir)/kvconfig,g $< > $@ 
 
-kvsynopdbadmin: kvsynopdbadmin.sh 
+kvbufferdbadmin: kvbufferdbadmin.sh 
 	$(SED_SUBST)
 	
-EXTRA_DIST = cleansynopdb.sql kvsynopdbadmin.sh changelog
+EXTRA_DIST = cleanbufferdb.sql kvbufferdbadmin.sh changelog
 
-CLEANFILES = kvsynopdbadmin
+CLEANFILES = kvbufferdbadmin
 
 install-data-hook:
 	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/lib/@PACKAGE_NAME@
 	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/lib/@PACKAGE_NAME@/debug
 	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/run/kvalobs
 	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/log/kvalobs
-	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/log/kvalobs/kvsynop
+	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/log/kvalobs/kvbuffer
 	$(install_sh) -m 755 -d $(DESTDIR)/$(datadir)/@PACKAGE_NAME@
 
 #pkgconfig_DATA = @PACKAGE_TARNAME@.pc

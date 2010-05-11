@@ -28,8 +28,8 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvsynop_getDataReceiver_h__
-#define __kvsynop_getDataReceiver_h__
+#ifndef __kvbuffer_getDataReceiver_h__
+#define __kvbuffer_getDataReceiver_h__
 
 #include <boost/shared_ptr.hpp>
 #include <kvcpp/KvGetDataReceiver.h>
@@ -41,7 +41,7 @@ class GetKvDataReceiver : public kvservice::KvGetDataReceiver{
   App                      &app;
   kvalobs::kvDbGate        &gate;
   dnmi::thread::CommandQue &que;
-  miutil::miTime           fromTime; //generate Synop from this time
+  miutil::miTime           fromTime; //generate buffer from this time
   const std::string        logid; 
 
  public:

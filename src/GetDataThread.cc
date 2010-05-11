@@ -28,7 +28,7 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-/* $Header: /var/lib/cvs/kvalobs/src/kvsynopd/GetDataThread.cc,v 1.4.2.4 2007/09/27 09:02:22 paule Exp $ */
+/* $Header: /var/lib/cvs/kvalobs/src/kvbufferd/GetDataThread.cc,v 1.4.2.4 2007/09/27 09:02:22 paule Exp $ */
 #include <milog/milog.h>
 #include <sstream>
 #include <puTools/miTime.h>
@@ -62,18 +62,18 @@ operator()()
 {
   dnmi::db::Connection     *con;
   miTime                   now(miTime::nowTime());
-  miTime                   synopFromTime(now);
+  miTime                   bufferFromTime(now);
 
   if(hours>=0){
-    synopFromTime.addHour(-6);
+    bufferFromTime.addHour(-6);
 
-    if(fromTime>=synopFromTime)
-      synopFromTime=fromTime;
+    if(fromTime>=bufferFromTime)
+      bufferFromTime=fromTime;
   }
 
   LogContext lContext("GetDataKv("+now.isoTime()+")"); 
 
-  //Generate synop for maximum 7 hours back in time.
+  //Generate buffer for maximum 7 hours back in time.
 
   LOGINFO("Started GetData thread!");
   IDLOGINFO("GetData", "Started GetData thread!");
@@ -81,7 +81,7 @@ operator()()
   IDLOGINFO("GetData", 
 	    "fromTime: " << fromTime << " hours: " << hours <<
 	    " wmono: " << wmono << endl <<
-	    " synopFromTime: " << synopFromTime);
+	    " bufferFromTime: " << bufferFromTime);
 
   
 
@@ -98,9 +98,9 @@ operator()()
   gate.busytimeout(120);
 
   if(wmono<=0){
-    reloadAll(gate, synopFromTime);
+    reloadAll(gate, bufferFromTime);
   }else{
-    reloadOne(gate, synopFromTime);
+    reloadOne(gate, bufferFromTime);
   }
 
   app.releaseDbConnection(con);
@@ -114,7 +114,7 @@ operator()()
 void 
 GetData::
 reloadAll(kvalobs::kvDbGate    &gate,
-	  const miutil::miTime &synopFromTime)
+	  const miutil::miTime &bufferFromTime)
 {
   kvservice::KvObsDataList dl;
   ostringstream            ost; 
@@ -141,7 +141,7 @@ reloadAll(kvalobs::kvDbGate    &gate,
 	      ost.str() << " FromTime: "  << fromTime); 
   
     
-    GetKvDataReceiver myDataReceiver(app, synopFromTime, que, gate, "GetData");
+    GetKvDataReceiver myDataReceiver(app, bufferFromTime, que, gate, "GetData");
   
     if(!app.getKvData(myDataReceiver, which)){
       IDLOGERROR("GetData",
@@ -160,7 +160,7 @@ reloadAll(kvalobs::kvDbGate    &gate,
 void 
 GetData::
 reloadOne(kvalobs::kvDbGate    &gate,
-	  const miutil::miTime &synopFromTime)
+	  const miutil::miTime &bufferFromTime)
 {
   ostringstream                ost;
   App::StationList stationList=app.reloadCache(wmono);
@@ -188,7 +188,7 @@ reloadOne(kvalobs::kvDbGate    &gate,
 	    << " stationids:" << ost.str() << " FromTime: "  << fromTime); 
   
   
-  GetKvDataReceiver myDataReceiver(app, synopFromTime, que, gate);
+  GetKvDataReceiver myDataReceiver(app, bufferFromTime, que, gate);
   
   if(!app.getKvData(myDataReceiver, which)){
     IDLOGERROR("GetData",

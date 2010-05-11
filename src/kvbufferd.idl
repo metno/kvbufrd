@@ -1,17 +1,17 @@
-#ifndef __kvsynopd_h__
-#define __kvsynopd_h__
+#ifndef __kvbufferd_h__
+#define __kvbufferd_h__
 
 #include "KeyVal.idl"
 #include "admin.idl"
 
-module kvsynopd{
+module kvbufferd{
 
-  struct SynopData{
+  struct BufferData{
     long     stationid;
     string   termin;
     boolean  isOk;
     string   message;
-    string   synop;
+    string   buffer;
   };
 
   struct DelayElement{
@@ -39,13 +39,13 @@ module kvsynopd{
   
   typedef sequence<StationInfo> StationInfoList;
   
-  interface synopcb{
-    void synop(in SynopData data); 
+  interface buffercb{
+    void buffer(in BufferData data); 
   };
 
   typedef sequence<short> WmoNoList;
 
-  struct SynopElement{
+  struct BufferElement{
     short  wmono;
     string obstime;
     string createtime;
@@ -53,7 +53,7 @@ module kvsynopd{
     string wmomsg;
   };
 
-  typedef sequence<SynopElement> SynopList;
+  typedef sequence<BufferElement> BufferList;
 
   struct DataElement{
     long stationid;
@@ -68,11 +68,11 @@ module kvsynopd{
   typedef sequence<DataElement> DataElementList;
   
   
-  interface synop : micutil::Admin{
-    boolean createSynop(in short  wmono, 
+  interface buffer : micutil::Admin{
+    boolean createBuffer(in short  wmono, 
 			in string obstime,
 			in micutil::KeyValList keyVals,
-			in synopcb callback);
+			in buffercb callback);
     
     boolean stations(out StationInfoList infoList);	     
     boolean uptime(out string startTime, out long uptimeInSeconds);
@@ -94,25 +94,25 @@ module kvsynopd{
                         out string message);
 
 
-    /** Get a synop tah is generated.
+    /** Get a buffer tah is generated.
      * \param wmoList a list of the wmonumbers we want. If the
      *                list is empty return information about all 
-     *                synops.
-     * \param fromtime the first synop time we want a synop for.
-     * \param totime the first synop time we want a synop for.
-     *               This may be empty if we only want synop for
-     *               one synop time.
-     * \param[out] synops  A list of the requested synops.
+     *                buffers.
+     * \param fromtime the first buffer time we want a buffer for.
+     * \param totime the first buffer time we want a buffer for.
+     *               This may be empty if we only want buffer for
+     *               one buffer time.
+     * \param[out] buffers  A list of the requested buffers.
      * \param[out] message An error message on failure.
      * \return true on success, false otherwise.
      */
-    boolean getsynop(in WmoNoList wmoList, 
+    boolean getbuffer(in WmoNoList wmoList, 
 		     in string fromtime, in string totime,
-		     out SynopList synops,
+		     out BufferList buffers,
 		     out string message);
 
 
-    /** Get the data that is used to encode a synop.
+    /** Get the data that is used to encode a buffer.
      *
      * \param wmono The wmono we want the data for.
      * \param obstime The obstime we want data for.

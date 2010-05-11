@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: SynopData.h,v 1.8.6.6 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: BufferData.h,v 1.8.6.6 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -28,8 +28,8 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __SynopData_h__
-#define __SynopData_h__
+#ifndef __BufferData_h__
+#define __BufferData_h__
 
 #include <stdexcept>
 #include <list>
@@ -37,12 +37,12 @@
 #include <puTools/miTime.h>
 
 
-class  SynopData
+class  BufferData
 {          
   	miutil::miTime time_;
 
-  	friend class SynopDataList;
-  	//  friend class SynopDataList::SynopDataProxy  
+  	friend class BufferDataList;
+  	//  friend class BufferDataList::BufferDataProxy
  public:
   	float  tempNaa;       
   	float  tempMid;       
@@ -114,10 +114,10 @@ class  SynopData
   	std::string IIR; //nedb�r indikator
   	std::string ITR;
 
-  	SynopData();
-  	SynopData(const SynopData &p);
-  	SynopData& operator=(const SynopData &p);
-  	~SynopData();
+  	BufferData();
+  	BufferData(const BufferData &p);
+  	BufferData& operator=(const BufferData &p);
+  	~BufferData();
 
   	bool setData(const int  &param, 
 				 const std::string &data_);
@@ -133,51 +133,51 @@ class  SynopData
   	bool undef()const{ return time_.undef();}
 
   	friend std::ostream& operator<<(std::ostream& ost,
-									  const SynopData& sd);
+									  const BufferData& sd);
 };
 
-typedef std::list<SynopData>                   TSynopDataList;
-typedef std::list<SynopData>::iterator        ISynopDataList;
-typedef std::list<SynopData>::const_iterator  CISynopDataList;
+typedef std::list<BufferData>                   TBufferDataList;
+typedef std::list<BufferData>::iterator        IBufferDataList;
+typedef std::list<BufferData>::const_iterator  CIBufferDataList;
 
-class SynopDataList{
-  	TSynopDataList  dataList;
+class BufferDataList{
+  	TBufferDataList  dataList;
 
-  	friend class SynopDataProxy;
+  	friend class BufferDataProxy;
 
-  	//setTime is a hack to set the time_ field in SynopData. It is 
-  	//needed because I cant manage to make SynopDataProxy 
-  	//a friend of SynopData. I am not sure if this is a defect of
-  	//g++ 3.3.x or if the construct 'friend class SynopDataList::SynopDataProxy'
+  	//setTime is a hack to set the time_ field in BufferData. It is
+  	//needed because I cant manage to make BufferDataProxy
+  	//a friend of BufferData. I am not sure if this is a defect of
+  	//g++ 3.3.x or if the construct 'friend class BufferDataList::BufferDataProxy'
   	//is ilegal c++. I cant see any reason why this shouldnt be allowed.
 
-  	void setTime(std::list<SynopData>::iterator it, 
+  	void setTime(std::list<BufferData>::iterator it,
 			     const miutil::miTime &t){ it->time_=t;}
 public:
   
-  	class SynopDataProxy{
-    	//SynopDataProxy is a helper class that is used 
+  	class BufferDataProxy{
+    	//BufferDataProxy is a helper class that is used
     	//to deceide if the array operator [] is used
     	//as a lvalue or a rvalue.
     
-    	SynopDataList                  *sdl;
+    	BufferDataList                  *sdl;
     	miutil::miTime                 timeIndex;
     
   	public:
-    	SynopDataProxy(SynopDataList *sdl_,
+    	BufferDataProxy(BufferDataList *sdl_,
 					   const miutil::miTime &t)
       		:sdl(sdl_), timeIndex(t){}
 
-    	SynopDataProxy& operator=(const SynopData &rhs); //used as lvalue use
+    	BufferDataProxy& operator=(const BufferData &rhs); //used as lvalue use
     
-    	operator SynopData()const; //used as rvalue
+    	operator BufferData()const; //used as rvalue
  	};
 
-  	SynopDataList();
-  	SynopDataList(const SynopDataList &d);
-  	~SynopDataList();  
+  	BufferDataList();
+  	BufferDataList(const BufferDataList &d);
+  	~BufferDataList();
   
-  	//SynopDataList& operator=(const SynopDataList &rhs);
+  	//BufferDataList& operator=(const BufferDataList &rhs);
 
   	void clear(){ dataList.clear();}
 
@@ -188,22 +188,22 @@ public:
   	miutil::miTime firstTime() const;
 
   	/**
-  	 * If used as a lvalue the SynopData record wil be inserted if it don't
+  	 * If used as a lvalue the BufferData record wil be inserted if it don't
   	 * exist.  The current record at timeIndex will be replaced if it exist.
   	 * if we use the operator as a rvalue it will throw std::out_of_range
-  	 * if there is now SynopData record at timeIndex.
+  	 * if there is now BufferData record at timeIndex.
   	 *
-  	 * \exception std::out_of_range, used as rvalue, if there is now SynopData 
+  	 * \exception std::out_of_range, used as rvalue, if there is now BufferData
   	 *            at timeIndex.
   	 */
-  	const SynopDataProxy operator[](const miutil::miTime &timeIndex)const;
-  	SynopDataProxy operator[](const miutil::miTime &timeIndex);
+  	const BufferDataProxy operator[](const miutil::miTime &timeIndex)const;
+  	BufferDataProxy operator[](const miutil::miTime &timeIndex);
   
   	/**
   	 * \exception std::out_of_range if index is not in [0, size()>
   	 */
-  	const SynopData& operator[](const int index)const;
-  	SynopData&       operator[](const int index);
+  	const BufferData& operator[](const int index)const;
+  	BufferData&       operator[](const int index);
   
 
   	/**
@@ -213,42 +213,42 @@ public:
   	int nContinuesTimes()const;
 
   	/**
-  	 * Insert SynopData at timeIndex in the list.
+  	 * Insert BufferData at timeIndex in the list.
   	 * 
-  	 * \param timeIndex, the time the SynopData (sd) is for.
-  	 * \param sd the SynopData to insert at timeIndex.
-  	 * \param replace, shall sd replace the SynopData at timeIndex if
+  	 * \param timeIndex, the time the BufferData (sd) is for.
+  	 * \param bd the BufferData to insert at timeIndex.
+  	 * \param replace, shall bd replace the BufferData at timeIndex if
   	 *        it exist.
   	 *
   	 * \return true on success, false otherwise. It may only return false if
-  	 *         replace is false and there allready is a SynopData record at 
+  	 *         replace is false and there allready is a BufferData record at
   	 *         timeIndex.
   	 */
  	 bool      insert(const miutil::miTime &timeIndex,
-		   			  const SynopData &sd,
+		   			  const BufferData &bd,
 		   			  bool replace=false);
 
   	int       size()const { return dataList.size();}
 
-  	ISynopDataList find(const miutil::miTime &from);
-  	CISynopDataList find(const miutil::miTime &from)const;
+  	IBufferDataList find(const miutil::miTime &from);
+  	CIBufferDataList find(const miutil::miTime &from)const;
     
-  	ISynopDataList  begin(){ return dataList.begin();}
-  	CISynopDataList begin()const{ return dataList.begin();}
-  	ISynopDataList  end(){ return dataList.end();}
-  	CISynopDataList end()const { return dataList.end();}
+  	IBufferDataList  begin(){ return dataList.begin();}
+  	CIBufferDataList begin()const{ return dataList.begin();}
+  	IBufferDataList  end(){ return dataList.end();}
+  	CIBufferDataList end()const { return dataList.end();}
 
-  	SynopDataList subData( const miutil::miTime &from, const miutil::miTime &to=miutil::miTime() ) const;
+  	BufferDataList subData( const miutil::miTime &from, const miutil::miTime &to=miutil::miTime() ) const;
 
   	friend std::ostream& operator<<(std::ostream& ost,
-				 					  const SynopDataList& sd);
+				 					  const BufferDataList& sd);
 };
 
 
 std::ostream& operator<<(std::ostream& ost,
-						  const SynopData& sd);
+						  const BufferData& sd);
 
 std::ostream& operator<<(std::ostream& ost,
-						  const SynopDataList& sd);
+						  const BufferDataList& sd);
 
 #endif

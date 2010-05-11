@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvsynopCorbaThread.h,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: kvbufferCltBuffercbImp.cc,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -28,38 +28,19 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvsynop_CorbaThread_h__
-#define __kvsynop_CorbaThread_h__
-
-#include <omnithread.h>
-#include <corbahelper/corbaApp.h>
-//#include "kvDataNotifySubscriberImpl.h"
+#include <dnmithread/mtcout.h>
+#include "kvbufferCltBuffercbImp.h"
 
 
-class SynopCltCorbaThread : public omni_thread
+BuffercbImpl::~BuffercbImpl()
 {
-  SynopCltCorbaThread(const SynopCltCorbaThread &);
-  SynopCltCorbaThread();
-  SynopCltCorbaThread &operator=(const SynopCltCorbaThread&);
-  
-  CorbaHelper::CorbaApp  app;
-  bool        isInitialized_;
-  
- public:
-  SynopCltCorbaThread(int argn, char **argv);
-  
-  virtual ~SynopCltCorbaThread(){} 
-  
-  
-  void *run_undetached(void*);
-  
-  bool  isInitialized()const{ return  isInitialized_;}
-};
+  CERR("INFO: A BuffercbImpl DELETED!\n");
+}
 
 
-#endif
-
-
-
-
-
+void 
+BuffercbImpl::buffer(const kvbufferd::BufferData& data)
+{
+  app.setResult(data);
+  app.wait(false);
+}

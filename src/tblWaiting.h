@@ -28,8 +28,8 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvsynop_tblWaiting_h__
-#define __kvsynop_tblWaiting_h__
+#ifndef __kvbuffer_tblWaiting_h__
+#define __kvbuffer_tblWaiting_h__
 
 #include <kvalobs/kvDbBase.h>
 

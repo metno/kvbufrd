@@ -1,5 +1,5 @@
-kvsynopd (2.1.0-1) unstable; urgency=low
+kvbufferd (2.1.0-1) unstable; urgency=low
 
-  * Initial release of kvsynopd as a stand alone package.
+  * Initial release of kvbufferd.
 
- -- Kvalobs <kvalobs@met.no>  Tue, 16 Mar 2010 18:30:00 +0100
+ -- Kvalobs <kvalobs@met.no>  Tue, 11 May 2010 18:30:00 +0200

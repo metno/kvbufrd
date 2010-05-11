@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations
 
-  $Id: synop.h,v 1.12.2.5 2007/09/27 09:02:18 paule Exp $
+  $Id: buffer.h,v 1.12.2.5 2007/09/27 09:02:18 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -34,15 +34,15 @@
 
 #include <string>
 #include <DataList.h>
-#include <LoadSynopData.h>
+#include <LoadBufferData.h>
 
 bool
 readDataFile( const std::string &filename, DataEntryList &data, const miutil::miTime &fromtime=miutil::miTime() );
 
 bool
-loadSynopDataFromFile( const std::string &filename,
+loadBufferDataFromFile( const std::string &filename,
 					   StationInfoPtr      info,
-					   SynopDataList       &sd,
+					   BufferDataList       &sd,
 					   kvdatacheck::Validate &validate,
 					   const miutil::miTime &fromtime=miutil::miTime() );
 

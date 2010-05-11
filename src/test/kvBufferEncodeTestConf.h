@@ -1,12 +1,12 @@
 /*
- * kvSynopEncodeTestConf.h
+ * kvBufferEncodeTestConf.h
  *
  *  Created on: Feb 23, 2010
  *      Author: borgem
  */
 
-#ifndef KVSYNOPENCODETESTCONF_H_
-#define KVSYNOPENCODETESTCONF_H_
+#ifndef __KVBUFFERENCODETESTCONF_H__
+#define __KVBUFFERENCODETESTCONF_H__
 
 const char *testconf =
 "wmo_default{\n"

@@ -30,13 +30,13 @@
 */
 
 #include <milog/milog.h>
-#include <LoadSynopData.h>
+#include <LoadBufferData.h>
 
 using namespace std;
 
 void
-loadSynopData(const DataEntryList &dl,
-			  SynopDataList       &sd,
+loadBufferData(const DataEntryList &dl,
+			  BufferDataList       &sd,
 			  StationInfoPtr      info,
 			   kvdatacheck::Validate &validate )
 {
@@ -52,7 +52,7 @@ loadSynopData(const DataEntryList &dl,
 	it=dl.begin();
 
 	for(; it!=dl.end(); it++){
-		SynopData synopData;
+		BufferData bufferData;
 
 		itt=types.rbegin();
 
@@ -63,7 +63,7 @@ loadSynopData(const DataEntryList &dl,
 				continue;
 
 			itd=dataList.begin();
-			synopData.time(itd->obstime());
+			bufferData.time(itd->obstime());
 
 			for(;itd!=dataList.end(); itd++){
 				//COMMENT:
@@ -73,24 +73,24 @@ loadSynopData(const DataEntryList &dl,
 
 				if(itd->sensor()==0 && itd->level()==0){
 					if( validate( *itd ) )
-						synopData.setData(itd->paramID(), itd->original());
+						bufferData.setData(itd->paramID(), itd->original());
 					else {
 						LOGDEBUG("CheckData: do NOT use: " << itd->obstime() << " " << itd->paramID() << " " << itd->typeID() << " val: "
 								 << itd->original() << " cinfo: " << itd->controlinfo().flagstring() << " uinfo: "
 								 << itd->useinfo().flagstring() );
 					}
 				}else{
-					LOGINFO("loadSynop: sensor=" << itd->sensor() << " level=" << itd->level()
+					LOGINFO("loadBuffer: sensor=" << itd->sensor() << " level=" << itd->level()
 							<< " not used!");
 				}
 			}
 		}
 
-	    if(!synopData.undef()){
-	    	synopData.cleanUpSlash();
+	    if(!bufferData.undef()){
+	    	bufferData.cleanUpSlash();
 
 	    	try{
-	    		sd[synopData.time()]=synopData;
+	    		sd[bufferData.time()]=bufferData;
 	    	}
 	    	catch(out_of_range &ex){
 	    		LOGDEBUG("EXCEPTION(out_of_range): Should not happend!!!"<< endl);

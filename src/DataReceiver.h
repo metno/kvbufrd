@@ -56,10 +56,10 @@ class DataReceiver {
   /**
    * Save the data to the cache. After the data is saved the cache is
    * looked up to retrive all stations/typeid it is received data for,
-   * before an event is sent to SynopWorker.
+   * before an event is sent to BufferWorker.
    */
   void newData(kvservice::KvObsDataListPtr data);
-  void prepareToProcessAnySynopBasedOnThisObs(const miutil::miTime &obstime,
+  void prepareToProcessAnyBufferBasedOnThisObs(const miutil::miTime &obstime,
 					      StationInfoPtr station);
   bool typeidReceived(ObsEvent &event);
   

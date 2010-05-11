@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: SynopData.cc,v 1.17.2.7 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: BufferData.cc,v 1.17.2.7 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -32,11 +32,11 @@
 #include <float.h>
 #include <sstream>
 #include <decodeutility/decodeutility.h>
-#include "SynopData.h"
+#include "BufferData.h"
 
 using namespace decodeutility;
 
-SynopData::SynopData():
+BufferData::BufferData():
     tempNaa(FLT_MAX),
     tempMid(FLT_MAX), 
     tempMin(FLT_MAX),
@@ -103,7 +103,7 @@ SynopData::SynopData():
 
 
 
-SynopData::SynopData(const SynopData &p):
+BufferData::BufferData(const BufferData &p):
     time_(p.time_), 
     tempNaa(p.tempNaa),
     tempMid(p.tempMid), 
@@ -178,8 +178,8 @@ SynopData::SynopData(const SynopData &p):
 {
 }
 
-SynopData&
-SynopData::operator=(const SynopData &p)
+BufferData&
+BufferData::operator=(const BufferData &p)
 {
     if(this==&p)
 	return *this;
@@ -257,12 +257,12 @@ SynopData::operator=(const SynopData &p)
     return *this;
 }
 
-SynopData::~SynopData()
+BufferData::~BufferData()
 {
 }
 
 void 
-SynopData::cleanUpSlash()
+BufferData::cleanUpSlash()
 {
   if(verGenerelt=="////")
     verGenerelt.erase();
@@ -292,7 +292,7 @@ SynopData::cleanUpSlash()
 
 
 bool
-SynopData::setData(const int  &param, 
+BufferData::setData(const int  &param,
 		   const std::string &data_)
 {
     float       fData;
@@ -497,22 +497,22 @@ SynopData::setData(const int  &param,
 }
 
 
-SynopDataList::SynopDataList()
+BufferDataList::BufferDataList()
 {
 } 
 
-SynopDataList::SynopDataList(const SynopDataList &d)
+BufferDataList::BufferDataList(const BufferDataList &d)
 {
   dataList=d.dataList;
 }
 
 
-SynopDataList::~SynopDataList()
+BufferDataList::~BufferDataList()
 {
 }  
   
-//SynopDataList& 
-//SynopDataList::operator=(const SynopDataList &rhs)
+//BufferDataList&
+//BufferDataList::operator=(const BufferDataList &rhs)
 //{
 //  if(this!=&rhs){
 //    dataList=rhs.dataList;
@@ -522,10 +522,10 @@ SynopDataList::~SynopDataList()
 
 
 miutil::miTime
-SynopDataList::
+BufferDataList::
 firstTime() const
 {
-   CISynopDataList it=dataList.begin();
+   CIBufferDataList it=dataList.begin();
 
     if( it == dataList.end() )
       return miutil::miTime();
@@ -536,29 +536,29 @@ firstTime() const
   /**
    * \exception 
    */
-const SynopDataList::SynopDataProxy 
-SynopDataList::operator[](const miutil::miTime &t)const
+const BufferDataList::BufferDataProxy
+BufferDataList::operator[](const miutil::miTime &t)const
 {
   //std::cerr << "const [miTime] operator\n";
   
-  return SynopDataProxy(const_cast<SynopDataList*>(this), t);
+  return BufferDataProxy(const_cast<BufferDataList*>(this), t);
 }
 
-SynopDataList::SynopDataProxy 
-SynopDataList::operator[](const miutil::miTime &t)
+BufferDataList::BufferDataProxy
+BufferDataList::operator[](const miutil::miTime &t)
 {
   //std::cerr << "[miTime] operator\n";
   
-  return SynopDataProxy(this, t);
+  return BufferDataProxy(this, t);
 }
 
 /**
  * \exception  
  */
-const SynopData& 
-SynopDataList::operator[](const int index)const
+const BufferData&
+BufferDataList::operator[](const int index)const
 {
-  CISynopDataList it=dataList.begin();
+  CIBufferDataList it=dataList.begin();
 
   //std::cerr << "const [int] operator\n";
 
@@ -574,10 +574,10 @@ SynopDataList::operator[](const int index)const
   return *it;
 }
 
-SynopData&
-SynopDataList::operator[](const int index)
+BufferData&
+BufferDataList::operator[](const int index)
 {
-   ISynopDataList it=dataList.begin();
+   IBufferDataList it=dataList.begin();
 
    //std::cerr << "const [int] operator\n";
 
@@ -594,9 +594,9 @@ SynopDataList::operator[](const int index)
 }
 
 int 
-SynopDataList::nContinuesTimes()const
+BufferDataList::nContinuesTimes()const
 {
-  CISynopDataList it=dataList.begin();
+  CIBufferDataList it=dataList.begin();
   miutil::miTime  prevT;
   miutil::miTime  testT;
   int             n;
@@ -625,11 +625,11 @@ SynopDataList::nContinuesTimes()const
 
   
 bool      
-SynopDataList::insert(const miutil::miTime &timeIndex,
-		      const SynopData            &sd,
+BufferDataList::insert(const miutil::miTime &timeIndex,
+		      const BufferData            &sd,
 		      bool                 replace)
 {
-  ISynopDataList it=dataList.begin();
+  IBufferDataList it=dataList.begin();
 
   for(;it!=dataList.end(); it++){
     if(it->time()<=timeIndex)
@@ -656,10 +656,10 @@ SynopDataList::insert(const miutil::miTime &timeIndex,
 
 
 
-ISynopDataList
-SynopDataList::find(const miutil::miTime &from)
+IBufferDataList
+BufferDataList::find(const miutil::miTime &from)
 {
-  ISynopDataList it=dataList.begin();
+  IBufferDataList it=dataList.begin();
 
   if(from.undef())
     return dataList.end();
@@ -673,10 +673,10 @@ SynopDataList::find(const miutil::miTime &from)
 }
 
 
-CISynopDataList 
-SynopDataList::find(const miutil::miTime &from)const
+CIBufferDataList
+BufferDataList::find(const miutil::miTime &from)const
 {
-  CISynopDataList it=dataList.begin();
+  CIBufferDataList it=dataList.begin();
 
   if(from.undef())
     return dataList.end();
@@ -689,22 +689,22 @@ SynopDataList::find(const miutil::miTime &from)const
   return dataList.end();
 }
 
-SynopDataList
-SynopDataList::subData( const miutil::miTime &from, const miutil::miTime &to ) const
+BufferDataList
+BufferDataList::subData( const miutil::miTime &from, const miutil::miTime &to ) const
 {
-   SynopDataList retList;
+   BufferDataList retList;
 
-   for( CISynopDataList it = find( from ); it != end() || ( !to.undef() && to>=it->time()); ++it )
+   for( CIBufferDataList it = find( from ); it != end() || ( !to.undef() && to>=it->time()); ++it )
       retList.dataList.push_back( *it );
 
    return retList;
 }
 
-SynopDataList::SynopDataProxy& 
-SynopDataList::SynopDataProxy::operator=(const SynopData &rhs) //lvalue use
+BufferDataList::BufferDataProxy&
+BufferDataList::BufferDataProxy::operator=(const BufferData &rhs) //lvalue use
 {
-  //std::cout << "SynopData: lvalue ...\n";
-  ISynopDataList it=sdl->dataList.begin();
+  //std::cout << "BufferData: lvalue ...\n";
+  IBufferDataList it=sdl->dataList.begin();
 
   for(;it!=sdl->dataList.end(); it++){
     if(it->time()<=timeIndex)
@@ -726,10 +726,10 @@ SynopDataList::SynopDataProxy::operator=(const SynopData &rhs) //lvalue use
   return *this;
 }
 
-SynopDataList::SynopDataProxy::operator SynopData()const //rvalue use
+BufferDataList::BufferDataProxy::operator BufferData()const //rvalue use
 {
-  //std::cerr << "SynopData: rvalue ...\n";
-  ISynopDataList it=sdl->dataList.begin();
+  //std::cerr << "BufferData: rvalue ...\n";
+  IBufferDataList it=sdl->dataList.begin();
 
   for(;it!=sdl->dataList.end(); it++){
     if(it->time()<=timeIndex)
@@ -738,7 +738,7 @@ SynopDataList::SynopDataProxy::operator SynopData()const //rvalue use
   
   if(it->time()!=timeIndex){
     std::ostringstream ost;
-    ost << "NO SynopData at <" << timeIndex << ">!";
+    ost << "NO BufferData at <" << timeIndex << ">!";
     throw std::out_of_range(ost.str());
   }
   
@@ -747,7 +747,7 @@ SynopDataList::SynopDataProxy::operator SynopData()const //rvalue use
 
 
 std::ostream& 
-operator<<(std::ostream& ost, const SynopData& sd)
+operator<<(std::ostream& ost, const BufferData& sd)
 {
   using namespace std;
   if(sd.time_.undef())
@@ -828,9 +828,9 @@ operator<<(std::ostream& ost, const SynopData& sd)
 
 std::ostream& 
 operator<<(std::ostream& ost,
-	   const SynopDataList& sd)
+	   const BufferDataList& sd)
 {
-  CISynopDataList it=sd.begin();
+  CIBufferDataList it=sd.begin();
 
   for(;it!=sd.end(); it++){
     ost << *it << std::endl 

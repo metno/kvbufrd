@@ -61,7 +61,7 @@ createGlobalLogger(const std::string &id)
     	FLogStream *logs=new FLogStream(2, 204800); //200k
     	std::ostringstream ost;
     
-    	ost << kvPath("logdir") << "/kvsynop/" << id << ".log";
+    	ost << kvPath("logdir") << "/kvbuffer/" << id << ".log";
     
     	if(logs->open(ost.str())){
       		if(!LogManager::createLogger(id, logs)){
@@ -185,20 +185,20 @@ App::
 
 bool
 App::
-initKvSynopInterface(  dnmi::thread::CommandQue &newObsQue )
+initKvBufferInterface(  dnmi::thread::CommandQue &newObsQue )
 {
-   kvSynopdImpl *synopdImpl;
+   kvBufferdImpl *bufferdImpl;
       
    try{
-      synopdImpl=new kvSynopdImpl( *this, newObsQue);
-      PortableServer::ObjectId_var id = getPoa()->activate_object(synopdImpl);
+      bufferdImpl=new kvBufferdImpl( *this, newObsQue);
+      PortableServer::ObjectId_var id = getPoa()->activate_object(bufferdImpl);
 
-      synopRef = synopdImpl->_this();
-      IDLOGINFO( "main", "CORBAREF: " << corbaRef(synopRef) );
+      bufferRef = bufferdImpl->_this();
+      IDLOGINFO( "main", "CORBAREF: " << corbaRef(bufferRef) );
       std::string nsname = "/" + mypathInCorbaNameserver();
-      nsname += "kvsynopd";
+      nsname += "kvbufferd";
       IDLOGINFO( "main", "CORBA NAMESERVER (register as): " << nsname );
-      putObjInNS(synopRef, nsname);
+      putObjInNS(bufferRef, nsname);
    }
    catch( const std::bad_alloc &ex ) {
       LOGFATAL("NOMEM: cant initialize the aplication!");
@@ -350,7 +350,7 @@ readStationInfo(std::list<StationInfoPtr> &stList)const
   bool ret=true;
   
   if(!theParser.parse(conf, stList)){
-    LOGWARN("Cant parse the SYNOP configuration!" << endl 
+    LOGWARN("Cant parse the BUFFER configuration!" << endl
 	    << "File: <" << confFile << ">" << endl );
     ret = false;
   }    
@@ -364,7 +364,7 @@ readStationInfo(std::list<StationInfoPtr> &stList)const
 
 bool
 App::
-listStations(kvsynopd::StationInfoList &list)
+listStations(kvbufferd::StationInfoList &list)
 {
   ostringstream ost;
 
@@ -583,18 +583,18 @@ getExpired()
   return wl;
 }
 
-kvsynopd::DelayList* 
+kvbufferd::DelayList*
 App::
 getDelayList(miutil::miTime &nowTime)
 {
-  kvsynopd::DelayList *dl;
+  kvbufferd::DelayList *dl;
     
   mutex::scoped_lock lock(mutex);
 
   nowTime=miTime::nowTime();
 
   try{
-    dl=new kvsynopd::DelayList();
+    dl=new kvbufferd::DelayList();
   }
   catch(...){
     return 0;
@@ -784,9 +784,9 @@ addStationInfo(StationInfoPtr newInfoPtr)
 
 bool
 App:: 
-getSavedSynopData(int wmono,
+getSavedBufferData(int wmono,
 		  const miutil::miTime &obstime,
-		  std::list<TblSynop> &tblSynop,
+		  std::list<TblBuffer> &tblBuffer,
 		  dnmi::db::Connection &con)
 {
   kvDbGate       gate(&con);
@@ -797,8 +797,8 @@ getSavedSynopData(int wmono,
   ost << "WHERE wmono=" << wmono << " AND obstime=\'" 
       << obstime << "\'";
   
-  if(!gate.select(tblSynop, ost.str())){
-    LOGERROR("DBERROR: getSavedSynopData: " << gate.getErrorStr());
+  if(!gate.select(tblBuffer, ost.str())){
+    LOGERROR("DBERROR: getSavedBufferData: " << gate.getErrorStr());
     return false;
   }
 
@@ -808,15 +808,15 @@ getSavedSynopData(int wmono,
 
 bool 
 App::
-saveSynopData(const TblSynop &tblSynop,
+saveBufferData(const TblBuffer &tblBuffer,
 	      dnmi::db::Connection &con)
 {
   kvDbGate       gate(&con);
   
   gate.busytimeout(120);
 
-  if(!gate.insert(tblSynop, true)){
-    LOGERROR("DBERROR: saveSynopData: " << gate.getErrorStr());
+  if(!gate.insert(tblBuffer, true)){
+    LOGERROR("DBERROR: saveBufferData: " << gate.getErrorStr());
     return false;
   }
 
@@ -941,17 +941,17 @@ reloadCache(int wmono)
   return myStationList;
 }
 
-kvsynopd::ReloadList* 
+kvbufferd::ReloadList*
 App::
 listCacheReload()
 {
   mutex::scoped_lock lock(mutex);
-  kvsynopd::ReloadList *retlist;
+  kvbufferd::ReloadList *retlist;
   
   StationList myStationList;
 
   try{
-    retlist=new kvsynopd::ReloadList();
+    retlist=new kvbufferd::ReloadList();
   }
   catch(...){
     return 0;

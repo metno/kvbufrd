@@ -34,12 +34,12 @@
 
 #include <DataList.h>
 #include <StationInfo.h>
-#include <SynopData.h>
+#include <BufferData.h>
 #include <Validate.h>
 
 void
-loadSynopData( const DataEntryList &dl,
-			   SynopDataList       &sd,
+loadBufferData( const DataEntryList &dl,
+			   BufferDataList       &sd,
 			   StationInfoPtr      info,
 			   kvdatacheck::Validate &validate );
 

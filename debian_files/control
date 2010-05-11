@@ -1,4 +1,4 @@
-Source: kvsynopd
+Source: kvbufferd
 Section: science
 Priority: extra
 Maintainer: kvalobs <kvalobs@met.no>
@@ -10,10 +10,10 @@ Build-Depends: debhelper (>= 5), autotools-dev, lsb-base, g++ (>= 4.1.1), debcon
  omniidl4 (>= 4.0.6), metlibs-putools-dev (>= 3.0)
 Standards-Version: 3.7.2
 
-Package: kvsynopd
+Package: kvbufferd
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends},  sqlite3
-Description: A quality assurance system for meteorological observations.
+Description: A buffer encoder for kvalobs.
  Kvalobs is a quality assurance system for meteorological observations.
 
 

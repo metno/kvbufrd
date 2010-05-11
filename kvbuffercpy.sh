@@ -9,8 +9,8 @@ fi
                                                                                
 
 SQL=sqlite
-BACKUPFILE=$KVALOBS/var/kvsynop/kvsynopd.sqlite.bak
-DBFILE=$KVALOBS/var/kvsynop/kvsynopd.sqlite
+BACKUPFILE=$KVALOBS/var/kvbuffer/kvbufferd.sqlite.bak
+DBFILE=$KVALOBS/var/kvbuffer/kvbufferd.sqlite
 
 echo 
 echo "Creating backup file!!"
@@ -40,7 +40,7 @@ DAY=`date '+%d'`
 echo -n "Start: "
 date 
 echo "-----------------------------------------------------------------------" 
-echo -n "Deleting kvsynopd.sqlite .... "
+echo -n "Deleting kvbufferd.sqlite .... "
 rm -f $DBFILE
 
 if [ ! $? ]; then
@@ -52,13 +52,13 @@ fi
 
 echo "Completed!"
 
-echo -n "Recreating kvsynopd.sqlite .... "
+echo -n "Recreating kvbufferd.sqlite .... "
 
-$KVALOBS/bin/kvsynopd_initdb > /dev/null 2>&1
+$KVALOBS/bin/kvbufferd_initdb > /dev/null 2>&1
 
 if [ ! $? ]; then
     echo "Failed."
-    echo "ERROR: Cant recreate kvsynopd.sqlite file!!"
+    echo "ERROR: Cant recreate kvbufferd.sqlite file!!"
     echo "FILE: <$DBFILE>"
     exit 1
 fi
@@ -66,7 +66,7 @@ fi
 echo "Completed!"
 echo -n "Inserting data from backupfile  .... "
 
-cat $KVALOBS/share/kvsynop/kvsynopcpy.sql | $SQL $BACKUPFILE  | $SQL $DBFILE
+cat $KVALOBS/share/kvbuffer/kvbuffercpy.sql | $SQL $BACKUPFILE  | $SQL $DBFILE
 
 if [! $? ]; then
     echo "Failed."
