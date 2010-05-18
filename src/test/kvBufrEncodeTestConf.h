@@ -5,8 +5,8 @@
  *      Author: borgem
  */
 
-#ifndef __KVBUFFERENCODETESTCONF_H__
-#define __KVBUFFERENCODETESTCONF_H__
+#ifndef __KVBUFRENCODETESTCONF_H__
+#define __KVBUFRENCODETESTCONF_H__
 
 const char *testconf =
 "wmo_default{\n"
@@ -34,4 +34,4 @@ const char *testconf =
 "}\n"
 ;
 
-#endif /* KVSYNOPENCODETESTCONF_H_ */
+#endif

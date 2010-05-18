@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvbufferCltApp.cc,v 1.6.2.3 2007/09/27 09:02:23 paule Exp $
+  $Id: kvbufrCltApp.cc,v 1.6.2.3 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -34,12 +34,12 @@
 #include <signal.h>
 #include <getopt.h>
 #include <iostream>
-#include "kvbufferd.hh"
+#include "kvbufrd.hh"
 #include <list>
 #include <stdio.h>
-#include "kvbufferCltApp.h"
-#include "kvbufferCorbaThread.h"
-#include "kvbufferCltBuffercbImp.h"
+#include "kvbufrCltApp.h"
+#include "kvbufrCorbaThread.h"
+#include "kvbufrCltBufrcbImp.h"
 
 using namespace std;
 using namespace CorbaHelper;
@@ -53,13 +53,13 @@ namespace{
 }
 
 
-BufferCltApp *BufferCltApp::app =0;
+BufrCltApp *BufrCltApp::app =0;
 
-BufferCltApp::BufferCltApp(int argn, char **argv, miutil::conf::ConfSection *conf )
-  :corbaThread(0),buffercb(kvbufferd::buffercb::_nil()), shutdown_(false),capp(0),
-   buffer(kvbufferd::buffer::_nil())
+BufrCltApp::BufrCltApp(int argn, char **argv, miutil::conf::ConfSection *conf )
+  :corbaThread(0),bufrcb(kvbufrd::bufrcb::_nil()), shutdown_(false),capp(0),
+   bufr(kvbufrd::bufr::_nil())
 {
-  BuffercbImpl *bufferImpl;
+  BufrcbImpl *bufrImpl;
   struct timespec spin;
 
   spin.tv_sec=0;
@@ -76,7 +76,7 @@ BufferCltApp::BufferCltApp(int argn, char **argv, miutil::conf::ConfSection *con
   setSigHandlers();
   
   try{
-    corbaThread = new BufferCltCorbaThread(argn, argv);
+    corbaThread = new BufrCltCorbaThread(argn, argv);
   }
   catch(...){
     CERR("FATAL: failed to initialize KVALOBS service interface!!");
@@ -89,7 +89,7 @@ BufferCltApp::BufferCltApp(int argn, char **argv, miutil::conf::ConfSection *con
   capp=CorbaApp::getCorbaApp();
  
   try{
-    bufferImpl=new BuffercbImpl(*this);
+    bufrImpl=new BufrcbImpl(*this);
   }
   catch(...){
     CERR("FATAL: NOMEM, failling to initialize the application!");
@@ -98,8 +98,8 @@ BufferCltApp::BufferCltApp(int argn, char **argv, miutil::conf::ConfSection *con
 
   try{
     PortableServer::ObjectId_var id; 
-    id=CorbaApp::getCorbaApp()->getPoa()->activate_object(bufferImpl);
-    buffercb=bufferImpl->_this();
+    id=CorbaApp::getCorbaApp()->getPoa()->activate_object(bufrImpl);
+    bufrcb=bufrImpl->_this();
   }
   catch(...){
     CERR("FATAL: Failling to initialize the application! (CORBA)");
@@ -118,7 +118,7 @@ BufferCltApp::BufferCltApp(int argn, char **argv, miutil::conf::ConfSection *con
   if(name[name.length()-1]!='/')
     name+="/";
 
-  name+="kvbufferd";
+  name+="kvbufrd";
 
   CORBA::Object_ptr obj=capp->getObjFromNS(name);
 
@@ -131,32 +131,32 @@ BufferCltApp::BufferCltApp(int argn, char **argv, miutil::conf::ConfSection *con
     exit(2);
   }
 
-  buffer=kvbufferd::buffer::_narrow(obj);
+  bufr=kvbufrd::bufr::_narrow(obj);
   
-  if(CORBA::is_nil(buffer)){
+  if(CORBA::is_nil(bufr)){
     CERR("FATAL: Cant downcast the object from the CORBA nameserver!\n");
     exit(2);
   }
 
   try{
-    buffer->ping();
+    bufr->ping();
   }
   catch(...){
-    CERR("FATAL: kvbufferd is down!\n");
+    CERR("FATAL: kvbufrd is down!\n");
     doShutdown();
     exit(2);
   }
   
 }
  
-BufferCltApp::~BufferCltApp()
+BufrCltApp::~BufrCltApp()
 {
   doShutdown();
 }
 
 
 void
-BufferCltApp::
+BufrCltApp::
 doShutdown()
 {
   omni_mutex_lock lock(mutex);
@@ -180,7 +180,7 @@ doShutdown()
 }
 
 bool 
-BufferCltApp::
+BufrCltApp::
 shutdown()const
 {
   omni_mutex_lock lock(mutex);
@@ -189,7 +189,7 @@ shutdown()const
 }
 
 bool 
-BufferCltApp::
+BufrCltApp::
 wait()const
 {
   omni_mutex_lock lock(mutex);
@@ -198,7 +198,7 @@ wait()const
 }
 
 void 
-BufferCltApp::
+BufrCltApp::
 wait(bool w)
 {
  omni_mutex_lock lock(mutex);
@@ -207,7 +207,7 @@ wait(bool w)
 }
 
 void
-BufferCltApp::
+BufrCltApp::
 run()
 {
   while(!shutdown())
@@ -216,14 +216,14 @@ run()
 
 
 bool 
-BufferCltApp::
+BufrCltApp::
 uptime(miutil::miTime &startTime, long &uptime_)
 {
   CORBA::String_var startTime_;
   CORBA::Long       tmpTime;
 
   try{
-    if(!buffer->uptime(startTime_, tmpTime))
+    if(!bufr->uptime(startTime_, tmpTime))
       return false;
   }
   catch(...){
@@ -238,13 +238,13 @@ uptime(miutil::miTime &startTime, long &uptime_)
 }
 
 bool
-BufferCltApp::
-stationsList(kvbufferd::StationInfoList &infoList)
+BufrCltApp::
+stationsList(kvbufrd::StationInfoList &infoList)
 {
-  kvbufferd::StationInfoList_var list;
+  kvbufrd::StationInfoList_var list;
 
   try{
-    if(!buffer->stations(list))
+    if(!bufr->stations(list))
       return false;
   }
   catch(...){
@@ -256,14 +256,14 @@ stationsList(kvbufferd::StationInfoList &infoList)
 }
 
 bool
-BufferCltApp::
-delayList(kvbufferd::DelayList &delayList, miutil::miTime &nowTime)
+BufrCltApp::
+delayList(kvbufrd::DelayList &delayList, miutil::miTime &nowTime)
 {
-  kvbufferd::DelayList_var list;
+  kvbufrd::DelayList_var list;
   CORBA::String_var       t;
   
   try{
-    if(!buffer->delays(t, list))
+    if(!bufr->delays(t, list))
       return false;
     
     nowTime=miutil::miTime(t);
@@ -276,15 +276,15 @@ delayList(kvbufferd::DelayList &delayList, miutil::miTime &nowTime)
   return true;
 }
 
-kvbufferd::ReloadList*
-BufferCltApp::
+kvbufrd::ReloadList*
+BufrCltApp::
 cacheReloadList(std::string &msg)
 {
   CORBA::String_var        msg_;
-  kvbufferd::ReloadList_var ll;
+  kvbufrd::ReloadList_var ll;
 
   try{
-    if(!buffer->reloadCache("", ll, msg_)){
+    if(!bufr->reloadCache("", ll, msg_)){
       msg=msg_;
       return 0;
     }
@@ -300,12 +300,12 @@ cacheReloadList(std::string &msg)
 }
 
 bool
-BufferCltApp::
-createBuffer(int wmono,
+BufrCltApp::
+createBufr(int wmono,
 	    const miutil::miTime &obstime,
 	    const TKeyVal &keyvals,
 	    int timeoutInSeconds,
-	    kvbufferd::BufferData &res)
+	    kvbufrd::BufrData &res)
 {
   time_t t;
   time_t tt;
@@ -326,14 +326,14 @@ createBuffer(int wmono,
   }
 
   try{
-    if(!buffer->createBuffer(wmono, obstime.isoTime().c_str(),
-			   keyVals, buffercb)){
+    if(!bufr->createBufr(wmono, obstime.isoTime().c_str(),
+			   keyVals, bufrcb)){
       CERR("Cant create SYNOP for station <" << wmono << ">!");
       return false;
     }
   }
   catch(...){
-    CERR("Cant connect to <kvbufferd>!");
+    CERR("Cant connect to <kvbufrd>!");
     return false;
   }
 
@@ -361,18 +361,18 @@ createBuffer(int wmono,
 
 
 bool 
-BufferCltApp::reloadConf()
+BufrCltApp::reloadConf()
 {
   CORBA::String_var msg;
 
   try{
-    if(!buffer->reloadConf(msg)){
+    if(!bufr->reloadConf(msg)){
       CERR(msg << endl);
       return false;
     }
   }
   catch(...){
-    CERR("Cant connect to kvbufferd!" << endl);
+    CERR("Cant connect to kvbufrd!" << endl);
     return false;
   }
    
@@ -381,12 +381,12 @@ BufferCltApp::reloadConf()
 }
 
 bool
-BufferCltApp::getOptions(int argn, char **argv, miutil::conf::ConfSection *conf, Options &opt)
+BufrCltApp::getOptions(int argn, char **argv, miutil::conf::ConfSection *conf, Options &opt)
 {
 	struct option long_options[]={{"list-stations", 0, 0, 0},
 			{"uptime", 0, 0, 0},
 			{"help", 0, 0, 0},
-			{"buffer", 0, 0, 0},
+			{"bufr", 0, 0, 0},
 			{"delay-list", 0, 0, 0},
 			{"reload", 0, 0, 0},
 			{"cachereload", 0, 0, 0},
@@ -471,13 +471,13 @@ BufferCltApp::getOptions(int argn, char **argv, miutil::conf::ConfSection *conf,
 	
 				opt.cmd=Options::Help;
 				use(0);
-			}else if(strcmp(long_options[index].name,"buffer")==0){
+			}else if(strcmp(long_options[index].name,"bufr")==0){
 				if(opt.cmd!=Options::Undef)
 					return false;
 	
-				opt.cmd=Options::Buffer;
+				opt.cmd=Options::Bufr;
 
-				CERR("buffer!" << endl);
+				CERR("bufr!" << endl);
 			}else if(strcmp(long_options[index].name,"delay-list")==0){
 				if(opt.cmd!=Options::Undef)
 					return false;
@@ -529,10 +529,10 @@ BufferCltApp::getOptions(int argn, char **argv, miutil::conf::ConfSection *conf,
 	}
 
 	if(opt.cmd==Options::Undef){
-		opt.cmd=Options::Buffer;
+		opt.cmd=Options::Bufr;
 	}
 
-	if(opt.cmd==Options::Buffer){
+	if(opt.cmd==Options::Bufr){
 		if(opt.wmonoList.empty()){
 			CERR("No wmono to create SYNOP for!\n");
 			return false;
@@ -549,7 +549,7 @@ BufferCltApp::getOptions(int argn, char **argv, miutil::conf::ConfSection *conf,
       
 
 /**
- * kvbufferclt [options] wmono, wmono, ....
+ * kvbufrclt [options] wmono, wmono, ....
  * options:
  *      -s kvalobsserver, ex kvtest, kvalobs 
  *      -n nameserver, the host name to the nameserver ex localhost, corbans
@@ -560,7 +560,7 @@ void
 use(int exitcode)
 {
   cerr << "Use\n\n"
-       << "    kvbufferclt [-n host] [-s kvserver] [CMDS]  \n\n"
+       << "    kvbufrclt [-n host] [-s kvserver] [CMDS]  \n\n"
        << "       -s kvserver : use the kvalobs server 'kvserver'.\n"
        << "          'kvserver' is the name of the kvalobsserver as it is\n"
        << "          known in the CORBA nameserver.\n"
@@ -570,14 +570,14 @@ use(int exitcode)
        << "\n"    
        << "    CMDS\n\n"
        << "     --list-stations: list the stations that is configured in\n"
-       << "                      the kvbufferd.\n"
+       << "                      the kvbufrd.\n"
        << "     --delay-list:  list the stations in the dely que.\n"
-       << "     --uptime: returns when kvbufferd was started.\n"
+       << "     --uptime: returns when kvbufrd was started.\n"
        << "     --help: print this help screen!\n"
-       << "     --buffer [OPTIONS] wmono wmono .... wmono\n\n"
+       << "     --bufr [OPTIONS] wmono wmono .... wmono\n\n"
        << "       OPTIONS\n\n"
-       << "       -t 'YYYY-MM-DD HH': Create the buffer for this time.\n\n"
-       << "       wmono: wmo number of the station we shall generate a buffer\n"
+       << "       -t 'YYYY-MM-DD HH': Create the bufr for this time.\n\n"
+       << "       wmono: wmo number of the station we shall generate a bufr\n"
        << "              for. There can be multiple wmono's.\n"
        << "     --reload: Update the station configrations from the\n"
        << "               configuration file."

@@ -32,22 +32,22 @@
  * $Header: /var/lib/cvs/kvalobs/src/kvsynopd/App.h,v 1.13.2.9 2007/09/27 09:02:22 paule Exp $
  */
 
-#ifndef __kvbufferd_app_h__
-#define __kvbufferd_app_h__
+#ifndef __kvbufrd_app_h__
+#define __kvbufrd_app_h__
 
 #include <kvcpp/corba/CorbaKvApp.h>
 #include <kvdb/dbdrivermgr.h>
 #include <list>
 #include <puTools/miTime.h>
 #include <boost/thread/mutex.hpp>
-#include "kvbufferd.hh"
-#include "kvbufferdImpl.h"
+#include "kvbufrd.hh"
+#include "kvbufrdImpl.h"
 #include "StationInfo.h"
 #include "Waiting.h"
-#include "tblBuffer.h"
+#include "tblBufr.h"
 #include "obsevent.h"
 
-namespace kvbufferd{
+namespace kvbufrd{
   class StationInfoList;
 }
 
@@ -75,7 +75,7 @@ private:
    std::list<GetData*>     getDataThreads;
    bool                    hasStationWaitingOnCacheReload;
    bool                    acceptAllTimes_;
-   kvbufferd::buffer_var bufferRef;
+   kvbufrd::bufr_var bufrRef;
   
    void readWaitingElementsFromDb();
    boost::mutex mutex;
@@ -89,11 +89,11 @@ public:
    bool acceptAllTimes()const { return acceptAllTimes_;}
 
    /**
-    * \brief Setup and initialize the interface to kvbufferd.
+    * \brief Setup and initialize the interface to kvbufrd.
     * 
     * \return true if the subsystem has been setup and false otherwise.
     */ 
-   bool initKvBufferInterface( dnmi::thread::CommandQue &newObsQue );
+   bool initKvBufrInterface( dnmi::thread::CommandQue &newObsQue );
   
    /**
     * \brief cretae a globale logger with id \a id.
@@ -172,7 +172,7 @@ public:
 
   StationInfoPtr findStationInfoWmono(int wmono);
   
-  bool           listStations(kvbufferd::StationInfoList &list);
+  bool           listStations(kvbufrd::StationInfoList &list);
 
   
   /**
@@ -297,7 +297,7 @@ public:
    * \param nowTime The time when the \c waitingList was sampled.
    * \return A pointer to a \a DelayList on sucess, 0 on fail.
    */
-  kvbufferd::DelayList* getDelayList(miutil::miTime &nowTime);
+  kvbufrd::DelayList* getDelayList(miutil::miTime &nowTime);
 
   /**
    * \brief removeWaiting, remove the waiting element \a w from the database.
@@ -325,26 +325,26 @@ public:
 
 
   /**
-   * saveBufferData, save data for a generated buffer to the database.
+   * saveBufrData, save data for a generated bufr to the database.
    *
-   * \param tblBuffer The data to be saved.
+   * \param tblBufr The data to be saved.
    * \return true if the data was saved and false on error.
    */
-  bool saveBufferData(const TblBuffer &tblBuffer, dnmi::db::Connection &con);
+  bool saveBufrData(const TblBufr &tblBufr, dnmi::db::Connection &con);
 
 
   /**
-   * getSavedBufferData. Search the database for a buffer message for
+   * getSavedBufrData. Search the database for a bufr message for
    * this station, \a wmono, for the given obstime if it exist.
    *
    * \param wmono The station to search for.
    * \param obstime The obstime to search for.
-   * \param tblBuffer This paramter holds the synop data.
+   * \param tblBufr This paramter holds the synop data.
    * \return true if we there was now database error, and false otherwise.
    */
-  bool getSavedBufferData(int wmono,
+  bool getSavedBufrData(int wmono,
                          const miutil::miTime &obstime,
-                         std::list<TblBuffer> &tblBuffer,
+                         std::list<TblBufr> &tblBufr,
                          dnmi::db::Connection &con);
   
 
@@ -409,7 +409,7 @@ public:
    * \return a list of station waiting on cache reload and number
    *         of \a ObsEvent waiting.
    */
-  kvbufferd::ReloadList* listCacheReload();
+  kvbufrd::ReloadList* listCacheReload();
 
 
   /**

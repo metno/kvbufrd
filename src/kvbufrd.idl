@@ -1,17 +1,17 @@
-#ifndef __kvbufferd_h__
-#define __kvbufferd_h__
+#ifndef __kvbufrd_h__
+#define __kvbufrd_h__
 
 #include "KeyVal.idl"
 #include "admin.idl"
 
-module kvbufferd{
+module kvbufrd{
 
-  struct BufferData{
+  struct BufrData{
     long     stationid;
     string   termin;
     boolean  isOk;
     string   message;
-    string   buffer;
+    string   bufr;
   };
 
   struct DelayElement{
@@ -39,13 +39,13 @@ module kvbufferd{
   
   typedef sequence<StationInfo> StationInfoList;
   
-  interface buffercb{
-    void buffer(in BufferData data); 
+  interface bufrcb{
+    void bufr(in BufrData data); 
   };
 
   typedef sequence<short> WmoNoList;
 
-  struct BufferElement{
+  struct BufrElement{
     short  wmono;
     string obstime;
     string createtime;
@@ -53,7 +53,7 @@ module kvbufferd{
     string wmomsg;
   };
 
-  typedef sequence<BufferElement> BufferList;
+  typedef sequence<BufrElement> BufrList;
 
   struct DataElement{
     long stationid;
@@ -68,11 +68,11 @@ module kvbufferd{
   typedef sequence<DataElement> DataElementList;
   
   
-  interface buffer : micutil::Admin{
-    boolean createBuffer(in short  wmono, 
+  interface bufr : micutil::Admin{
+    boolean createBufr(in short  wmono, 
 			in string obstime,
 			in micutil::KeyValList keyVals,
-			in buffercb callback);
+			in bufrcb callback);
     
     boolean stations(out StationInfoList infoList);	     
     boolean uptime(out string startTime, out long uptimeInSeconds);
@@ -94,25 +94,25 @@ module kvbufferd{
                         out string message);
 
 
-    /** Get a buffer tah is generated.
+    /** Get a bufr tah is generated.
      * \param wmoList a list of the wmonumbers we want. If the
      *                list is empty return information about all 
-     *                buffers.
-     * \param fromtime the first buffer time we want a buffer for.
-     * \param totime the first buffer time we want a buffer for.
-     *               This may be empty if we only want buffer for
-     *               one buffer time.
-     * \param[out] buffers  A list of the requested buffers.
+     *                bufrs.
+     * \param fromtime the first bufr time we want a bufr for.
+     * \param totime the first bufr time we want a bufr for.
+     *               This may be empty if we only want bufr for
+     *               one bufr time.
+     * \param[out] bufrs  A list of the requested bufrs.
      * \param[out] message An error message on failure.
      * \return true on success, false otherwise.
      */
-    boolean getbuffer(in WmoNoList wmoList, 
+    boolean getbufr(in WmoNoList wmoList, 
 		     in string fromtime, in string totime,
-		     out BufferList buffers,
+		     out BufrList bufrs,
 		     out string message);
 
 
-    /** Get the data that is used to encode a buffer.
+    /** Get the data that is used to encode a bufr.
      *
      * \param wmono The wmono we want the data for.
      * \param obstime The obstime we want data for.

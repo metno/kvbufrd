@@ -28,7 +28,7 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-/* $Header: /var/lib/cvs/kvalobs/src/kvbufferd/StationInfo.h,v 1.13.2.8 2007/09/27 09:02:22 paule Exp $ */
+/* $Header: /var/lib/cvs/kvalobs/src/kvbufrd/StationInfo.h,v 1.13.2.8 2007/09/27 09:02:22 paule Exp $ */
 
 #ifndef __StationInfo_h__
 #define __StationInfo_h__
@@ -65,27 +65,27 @@ class StationInfoParse;
  *                          mm is an minute in the range [0, 59],
  *                          F - force.
  *                 SS:mm  - SS specify that  mm is for all
- *                          buffertimes, ie. 0,3,6,9,12,15,18 og 21
+ *                          bufrtimes, ie. 0,3,6,9,12,15,18 og 21
  *                 HH:mm  - HH specify that mm is for all hours.
- *                 FS:mm  - Force a delay for all buffertimes.
+ *                 FS:mm  - Force a delay for all bufrtimes.
  *                 FH:mm  - Force a delay for all hours.
  *                 fS:mm  - Delay max mm minutes after the first data is 
- *                          received for all buffertimes.
+ *                          received for all bufrtimes.
  *                 fH:mm  - Delay max mm minutes after the first data is
  *                          received for all hours.
- *                 -SS    - Dont generate buffer for buffertimes.
- *                 -tt    - Dont generate buffer for the hour tt, where
+ *                 -SS    - Dont generate bufr for bufrtimes.
+ *                 -tt    - Dont generate bufr for the hour tt, where
  * 	                        tt is in the range [0,23].
  * 		
  *                 
  *                 ex: delay=("6:10", "SS:03")
  *                     This means that we shall delay with 3 minutes for all 
- *                     buffertimes except for the 6 termin that we shall delay
+ *                     bufrtimes except for the 6 termin that we shall delay
  *                     with 10 minutes.
  *
  *                     delay=("6:10", "SS:03", "HH:01")
  *                     This means that we shall delay all termins with 1 
- *                     minute, except for buffertimes (except the 6 termin
+ *                     minute, except for bufrtimes (except the 6 termin
  *                     that shal be delayed with 6 minutes) that shall delay
  *                     with  minutes.
  *                          
@@ -107,20 +107,20 @@ class DelayInfo
 {
   	//hour have several value:
   	// [0,23] the termin (hour) to delay.
-  	//  -1 specify only buffertimes ie. 0, 3, 6, 9, 12, 15, 18, 21
+  	//  -1 specify only bufrtimes ie. 0, 3, 6, 9, 12, 15, 18, 21
   	//  -2 specify all hours
   
   	char hour_;  
   	char delay_; //minutes
   	bool force_;
-  	bool *buffertimes_;  //Create buffer for this times.
+  	bool *bufrtimes_;  //Create bufr for this times.
 
-	void initBufferTimes(){
+	void initBufrTimes(){
 		
-			//std::cerr << "initBufferTimes: " << int(hour_) << std::endl;
-			if(!buffertimes_){
+			//std::cerr << "initBufrTimes: " << int(hour_) << std::endl;
+			if(!bufrtimes_){
 				try{
-					buffertimes_=new bool[24];
+					bufrtimes_=new bool[24];
 				}
 				catch(...){
 					return;
@@ -128,35 +128,35 @@ class DelayInfo
 			}
 		
 			for(int i=0; i<24; i++)
-				buffertimes_[i]=true;
+				bufrtimes_[i]=true;
 	}
 
 public:
   	enum {STIME=-1, HTIME=-2, FSTIME=-3, FHTIME=-3,SKIP_SYNOP=127, UNDEF=-128};
 
   	DelayInfo(int hour=UNDEF)
-    	:hour_(hour), delay_(0), force_(false), buffertimes_(0){
+    	:hour_(hour), delay_(0), force_(false), bufrtimes_(0){
     		if(hour==SKIP_SYNOP){
     			//std::cerr << "DelayInfo::CTOR: SKIP_SYNOP!" << std::endl;
-    			initBufferTimes();
+    			initBufrTimes();
     		}
     	}
   	DelayInfo(char hour, char delay, bool force)
-    	: hour_(hour), delay_(delay), force_(force), buffertimes_(0){}
+    	: hour_(hour), delay_(delay), force_(force), bufrtimes_(0){}
   	DelayInfo(const DelayInfo &d)
-    	:hour_(d.hour_),delay_(d.delay_),force_(d.force_), buffertimes_(0){
-    		if(d.buffertimes_){
-   				initBufferTimes();
+    	:hour_(d.hour_),delay_(d.delay_),force_(d.force_), bufrtimes_(0){
+    		if(d.bufrtimes_){
+   				initBufrTimes();
     				    		
-    			if(buffertimes_){
+    			if(bufrtimes_){
     				for(int i=0; i<24; i++)
-    					buffertimes_[i]=d.buffertimes_[i];
+    					bufrtimes_[i]=d.bufrtimes_[i];
     			}
     		}
     	}
     ~DelayInfo(){
-    	if(buffertimes_)
-    		delete buffertimes_;
+    	if(bufrtimes_)
+    		delete bufrtimes_;
     }
 
   	DelayInfo& operator=(const DelayInfo &rhs){
@@ -165,17 +165,17 @@ public:
       		delay_=rhs.delay_;
       		force_=rhs.force_;
       
-      		if(rhs.buffertimes_){
-    			if(!buffertimes_)
-    				initBufferTimes();
+      		if(rhs.bufrtimes_){
+    			if(!bufrtimes_)
+    				initBufrTimes();
     				    		
-    			if(buffertimes_){
+    			if(bufrtimes_){
     				for(int i=0; i<24; i++)
-    					buffertimes_[i]=rhs.buffertimes_[i];
+    					bufrtimes_[i]=rhs.bufrtimes_[i];
     			}
-    		}else if(buffertimes_){
-    			delete buffertimes_;
-    			buffertimes_=0;
+    		}else if(bufrtimes_){
+    			delete bufrtimes_;
+    			bufrtimes_=0;
       		}
     			
     	}
@@ -200,10 +200,10 @@ public:
 	     	   delay_==di.delay_ &&
 	     	   force_==di.force_){
 	   
-	   			if(buffertimes_ || di.buffertimes_){
-	   				if(buffertimes_ && di.buffertimes_){
+	   			if(bufrtimes_ || di.bufrtimes_){
+	   				if(bufrtimes_ && di.bufrtimes_){
 	     	   			for(int i=0; i<24; i++){
-    						if(buffertimes_[i]!=di.buffertimes_[i])
+    						if(bufrtimes_[i]!=di.bufrtimes_[i])
     							return false;
 	     	   			}
 	   				}else{
@@ -217,30 +217,30 @@ public:
 	    	}
   	}
 
-	bool skipBufferSpec()const{ return buffertimes_!=0;}
+	bool skipBufrSpec()const{ return bufrtimes_!=0;}
   	bool undef()const { return hour_==UNDEF;}
   	int  hour()const{ return static_cast<int>(hour_); }
   	int  delay()const{ return static_cast<int>(delay_);}
   	bool force()const{ return force_;}
   
-  	//Shall we generate buffer for this hour
-  	bool bufferForThisHour(int hour)const{
-			if(!buffertimes_)
+  	//Shall we generate bufr for this hour
+  	bool bufrForThisHour(int hour)const{
+			if(!bufrtimes_)
 				return true;
 
   			if(hour<0 || hour>23)
   				return false;
   		
-  			return buffertimes_[hour];
+  			return bufrtimes_[hour];
   	}
   
-  	void bufferForThisHour(int hour, bool flag){
+  	void bufrForThisHour(int hour, bool flag){
   		//Must be a SKIP_SYNOP spec.
-  		if(buffertimes_){
+  		if(bufrtimes_){
   			if(hour<0 || hour>23)
   				return;
   				  			
-  			buffertimes_[hour]=flag;
+  			bufrtimes_[hour]=flag;
   		}
   	}
   	
@@ -467,12 +467,12 @@ class StationInfo
    *        data that is required.
    * \param relativToFirst[out] Is set to true on return if the delay
    *                            shall be relativ to the first typeid received
-   *                            data for for a given buffer time.
+   *                            data for for a given bufr time.
    * \return True if we shall delay and false otherwise.
    */
   bool delay(int hour, int &minute, bool &force, bool &relativToFirst)const;
   
-  bool bufferForTime(int hh)const;
+  bool bufrForTime(int hh)const;
 
   friend std::ostream& operator<<(std::ostream& ost,
 				  const StationInfo& sd);

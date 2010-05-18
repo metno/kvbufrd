@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvbufferdImpl.h,v 1.5.2.4 2007/09/27 09:02:23 paule Exp $
+  $Id: kvbufrdImpl.h,v 1.5.2.4 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -28,16 +28,16 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvbufferdImpl_h__
-#define __kvbufferdImpl_h__
+#ifndef __kvbufrdImpl_h__
+#define __kvbufrdImpl_h__
 
-#include "kvbufferd.hh"
+#include "kvbufrd.hh"
 #include "obsevent.h"
 #include <kvskel/adminInterface.h>
 
 class App;
 
-class kvBufferdImpl: public virtual POA_kvbufferd::buffer,
+class kvBufrdImpl: public virtual POA_kvbufrd::bufr,
 		    public virtual micutil::AdminInterface,
 		    public PortableServer::RefCountServantBase 
 {
@@ -46,29 +46,29 @@ class kvBufferdImpl: public virtual POA_kvbufferd::buffer,
 
 public:
   // standard constructor
-  kvBufferdImpl(App &app_, dnmi::thread::CommandQue &que_);
-  virtual ~kvBufferdImpl();
+  kvBufrdImpl(App &app_, dnmi::thread::CommandQue &que_);
+  virtual ~kvBufrdImpl();
 
 
-  CORBA::Boolean createBuffer(CORBA::Short wmono,
+  CORBA::Boolean createBufr(CORBA::Short wmono,
 			     const char* obstime, 
 			     const micutil::KeyValList& keyVals,
-			     kvbufferd::buffercb_ptr callback);
-  CORBA::Boolean stations(kvbufferd::StationInfoList_out infoList);
+			     kvbufrd::bufrcb_ptr callback);
+  CORBA::Boolean stations(kvbufrd::StationInfoList_out infoList);
   CORBA::Boolean uptime(CORBA::String_out startTime, 
 			CORBA::Long& uptimeInSeconds);
   CORBA::Boolean delays(CORBA::String_out nowTime, 
-			kvbufferd::DelayList_out dl);
+			kvbufrd::DelayList_out dl);
   CORBA::Boolean reloadConf(CORBA::String_out message);
   CORBA::Boolean reloadCache(const char* fromTime, 
-			     kvbufferd::ReloadList_out wmonolist,
+			     kvbufrd::ReloadList_out wmonolist,
 			     CORBA::String_out message);
-  CORBA::Boolean getbuffer(const kvbufferd::WmoNoList& wmoList,
+  CORBA::Boolean getbufr(const kvbufrd::WmoNoList& wmoList,
 			  const char* fromtime, const char* totime, 
-			  kvbufferd::BufferList_out buffers,
+			  kvbufrd::BufrList_out bufrs,
 			  CORBA::String_out message);
   CORBA::Boolean getdata(CORBA::Short wmono, const char* obstime, 
-			 kvbufferd::DataElementList_out datalist,
+			 kvbufrd::DataElementList_out datalist,
 			 CORBA::String_out message);
 
 

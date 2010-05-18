@@ -154,7 +154,7 @@ hasTypeId(int typeID, int hour)const
 
 bool 
 StationInfo::
-bufferForTime(int hh)const
+bufrForTime(int hh)const
 {
 	TLongList tp=typepriority(hh);
 	
@@ -165,8 +165,8 @@ bufferForTime(int hh)const
 	for(CITDelayList it=delayList_.begin();
 		 it!=delayList_.end(); 
 		 ++it)
-  		if(it->skipBufferSpec())
-  			return it->bufferForThisHour(hh);
+  		if(it->skipBufrSpec())
+  			return it->bufrForThisHour(hh);
 	
     return true;
 }
@@ -176,7 +176,7 @@ StationInfo::
 delay(int hour, int &minute, 
       bool &force,  bool &relativToFirst)const
 {
-   bool         stime=hour%3==0; //Is it a buffer time.
+   bool         stime=hour%3==0; //Is it a bufr time.
    CITDelayList it=delayList_.begin();
 
    relativToFirst=false;
@@ -408,10 +408,10 @@ operator<<(std::ostream& ost,
       return ost;
    }
 
-   if(sd.skipBufferSpec()){
+   if(sd.skipBufrSpec()){
       bool first=true;
       for(int i=0; i<23; i++){
-         if(!sd.buffertimes_[i]){
+         if(!sd.bufrtimes_[i]){
             if(first){
                ost << "\"-" << i;
                first=false;

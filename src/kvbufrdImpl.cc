@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvbufferdImpl.cc,v 1.9.2.3 2007/09/27 09:02:23 paule Exp $
+  $Id: kvbufrdImpl.cc,v 1.9.2.3 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -32,36 +32,36 @@
 #include <iostream>
 #include "App.h"
 #include "StationInfo.h"
-#include "kvbufferdImpl.h"
+#include "kvbufrdImpl.h"
 
 using namespace std;
 
 
-kvBufferdImpl::
-kvBufferdImpl(App &app_, dnmi::thread::CommandQue &que_)
+kvBufrdImpl::
+kvBufrdImpl(App &app_, dnmi::thread::CommandQue &que_)
   :app(app_), que(que_)
 {
 }
 
-kvBufferdImpl::
-~kvBufferdImpl()
+kvBufrdImpl::
+~kvBufrdImpl()
 {
 }
 
 
 CORBA::Boolean 
-kvBufferdImpl::
-createBuffer(CORBA::Short wmono,
+kvBufrdImpl::
+createBufr(CORBA::Short wmono,
 	    const char* obstime, 
 	    const micutil::KeyValList& keyVals,
-	    kvbufferd::buffercb_ptr callback)
+	    kvbufrd::bufrcb_ptr callback)
 {
   StationInfoPtr info=app.findStationInfoWmono(wmono);
   StationInfo    *pInfo;
   ObsEvent       *event;
   miutil::miTime time(obstime);
 
-  milog::LogContext context("BufferdImpl");
+  milog::LogContext context("BufrdImpl");
 
   if(time.undef()){
     LOGERROR("obstime: " << obstime << " Invalid!");
@@ -89,7 +89,7 @@ createBuffer(CORBA::Short wmono,
   try{
     event=new ObsEvent(time, 
 		       StationInfoPtr(pInfo), 
-		       kvbufferd::buffercb::_duplicate(callback));
+		       kvbufrd::bufrcb::_duplicate(callback));
   }
   catch(...){
     LOGFATAL("NOMEM!");
@@ -102,11 +102,11 @@ createBuffer(CORBA::Short wmono,
 }
 
 CORBA::Boolean 
-kvBufferdImpl::
-stations(kvbufferd::StationInfoList_out infoList)
+kvBufrdImpl::
+stations(kvbufrd::StationInfoList_out infoList)
 {
   try{
-    infoList=new kvbufferd::StationInfoList();
+    infoList=new kvbufrd::StationInfoList();
   }
   catch(...){
     return false;
@@ -117,11 +117,11 @@ stations(kvbufferd::StationInfoList_out infoList)
 }
 
 CORBA::Boolean 
-kvBufferdImpl::
+kvBufrdImpl::
 uptime(CORBA::String_out startTime, 
        CORBA::Long& uptimeInSeconds)
 {
-  milog::LogContext context("BufferdImpl");
+  milog::LogContext context("BufrdImpl");
   std::string t=app.startTime().isoTime();
   startTime=CORBA::string_dup(t.c_str());
   miutil::miTime now=miutil::miTime::nowTime();
@@ -132,11 +132,11 @@ uptime(CORBA::String_out startTime,
 }
 
 CORBA::Boolean
-kvBufferdImpl::
+kvBufrdImpl::
 delays(CORBA::String_out nowTime, 
-       kvbufferd::DelayList_out dl)
+       kvbufrd::DelayList_out dl)
 {
-  milog::LogContext context("BufferdImpl");
+  milog::LogContext context("BufrdImpl");
   miutil::miTime      now;
   
   dl=app.getDelayList(now);
@@ -149,7 +149,7 @@ delays(CORBA::String_out nowTime,
 }
 
 CORBA::Boolean 
-kvBufferdImpl::
+kvBufrdImpl::
 reloadConf(CORBA::String_out message)
 {
   std::list<StationInfoPtr>                 stList;
@@ -158,7 +158,7 @@ reloadConf(CORBA::String_out message)
   int                                       newStations=0;
   int                                       updatedStations=0;
 
-  milog::LogContext context("BufferdImpl");
+  milog::LogContext context("BufrdImpl");
 
   LOGDEBUG1("reloadConf called! " << endl);
 
@@ -217,19 +217,19 @@ reloadConf(CORBA::String_out message)
 
 
 CORBA::Boolean 
-kvBufferdImpl::
+kvBufrdImpl::
 reloadCache(const char* fromTime, 
-	    kvbufferd::ReloadList_out wmonolist,
+	    kvbufrd::ReloadList_out wmonolist,
 	    CORBA::String_out message)
 {
-  milog::LogContext context("BufferdImpl");
+  milog::LogContext context("BufrdImpl");
   LOGINFO("reloadCache called!"<<endl);
 
   wmonolist=app.listCacheReload();
  
   if(!wmonolist){
-    wmonolist=new kvbufferd::ReloadList();
-    message=CORBA::string_dup("kvBufferdImpl::reloadCache Failed");
+    wmonolist=new kvbufrd::ReloadList();
+    message=CORBA::string_dup("kvBufrdImpl::reloadCache Failed");
     return false;
   }
 
@@ -240,27 +240,27 @@ reloadCache(const char* fromTime,
 
 
 CORBA::Boolean 
-kvBufferdImpl::
-getbuffer(const kvbufferd::WmoNoList& wmoList,
+kvBufrdImpl::
+getbufr(const kvbufrd::WmoNoList& wmoList,
 	 const char* fromtime, const char* totime, 
-	 kvbufferd::BufferList_out buffers,
+	 kvbufrd::BufrList_out bufrs,
 	 CORBA::String_out message)
 {
 
-  buffers=new kvbufferd::BufferList();
-  message=CORBA::string_dup("kvBufferdImpl::getbuffer: Not implemented");
+  bufrs=new kvbufrd::BufrList();
+  message=CORBA::string_dup("kvBufrdImpl::getbufr: Not implemented");
   return false;
  
 }
  
 
 CORBA::Boolean 
-kvBufferdImpl::
+kvBufrdImpl::
 getdata(CORBA::Short wmono, const char* obstime, 
-	kvbufferd::DataElementList_out datalist,
+	kvbufrd::DataElementList_out datalist,
 	CORBA::String_out message)
 {
-  datalist=new kvbufferd::DataElementList();
-  message=CORBA::string_dup("kvBufferdImpl::getdata: Not implemented");
+  datalist=new kvbufrd::DataElementList();
+  message=CORBA::string_dup("kvBufrdImpl::getdata: Not implemented");
   return false;
 }

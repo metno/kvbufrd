@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations
 
-  $Id: buffer.h,v 1.12.2.5 2007/09/27 09:02:18 paule Exp $
+  $Id: bufr.h,v 1.12.2.5 2007/09/27 09:02:18 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -34,15 +34,15 @@
 
 #include <string>
 #include <DataList.h>
-#include <LoadBufferData.h>
+#include <LoadBufrData.h>
 
 bool
 readDataFile( const std::string &filename, DataEntryList &data, const miutil::miTime &fromtime=miutil::miTime() );
 
 bool
-loadBufferDataFromFile( const std::string &filename,
+loadBufrDataFromFile( const std::string &filename,
 					   StationInfoPtr      info,
-					   BufferDataList       &sd,
+					   BufrDataList       &sd,
 					   kvdatacheck::Validate &validate,
 					   const miutil::miTime &fromtime=miutil::miTime() );
 

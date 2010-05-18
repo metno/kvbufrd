@@ -28,12 +28,12 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvbuffer_tblBuffer_h__
-#define __kvbuffer_tblBuffer_h__
+#ifndef __kvbufr_tblBufr_h__
+#define __kvbufr_tblBufr_h__
 
 #include <kvalobs/kvDbBase.h>
 
-class TblBuffer : public kvalobs::kvDbBase {
+class TblBufr : public kvalobs::kvDbBase {
 private:
   int              wmono_;
   miutil::miTime   obstime_;
@@ -45,10 +45,10 @@ private:
   void createSortIndex();
 
 public:
-  TblBuffer() {clean();}
-  TblBuffer(const TblBuffer &buffer){ set(buffer);}
-  TblBuffer(const dnmi::db::DRow &r){set(r);}
-  TblBuffer(int                  wmono,
+  TblBufr() {clean();}
+  TblBufr(const TblBufr &bufr){ set(bufr);}
+  TblBufr(const dnmi::db::DRow &r){set(r);}
+  TblBufr(int                  wmono,
 	   const miutil::miTime &obtime,
 	   const miutil::miTime &createtime,
 	   int                  crc,
@@ -64,9 +64,9 @@ public:
 	   const std::string    &wmomsg);
 
   bool set(const dnmi::db::DRow&);
-  bool set(const TblBuffer &buffer );
+  bool set(const TblBufr &bufr );
 
-  TblBuffer& operator=(const TblBuffer &ts){
+  TblBufr& operator=(const TblBufr &ts){
                   if(&ts!=this)
 		    set(ts);
 		  return *this;
@@ -74,7 +74,7 @@ public:
 
   void clean();
 
-  const char* tableName()            const {return "buffer";}
+  const char* tableName()            const {return "bufr";}
   miutil::miString toSend()    const;
   miutil::miString toUpdate()  const;
   miutil::miString uniqueKey() const;

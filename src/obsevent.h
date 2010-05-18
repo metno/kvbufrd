@@ -34,27 +34,27 @@
 #include <sstream>
 #include <dnmithread/CommandQue.h>
 #include <puTools/miTime.h>
-#include "kvbufferd.hh"
+#include "kvbufrd.hh"
 #include "StationInfo.h"
 #include "Waiting.h"
 
 class ObsEvent : public dnmi::thread::CommandBase
 {
   	miutil::miTime        obstime_;
-  	kvbufferd::buffercb_var ref;
+  	kvbufrd::bufrcb_var ref;
   	StationInfoPtr        stInfo;
   	WaitingPtr            waiting_;
   
   	///Used to send a message back in the callback \a ref
   	std::ostringstream    msg_; 
   
-  	///Used to send a buffer back in the callback \a ref
-  	std::string           buffer_;
+  	///Used to send a bufr back in the callback \a ref
+  	std::string           bufr_;
   
   	///Used to send status indicator back in the callback \a ref
   	bool                  isOk_;  
 
-  	///Used to indicate that a buffer posibly need to be regenerated
+  	///Used to indicate that a bufr posibly need to be regenerated
   	///due to changed data.
   	bool                  regenerate_;
   
@@ -88,7 +88,7 @@ class ObsEvent : public dnmi::thread::CommandBase
 	  			 StationInfoPtr stInfo_,
 	  			 bool regenerate=false)
     		:obstime_(obstime),
-    		 ref(kvbufferd::buffercb::_nil()),
+    		 ref(kvbufrd::bufrcb::_nil()),
     		 stInfo(stInfo_),
     		 isOk_(false),
     		 regenerate_(regenerate)
@@ -96,7 +96,7 @@ class ObsEvent : public dnmi::thread::CommandBase
 
   		ObsEvent(const miutil::miTime &obstime,
 	   			 StationInfoPtr stInfo_,
-	    		 kvbufferd::buffercb_ptr cb)
+	    		 kvbufrd::bufrcb_ptr cb)
     		:obstime_(obstime),
     		 ref(cb),
     		 stInfo(stInfo_),
@@ -106,7 +106,7 @@ class ObsEvent : public dnmi::thread::CommandBase
 
   		ObsEvent(WaitingPtr w)
     		:obstime_(w->obstime()),
-    		 ref(kvbufferd::buffercb::_nil()),
+    		 ref(kvbufrd::bufrcb::_nil()),
     		 stInfo(w->info()),
     		 waiting_(w),
     		 isOk_(false),
@@ -116,8 +116,8 @@ class ObsEvent : public dnmi::thread::CommandBase
   		miutil::miTime         obstime()const{ return obstime_;}
   		StationInfoPtr     stationInfo()const{ return stInfo;}
   		WaitingPtr             waiting()const{ return waiting_;}
-  		kvbufferd::buffercb_ptr callback()const
-    			{ return kvbufferd::buffercb::_duplicate(ref);}
+  		kvbufrd::bufrcb_ptr callback()const
+    			{ return kvbufrd::bufrcb::_duplicate(ref);}
   
   		bool hasCallback()const{ return !CORBA::is_nil(ref);}
   		bool regenerate()const { return regenerate_;}
@@ -125,11 +125,11 @@ class ObsEvent : public dnmi::thread::CommandBase
 	    ///The following tree functions is used to comunicate 
 	    ///data back to a client trough the callback \a ref.
 	    ///The callback is only set when we get a explicit request 
-	    ///to generate a buffer.
+	    ///to generate a bufr.
 
   		std::ostringstream& msg() { return msg_;}
-  		void              buffer(const std::string &s){ buffer_=s;}
- 		std::string       buffer()const { return buffer_;}
+  		void              bufr(const std::string &s){ bufr_=s;}
+ 		std::string       bufr()const { return bufr_;}
   		void              isOk(bool f){ isOk_=f;}
   		bool              isOk()const { return isOk_;}
 

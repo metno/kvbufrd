@@ -1,15 +1,15 @@
 SUBDIRS = src 
 ACLOCAL_AMFLAGS = -I m4
-sqldir = $(datadir)/kvbufferd
-sql_DATA = cleanbufferdb.sql 
-bin_SCRIPTS = kvbufferdbadmin check_kvbufferd.sh
+sqldir = $(datadir)/kvbufrd
+sql_DATA = cleanbufrdb.sql 
+bin_SCRIPTS = kvbufrdbadmin check_kvbufrd.sh
 
 SED_SUBST = sed s,KVCONFIG,$(bindir)/kvconfig,g $< > $@ 
 
-kvbufferdbadmin: kvbufferdbadmin.sh 
+kvbufrdbadmin: kvbufrdbadmin.sh 
 	$(SED_SUBST)
 	
-EXTRA_DIST = cleanbufferdb.sql kvbufferdbadmin.sh changelog
+EXTRA_DIST = cleanbufrdb.sql kvbufrdbadmin.sh changelog
 
 CLEANFILES = kvbufferdbadmin
 

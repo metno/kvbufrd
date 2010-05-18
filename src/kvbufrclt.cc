@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvbufferclt.cc,v 1.5.2.3 2007/09/27 09:02:23 paule Exp $
+  $Id: kvbufrclt.cc,v 1.5.2.3 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -32,12 +32,12 @@
 #include <getopt.h>
 #include <iostream>
 #include <sstream>
-#include "kvbufferd.hh"
+#include "kvbufrd.hh"
 #include <kvalobs/kvPath.h>
 #include <miconfparser/miconfparser.h>
 #include <list>
 #include <dnmithread/mtcout.h>
-#include "kvbufferCltApp.h"
+#include "kvbufrCltApp.h"
 
 using namespace std;
 
@@ -48,7 +48,7 @@ main(int argn, char **argv)
   std::string confFile;
   miutil::conf::ConfSection *conf;
   
-  confFile = kvPath("sysconfdir")+"/kvbufferd.conf";
+  confFile = kvPath("sysconfdir")+"/kvbufrd.conf";
 
   try{
       conf=miutil::conf::ConfParser::parse(confFile);
@@ -58,7 +58,7 @@ main(int argn, char **argv)
      return 1;
   }
   
-  BufferCltApp app(argn, argv, conf );
+  BufrCltApp app(argn, argv, conf );
 
   opt=app.options();
 
@@ -71,14 +71,14 @@ main(int argn, char **argv)
       int hours=(u%86400)/3600;
       int min=((u%86400)%3600)/60;
       int sec=((u%86400)%3600)%60;
-      COUT("kvbufferd:\n\tStarted: " << startTime << "\n\tuptime: "
+      COUT("kvbufrd:\n\tStarted: " << startTime << "\n\tuptime: "
 	   << days << " days " << hours << " hours " <<
 	   min << " minutes " << sec << " seconds!\n");
     }else{
-      CERR("Cant get uptime from <kvbufferd>!\n");
+      CERR("Cant get uptime from <kvbufrd>!\n");
     }
   }else if(opt.cmd==Options::StationList){
-    kvbufferd::StationInfoList list;
+    kvbufrd::StationInfoList list;
 
     if(app.stationsList(list)){
       for(CORBA::ULong i=0; i<list.length(); i++){
@@ -103,14 +103,14 @@ main(int argn, char **argv)
 	COUT(info << endl << endl);
       }
     }else{
-      CERR("Cant get station list from <kvbufferd>!");
+      CERR("Cant get station list from <kvbufrd>!");
     }
   }else if(opt.cmd==Options::Delays){
     miutil::miTime t;
-    kvbufferd::DelayList dl;
+    kvbufrd::DelayList dl;
 
     if(!app.delayList(dl, t)){
-      CERR("Cant get delay list from <kvbufferd>!");
+      CERR("Cant get delay list from <kvbufrd>!");
     }else{
       COUT("Delay list at: " << t << endl <<
 	   "---------------------------------------------------" << endl);
@@ -121,34 +121,34 @@ main(int argn, char **argv)
       }
       COUT(endl);
     }
-  }else if(opt.cmd==Options::Buffer){
+  }else if(opt.cmd==Options::Bufr){
      
     if(opt.time.undef()){
       CERR("Invalid time <" << opt.time << ">!");
     }else{
       Options::IIntList it=opt.wmonoList.begin();
-      kvbufferd::BufferData d;
+      kvbufrd::BufrData d;
       TKeyVal keyvals;
       
       for(; it!=opt.wmonoList.end(); it++){
-	if(!app.createBuffer(*it, opt.time, keyvals, 20, d)){
+	if(!app.createBufr(*it, opt.time, keyvals, 20, d)){
 	  if(app.shutdown()){
 	    break;
 	  }else{
-	    CERR("Create buffer failed!\n");
+	    CERR("Create bufr failed!\n");
 	  }
 	continue;
 	}
 	
 	if(!d.isOk){
-	  CERR("Cant create buffer for <" << d.stationid << ">!\n"
+	  CERR("Cant create bufr for <" << d.stationid << ">!\n"
 	       << "Reason: " << d.message << endl);
 	  continue;
 	}
 	
-	CERR("Created buffer for <" << d.stationid << "> termin: " << d.termin
-	     << endl << "Message: " << d.message << endl << "Buffer: " << endl
-	     << d.buffer << endl << endl);
+	CERR("Created bufr for <" << d.stationid << "> termin: " << d.termin
+	     << endl << "Message: " << d.message << endl << "Bufr: " << endl
+	     << d.bufr << endl << endl);
       }
 
     }
@@ -159,10 +159,10 @@ main(int argn, char **argv)
     string msg;
     int  count;
 
-    kvbufferd::ReloadList *reloadlist=app.cacheReloadList(msg);
+    kvbufrd::ReloadList *reloadlist=app.cacheReloadList(msg);
 
     if(!reloadlist){
-      CERR("Cant get station list from <kvbufferd>!");
+      CERR("Cant get station list from <kvbufrd>!");
     }else{
       COUT("wmono: ");
       count=0;

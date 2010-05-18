@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvbufferCorbaThread.cc,v 1.2.2.2 2007/09/27 09:02:23 paule Exp $
+  $Id: kvbufrCorbaThread.cc,v 1.2.2.2 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -30,11 +30,11 @@
 */
 #include <dnmithread/mtcout.h>
 //#include <kvcpp/kvDataNotifySubscriberImpl.h>
-#include "kvbufferCorbaThread.h"
+#include "kvbufrCorbaThread.h"
 
 using namespace std;
 
-BufferCltCorbaThread::BufferCltCorbaThread(int          argn,
+BufrCltCorbaThread::BufrCltCorbaThread(int          argn,
 					 char       **argv)
   :omni_thread(), app(argn, argv), isInitialized_(false)
 {
@@ -42,7 +42,7 @@ BufferCltCorbaThread::BufferCltCorbaThread(int          argn,
 }
 
 void*
-BufferCltCorbaThread::run_undetached(void*)
+BufrCltCorbaThread::run_undetached(void*)
 {
   //CERR("CorbaThread: created!\n");
   CORBA::ORB_var orb=app.getOrb();

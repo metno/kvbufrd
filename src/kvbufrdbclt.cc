@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvbufferdbclt.cc,v 1.4.6.5 2007/09/27 09:02:23 paule Exp $
+  $Id: kvbufrdbclt.cc,v 1.4.6.5 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -41,7 +41,7 @@
 #include <kvdb/dbdrivermgr.h>
 #include <fstream>
 #include <kvalobs/kvDbGate.h>
-#include "tblBuffer.h"
+#include "tblBufr.h"
 #include <puTools/miTime.h>
 #include <sstream>
 #include <fstream>
@@ -85,7 +85,7 @@ readStationNames(const std::string &file, IntStringMap &map);
 
 
 struct Options{
-  bool           onlyBuffertimes;
+  bool           onlyBufrtimes;
   bool           allTimes;
   miutil::miTime ftime; //from time
   miutil::miTime ttime; //To time. Empty, use only the ftime. 
@@ -108,7 +108,7 @@ getOptions(int argn, char **argv, Options &opt);
 
 
 void
-getBufferAndOutput(Options &opt,
+getBufrAndOutput(Options &opt,
 		  const std::string &query,
 		  IntStringMap      &nameMap,
 		  dnmi::db::Connection *dbCon);
@@ -127,9 +127,9 @@ main(int argn, char **argv)
   miutil::miTime obt;
 
   
-  cerr << "Configurationfile: " << kvPath("sysconfdir")+"/kvbufferd.conf" << endl;
+  cerr << "Configurationfile: " << kvPath("sysconfdir")+"/kvbufrd.conf" << endl;
 
-  conf=readConf( kvPath("sysconfdir") + "/kvbufferd.conf");
+  conf=readConf( kvPath("sysconfdir") + "/kvbufrd.conf");
 
   if(!conf){
     return 1;
@@ -161,7 +161,7 @@ main(int argn, char **argv)
     if(options.allTimes){
         ost << "ORDER BY obstime";
         //cerr << "Query: <" << ost.str() << ">!" << endl;
-        getBufferAndOutput(options,  ost.str(), nameMap, dbCon);
+        getBufrAndOutput(options,  ost.str(), nameMap, dbCon);
     }else{
         obt=options.ftime;
   
@@ -169,7 +169,7 @@ main(int argn, char **argv)
             ost.str("");
             ost << "WHERE obstime=\'" << obt.isoTime() << "\'";
             //cerr << "Query: <" << ost.str() << ">!" << endl;
-            getBufferAndOutput(options,  ost.str(), nameMap, dbCon);
+            getBufrAndOutput(options,  ost.str(), nameMap, dbCon);
             obt.addHour(options.tstep);
         }
     }
@@ -191,7 +191,7 @@ main(int argn, char **argv)
 	ost.str("");
 	ost << "WHERE obstime=\'" << obt.isoTime() << "\' AND wmono=" 
 	    << wmono;
-	getBufferAndOutput(options,  ost.str(), nameMap, dbCon);
+	getBufrAndOutput(options,  ost.str(), nameMap, dbCon);
 	obt.addHour(options.tstep);
       }
     }
@@ -199,33 +199,33 @@ main(int argn, char **argv)
 }
 
 void
-getBufferAndOutput(Options &opt,
+getBufrAndOutput(Options &opt,
 		  const std::string &query,
 		  IntStringMap      &nameMap,
 		  dnmi::db::Connection *dbCon
 		  )
 {
   char         buf[30];
-  list<TblBuffer> bufferList;
+  list<TblBufr> bufrList;
   IIntStringMap tit;
   kvalobs::kvDbGate gate(dbCon);
-  list<TblBuffer>::iterator it;
+  list<TblBufr>::iterator it;
   ostringstream ost;
 
-  if(!gate.select(bufferList, query)){
+  if(!gate.select(bufrList, query)){
     cerr << "ERROR: " << gate.getErrorStr() << endl;
     return;
   }
    
-  it=bufferList.begin();
+  it=bufrList.begin();
 
-  for(; it!=bufferList.end(); it++){
+  for(; it!=bufrList.end(); it++){
     tit=nameMap.find(it->wmono());
     
     if(tit==nameMap.end()){
       cerr << it->wmono() << "= <NO NAME>" << endl;
       
-      //If the namefile is given. Write only buffers for
+      //If the namefile is given. Write only bufrs for
       //stations in the file.
       if(!opt.namefile.empty())
 	continue;
@@ -239,7 +239,7 @@ getBufferAndOutput(Options &opt,
     ost.str("");
     ost << opt.outputdir << "/";
     
-    if(opt.onlyBuffertimes && (it->obstime().hour()%3)!=0)
+    if(opt.onlyBufrtimes && (it->obstime().hour()%3)!=0)
         continue;
 
     sprintf(buf, "-%04d%02d%02d%02d.syn", 
@@ -414,7 +414,7 @@ void
 getOptions(int argn, char **argv, Options &opt)
 {
     struct option long_options[]={{"help", 0, 0, 0},
-                                  {"only-buffertimes", 0, 0, 0},
+                                  {"only-bufrtimes", 0, 0, 0},
 				                  {0,0,0,0}};
                                   
     int c;
@@ -422,7 +422,7 @@ getOptions(int argn, char **argv, Options &opt)
     std::string sWmo;
   
     opt.allTimes=false;
-    opt.onlyBuffertimes=false;
+    opt.onlyBufrtimes=false;
   
     while(true){
         c=getopt_long(argn, argv, "o:f:t:n:i:s:c:", long_options, &index);
@@ -487,8 +487,8 @@ getOptions(int argn, char **argv, Options &opt)
             if(strcmp(long_options[index].name,"help")==0){
 	           use(0);
             }
-            if(strcmp(long_options[index].name,"only-buffertimes")==0){
-                opt.onlyBuffertimes=true;
+            if(strcmp(long_options[index].name,"only-bufrtimes")==0){
+                opt.onlyBufrtimes=true;
             }
             break;
         case '?':
@@ -541,9 +541,9 @@ void
 use(int exitstatus)
 {
   cerr << "\n\tuse" << endl
-       <<"\t   kvbufferdbclt -f timestamp [-t timestamp] [-s step] " << endl
+       <<"\t   kvbufrdbclt -f timestamp [-t timestamp] [-s step] " << endl
        << "\t\t[-i stationnames] [-o outdir] [-n wmonolist] [-c dbconnect]" << endl 
-       << "\t\t[--only-buffertimes]" << endl << endl
+       << "\t\t[--only-bufrtimes]" << endl << endl
        << "\t-f timestamp  From time. Use 'all' to ignore fromtime!" << endl
        << "\t-t timestamp  To time" << endl
        << "\t-s step       Increment the fromtime with this step until totime"

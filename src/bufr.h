@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: buffer.h,v 1.8.2.3 2007/09/27 09:02:23 paule Exp $
+  $Id: bufr.h,v 1.8.2.3 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -28,12 +28,12 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __BUFFER_H__
-#define __BUFFER_H__
+#ifndef __BUFR_H__
+#define __BUFR_H__
 
 #include <vector>
 #include <string>
-#include "BufferData.h"
+#include "BufrData.h"
 #include "StationInfo.h"
 
 #define GROUPSIZE                  6
@@ -47,10 +47,10 @@
 #define IW 1             //Wind unit i m/s
 //#define KNOPFAKTOR     1.94384449244
 //#define IW 4  //Wind unit in knop
-class Buffer
+class Bufr
 {
-    Buffer(const Buffer &);
-    Buffer& operator=(const Buffer &);
+    Bufr(const Bufr &);
+    Bufr& operator=(const Bufr &);
 
  public:
     enum EPrecipitation{NoPrecipitation,
@@ -102,24 +102,24 @@ class Buffer
 		       std::string &verTilleggKode,
 		       std::string &rr24,
 		       int         &tr,
-		       BufferDataList &sd);
-    int  nedborFromRA(float &nedbor, float &fRR24, int &tr, BufferDataList &sd);
-    int  nedborFromRR(float &nedbor, float &fRR24, int &tr, BufferDataList &sd);
+		       BufrDataList &sd);
+    int  nedborFromRA(float &nedbor, float &fRR24, int &tr, BufrDataList &sd);
+    int  nedborFromRR(float &nedbor, float &fRR24, int &tr, BufrDataList &sd);
     int  nedborFromRR_N(float &nedbor, 
 			float &fRR24, 
 			int   &tr, 
-			BufferDataList &sd);
+			BufrDataList &sd);
     int  nedborFromRRRtr(float &nedbor,
 			 float &fRR24, 
 			 int   &tr, 
-			 BufferDataList &sd);
-    int RR_24_from_RR_N(BufferDataList &sd, float &fRR24);
+			 BufrDataList &sd);
+    int RR_24_from_RR_N(BufrDataList &sd, float &fRR24);
  	 
     void Dugg_Kode(std::string &kode, float temp, float fukt);
-    void Min_Max_Kode(std::string &kode, BufferDataList &sd);
-    void Max_Min_Kode(std::string &kode, BufferDataList &sd);
-    void Max_Vind_Gust_Kode(std::string &kode, BufferDataList &sd);
-    void Max_Vind_Max_Kode(std::string &kode, BufferDataList &sd);
+    void Min_Max_Kode(std::string &kode, BufrDataList &sd);
+    void Max_Min_Kode(std::string &kode, BufrDataList &sd);
+    void Max_Vind_Gust_Kode(std::string &kode, BufrDataList &sd);
+    void Max_Vind_Max_Kode(std::string &kode, BufrDataList &sd);
     void Trykk_Kode(int prefix, std::string &kode, float trykk);
     void Tendens_Kode(std::string &kode, 
 		      int   time, 
@@ -127,47 +127,47 @@ class Buffer
 		      float trykk2, 
 		      float trykk3, 
 		      float trykk4);
-    void Tendens_Kode(std::string &kode, const BufferData &data);
+    void Tendens_Kode(std::string &kode, const BufrData &data);
     void Skydekke_Kode(std::string &kode, const std::string &str);
-    void Hoyde_Sikt_Kode(std::string &kode, const BufferData &data);
+    void Hoyde_Sikt_Kode(std::string &kode, const BufrData &data);
     int  ix_Kode(const std::string &str);
-    bool doVerGenerelt(std::string &kode, int &ix, const BufferData &data);
-    bool SjoeTempKode(std::string &kode, const BufferData &data);
+    bool doVerGenerelt(std::string &kode, int &ix, const BufrData &data);
+    bool SjoeTempKode(std::string &kode, const BufrData &data);
     bool SjekkEsss(std::string &kode, const std::string &str);
-    void doEsss( std::string &kode, const BufferData &data );
-    void GressTempKode(std::string &kode, BufferDataList &sd);
+    void doEsss( std::string &kode, const BufrData &data );
+    void GressTempKode(std::string &kode, BufrDataList &sd);
     void SplittStreng(std::string &streng, std::string::size_type index);
 
  public:
     
     
-    Buffer(EPrecipitation precipitation);
-    Buffer();
+    Bufr(EPrecipitation precipitation);
+    Bufr();
 
-    ~Buffer();
+    ~Bufr();
 
     std::string getErrorMsg()const { return errorMsg;}
     void        setDebug(){ debug=true;}
     void        setTest( bool flag ) { test = flag; }
     
     /**
-     * doBuffer,
+     * doBufr,
      *
      * \param create_CCA_template, angir at vi skal lage en template
      *        p� formen 'CCCXXX'  som senere skal skiftes
      *        ut med aktuell CCA verdi.
      */
-    bool    doBuffer(int                  bufferno,
+    bool    doBufr(int                  bufrno,
 		    const std::string    &usteder,
 		    int                  listenummer,
-		    std::string          &buffer,
+		    std::string          &bufr,
 		    StationInfoPtr       info,
-		    BufferDataList        &bufferData,
+		    BufrDataList        &bufrData,
 		    bool                 create_CCA_template=false);
 
-    bool doBuffer( StationInfoPtr       info,
-    		      BufferDataList        &bufferData,
-    		      std::string          &buffer,
+    bool doBufr( StationInfoPtr       info,
+    		      BufrDataList        &bufrData,
+    		      std::string          &bufr,
     		      bool                 create_CCA_template=false
     		    );
 
@@ -177,7 +177,7 @@ class Buffer
      * templaten, for ccx=1 f�r vi CCA, for ccx=2 f�r vi CCB osv. Hvis
      * ccx > 26, blir templaten bare fjernet.
      */
-    static void replaceCCCXXX(std::string &buffer, int ccx);
+    static void replaceCCCXXX(std::string &bufr, int ccx);
 };
 
 #endif

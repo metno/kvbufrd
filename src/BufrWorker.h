@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: BufferWorker.h,v 1.12.2.7 2007/09/27 09:02:23 paule Exp $
+  $Id: BufrWorker.h,v 1.12.2.7 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -28,19 +28,19 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __BufferWorker_h__
-#define __BufferWorker_h__
+#ifndef __BufrWorker_h__
+#define __BufrWorker_h__
 
 #include <sstream>
 #include "App.h"
 #include <kvcpp/kvevents.h>
 #include "DataList.h"
-#include "BufferData.h"
+#include "BufrData.h"
 #include "obsevent.h"
 #include "StationInfo.h"
 
 
-class BufferWorker {
+class BufrWorker {
   typedef enum{RdOK, 
 		 RdNoStation, 
 		 RdNoData, 
@@ -72,16 +72,16 @@ class BufferWorker {
 		     ObsEvent             &event,
 		     DataEntryList        &data)const;
   
-  void loadBufferData(const DataEntryList &dl, BufferDataList &sd,
+  void loadBufrData(const DataEntryList &dl, BufrDataList &sd,
 		     StationInfoPtr info)const;
 
   /**
    * checkTypes, check if all data types that is needed to
-   * generate a buffer is received.
+   * generate a bufr is received.
    *
-   * \param data A list of data to be used to encode a buffer.
+   * \param data A list of data to be used to encode a bufr.
    * \param stInfo A pointer to the station information.
-   * \param obstime The obstime to create a buffer for.
+   * \param obstime The obstime to create a bufr for.
    * \param mustHaveTypes An output variable. It is true if at least
    *                all must have type id is pressent for obstime.
    *
@@ -95,11 +95,11 @@ class BufferWorker {
 
 
   /**
-   * readyForBuffer, check if we are ready to create a buffer
+   * readyForBufr, check if we are ready to create a bufr
    * for the pressent data. If we don't have enogh data delay
    * if necesarry. 
    */
-  bool readyForBuffer(const DataEntryList  &data,
+  bool readyForBufr(const DataEntryList  &data,
 		     ObsEvent             &event)const;
 
   /**
@@ -108,9 +108,9 @@ class BufferWorker {
    * to the path given by \e copyto if \e copy is true. If \e copy is
    * false the \a wmomsg is not saved to disk.
    * 
-   * The file is named: wmono-termin-ccx.buffer, termin: hhDD.
-   *  ex. 1492-0625.buffer, Blindern, kl 06 dag 25.
-   *      1492-0625-A.buffer, same as above, but a CCA message.
+   * The file is named: wmono-termin-ccx.bufr, termin: hhDD.
+   *  ex. 1492-0625.bufr, Blindern, kl 06 dag 25.
+   *      1492-0625-A.bufr, same as above, but a CCA message.
    *
    * \param inf A pointer to the StationInfo for the station.
    * \param obstime The observation time to the \a wmomsg.
@@ -126,7 +126,7 @@ class BufferWorker {
 			   const DataEntryList &data)const;
 
  public:
-  BufferWorker(App &app,
+  BufrWorker(App &app,
 	      dnmi::thread::CommandQue &que,
 	      dnmi::thread::CommandQue &replayQue);
 

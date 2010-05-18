@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvbufferCltApp.h,v 1.3.2.3 2007/09/27 09:02:23 paule Exp $
+  $Id: kvbufrCltApp.h,v 1.3.2.3 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -28,14 +28,14 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvbufferCltApp_h__
-#define __kvbufferCltApp_h__
+#ifndef __kvbufrCltApp_h__
+#define __kvbufrCltApp_h__
 
 #include <puTools/miTime.h>
 #include <map>
 #include <list>
 #include <miconfparser/miconfparser.h>
-#include "kvbufferCorbaThread.h"
+#include "kvbufrCorbaThread.h"
 
 typedef std::map<std::string, std::string>                   TKeyVal;
 typedef std::map<std::string, std::string>::iterator        ITKeyVal;
@@ -46,7 +46,7 @@ use(int exitcode);
 
 
 struct Options{
-  typedef enum{ Buffer, Uptime, StationList, Delays, Reload, Help,
+  typedef enum{ Bufr, Uptime, StationList, Delays, Reload, Help,
 		CacheReload, Undef} Cmd;
   typedef std::list<int>           IntList;
   typedef std::list<int>::iterator IIntList;
@@ -83,42 +83,42 @@ struct Options{
 };  
 
 
-class BufferCltApp
+class BufrCltApp
 {
   bool getOptions(int argn, char **argv, miutil::conf::ConfSection *conf, Options &opt);
   Options opt;
-  BufferCltCorbaThread   *corbaThread;
-  kvbufferd::buffercb_var buffercb;
-  static BufferCltApp    *app;
+  BufrCltCorbaThread   *corbaThread;
+  kvbufrd::bufrcb_var bufrcb;
+  static BufrCltApp    *app;
   bool                  shutdown_;
   CorbaHelper::CorbaApp *capp; 
-  kvbufferd::buffer_var   buffer;
+  kvbufrd::bufr_var   bufr;
   bool                  wait_;
-  kvbufferd::BufferData   result;
+  kvbufrd::BufrData   result;
  public:
-  BufferCltApp(int argn, char **argv, miutil::conf::ConfSection *conf );
-  ~BufferCltApp();
+  BufrCltApp(int argn, char **argv, miutil::conf::ConfSection *conf );
+  ~BufrCltApp();
 
   Options options() const{ return opt;}
   void doShutdown();
   bool shutdown()const;
 
   bool uptime(miutil::miTime &startTime, long &uptime);
-  bool stationsList(kvbufferd::StationInfoList &infoList);
+  bool stationsList(kvbufrd::StationInfoList &infoList);
   bool wait()const;
   void wait(bool w);
 
-  void setResult(const kvbufferd::BufferData &d){ result=d;}
+  void setResult(const kvbufrd::BufrData &d){ result=d;}
 
-  bool createBuffer(int wmono,
+  bool createBufr(int wmono,
 		   const miutil::miTime &obstime,
 		   const TKeyVal &keyvals,
 		   int timeoutInSeconds,
-		   kvbufferd::BufferData &result);
+		   kvbufrd::BufrData &result);
 
-  bool delayList(kvbufferd::DelayList &delayList, miutil::miTime &nowTime);
+  bool delayList(kvbufrd::DelayList &delayList, miutil::miTime &nowTime);
   
-  kvbufferd::ReloadList* cacheReloadList(std::string &message);
+  kvbufrd::ReloadList* cacheReloadList(std::string &message);
 
   bool reloadConf();
 

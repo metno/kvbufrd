@@ -528,8 +528,8 @@ doDefDelay(miutil::conf::ValElementList &vl, int wmono)
       if(i==string::npos){
          //Is this an forced skip SYNOP definition.
          //An skip SYNOP i started with a - character.
-         //Valid values SS - skip SYNOP for all buffertimes.
-         //A value in the range [0, 23], skip buffer for
+         //Valid values SS - skip SYNOP for all bufrtimes.
+         //A value in the range [0, 23], skip bufr for
          //this hour.
          if(!val.empty() && val[0]=='-'){
             int h;
@@ -540,7 +540,7 @@ doDefDelay(miutil::conf::ValElementList &vl, int wmono)
             }else{
                h=atoi(val.c_str());
                if(h<0 || h>23){
-                  LOGERROR("Invalid hour in 'Skip buffer' spec: h=" << h <<
+                  LOGERROR("Invalid hour in 'Skip bufr' spec: h=" << h <<
                         " Valid values [0, 23].");
                   continue;
                }
@@ -554,7 +554,7 @@ doDefDelay(miutil::conf::ValElementList &vl, int wmono)
             StationInfo::ITDelayList itd=dl.begin();
 
             if(itd!=dl.end())
-               if(!itd->skipBufferSpec())
+               if(!itd->skipBufrSpec())
                   itd=dl.end();
 
             if(itd==dl.end()){
@@ -564,9 +564,9 @@ doDefDelay(miutil::conf::ValElementList &vl, int wmono)
 
             if(h==-1){
                for(int i=0; i<24; i+=3)
-                  itd->bufferForThisHour(i, false);
+                  itd->bufrForThisHour(i, false);
             }else{
-               itd->bufferForThisHour(h, false);
+               itd->bufrForThisHour(h, false);
             }
 
             continue;

@@ -35,8 +35,8 @@ if test -z $BOOST_PROGRAM_OPTIONS_LIB; then AC_MSG_ERROR([Unable to find boost p
 
 
 AC_CONFIG_FILES([Makefile
-                 check_kvbufferd.sh
-                 src/kvbufferd_initdb
+                 check_kvbufrd.sh
+                 src/kvbufrd_initdb
                  src/Makefile
 ])
 

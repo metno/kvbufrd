@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: BufferData.cc,v 1.17.2.7 2007/09/27 09:02:23 paule Exp $
+  $Id: BufrData.cc,v 1.17.2.7 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -32,11 +32,11 @@
 #include <float.h>
 #include <sstream>
 #include <decodeutility/decodeutility.h>
-#include "BufferData.h"
+#include "BufrData.h"
 
 using namespace decodeutility;
 
-BufferData::BufferData():
+BufrData::BufrData():
     tempNaa(FLT_MAX),
     tempMid(FLT_MAX), 
     tempMin(FLT_MAX),
@@ -103,7 +103,7 @@ BufferData::BufferData():
 
 
 
-BufferData::BufferData(const BufferData &p):
+BufrData::BufrData(const BufrData &p):
     time_(p.time_), 
     tempNaa(p.tempNaa),
     tempMid(p.tempMid), 
@@ -178,8 +178,8 @@ BufferData::BufferData(const BufferData &p):
 {
 }
 
-BufferData&
-BufferData::operator=(const BufferData &p)
+BufrData&
+BufrData::operator=(const BufrData &p)
 {
     if(this==&p)
 	return *this;
@@ -257,12 +257,12 @@ BufferData::operator=(const BufferData &p)
     return *this;
 }
 
-BufferData::~BufferData()
+BufrData::~BufrData()
 {
 }
 
 void 
-BufferData::cleanUpSlash()
+BufrData::cleanUpSlash()
 {
   if(verGenerelt=="////")
     verGenerelt.erase();
@@ -292,7 +292,7 @@ BufferData::cleanUpSlash()
 
 
 bool
-BufferData::setData(const int  &param,
+BufrData::setData(const int  &param,
 		   const std::string &data_)
 {
     float       fData;
@@ -497,22 +497,22 @@ BufferData::setData(const int  &param,
 }
 
 
-BufferDataList::BufferDataList()
+BufrDataList::BufrDataList()
 {
 } 
 
-BufferDataList::BufferDataList(const BufferDataList &d)
+BufrDataList::BufrDataList(const BufrDataList &d)
 {
   dataList=d.dataList;
 }
 
 
-BufferDataList::~BufferDataList()
+BufrDataList::~BufrDataList()
 {
 }  
   
-//BufferDataList&
-//BufferDataList::operator=(const BufferDataList &rhs)
+//BufrDataList&
+//BufrDataList::operator=(const BufrDataList &rhs)
 //{
 //  if(this!=&rhs){
 //    dataList=rhs.dataList;
@@ -522,10 +522,10 @@ BufferDataList::~BufferDataList()
 
 
 miutil::miTime
-BufferDataList::
+BufrDataList::
 firstTime() const
 {
-   CIBufferDataList it=dataList.begin();
+   CIBufrDataList it=dataList.begin();
 
     if( it == dataList.end() )
       return miutil::miTime();
@@ -536,29 +536,29 @@ firstTime() const
   /**
    * \exception 
    */
-const BufferDataList::BufferDataProxy
-BufferDataList::operator[](const miutil::miTime &t)const
+const BufrDataList::BufrDataProxy
+BufrDataList::operator[](const miutil::miTime &t)const
 {
   //std::cerr << "const [miTime] operator\n";
   
-  return BufferDataProxy(const_cast<BufferDataList*>(this), t);
+  return BufrDataProxy(const_cast<BufrDataList*>(this), t);
 }
 
-BufferDataList::BufferDataProxy
-BufferDataList::operator[](const miutil::miTime &t)
+BufrDataList::BufrDataProxy
+BufrDataList::operator[](const miutil::miTime &t)
 {
   //std::cerr << "[miTime] operator\n";
   
-  return BufferDataProxy(this, t);
+  return BufrDataProxy(this, t);
 }
 
 /**
  * \exception  
  */
-const BufferData&
-BufferDataList::operator[](const int index)const
+const BufrData&
+BufrDataList::operator[](const int index)const
 {
-  CIBufferDataList it=dataList.begin();
+  CIBufrDataList it=dataList.begin();
 
   //std::cerr << "const [int] operator\n";
 
@@ -574,10 +574,10 @@ BufferDataList::operator[](const int index)const
   return *it;
 }
 
-BufferData&
-BufferDataList::operator[](const int index)
+BufrData&
+BufrDataList::operator[](const int index)
 {
-   IBufferDataList it=dataList.begin();
+   IBufrDataList it=dataList.begin();
 
    //std::cerr << "const [int] operator\n";
 
@@ -594,9 +594,9 @@ BufferDataList::operator[](const int index)
 }
 
 int 
-BufferDataList::nContinuesTimes()const
+BufrDataList::nContinuesTimes()const
 {
-  CIBufferDataList it=dataList.begin();
+  CIBufrDataList it=dataList.begin();
   miutil::miTime  prevT;
   miutil::miTime  testT;
   int             n;
@@ -625,11 +625,11 @@ BufferDataList::nContinuesTimes()const
 
   
 bool      
-BufferDataList::insert(const miutil::miTime &timeIndex,
-		      const BufferData            &sd,
+BufrDataList::insert(const miutil::miTime &timeIndex,
+		      const BufrData            &sd,
 		      bool                 replace)
 {
-  IBufferDataList it=dataList.begin();
+  IBufrDataList it=dataList.begin();
 
   for(;it!=dataList.end(); it++){
     if(it->time()<=timeIndex)
@@ -656,10 +656,10 @@ BufferDataList::insert(const miutil::miTime &timeIndex,
 
 
 
-IBufferDataList
-BufferDataList::find(const miutil::miTime &from)
+IBufrDataList
+BufrDataList::find(const miutil::miTime &from)
 {
-  IBufferDataList it=dataList.begin();
+  IBufrDataList it=dataList.begin();
 
   if(from.undef())
     return dataList.end();
@@ -673,10 +673,10 @@ BufferDataList::find(const miutil::miTime &from)
 }
 
 
-CIBufferDataList
-BufferDataList::find(const miutil::miTime &from)const
+CIBufrDataList
+BufrDataList::find(const miutil::miTime &from)const
 {
-  CIBufferDataList it=dataList.begin();
+  CIBufrDataList it=dataList.begin();
 
   if(from.undef())
     return dataList.end();
@@ -689,22 +689,22 @@ BufferDataList::find(const miutil::miTime &from)const
   return dataList.end();
 }
 
-BufferDataList
-BufferDataList::subData( const miutil::miTime &from, const miutil::miTime &to ) const
+BufrDataList
+BufrDataList::subData( const miutil::miTime &from, const miutil::miTime &to ) const
 {
-   BufferDataList retList;
+   BufrDataList retList;
 
-   for( CIBufferDataList it = find( from ); it != end() || ( !to.undef() && to>=it->time()); ++it )
+   for( CIBufrDataList it = find( from ); it != end() || ( !to.undef() && to>=it->time()); ++it )
       retList.dataList.push_back( *it );
 
    return retList;
 }
 
-BufferDataList::BufferDataProxy&
-BufferDataList::BufferDataProxy::operator=(const BufferData &rhs) //lvalue use
+BufrDataList::BufrDataProxy&
+BufrDataList::BufrDataProxy::operator=(const BufrData &rhs) //lvalue use
 {
-  //std::cout << "BufferData: lvalue ...\n";
-  IBufferDataList it=sdl->dataList.begin();
+  //std::cout << "BufrData: lvalue ...\n";
+  IBufrDataList it=sdl->dataList.begin();
 
   for(;it!=sdl->dataList.end(); it++){
     if(it->time()<=timeIndex)
@@ -726,10 +726,10 @@ BufferDataList::BufferDataProxy::operator=(const BufferData &rhs) //lvalue use
   return *this;
 }
 
-BufferDataList::BufferDataProxy::operator BufferData()const //rvalue use
+BufrDataList::BufrDataProxy::operator BufrData()const //rvalue use
 {
-  //std::cerr << "BufferData: rvalue ...\n";
-  IBufferDataList it=sdl->dataList.begin();
+  //std::cerr << "BufrData: rvalue ...\n";
+  IBufrDataList it=sdl->dataList.begin();
 
   for(;it!=sdl->dataList.end(); it++){
     if(it->time()<=timeIndex)
@@ -738,7 +738,7 @@ BufferDataList::BufferDataProxy::operator BufferData()const //rvalue use
   
   if(it->time()!=timeIndex){
     std::ostringstream ost;
-    ost << "NO BufferData at <" << timeIndex << ">!";
+    ost << "NO BufrData at <" << timeIndex << ">!";
     throw std::out_of_range(ost.str());
   }
   
@@ -747,7 +747,7 @@ BufferDataList::BufferDataProxy::operator BufferData()const //rvalue use
 
 
 std::ostream& 
-operator<<(std::ostream& ost, const BufferData& sd)
+operator<<(std::ostream& ost, const BufrData& sd)
 {
   using namespace std;
   if(sd.time_.undef())
@@ -828,9 +828,9 @@ operator<<(std::ostream& ost, const BufferData& sd)
 
 std::ostream& 
 operator<<(std::ostream& ost,
-	   const BufferDataList& sd)
+	   const BufrDataList& sd)
 {
-  CIBufferDataList it=sd.begin();
+  CIBufrDataList it=sd.begin();
 
   for(;it!=sd.end(); it++){
     ost << *it << std::endl 

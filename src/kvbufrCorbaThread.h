@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvbufferCltBuffercbImp.h,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $
+  $Id: kvbufrCorbaThread.h,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -28,26 +28,38 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvbufferCltBuffercbImpl_h__
-#define __kvbufferCltBuffercbImpl_h__
+#ifndef __kvbufr_CorbaThread_h__
+#define __kvbufr_CorbaThread_h__
 
-#include "kvbufferd.hh"
-#include "kvbufferCltApp.h"
-//
-// Example class implementing IDL interface kvbufferd::buffercb
-//
-class BuffercbImpl: public POA_kvbufferd::buffercb,
-		   public PortableServer::RefCountServantBase 
+#include <omnithread.h>
+#include <corbahelper/corbaApp.h>
+//#include "kvDataNotifySubscriberImpl.h"
+
+
+class BufrCltCorbaThread : public omni_thread
 {
-  BufferCltApp &app;
-
-public:
-  BuffercbImpl(BufferCltApp &app_): app(app_){};
-  virtual ~BuffercbImpl();
-
-
-  void buffer(const kvbufferd::BufferData& data);
-
+  BufrCltCorbaThread(const BufrCltCorbaThread &);
+  BufrCltCorbaThread();
+  BufrCltCorbaThread &operator=(const BufrCltCorbaThread&);
+  
+  CorbaHelper::CorbaApp  app;
+  bool        isInitialized_;
+  
+ public:
+  BufrCltCorbaThread(int argn, char **argv);
+  
+  virtual ~BufrCltCorbaThread(){}
+  
+  
+  void *run_undetached(void*);
+  
+  bool  isInitialized()const{ return  isInitialized_;}
 };
 
+
 #endif
+
+
+
+
+

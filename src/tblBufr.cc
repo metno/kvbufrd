@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: tblBuffer.cc,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $
+  $Id: tblBufr.cc,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -31,7 +31,7 @@
 #include <list>
 #include <stdlib.h>
 #include <stdio.h>
-#include "tblBuffer.h"
+#include "tblBufr.h"
 #include <milog/milog.h>
 
 using namespace std;
@@ -39,7 +39,7 @@ using namespace miutil;
 using namespace dnmi;
 
 void 
-TblBuffer::
+TblBufr::
 createSortIndex() 
 {
   sortBy_=miString(wmono_)+obstime_.isoTime()+createtime_.isoTime()+
@@ -47,7 +47,7 @@ createSortIndex()
 }
   
 void 
-TblBuffer::
+TblBufr::
 clean()
 {
   wmono_      = 0;  
@@ -62,7 +62,7 @@ clean()
 
 
 bool 
-TblBuffer::
+TblBufr::
 set(const dnmi::db::DRow &r_)
 {
   db::DRow               &r=const_cast<db::DRow&>(r_);
@@ -87,11 +87,11 @@ set(const dnmi::db::DRow &r_)
       }else if(*it=="wmomsg"){
 	wmomsg_=buf;
       }else{
-	LOGWARN("TblBuffer::set .. unknown entry:" << *it << std::endl);
+	LOGWARN("TblBufr::set .. unknown entry:" << *it << std::endl);
       }
     }
     catch(...){
-      LOGWARN("TblBuffer: unexpected exception ..... \n");
+      LOGWARN("TblBufr: unexpected exception ..... \n");
     }  
   }
  
@@ -100,8 +100,8 @@ set(const dnmi::db::DRow &r_)
 }
 
 bool 
-TblBuffer::
-set(const TblBuffer &s)
+TblBufr::
+set(const TblBufr &s)
 {
   wmono_      = s.wmono_;  
   obstime_    = s.obstime_;  
@@ -118,7 +118,7 @@ set(const TblBuffer &s)
 
 
 bool 
-TblBuffer::
+TblBufr::
 set(int                  wmono, 
     const miutil::miTime &obtime,    
     const miutil::miTime &createtime,    
@@ -139,7 +139,7 @@ set(int                  wmono,
 }
 
 miutil::miString 
-TblBuffer::
+TblBufr::
 toSend() const
 {
   ostringstream ost;
@@ -158,7 +158,7 @@ toSend() const
 
 
 miutil::miString 
-TblBuffer::
+TblBufr::
 uniqueKey()const
 {
   ostringstream ost;
@@ -172,7 +172,7 @@ uniqueKey()const
 
 
 miutil::miString 
-TblBuffer::
+TblBufr::
 toUpdate()const
 {
   ostringstream ost;

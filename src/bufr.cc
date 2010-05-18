@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: buffer.cc,v 1.34.2.20 2007/09/27 09:02:23 paule Exp $
+  $Id: bufr.cc,v 1.34.2.20 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -34,7 +34,7 @@
 #include <float.h>
 #include <milog/milog.h>
 #include <decodeutility/decodeutility.h>
-#include "buffer.h"
+#include "bufr.h"
 
 /*CHANGES
  *
@@ -111,36 +111,36 @@ using namespace std;
 #define FEQ(f1, f2, d) ((fabsf((f1)-(f2)))<(d)?true:false)
 
 bool
-Buffer::
-doBuffer( StationInfoPtr       info,
-    	 BufferDataList        &bufferData,
-    	 std::string          &buffer,
+Bufr::
+doBufr( StationInfoPtr       info,
+    	 BufrDataList        &bufrData,
+    	 std::string          &bufr,
     	 bool                 create_CCA_template )
 {
-	milog::LogContext context("buffer");
+	milog::LogContext context("bufr");
 
 	if( !info ) {
-		LOGERROR( "Cant create buffer. Missing station information.");
+		LOGERROR( "Cant create bufr. Missing station information.");
 		return false;
 	}
 
-	return doBuffer( info->wmono(),
+	return doBufr( info->wmono(),
 			        info->owner(),
 			        atoi(info->list().c_str()),
-			        buffer,
+			        bufr,
 			        info,
-			        bufferData,
+			        bufrData,
 			        create_CCA_template );
 }
 
 bool
-Buffer::
-doBuffer(int           bufferno,
+Bufr::
+doBufr(int           bufrno,
 	const std::string &utsteder,
 	int               listenummer,
-	std::string       &buffer,
+	std::string       &bufr,
 	StationInfoPtr    info,
-	BufferDataList     &bufferData,
+	BufrDataList     &bufrData,
 	bool              create_CCA_template)
 {
     using std::string;
@@ -150,7 +150,7 @@ doBuffer(int           bufferno,
     char   tmp[512];
     string buf;
     string dato_tid;
-    string bufferStr;
+    string bufrStr;
     string tempStr;
     string tidsKode;
     string luftTempKode;
@@ -182,26 +182,26 @@ doBuffer(int           bufferno,
     string rr24Kode;
     int    ITR;
     string tmpUtsteder(utsteder);
-    BufferData sisteTid;
+    BufrData sisteTid;
     int       nTimeStr=0;
     
 
-    buffer.erase();
-    milog::LogContext context("buffer");
+    bufr.erase();
+    milog::LogContext context("bufr");
     
     verGenerelt    = false;
      
     errorMsg.erase();
 
-    if(bufferData.size()==0){
+    if(bufrData.size()==0){
       errorMsg="No data!";
       return false;
     }
 
-    nTimeStr=bufferData.nContinuesTimes();
+    nTimeStr=bufrData.nContinuesTimes();
     
-    sisteTid=*bufferData.begin();
-    IBufferDataList it=bufferData.end();
+    sisteTid=*bufrData.begin();
+    IBufrDataList it=bufrData.end();
     it--;
 
 	 {
@@ -233,7 +233,7 @@ doBuffer(int           bufferno,
 
   
     LOGDEBUG("nTimeStr (cont): " << nTimeStr << endl <<
-	    	 "Tot times:       " << bufferData.size() << endl <<
+	    	 "Tot times:       " << bufrData.size() << endl <<
 	     	 "sisteTid:        " << sisteTid.time() << endl <<
 	    	 "fï¿½rsteTid:       " << it->time() << endl <<
 	    	 "nedbor12t:       " << sisteTid.nedboer12Time << endl <<
@@ -252,7 +252,7 @@ doBuffer(int           bufferno,
 				      verTilleggKode,
 		   			  rr24Kode,
 		   			  ITR,
-		    		  bufferData);
+		    		  bufrData);
     }
 
     LOGDEBUG("Etter doNedboerKode:"
@@ -268,17 +268,17 @@ doBuffer(int           bufferno,
     /* Lagar tidskoda SM|SI|SN */
     Tid_Kode(tidsKode, sisteTid.time().hour());
     
-    /* Lufttemperatur i buffer */
+    /* Lufttemperatur i bufr */
     Temp_Kode(luftTempKode, sisteTid.tempNaa);
 
     /* Reknar ut duggtemp. vha. lufttemp. og fuktigheit */
     Dugg_Kode(duggTempKode, sisteTid.tempNaa, sisteTid.fuktNaa);
  
     /* Reknar ut nattens min.temp ELLER dagens max.temp  */
-    Min_Max_Kode(minMaxKode, bufferData);
+    Min_Max_Kode(minMaxKode, bufrData);
 
     /* Reknar ut nattens max ELLER dagens min */
-    Max_Min_Kode(maxMinKode, bufferData);
+    Max_Min_Kode(maxMinKode, bufrData);
 
     if(sisteTid.vindRetnNaa!=FLT_MAX && sisteTid.vindHastNaa!=FLT_MAX){
       	Naa_Vind_Kode(naaVindKode, 
@@ -289,13 +289,13 @@ doBuffer(int           bufferno,
     }
     
     /* Reknar ut max. vindgust kode sidan forrige hovud obs. (12t int.) */
-    Max_Vind_Gust_Kode(maxVindGustKode, bufferData);
+    Max_Vind_Gust_Kode(maxVindGustKode, bufrData);
 
     /* Reknar ut max. vindkast kode sidan forrige hovud obs. (6t int.) */
-    Max_Vind_Max_Kode(maxVindMaxKode, bufferData);
+    Max_Vind_Max_Kode(maxVindMaxKode, bufrData);
 
       //Regner ut gressTempereaturen
-    GressTempKode(gressTemp, bufferData);
+    GressTempKode(gressTemp, bufrData);
 
     Trykk_Kode(4,trykkQFFKode, sisteTid.trykkQFFNaa);
     Trykk_Kode(3,trykkQFEKode, sisteTid.trykkQFENaa);
@@ -305,9 +305,9 @@ doBuffer(int           bufferno,
     }else if(nTimeStr>=4){
 		Tendens_Kode(tendensKode,
 				     sisteTid.time().hour(),
-		    		 bufferData[3].trykkQFENaa,
-		    		 bufferData[2].trykkQFENaa,
-		    		 bufferData[1].trykkQFENaa,
+		    		 bufrData[3].trykkQFENaa,
+		    		 bufrData[2].trykkQFENaa,
+		    		 bufrData[1].trykkQFENaa,
 		    		 sisteTid.trykkQFENaa);
     }
 
@@ -324,22 +324,22 @@ doBuffer(int           bufferno,
     Sjekk_Gruppe(0, sjoeTempKode, sisteTid.sjoeTemp);
     
     if( ! test ) {
-    	buffer="\r\r\nZCZC\r\r\n";
-    	buffer+=tidsKode;
-    	buffer+="NO";
+    	bufr="\r\r\nZCZC\r\r\n";
+    	bufr+=tidsKode;
+    	bufr+="NO";
     	sprintf(tmp,"%02d ", listenummer);
-    	buffer+=tmp;
+    	bufr+=tmp;
     
     	while(tmpUtsteder.length()<4)
     		tmpUtsteder.insert(0," ");
 
 		tmpUtsteder+=" ";
-		buffer+=tmpUtsteder;
-		buffer+=dato_tid;
-		buffer.append("00");
+		bufr+=tmpUtsteder;
+		bufr+=dato_tid;
+		bufr.append("00");
 
 		if(create_CCA_template)
-			buffer+=" CCCXXX";
+			bufr+=" CCCXXX";
     }
 
     if(ir==1){
@@ -365,38 +365,38 @@ doBuffer(int           bufferno,
      *          W = 4 - knop
      *          W = 1 - m/s
      * 
-     * IW is defined in buffer.h
+     * IW is defined in bufr.h
      */
     sprintf(tmp,"\r\nAAXX %s%1d", dato_tid.c_str(), IW);
-    buffer+=tmp;
+    bufr+=tmp;
       
-    sprintf(tmp, "\r\n%05d %1d%1d", bufferno, ir, ix);
-    buffer+=tmp;
-    buffer+=hoyde_siktKode;
-    buffer+=string(" ")+skydekkeKode+naaVindKode;
-    buffer+=" 1";
-    buffer+=luftTempKode+duggTempKode;
+    sprintf(tmp, "\r\n%05d %1d%1d", bufrno, ir, ix);
+    bufr+=tmp;
+    bufr+=hoyde_siktKode;
+    bufr+=string(" ")+skydekkeKode+naaVindKode;
+    bufr+=" 1";
+    bufr+=luftTempKode+duggTempKode;
 
-    buffer+= trykkQFEKode+trykkQFFKode+tendensKode;
+    bufr+= trykkQFEKode+trykkQFFKode+tendensKode;
     
     if(ir==1 && !nedboerKodeSect1.empty())
-      	bufferStr+=nedboerKodeSect1;
+      	bufrStr+=nedboerKodeSect1;
     
     if(verGenerelt)
-		bufferStr+=verGenereltKode;
+		bufrStr+=verGenereltKode;
     
     if(skyerKode.length()>0 && 
        skydekkeKode[0]!='0' && 
        skydekkeKode[0]!='9')
-		bufferStr+=skyerKode;
+		bufrStr+=skyerKode;
     
     
     //Seksjon 222
     //Kyststajoner som fï¿½r beskjed
     if(sisteTid.time().hour()==12){
       	if(SjoeTempKode(sjoeTempKode, sisteTid)){
-			bufferStr+=" 222// ";
-			bufferStr+=sjoeTempKode;
+			bufrStr+=" 222// ";
+			bufrStr+=sjoeTempKode;
       	}
     }
     
@@ -416,16 +416,16 @@ doBuffer(int           bufferno,
        !skyerEkstraKode3.empty() ||
        !skyerEkstraKode4.empty()){
       	/* Gruppe 333 */
-      	bufferStr+=" 333 ";
-      	bufferStr+=minMaxKode;
-      	bufferStr+=snoeMarkKode;
-      	bufferStr+=nedboerKodeSect3;
-      	bufferStr+=rr24Kode;
-      	bufferStr+=skyerEkstraKode1;
-      	bufferStr+=skyerEkstraKode2;
-      	bufferStr+=skyerEkstraKode3;
-      	bufferStr+=skyerEkstraKode4;
-      	bufferStr+=maxVindGustKode;
+      	bufrStr+=" 333 ";
+      	bufrStr+=minMaxKode;
+      	bufrStr+=snoeMarkKode;
+      	bufrStr+=nedboerKodeSect3;
+      	bufrStr+=rr24Kode;
+      	bufrStr+=skyerEkstraKode1;
+      	bufrStr+=skyerEkstraKode2;
+      	bufrStr+=skyerEkstraKode3;
+      	bufrStr+=skyerEkstraKode4;
+      	bufrStr+=maxVindGustKode;
     }
     
     if(!maxVindMaxKode.empty() || 
@@ -433,23 +433,23 @@ doBuffer(int           bufferno,
        !verTilleggKode.empty() ||
        !gressTemp.empty()){
       	/* Gruppe 555 */
-      	bufferStr+=" 555 ";
-      	bufferStr+=maxVindMaxKode;
-      	bufferStr+=maxMinKode;
-      	bufferStr+=gressTemp;
-      	bufferStr+=verTilleggKode;
+      	bufrStr+=" 555 ";
+      	bufrStr+=maxVindMaxKode;
+      	bufrStr+=maxMinKode;
+      	bufrStr+=gressTemp;
+      	bufrStr+=verTilleggKode;
     }
 
     // Avslutting av data-streng 
-    bufferStr+="=";
+    bufrStr+="=";
    
     // Datastrengen kan ikke vere lenger enn 69 karakterar 
-    SplittStreng(bufferStr, 69);
+    SplittStreng(bufrStr, 69);
     
-    buffer+=bufferStr;
+    bufr+=bufrStr;
     
     if( ! test ) {
-    	buffer+="\r\n\r\r\n\n\n\n\n\n\n\nNNNN\r\n";
+    	bufr+="\r\n\r\r\n\n\n\n\n\n\n\nNNNN\r\n";
     }
 
     return true;
@@ -464,7 +464,7 @@ doBuffer(int           bufferno,
 ** Returnerar  ein streng ; anten "SM","SI",el. "SN"
 */
 void 
-Buffer::Tid_Kode(std::string &kode, int time)
+Bufr::Tid_Kode(std::string &kode, int time)
 {
    switch(time){
    case 0:
@@ -521,7 +521,7 @@ Buffer::Tid_Kode(std::string &kode, int time)
  *  vindhastighet: [0,98]  (m/s)
  *  vindretning:   [0,360] (grader)
  *
- * Bufferkode gruppe 3 har foelgende form:
+ * Bufrkode gruppe 3 har foelgende form:
  *   Nddff 
  *   Hvor:
  *     N - Samlet skydekke. Angis ikke for automatstasjoner.
@@ -530,17 +530,17 @@ Buffer::Tid_Kode(std::string &kode, int time)
  *    dd - Vindretningen. Angis i nermeste 10'de grad. 
  *         Gyldige verdier [00,36]. Verdien 00 gis for vindstille.
  *    ff - Vindhastighet i knop. Gyldige verdier [0,99]. Hvis vindhastigheten
- *         er mindre enn 1 knop settes dd=00. slik at bufferen blir /0000.
+ *         er mindre enn 1 knop settes dd=00. slik at bufren blir /0000.
  *         Hvis vindhastigheten er stoerre enn 99 knop. Faar vi en ekstra
- *         gruppe umiddelbart etter. Bufferen blir da /dd99 00fff, fff er
+ *         gruppe umiddelbart etter. Bufren blir da /dd99 00fff, fff er
  *         vinden i knop.
  *
  * Parameterene 'retn' og 'hast' til funksjonen er gitt i grader og m/s.
- * 'hast' maa omregnes til knop foer den settes i buffer koden.
+ * 'hast' maa omregnes til knop foer den settes i bufr koden.
  *  
  ******/
 void 
-Buffer::Naa_Vind_Kode(std::string &kode, float retn, float hast)
+Bufr::Naa_Vind_Kode(std::string &kode, float retn, float hast)
 {  
    char tmp[30];
    string ffCode="//";
@@ -580,7 +580,7 @@ Buffer::Naa_Vind_Kode(std::string &kode, float retn, float hast)
 
 #if 0
 void
-Buffer::Naa_Vind_Kode(std::string &kode, float retn, float hast)
+Bufr::Naa_Vind_Kode(std::string &kode, float retn, float hast)
 {
   	char tmp[30];
   	
@@ -641,7 +641,7 @@ Buffer::Naa_Vind_Kode(std::string &kode, float retn, float hast)
 ** Lagar temperaturkode pï¿½ format SnTTT der Sn er forteikn
 */
 void 
-Buffer::Temp_Kode(std::string &kode, float temp)
+Bufr::Temp_Kode(std::string &kode, float temp)
 {
  	char stmp[30];
   
@@ -689,7 +689,7 @@ Buffer::Temp_Kode(std::string &kode, float temp)
  *  
  */
 void 
-Buffer::Dugg_Kode(std::string &kode, float temp, float fukt)
+Bufr::Dugg_Kode(std::string &kode, float temp, float fukt)
 {
 	char stmp[30];
    int index;
@@ -775,7 +775,7 @@ Buffer::Dugg_Kode(std::string &kode, float temp, float fukt)
  * i tid med data.
  */
 void 
-Buffer::Min_Max_Kode(std::string &kode, BufferDataList &sd)
+Bufr::Min_Max_Kode(std::string &kode, BufrDataList &sd)
 {
     int         nTimeStr=sd.nContinuesTimes();
     float       min;
@@ -876,7 +876,7 @@ Buffer::Min_Max_Kode(std::string &kode, BufferDataList &sd)
  *
  */
 void 
-Buffer::Max_Min_Kode(std::string &kode, BufferDataList &sd)
+Bufr::Max_Min_Kode(std::string &kode, BufrDataList &sd)
 {
     int nTimeStr=sd.nContinuesTimes();
     float min;
@@ -966,13 +966,13 @@ Buffer::Max_Min_Kode(std::string &kode, BufferDataList &sd)
  * Bxrge Moe
  *
  * Beregning av Maksimalt vindkast (FG), maksimalvind (FX) 
- * siden forrige hovedobservasjon og vinden ved buffertidspunkt (FF).
+ * siden forrige hovedobservasjon og vinden ved bufrtidspunkt (FF).
  * ( FG - Seksjon 333 911, FX - Seksjon 555 0 og FF - alle stasjoner Nddff )
  * -------------------------------------------------------------------------
  * 
  * Noen definisjoner.
  *    Automatstasjonene leverer parameterene ff, fx og fg hver time.
- *    Tilsvarende verdier for buffertidspunktene er FF, FX og FG.
+ *    Tilsvarende verdier for bufrtidspunktene er FF, FX og FG.
  *
  *    hvor
  *       ff - 10 minutters middel. Beregnet 10 minutter foer hver hele time.
@@ -981,7 +981,7 @@ Buffer::Max_Min_Kode(std::string &kode, BufferDataList &sd)
  *       fg - er hoeyeste glidende 3 sekunders middelverdi i loepet av en
  *            60 minutters periode. ((tt-1):00-tt:00, tt - timen for beregn.)
  *
- *    Buffertidene er 0, 3, 6, 9, 12, 15, 18, og 21. Hvor hovedtidene er
+ *    Bufrtidene er 0, 3, 6, 9, 12, 15, 18, og 21. Hvor hovedtidene er
  *    0, 6, 12 og 18. Mellomtidene er 3, 9, 15 og 21.
  *
  *    La XX representere hovedtidene, og xx mellomtidene. 
@@ -1003,9 +1003,9 @@ Buffer::Max_Min_Kode(std::string &kode, BufferDataList &sd)
 /* 16.01.98
  * Bxrge Moe
  *
- * Buffergruppe: 333 911ff  (FG)
+ * Bufrgruppe: 333 911ff  (FG)
  *
- * Beregner maksimalt vindkast siden forrige hovedbuffertid.
+ * Beregner maksimalt vindkast siden forrige hovedbufrtid.
  *
  * nTimeStr er en global variabel som holder antall timer med data vi har.
  * nTimeStr settes  i rutinen LagTabell.
@@ -1029,7 +1029,7 @@ Buffer::Max_Min_Kode(std::string &kode, BufferDataList &sd)
  * Rettet bugg for generering av Gust for 'pio'.
  */ 
 void 
-Buffer::Max_Vind_Gust_Kode(std::string &kode, BufferDataList &sd)
+Bufr::Max_Vind_Gust_Kode(std::string &kode, BufrDataList &sd)
 {
     int   nTimeStr=sd.nContinuesTimes();
     float fMax;
@@ -1089,7 +1089,7 @@ Buffer::Max_Vind_Gust_Kode(std::string &kode, BufferDataList &sd)
 /* 16.01.98
  * Bxrge Moe
  *
- * Buffergruppe 555 0STzFxFx
+ * Bufrgruppe 555 0STzFxFx
  *
  * Regner ut maksimal middelvind siden forrige hovedtermin,
  * dvs. kl. 0, 6, 12  eller 18, og hvor mange timer siden det inntraff. 
@@ -1112,7 +1112,7 @@ Buffer::Max_Vind_Gust_Kode(std::string &kode, BufferDataList &sd)
  * Lagt inn stÃ¸tte for FX_3.
  */
 void 
-Buffer::Max_Vind_Max_Kode(std::string &kode, BufferDataList &sd)
+Bufr::Max_Vind_Max_Kode(std::string &kode, BufrDataList &sd)
 {
    int   nTimeStr=sd.nContinuesTimes();
    int   nNeedTimes;
@@ -1154,7 +1154,7 @@ Buffer::Max_Vind_Max_Kode(std::string &kode, BufferDataList &sd)
          if((sd[0].time().hour()%6)==0){ //Hovedtermin!
             miutil::miTime prevTime=sd[0].time();
             prevTime.addHour(-3);
-            CIBufferDataList it=sd.find(prevTime);
+            CIBufrDataList it=sd.find(prevTime);
     			
             if(it!=sd.end() && it->time()==prevTime &&
                it->FX_3!=FLT_MAX && it->FX_3>=0){
@@ -1289,12 +1289,12 @@ Buffer::Max_Vind_Max_Kode(std::string &kode, BufferDataList &sd)
  * 22.01.98
  * Bxrge Moe
  *
- * Rettet bugg i koden for generering av bufferkoden for trykk.
+ * Rettet bugg i koden for generering av bufrkoden for trykk.
  * Har ogsaa lagt til test for aa se om trykkverdien er 'mulig'.
  * trykk maa vaere element i [800,1100]. (jfr. klimaavdelingen)
  */
 void 
-Buffer::Trykk_Kode(int prefix, std::string &kode, float trykk)
+Bufr::Trykk_Kode(int prefix, std::string &kode, float trykk)
 {
    	double dTrykk;
   	char   stmp[30];
@@ -1326,7 +1326,7 @@ Buffer::Trykk_Kode(int prefix, std::string &kode, float trykk)
  *
  */
 void 
-Buffer::Tendens_Kode(std::string &kode,
+Bufr::Tendens_Kode(std::string &kode,
 		  int time, 
 		  float trykk1, 
 		  float trykk2, 
@@ -1414,7 +1414,7 @@ Buffer::Tendens_Kode(std::string &kode,
  * trykkarakteristikk er gitt med DATASTRUCTTYPE1._aa
  */
 void 
-Buffer::Tendens_Kode(std::string &kode, const BufferData &data)
+Bufr::Tendens_Kode(std::string &kode, const BufrData &data)
 {
   	char karakter;
   	char stmp[30];
@@ -1461,7 +1461,7 @@ Buffer::Tendens_Kode(std::string &kode, const BufferData &data)
 **
 */
 void 
-Buffer::Skydekke_Kode(std::string &kode, const std::string &str)
+Bufr::Skydekke_Kode(std::string &kode, const std::string &str)
 {
    	if(str.length()!= 1)
       	kode="/";
@@ -1476,7 +1476,7 @@ Buffer::Skydekke_Kode(std::string &kode, const std::string &str)
 **
 */
 void 
-Buffer::Hoyde_Sikt_Kode(std::string &kode, const BufferData &data)
+Bufr::Hoyde_Sikt_Kode(std::string &kode, const BufrData &data)
 {
    float Vmor=data.Vmor;
    float VV=data.VV;
@@ -1509,7 +1509,7 @@ Buffer::Hoyde_Sikt_Kode(std::string &kode, const BufferData &data)
 **
 */
 int 
-Buffer::ix_Kode(const std::string &str)
+Bufr::ix_Kode(const std::string &str)
 {
   	if(str.length()!=2 || !(isdigit(str[1])))
     	return 6;
@@ -1528,7 +1528,7 @@ Buffer::ix_Kode(const std::string &str)
  *  
  */
 bool 
-Buffer::doVerGenerelt(std::string &kode, int &ix, const BufferData &data)
+Bufr::doVerGenerelt(std::string &kode, int &ix, const BufrData &data)
 {
 	bool verGenerelt;
 	
@@ -1565,14 +1565,14 @@ Buffer::doVerGenerelt(std::string &kode, int &ix, const BufferData &data)
  * 1999.06.10
  *
  * Endringer av tolkning av Esss gitt av klimaavdelingen.
- * En Esss kode pï¿½ formen /000 skal ikke tas med i bufferen
- * men den angir en lovlig verdi for koden. I fï¿½lge buffer
+ * En Esss kode pï¿½ formen /000 skal ikke tas med i bufren
+ * men den angir en lovlig verdi for koden. I fï¿½lge bufr
  * kodingen (spec) er ikke sss=0 en lovlig verdi, men er tillatt
  * slik at man kan sende Esss hele ï¿½ret, ogsï¿½ nï¿½r det ikke er
  * snï¿½.
  */
 bool 
-Buffer::SjekkEsss(std::string &kode, const std::string &str)
+Bufr::SjekkEsss(std::string &kode, const std::string &str)
 {
   	std::string::const_iterator it;
   
@@ -1609,9 +1609,9 @@ Buffer::SjekkEsss(std::string &kode, const std::string &str)
  * Når en værstasjon sender 998 vil de enten også sende E'= 1. (Hvis de har
  * utelatt E' må vi dekode E' til 1 siden 998 er en såpass bevisst handling.)
  *
- * Altså, det er E' som bestemmer om SA=-1 er flekkvis snø. I koding av buffer
+ * Altså, det er E' som bestemmer om SA=-1 er flekkvis snø. I koding av bufr
  * må en altså for alle typeid bruke kombinasjonen av SA og E' eller SA og SD 
- * for å kunne angi 998 i buffer.
+ * for å kunne angi 998 i bufr.
  * SA=-1 når snødybde raporteres som "blank", utelatt (gruppe) eller "0" (Ingen
  * snø)
  * SA=-1 når snødybde raporteres som 998             (flekkvis snø)
@@ -1621,16 +1621,16 @@ Buffer::SjekkEsss(std::string &kode, const std::string &str)
  * EM=0  er is-lag
  * EM= 1 - 9 er andel snødekke og type
  *
- * Buffer enkoding fra Kvalobs
- * Når det skal lages buffer fra kvalobs så må det kanskje ut fra dette til en
+ * Bufr enkoding fra Kvalobs
+ * Når det skal lages bufr fra kvalobs så må det kanskje ut fra dette til en
  * justering av dagens enkoder slik at koding av SA og EM blir riktig? (For 302
- * må kun SA benyttes i buffer - ikke SD.)
+ * må kun SA benyttes i bufr - ikke SD.)
  * 
  */
 
 void 
-Buffer::
-doEsss( std::string &kode, const BufferData &data )
+Bufr::
+doEsss( std::string &kode, const BufrData &data )
 {
    kode.erase();
    
@@ -1683,7 +1683,7 @@ doEsss( std::string &kode, const BufferData &data )
 ** maa innehalde anten tal eller '/'
 */
 bool
-Buffer::Sjekk_Gruppe(int grpNr, std::string &kode, const std::string &str)
+Bufr::Sjekk_Gruppe(int grpNr, std::string &kode, const std::string &str)
 {
   	std::string::const_iterator it;
   	char tmp[30];
@@ -1719,7 +1719,7 @@ Buffer::Sjekk_Gruppe(int grpNr, std::string &kode, const std::string &str)
 ** Sjekkar den manuelt inntasta koda "ir"
 */
 int 
-Buffer::Vis_ir_Kode(const std::string &str)
+Bufr::Vis_ir_Kode(const std::string &str)
 {
    	std::string s;
    	std::string::iterator it;
@@ -1740,7 +1740,7 @@ Buffer::Vis_ir_Kode(const std::string &str)
 } /* Vis_ir_Kode */
 
 bool 
-Buffer::SjoeTempKode(std::string &kode, const BufferData &data)
+Bufr::SjoeTempKode(std::string &kode, const BufrData &data)
 {
   	kode="";
   
@@ -1783,7 +1783,7 @@ Buffer::SjoeTempKode(std::string &kode, const BufferData &data)
  * vi trenger bare en timestreng.
  */
 void 
-Buffer::GressTempKode(std::string &kode, BufferDataList &sd)
+Bufr::GressTempKode(std::string &kode, BufrDataList &sd)
 {
   	int nTimeStr=sd.nContinuesTimes();
   	float min;
@@ -1837,7 +1837,7 @@ Buffer::GressTempKode(std::string &kode, BufferDataList &sd)
  */
 
 void
-Buffer::Nedboer_Kode(std::string &kode,  //RRRtr
+Bufr::Nedboer_Kode(std::string &kode,  //RRRtr
 		    		std::string &verTilleggKode, //555 ... 4RtWdWdWd
 		    		std::string &rr24Kode,       //333 ... 7RR24
 		    		float totalNedboer, 
@@ -1929,13 +1929,13 @@ Buffer::Nedboer_Kode(std::string &kode,  //RRRtr
 
 
 void
-Buffer::doNedboerKode(std::string &nedboerKode,
+Bufr::doNedboerKode(std::string &nedboerKode,
 		     		 std::string &verTilleggKode,
 		     		 std::string &rr24Kode,
 		     		 int         &tr,
-		     		 BufferDataList &sd)
+		     		 BufrDataList &sd)
 {
-  	BufferData     sisteTid;
+  	BufrData     sisteTid;
   	ostringstream ost;
   	int           ir;
   	float         nedboerTotal=0.0;
@@ -1986,15 +1986,15 @@ Buffer::doNedboerKode(std::string &nedboerKode,
  * 2003.03.12 Bxrge Moe
  *
  * nedborFromRA, beregner nedbï¿½ren fra RA (Akumulert nedbï¿½r).
- * Nedbï¿½ren beregnes ved ï¿½ ta differansen mellom  RA fra buffertidspunktet og
+ * Nedbï¿½ren beregnes ved ï¿½ ta differansen mellom  RA fra bufrtidspunktet og
  * RA 12 (evt 24) timer tilbake. Dette betyr at nedbï¿½ren bergnes pï¿½ fï¿½lgende
- * mï¿½te for buffertidspunktene 06, 12, 18 og 24. Bruke notasjonen RA(t) for ï¿½
+ * mï¿½te for bufrtidspunktene 06, 12, 18 og 24. Bruke notasjonen RA(t) for ï¿½
  * angi bï¿½tteinholdet ved timen t. Eks RA(12) er bï¿½tteinnholdet kl 12.
  * 
- * buffertidspunkt kl 00 og 12,  6 timers nedbï¿½r:
+ * bufrtidspunkt kl 00 og 12,  6 timers nedbï¿½r:
  *    nedbï¿½r= RA(t)-RA(t-6)
  *
- * buffertidspunkt kl 6 og 18,  12 timers nedbï¿½r:
+ * bufrtidspunkt kl 6 og 18,  12 timers nedbï¿½r:
  *    nedbï¿½r=RA(t)-RA(t-12)
  *
  * Nedbï¿½ren raporteres bare dersom den er over en gitt grense. For
@@ -2010,16 +2010,16 @@ Buffer::doNedboerKode(std::string &nedboerKode,
  * \return ir
  */
 int
-Buffer::nedborFromRA(float &nedbor, float &fRR24, int &tr, BufferDataList &sd)
+Bufr::nedborFromRA(float &nedbor, float &fRR24, int &tr, BufrDataList &sd)
 {
   	const float limit=0.2;
   	const float bucketFlush=-10.0;
   	int   nTimes;
   	miutil::miTime t=sd.begin()->time();
   	miutil::miTime t2;
-  	BufferData d1;
-  	BufferData d2;
-  	IBufferDataList it;
+  	BufrData d1;
+  	BufrData d2;
+  	IBufrDataList it;
 
   	int   time=t.hour();
 
@@ -2082,11 +2082,11 @@ Buffer::nedborFromRA(float &nedbor, float &fRR24, int &tr, BufferDataList &sd)
 
   	nedbor=d1.nedboerTot-d2.nedboerTot;
 
-  	LOGDEBUG("bufferTidspunkt:          " << d1.time() << endl
+  	LOGDEBUG("bufrTidspunkt:          " << d1.time() << endl
 			 << "nedbor=" <<  nedbor << endl
 	   		 << " RR_24=" <<  fRR24 << endl
 	   		 << "    RA=" <<  d1.nedboerTot << endl 
-  	   		 << "bufferTidspunkt-" << nTimes << " timer : " << d2.time() << endl
+  	   		 << "bufrTidspunkt-" << nTimes << " timer : " << d2.time() << endl
 	   		 << "    RA=" <<  d2.nedboerTot << endl);
 
   
@@ -2104,24 +2104,24 @@ Buffer::nedborFromRA(float &nedbor, float &fRR24, int &tr, BufferDataList &sd)
 }
 
 int
-Buffer::RR_24_from_RR_N(BufferDataList &sd, float &fRR24)
+Bufr::RR_24_from_RR_N(BufrDataList &sd, float &fRR24)
 {
   	return 4;
 }
 
 
 /*
- * buffertidspunkt kl 00 og 12,  6 timers nedbï¿½r: RR_6
- * buffertidspunkt kl 6 og 18,  12 timers nedbï¿½r: RR_12
+ * bufrtidspunkt kl 00 og 12,  6 timers nedbï¿½r: RR_6
+ * bufrtidspunkt kl 6 og 18,  12 timers nedbï¿½r: RR_12
  * 
  * Sï¿½ker i nedbï¿½rparametrene RR_N, hvor N=1, 3, 6, 12, 24
  * Sï¿½ker nedbï¿½ren fra den fï¿½rste som er gitt, sï¿½ker fra 24, 12, .. ,1
  */
 int  
-Buffer::nedborFromRR_N(float &nedbor,
+Bufr::nedborFromRR_N(float &nedbor,
 		      		  float &fRR24,
 		      		  int &tr,
-		      		  BufferDataList &sd)
+		      		  BufrDataList &sd)
 {
   	int t=sd.begin()->time().hour();
 
@@ -2174,12 +2174,12 @@ Buffer::nedborFromRR_N(float &nedbor,
     	return 4;
 
   	if(t==6 && fRR24==FLT_MAX && sd.size()>1){
-    	CIBufferDataList it=sd.begin();
+    	CIBufrDataList it=sd.begin();
     	miutil::miTime tt=it->time();
     	
     	tt.addHour(-12);	
     
-    	CIBufferDataList it2=sd.find(tt);
+    	CIBufrDataList it2=sd.find(tt);
     	
     	if(it2!=sd.end() && it2->time()==tt){
     		bool hasPrecip=true;
@@ -2240,21 +2240,21 @@ Buffer::nedborFromRR_N(float &nedbor,
  * Hvis ITR har en gyldig verdi og nedbï¿½ren er -1 angir dette tï¿½rt.
  */
 int  
-Buffer::nedborFromRRRtr(float &nedbor,
+Bufr::nedborFromRRRtr(float &nedbor,
 		       float &fRR24, 
 		       int   &tr, 
-		       BufferDataList &sd)
+		       BufrDataList &sd)
 {
 	nedbor=FLT_MAX;
   	fRR24 =FLT_MAX;
 
   	if(sd.begin()->time().hour()==6) {
-  		CIBufferDataList it=sd.begin();
+  		CIBufrDataList it=sd.begin();
     	miutil::miTime tt=it->time();
 	
     	tt.addHour(-12);	
     
-    	CIBufferDataList it2=sd.find(tt);
+    	CIBufrDataList it2=sd.find(tt);
     	
     	if( it2 != sd.end() && it2->time() == tt ){
     		bool hasPrecip=true;
@@ -2388,13 +2388,13 @@ Buffer::nedborFromRRRtr(float &nedbor,
  * 2003.03.14 Bxrge Moe
  *
  * nedborFromRR, beregner nedbï¿½ren fra RR (Times nedbï¿½r).
- * Nedbï¿½ren beregnes ved ï¿½ summere RR fra buffertidspunktet og
+ * Nedbï¿½ren beregnes ved ï¿½ summere RR fra bufrtidspunktet og
  * 12 (evt 6) timer tilbake. 
 
- * buffertidspunkt kl 00 og 12,  6 timers nedbï¿½r:
+ * bufrtidspunkt kl 00 og 12,  6 timers nedbï¿½r:
  *    nedbï¿½r= RR(t)+RR(t-1)+ .... +RR(t-6)
  *
- * buffertidspunkt kl 6 og 18,  12 timers nedbï¿½r:
+ * bufrtidspunkt kl 6 og 18,  12 timers nedbï¿½r:
  *    nedbï¿½r=RR(t)+RR(t-1)+ .... +RR(t-12)
  *
  * Nedbï¿½ren raporteres bare dersom den er over en gitt grense. For
@@ -2411,7 +2411,7 @@ Buffer::nedborFromRRRtr(float &nedbor,
  */
 
 int  
-Buffer::nedborFromRR(float &nedbor, float &fRR24, int &tr, BufferDataList &sd)
+Bufr::nedborFromRR(float &nedbor, float &fRR24, int &tr, BufrDataList &sd)
 {
   	const float limit=0.2;
   	int   nTimeStr=sd.nContinuesTimes();
@@ -2461,9 +2461,9 @@ Buffer::nedborFromRR(float &nedbor, float &fRR24, int &tr, BufferDataList &sd)
     		fRR24=sum;
   	}
   
-  	LOGDEBUG("bufferTidspunkt:          " << sd[0].time()
+  	LOGDEBUG("bufrTidspunkt:          " << sd[0].time()
 			 << "  RR=" <<  sd[0].nedboer1Time << endl
-			 << "bufferTidspunkt-" << nTimes << " timer : "
+			 << "bufrTidspunkt-" << nTimes << " timer : "
 			 << sd[nTimes-1].time() 
 			 << "  RR=" <<  sd[nTimes-1].nedboer1Time << endl);
 
@@ -2482,7 +2482,7 @@ Buffer::nedborFromRR(float &nedbor, float &fRR24, int &tr, BufferDataList &sd)
 ** og legg inn linefeed og 6 space'ar ved denne.
 */
 void 
-Buffer::SplittStreng(std::string &streng, std::string::size_type index)
+Bufr::SplittStreng(std::string &streng, std::string::size_type index)
 {
   	std::string tmp;
   	int         i;
@@ -2525,25 +2525,25 @@ Buffer::SplittStreng(std::string &streng, std::string::size_type index)
 
 
 
-Buffer::Buffer(EPrecipitation pre)
+Bufr::Bufr(EPrecipitation pre)
   :debug(false), test( false), precipitationParam(pre)
     
 {
 }
 
-Buffer::Buffer():debug(false), test( false ), precipitationParam(PrecipitationRA)
+Bufr::Bufr():debug(false), test( false ), precipitationParam(PrecipitationRA)
 {
 }
 
-Buffer::~Buffer()
+Bufr::~Bufr()
 {
 }
 
 void 
-Buffer::replaceCCCXXX(std::string &buffer, int ccx)
+Bufr::replaceCCCXXX(std::string &bufr, int ccx)
 {
   	char tmp[10];
-  	std::string::size_type i=buffer.find(" CCCXXX");
+  	std::string::size_type i=bufr.find(" CCCXXX");
 
   	if(i==std::string::npos)
     	return;
@@ -2553,7 +2553,7 @@ Buffer::replaceCCCXXX(std::string &buffer, int ccx)
   	if(ccx>0)
     	sprintf(tmp, " CC%c", 'A'+(ccx-1));
   
-  	buffer.replace(i, 7, tmp);
+  	bufr.replace(i, 7, tmp);
 }
 
 

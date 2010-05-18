@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvbufferCltBuffercbImp.cc,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $
+  $Id: kvbufrCltBufrcbImp.cc,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -29,17 +29,17 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include <dnmithread/mtcout.h>
-#include "kvbufferCltBuffercbImp.h"
+#include "kvbufrCltBufrcbImp.h"
 
 
-BuffercbImpl::~BuffercbImpl()
+BufrcbImpl::~BufrcbImpl()
 {
-  CERR("INFO: A BuffercbImpl DELETED!\n");
+  CERR("INFO: A BufrcbImpl DELETED!\n");
 }
 
 
 void 
-BuffercbImpl::buffer(const kvbufferd::BufferData& data)
+BufrcbImpl::bufr(const kvbufrd::BufrData& data)
 {
   app.setResult(data);
   app.wait(false);

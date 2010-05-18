@@ -33,7 +33,7 @@
 #include "Data.h"
 #include <kvalobs/kvDbGate.h>
 #include "DataReceiver.h"
-#include "tblBuffer.h"
+#include "tblBufr.h"
 #include <kvalobs/kvPath.h>
 
 using namespace std;
@@ -115,7 +115,7 @@ DataReceiver::doCheckReceivedData(ObsEvent *obsevent)
 
   	setDefaultLogger(obsevent->stationInfo());
 
-	if(!obsevent->stationInfo()->bufferForTime(obsevent->obstime().hour())){
+	if(!obsevent->stationInfo()->bufrForTime(obsevent->obstime().hour())){
    		LOGINFO("Skip BUFFER for this hour: " << obsevent->obstime() << endl <<
 				" wmono: " << obsevent->stationInfo()->wmono() );
 		delete obsevent;
@@ -276,8 +276,8 @@ DataReceiver::newData(kvservice::KvObsDataListPtr data)
       		continue;
     	}
 
-		if(!station->bufferForTime(dit->obstime().hour())){
-			LOGINFO("Skip BUFFER for this hour: " << dit->obstime() << endl
+		if(!station->bufrForTime(dit->obstime().hour())){
+			LOGINFO("Skip BUFR for this hour: " << dit->obstime() << endl
 				<<  " stationid: " << dit->stationID() << endl
 				<<  " typeid: " << dit->typeID());
 			Logger::resetDefaultLogger();
@@ -332,7 +332,7 @@ DataReceiver::newData(kvservice::KvObsDataListPtr data)
     	//if(app.isContinuesType(dataIt->typeID())){
       		//We dont need to regenerate BUFFER for typeid that
       		//are not continues in time.
-      		prepareToProcessAnyBufferBasedOnThisObs(dataIt->obstime(),
+      		prepareToProcessAnyBufrBasedOnThisObs(dataIt->obstime(),
 									     		   station);
     	//}
     
@@ -344,10 +344,10 @@ DataReceiver::newData(kvservice::KvObsDataListPtr data)
 
 void
 DataReceiver::
-prepareToProcessAnyBufferBasedOnThisObs(const miutil::miTime &obstime,
+prepareToProcessAnyBufrBasedOnThisObs(const miutil::miTime &obstime,
 				       StationInfoPtr station)
 {
-  	std::list<TblBuffer> bufferData;
+  	std::list<TblBufr> bufrData;
   	miutil::miTime      now(miutil::miTime::nowTime());
   	miutil::miTime      maxTime;
   	miutil::miTime      time=obstime;
@@ -515,7 +515,7 @@ DataReceiver::setDefaultLogger(StationInfoPtr station)
     	FLogStream *logs=new FLogStream(1, 204800); //200k
     	std::ostringstream ost;
     
-    	ost << kvPath("logdir") << "/kvbuffer/dr-"
+    	ost << kvPath("logdir") << "/kvbufr/dr-"
 			<< station->wmono() << ".log";
     
     	if(logs->open(ost.str())){

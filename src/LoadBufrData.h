@@ -34,12 +34,12 @@
 
 #include <DataList.h>
 #include <StationInfo.h>
-#include <BufferData.h>
+#include <BufrData.h>
 #include <Validate.h>
 
 void
-loadBufferData( const DataEntryList &dl,
-			   BufferDataList       &sd,
+loadBufrData( const DataEntryList &dl,
+			   BufrDataList       &sd,
 			   StationInfoPtr      info,
 			   kvdatacheck::Validate &validate );
 

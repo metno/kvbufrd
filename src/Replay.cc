@@ -35,7 +35,7 @@
 
 using namespace std;
 using namespace kvalobs;
-using namespace kvbufferd;
+using namespace kvbufrd;
 
 Replay::Replay(App &app_, 
 	       dnmi::thread::CommandQue &inputQue)
@@ -49,7 +49,7 @@ Replay::operator()()
   dnmi::thread::CommandBase *com;
   ObsEvent                  *event;
   /*
-    struct BufferData{
+    struct BufrData{
     long     stationid;
     string   termin;
     boolean  isOk;
@@ -73,19 +73,19 @@ Replay::operator()()
       continue;
     }
     
-    BufferData result;
+    BufrData result;
 
     result.stationid=event->stationInfo()->wmono();
     result.termin=CORBA::string_dup(miutil::miTime::nowTime().isoTime().c_str());
     result.isOk=event->isOk();
     result.message=CORBA::string_dup(event->msg().str().c_str());
-    result.buffer=CORBA::string_dup(event->buffer().c_str());
+    result.bufr=CORBA::string_dup(event->bufr().c_str());
 
     try{
-      buffercb_var cb=event->callback();
+      bufrcb_var cb=event->callback();
       
       if(!CORBA::is_nil(cb)){
-	cb->buffer(result);
+	cb->bufr(result);
       }else{
 	LOGDEBUG("NILREF: callback!");
       } 
