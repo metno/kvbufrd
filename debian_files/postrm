@@ -23,23 +23,23 @@ set -e
 
 #BINDIR, BIN and DIR must be in sync with the respectives variables in postrm.
 BINDIR="/usr/bin"
-BIN="check_kvsynopd.sh kvsynopclt kvsynopd kvsynopdbadmin kvsynopdbclt
-     kvsynopd_initdb kvsynopdparse"
+BIN="check_kvbufrd.sh kvbufrclt kvbufrd kvbufrdbadmin kvbufrdbclt
+     kvbufrd_initdb kvbufrdparse"
 
 KVBINDIR=""
 KVBIN=""
 
 ETC_FILES=" "
 
-DIRS="/usr/share/kvbufferd 
-      /var/lib/kvbufferd
-      /var/log/kvalobs/kvbuffer/debug
-      /var/log/kvalobs/kvbuffer
+DIRS="/usr/share/kvbufrd 
+      /var/lib/kvbufrd
+      /var/log/kvalobs/kvbufr/debug
+      /var/log/kvalobs/kvbufr
       /var/lib/kvalobs/run
       /var/lib/kvalobs/service
       /var/lib/kvalobs/service/subscribers"     
 
-SQLLITE_DB="/var/lib/kvbufferd/kvbufferd.sqlite"
+SQLLITE_DB="/var/lib/kvbufrd/kvbufrd.sqlite"
 
 case "$1" in
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)

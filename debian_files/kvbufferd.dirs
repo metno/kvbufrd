@@ -1,8 +1,0 @@
-etc/kvalobs
-usr/bin
-usr/share/kvsynopd
-var/lib/kvsynopd
-var/log/kvalobs
-var/log/kvalobs/kvsynop
-var/log/kvalobs/kvsynop/debug
-var/run/kvalobs
