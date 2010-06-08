@@ -42,12 +42,14 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   getDataReceiver.cc getDataReceiver.h \
                   GetDataThread.cc GetDataThread.h \
                   kvbufrdImpl.h obsevent.h \
-                  LoadBufrData.h LoadBufrData.cc 
+                  LoadBufrData.h LoadBufrData.cc \
+                  encodebufr.h encodebufr.cc
 
 kvbufrd_CPPFLAGS = $(AM_CPPFLAGS) 
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
 kvbufrd_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
+                -L/disk1/local/lib -lbufr -lgfortran \
                  -lm         
 EXTRA_DIST = kvbufrd_schema.sql
  

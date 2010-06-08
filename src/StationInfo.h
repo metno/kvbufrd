@@ -349,11 +349,18 @@ class StationInfo
   friend class StationInfoParse;
 
   StationInfo& operator=(const StationInfo &);
-  
+  int            height_;
+  int            heightVisability_;
+  int            heightTemperature_;
+  int            heightPressure_;
+  int            heightPrecip_;
+  int            heightWind_;
+  float          latitude_;
+  float          longitude_;
   int            wmono_;
+  std::string    name_;
   TLongList      stationid_;
   TTypeList      typepriority_;
-//  TLongList      mustHaveTypes_;
   TStringList    precipitation_;
   TDelayList     delayList_;
   std::string    list_;
@@ -361,12 +368,10 @@ class StationInfo
   std::string    copyto_;
   std::string    owner_;
   miutil::miTime delayUntil_;
-  //  bool           delayLogic_;
   static std::string  debugdir_;
   milog::LogLevel loglevel_;  
   bool            cacheReloaded48_;
   
-  //  std::string    errorMsg;
 
   StationInfo();
 
@@ -386,7 +391,16 @@ class StationInfo
   milog::LogLevel loglevel()const { return loglevel_;}
 
 
+  int       height()const{ return height_; }
+  int       heightVisability() const;
+  int       heightTemperature()const;
+  int       heightPressure() const;
+  int       heightPrecip()const;
+  int       heightWind()const;
+  float     latitude()const { return latitude_; }
+  float     longitude()const { return longitude_; }
   int       wmono()const{ return wmono_;}
+  std::string name()const{ return name_; }
   TLongList stationID()const { return stationid_;}
   bool      hasStationId(long stid)const;
 

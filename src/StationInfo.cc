@@ -28,12 +28,22 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+#include <float.h>
+#include <limits.h>
 #include "StationInfo.h"
 
 using namespace std;
 
 StationInfo::
 StationInfo():
+   height_( INT_MAX ),
+   heightVisability_( INT_MAX ),
+   heightTemperature_( INT_MAX ),
+   heightPressure_( INT_MAX ),
+   heightPrecip_( INT_MAX ),
+   heightWind_( INT_MAX ),
+   latitude_( FLT_MAX ),
+   longitude_( FLT_MAX ),
   	wmono_(-1),
   	cacheReloaded48_(true)
 {
@@ -42,10 +52,17 @@ StationInfo():
 StationInfo::
 StationInfo(const StationInfo &i)
 {
-  	wmono_=i.wmono_;
+   height_ = i.height_;
+   heightVisability_ = i.heightVisability_;
+   heightTemperature_ = i.heightTemperature_;
+   heightPressure_ = i.heightPressure_;
+   heightPrecip_ = i.heightPrecip_;
+   heightWind_ = i.heightWind_;
+   latitude_ = i.latitude_;
+   longitude_ = i.longitude_;
+   wmono_=i.wmono_;
   	stationid_=i.stationid_;
   	typepriority_=i.typepriority_;
-//  	mustHaveTypes_=i.mustHaveTypes_;
   	precipitation_=i.precipitation_;
   	delayList_=i.delayList_;
   	list_=i.list_;
@@ -60,6 +77,57 @@ StationInfo::
 ~StationInfo()
 {
 }
+
+int
+StationInfo::
+heightVisability() const
+{
+   if( heightVisability_ != INT_MAX )
+      return heightVisability_;
+
+   return height_;
+}
+
+int
+StationInfo::
+heightTemperature()const
+{
+   if( heightTemperature_ != INT_MAX )
+      return  heightTemperature_;
+
+   return height_;
+}
+
+int
+StationInfo::
+heightPressure() const
+{
+   if( heightPressure_ != INT_MAX )
+      return heightPressure_;
+
+   return height_;
+}
+
+int
+StationInfo::
+heightPrecip()const
+{
+   if( heightPrecip_ != INT_MAX )
+      return heightPrecip_;
+
+   return height_;
+}
+
+int
+StationInfo::
+heightWind()const
+{
+   if( heightWind_ != INT_MAX )
+      return heightWind_;
+
+   return height_ + 10;
+}
+
 
 bool      
 StationInfo::
@@ -222,14 +290,21 @@ equalTo(const StationInfo &st)
   	if(wmono_==st.wmono_                 &&
        stationid_==st.stationid_         &&
        typepriority_==st.typepriority_   &&
- //      mustHaveTypes_==st.mustHaveTypes_ &&
        precipitation_==st.precipitation_ &&
        delayList_==st.delayList_         &&
        list_==st.list_                   &&
        copy_==st.copy_                   &&
        copyto_==st.copyto_               &&
        owner_==st.owner_                 &&
-       loglevel_==st.loglevel_)
+       loglevel_==st.loglevel_           &&
+       heightPrecip_ == st.heightPrecip_ &&
+       heightPressure_ == st.heightPressure_ &&
+       heightTemperature_ == st.heightTemperature_ &&
+       heightVisability_ == st.heightVisability_ &&
+       heightWind_ == st.heightWind_ &&
+       height_ == st.height_ &&
+       latitude_ == st.latitude_ &&
+       longitude_ == st.longitude_ )
      	return true;
   	else
     	return false;
@@ -332,7 +407,32 @@ keyToString(const std::string &key)
   	}else if(key=="loglevel"){
     	ost << loglevel_;
     	return ost.str();
-  	}
+  	} else if( key == "height" ) {
+  	   ost << height_;
+  	   return ost.str();
+  	} else if( key == "height-visibility" ) {
+      ost << heightVisability();
+      return ost.str();
+   } else if( key == "height-precip" ) {
+      ost << heightPrecip();
+      return ost.str();
+   } else if( key == "height-pressure" ) {
+      ost << heightPressure();
+      return ost.str();
+   } else if( key == "height-temperature" ) {
+      ost << heightTemperature();
+      return ost.str();
+   } else if( key == "height-wind" ) {
+      ost << heightWind();
+      return ost.str();
+   } else if( key == "latitude" ) {
+      ost << latitude_;
+      return ost.str();
+   } else if( key == "longitude" ) {
+      ost << longitude_;
+      return ost.str();
+   }
+
 
 	return string();
 }
@@ -387,14 +487,21 @@ operator<<(std::ostream& ost,
     	ost << sd.delayUntil_;
 
   	ost << endl;
-
-  	ost << "           list: " << sd.list_ << endl;
-  	ost << "           copy: " << (sd.copy_?"TRUE":"FALSE") << endl;
-  	ost << "         copyto: " << sd.copyto_ << endl;
-  	ost << "          owner: " << sd.owner_ << endl;
-  	ost << "     delayLogic: " << (!sd.delayList_.empty()?"TRUE":"FALSE") 
+   ost << "           latitude: " << sd.latitude_ << endl;
+   ost << "          longitude: " << sd.longitude_ << endl;
+  	ost << "             height: " << sd.height_ << endl;
+  	ost << "  height-visibility: " << sd.heightVisability() << endl;
+   ost << "      height-precip: " << sd.heightPrecip() << endl;
+   ost << "    height-pressure: " << sd.heightPressure() << endl;
+   ost << " height-temperature: " << sd.heightTemperature() << endl;
+   ost << "        height-wind: " << sd.heightWind() << endl;
+  	ost << "               list: " << sd.list_ << endl;
+  	ost << "               copy: " << (sd.copy_?"TRUE":"FALSE") << endl;
+  	ost << "             copyto: " << sd.copyto_ << endl;
+  	ost << "              owner: " << sd.owner_ << endl;
+  	ost << "        delayLogic: " << (!sd.delayList_.empty()?"TRUE":"FALSE")
       	<< endl;
-  	ost << "       loglevel: " << sd.loglevel_ << endl;
+  	ost << "           loglevel: " << sd.loglevel_ << endl;
 
   	return ost;
 }

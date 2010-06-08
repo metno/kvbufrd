@@ -31,10 +31,12 @@
 #ifndef __BufrData_h__
 #define __BufrData_h__
 
+#include <float.h>
 #include <stdexcept>
 #include <list>
 #include <string>
 #include <puTools/miTime.h>
+
 
 
 class  BufrData
@@ -44,40 +46,83 @@ class  BufrData
   	friend class BufrDataList;
   	//  friend class BufrDataList::BufrDataProxy
  public:
-  	float  tempNaa;       
-  	float  tempMid;       
-  	float  tempMin;       
-  	float  tempMax;       
-  	float  fuktNaa;       
-  	float  fuktMid;       
-  	float  vindHastNaa;   
-  	float  vindHastMid;   
-  	float  vindHastGust;
-  	float  vindHastMax;   
+  	struct CloudDataExtra {
+  	   float vsci;
+  	   float Ns;
+  	   float C;
+  	   float hshs;
+
+  	   CloudDataExtra():
+  	      vsci( FLT_MAX ), Ns( FLT_MAX ), C( FLT_MAX ), hshs( FLT_MAX )
+  	   {}
+  	   CloudDataExtra& operator=( const CloudDataExtra &rhs )
+  	   {
+  	      if( this != &rhs ) {
+  	         vsci = rhs.vsci;
+  	         Ns = rhs.Ns;
+  	         C = rhs.C;
+  	         hshs = rhs.hshs;
+  	      }
+  	      return *this;
+  	   }
+
+  	   friend std::ostream &operator<<(std::ostream &o, const CloudDataExtra &cd );
+  	};
+
+  	struct Wind {
+  	   float ff;
+  	   float dd;
+  	   float i;
+
+  	   Wind():
+  	      ff( FLT_MAX ), dd( FLT_MAX ), i( FLT_MAX ) {}
+  	   Wind& operator=( const Wind &rhs )
+  	   {
+  	      if( this != &rhs ) {
+  	         ff = rhs.ff;
+  	         dd = rhs.dd;
+  	         i  = rhs.i;
+  	      }
+  	      return *this;
+  	   }
+  	   friend std::ostream &operator<<(std::ostream &o, const Wind &wind );
+  	};
+
+  	float  TA;       
+  	float  TAM;       
+  	float  TAN;       
+  	float  TAX;
+  	float  TD;
+  	float  UU;       
+  	float  UM;       
+  	float  FF;   
+  	float  FM;   
+  	float  FG_1;
+  	float  FX_1;   
   	float  FX_3;
-  	float  vindRetnNaa;   
-  	float  vindRetnMid;   
-  	float  vindRetnGust;  
-  	float  vindRetnMax;
+  	float  DD;   
+  	float  DM;   
+  	float  DG;  
+  	float  DX;
   	float  DX_3;   
-  	float  nedboerTot;    
-  	float  nedboer1Time; 
-  	float  nedboer2Time;
-  	float  nedboer3Time;  
-  	float  nedboer6Time;
-  	float  nedboer9Time;
-  	float  nedboer12Time;
-  	float  nedboer15Time;
-  	float  nedboer18Time;
-  	float  nedboer24Time; 
-  	float  nedboerJa;     
-  	float  trykkQFENaa;  //PO, stasjonstrykk.    
-  	float  trykkQFEMid;  //POM, stasjonstrykk.  
-  	float  trykkQFEMin;  //PON, stasjonstrykk.  
-  	float  trykkQFEMax;  //POX, stasjonstrykk.  
-  	float  trykkQNHNaa;  //PH, trykk redusert til havets nivï¿½, ICAO standard.   
-  	float  trykkQFFNaa;  //PR, trykk redusert til havets nivï¿½.
-  	float  trykkTendens;  
+  	float  RA;    
+  	float  RR_1; 
+  	float  RR_2;
+  	float  RR_3;  
+  	float  RR_6;
+  	float  RR_9;
+  	float  RR_12;
+  	float  RR_15;
+  	float  RR_18;
+  	float  RR_24; 
+  	float  RT_1;     
+  	float  PO;  //PO, stasjonstrykk.    
+  	float  POM;  //POM, stasjonstrykk.  
+  	float  PON;  //PON, stasjonstrykk.  
+  	float  POX;  //POX, stasjonstrykk.  
+  	float  PH;  //PH, trykk redusert til havets nivï¿½, ICAO standard.   
+  	float  PR;  //PR, trykk redusert til havets nivï¿½.
+  	float  PP;  
   	float  TAN_12;
   	float  TAX_12;
   	float  TW;
@@ -95,24 +140,25 @@ class  BufrData
   	float  Vmor;  //Automatic measured horizontal visibility
   	float  VV;    //Human estimated horizontal visibility
   	float  HL;
-  	std::string nedboerInd_verInd;
-  	std::string hoeyde_sikt;
-  	std::string skydekke;
-  	//  std::string nedboermengde;
-  	std::string verGenerelt;
-  	std::string skyer;
-  	std::string verTillegg;
-  	std::string skyerEkstra1;
-  	std::string skyerEkstra2;
-  	std::string skyerEkstra3;
-  	std::string skyerEkstra4;
-  	std::string sjoeTemp;
-  	std::string sjoegang;
-  	std::string snoeMark;
-  	std::string AA;
-  	std::string ITZ;
-  	std::string IIR; //nedbï¿½r indikator
-  	std::string ITR;
+  	std::vector<CloudDataExtra> cloudExtra;
+  	float NH;     //NhClCmCh
+  	float CL;     //NhClCmCh
+  	float CM;     //NhClCmCh
+  	float CH;     //NhClCmCh
+  	float IR;   //Nedbørindikator.
+  	float IX;   //Værindikator
+  	float N;    //Skydekke
+  	float ww;    //ww,  wwW1W2
+  	float W1;    //W1,  wwW1W2
+  	float W2;    //W2,  wwW1W2
+  	float X1WD;
+  	float X2WD;
+  	float X3WD;
+  	float S;
+  	float AA;
+  	float ITZ;
+  	float ITR;
+  	Wind  FxMax;
 
   	BufrData();
   	BufrData(const BufrData &p);
@@ -244,6 +290,8 @@ public:
 				 					  const BufrDataList& sd);
 };
 
+std::ostream &operator<<(std::ostream &o, const BufrData::CloudDataExtra &cd );
+std::ostream &operator<<(std::ostream &o, const BufrData::Wind &wind );
 
 std::ostream& operator<<(std::ostream& ost,
 						  const BufrData& sd);

@@ -34,43 +34,72 @@
 #include <decodeutility/decodeutility.h>
 #include "BufrData.h"
 
+
+namespace {
+   template <class T>
+   bool resizeAndCheckData( std::vector<T> &vec, int size, float value, float null_value = FLT_MAX )
+   {
+      if( value == null_value )
+         return false;
+
+      if( vec.size() < size )
+         vec.resize( size );
+
+      return true;
+   }
+
+   std::string printOut( const std::string &name, float val, float null_value = FLT_MAX  )
+   {
+      std::ostringstream o;
+
+      o << name <<": ";
+      if( val == null_value )
+         o << "NA";
+      else
+         o << val;
+
+      o << " ";
+      return o.str();
+   }
+}
 using namespace decodeutility;
 
 BufrData::BufrData():
-    tempNaa(FLT_MAX),
-    tempMid(FLT_MAX), 
-    tempMin(FLT_MAX),
-    tempMax(FLT_MAX),
-    fuktNaa(FLT_MAX),
-    fuktMid(FLT_MAX),
-    vindHastNaa(FLT_MAX),
-    vindHastMid(FLT_MAX),
-    vindHastGust(FLT_MAX),
-    vindHastMax(FLT_MAX),
+    TA(FLT_MAX),
+    TAM(FLT_MAX), 
+    TAN(FLT_MAX),
+    TAX(FLT_MAX),
+    TD( FLT_MAX ),
+    UU(FLT_MAX),
+    UM(FLT_MAX),
+    FF(FLT_MAX),
+    FM(FLT_MAX),
+    FG_1(FLT_MAX),
+    FX_1(FLT_MAX),
     FX_3(FLT_MAX),
-    vindRetnNaa(FLT_MAX),
-    vindRetnMid(FLT_MAX),
-    vindRetnGust(FLT_MAX),
-    vindRetnMax(FLT_MAX),
+    DD(FLT_MAX),
+    DM(FLT_MAX),
+    DG(FLT_MAX),
+    DX(FLT_MAX),
     DX_3(FLT_MAX),
-    nedboerTot(FLT_MAX), 
-    nedboer1Time(FLT_MAX),
-    nedboer2Time(FLT_MAX),
-    nedboer3Time(FLT_MAX),  
-    nedboer6Time(FLT_MAX),
-    nedboer9Time(FLT_MAX),
-    nedboer12Time(FLT_MAX),
-    nedboer15Time(FLT_MAX),
-    nedboer18Time(FLT_MAX),
-    nedboer24Time(FLT_MAX),
-    nedboerJa(FLT_MAX),
-    trykkQFENaa(FLT_MAX),
-    trykkQFEMid(FLT_MAX),
-    trykkQFEMin(FLT_MAX),
-    trykkQFEMax(FLT_MAX),
-    trykkQNHNaa(FLT_MAX),
-    trykkQFFNaa(FLT_MAX),
-    trykkTendens(FLT_MAX), 
+    RA(FLT_MAX), 
+    RR_1(FLT_MAX),
+    RR_2(FLT_MAX),
+    RR_3(FLT_MAX),  
+    RR_6(FLT_MAX),
+    RR_9(FLT_MAX),
+    RR_12(FLT_MAX),
+    RR_15(FLT_MAX),
+    RR_18(FLT_MAX),
+    RR_24(FLT_MAX),
+    RT_1(FLT_MAX),
+    PO(FLT_MAX),
+    POM(FLT_MAX),
+    PON(FLT_MAX),
+    POX(FLT_MAX),
+    PH(FLT_MAX),
+    PR(FLT_MAX),
+    PP(FLT_MAX), 
     TAN_12(FLT_MAX),
     TAX_12(FLT_MAX),
     TW(FLT_MAX),
@@ -88,16 +117,22 @@ BufrData::BufrData():
     Vmor(FLT_MAX),
     VV(FLT_MAX),
     HL(FLT_MAX),
-    nedboerInd_verInd("//"),
-    hoeyde_sikt("///"),
-    verGenerelt("////"),
-    skyer("////"),
-    verTillegg("////"),
-    skyerEkstra1("////"),
-    skyerEkstra2("////"),
-    skyerEkstra3("////"),
-    skyerEkstra4("////"),
-    snoeMark("////")
+    NH( FLT_MAX ),
+    CL( FLT_MAX ),
+    CM( FLT_MAX ),
+    CH( FLT_MAX ),
+    IR( FLT_MAX ),
+    IX( FLT_MAX ),
+    N( FLT_MAX ),
+    ww( FLT_MAX ),
+    W1( FLT_MAX ),
+    W2( FLT_MAX ),
+    X1WD( FLT_MAX ),
+    X2WD( FLT_MAX ),
+    X3WD( FLT_MAX ),
+    AA( FLT_MAX ),
+    ITZ( FLT_MAX ),
+    ITR( FLT_MAX )
 {
 }
 
@@ -105,40 +140,41 @@ BufrData::BufrData():
 
 BufrData::BufrData(const BufrData &p):
     time_(p.time_), 
-    tempNaa(p.tempNaa),
-    tempMid(p.tempMid), 
-    tempMin(p.tempMin),
-    tempMax(p.tempMax),
-    fuktNaa(p.fuktNaa),
-    fuktMid(p.fuktMid),
-    vindHastNaa(p.vindHastNaa),
-    vindHastMid(p.vindHastMid),
-    vindHastGust(p.vindHastGust),
-    vindHastMax(p.vindHastMax),
+    TA(p.TA),
+    TAM(p.TAM), 
+    TAN(p.TAN),
+    TAX(p.TAX),
+    TD( p.TD ),
+    UU(p.UU),
+    UM(p.UM),
+    FF(p.FF),
+    FM(p.FM),
+    FG_1(p.FG_1),
+    FX_1(p.FX_1),
     FX_3(p.FX_3),
-    vindRetnNaa(p.vindRetnNaa),
-    vindRetnMid(p.vindRetnMid),
-    vindRetnGust(p.vindRetnGust),
-    vindRetnMax(p.vindRetnMax),
+    DD(p.DD),
+    DM(p.DM),
+    DG(p.DG),
+    DX(p.DX),
     DX_3(p.DX_3),
-    nedboerTot(p.nedboerTot), 
-    nedboer1Time(p.nedboer1Time),  
-    nedboer2Time(p.nedboer2Time),
-    nedboer3Time(p.nedboer3Time),
-    nedboer6Time(p.nedboer6Time),
-    nedboer9Time(p.nedboer9Time),
-    nedboer12Time(p.nedboer12Time),
-    nedboer15Time(p.nedboer15Time),
-    nedboer18Time(p.nedboer18Time),
-    nedboer24Time(p.nedboer24Time),
-    nedboerJa(p.nedboerJa),
-    trykkQFENaa(p.trykkQFENaa),   
-    trykkQFEMid(p.trykkQFEMid),
-    trykkQFEMin(p.trykkQFEMin),
-    trykkQFEMax(p.trykkQFEMax),
-    trykkQNHNaa(p.trykkQNHNaa),
-    trykkQFFNaa(p.trykkQFFNaa),
-    trykkTendens(p.trykkTendens),
+    RA(p.RA), 
+    RR_1(p.RR_1),  
+    RR_2(p.RR_2),
+    RR_3(p.RR_3),
+    RR_6(p.RR_6),
+    RR_9(p.RR_9),
+    RR_12(p.RR_12),
+    RR_15(p.RR_15),
+    RR_18(p.RR_18),
+    RR_24(p.RR_24),
+    RT_1(p.RT_1),
+    PO(p.PO),   
+    POM(p.POM),
+    PON(p.PON),
+    POX(p.POX),
+    PH(p.PH),
+    PR(p.PR),
+    PP(p.PP),
     TAN_12(p.TAN_12),
     TAX_12(p.TAX_12),
     TW(p.TW),
@@ -156,23 +192,23 @@ BufrData::BufrData(const BufrData &p):
     Vmor(p.Vmor),
     VV(p.VV),
     HL(p.HL),
-    nedboerInd_verInd(p.nedboerInd_verInd),
-    hoeyde_sikt(p.hoeyde_sikt),
-    skydekke(p.skydekke),
-    //    nedboermengde(p.nedboermengde),
-    verGenerelt(p.verGenerelt),
-    skyer(p.skyer),
-    verTillegg(p.verTillegg),
-    skyerEkstra1(p.skyerEkstra1),
-    skyerEkstra2(p.skyerEkstra2),
-    skyerEkstra3(p.skyerEkstra3),
-    skyerEkstra4(p.skyerEkstra4),
-    sjoeTemp(p.sjoeTemp),
-    sjoegang(p.sjoegang),
-    snoeMark(p.snoeMark),
+    cloudExtra( p.cloudExtra ),
+    NH( p.NH ),
+    CL( p.CL ),
+    CM( p.CM ),
+    CH( p.CH ),
+    IR( p.IR ),
+    IX( p.IX ),
+    N( p.N ),
+    ww( p.ww ),
+    W1( p.W1 ),
+    W2( p.W2 ),
+    X1WD( p.X1WD ),
+    X2WD( p.X2WD ),
+    X3WD( p.X3WD ),
+    S( p.S ),
     AA(p.AA),
     ITZ(p.ITZ),
-    IIR(p.IIR),
     ITR(p.ITR)
   
 {
@@ -184,76 +220,77 @@ BufrData::operator=(const BufrData &p)
     if(this==&p)
 	return *this;
 
-    time_            =p.time_;
-    tempNaa          =p.tempNaa;
-    tempMid          =p.tempMid; 
-    tempMin          =p.tempMin;
-    tempMax          =p.tempMax;
-    fuktNaa          =p.fuktNaa;
-    fuktMid          =p.fuktMid;
-    vindHastNaa      =p.vindHastNaa;
-    vindHastMid      =p.vindHastMid;
-    vindHastGust     =p.vindHastGust;
-    vindHastMax      =p.vindHastMax;
-    FX_3             =p.FX_3;
-    vindRetnNaa      =p.vindRetnNaa;
-    vindRetnMid      =p.vindRetnMid;
-    vindRetnGust     =p.vindRetnGust;
-    vindRetnMax      =p.vindRetnMax;
-    DX_3             =p.DX_3;
-    nedboerTot       =p.nedboerTot; 
-    nedboer1Time     =p.nedboer1Time;
-    nedboer2Time     =p.nedboer2Time;
-    nedboer3Time     =p.nedboer3Time;
-    nedboer6Time     =p.nedboer6Time;
-    nedboer9Time     =p.nedboer9Time;
-    nedboer12Time    =p.nedboer12Time;
-    nedboer15Time    =p.nedboer15Time;
-    nedboer18Time    =p.nedboer18Time;
-    nedboer24Time    =p.nedboer24Time;
-    nedboerJa        =p.nedboerJa;
-    trykkQFENaa      =p.trykkQFENaa;   
-    trykkQFEMid      =p.trykkQFEMid;
-    trykkQFEMin      =p.trykkQFEMin;
-    trykkQFEMax      =p.trykkQFEMax;
-    trykkQNHNaa      =p.trykkQNHNaa;
-    trykkQFFNaa      =p.trykkQFFNaa;
-    trykkTendens     =p.trykkTendens;
-    TAN_12           =p.TAN_12;
-    TAX_12           =p.TAX_12;
-    TW               =p.TW;
-    TWM              =p.TWM;
-    TWN              =p.TWN;
-    TWX              =p.TWX;
-    TGN              =p.TGN;
-    TGN_12           =p.TGN_12;
-    FG               =p.FG;
-    FX               =p.FX;
-    WAWA             =p.WAWA;
-    HLN              =p.HLN;
-    EM               =p.EM;
-    SA               =p.SA;
-    Vmor             =p.Vmor;
-    VV               =p.VV;
-    HL               =p.HL;
-    nedboerInd_verInd=p.nedboerInd_verInd;
-    hoeyde_sikt      =p.hoeyde_sikt;
-    skydekke         =p.skydekke;
-    //    nedboermengde    =p.nedboermengde;
-    verGenerelt      =p.verGenerelt;
-    skyer            =p.skyer;
-    verTillegg       =p.verTillegg;
-    skyerEkstra1     =p.skyerEkstra1;
-    skyerEkstra2     =p.skyerEkstra2;
-    skyerEkstra3     =p.skyerEkstra3;
-    skyerEkstra4     =p.skyerEkstra4;
-    sjoeTemp         =p.sjoeTemp;
-    sjoegang         =p.sjoegang;
-    snoeMark         =p.snoeMark;
-    AA               =p.AA;
-    ITZ              =p.ITZ;
-    IIR              =p.IIR;
-    ITR              =p.ITR;
+    time_            = p.time_;
+    TA          = p.TA;
+    TAM          = p.TAM;
+    TAN          = p.TAN;
+    TAX          = p.TAX;
+    TD         = p.TD;
+    UU          = p.UU;
+    UM          = p.UM;
+    FF      = p.FF;
+    FM      = p.FM;
+    FG_1     = p.FG_1;
+    FX_1      = p.FX_1;
+    FX_3             = p.FX_3;
+    DD      = p.DD;
+    DM      = p.DM;
+    DG     = p.DG;
+    DX      = p.DX;
+    DX_3             = p.DX_3;
+    RA       = p.RA;
+    RR_1     = p.RR_1;
+    RR_2     = p.RR_2;
+    RR_3     = p.RR_3;
+    RR_6     = p.RR_6;
+    RR_9     = p.RR_9;
+    RR_12    = p.RR_12;
+    RR_15    = p.RR_15;
+    RR_18    = p.RR_18;
+    RR_24    = p.RR_24;
+    RT_1        = p.RT_1;
+    PO      = p.PO;
+    POM      = p.POM;
+    PON      = p.PON;
+    POX      = p.POX;
+    PH      = p.PH;
+    PR      = p.PR;
+    PP     = p.PP;
+    TAN_12           = p.TAN_12;
+    TAX_12           = p.TAX_12;
+    TW               = p.TW;
+    TWM              = p.TWM;
+    TWN              = p.TWN;
+    TWX              = p.TWX;
+    TGN              = p.TGN;
+    TGN_12           = p.TGN_12;
+    FG               = p.FG;
+    FX               = p.FX;
+    WAWA             = p.WAWA;
+    HLN              = p.HLN;
+    EM               = p.EM;
+    SA               = p.SA;
+    Vmor             = p.Vmor;
+    VV               = p.VV;
+    HL               = p.HL;
+    cloudExtra       = p.cloudExtra;
+    NH          = p.NH;
+    CL          = p.CL;
+    CM          = p.CM;
+    CH          = p.CH;
+    IR               = p.IR;
+    IX               = p.IX;
+    N                = p.N;
+    ww               = p.ww;
+    W1               = p.W1;
+    W2               = p.W2;
+    X1WD              = p.X1WD;
+    X2WD              = p.X2WD;
+    X3WD              = p.X3WD;
+    S                = p.S;
+    AA               = p.AA;
+    ITZ              = p.ITZ;
+    ITR              = p.ITR;
     return *this;
 }
 
@@ -264,30 +301,7 @@ BufrData::~BufrData()
 void 
 BufrData::cleanUpSlash()
 {
-  if(verGenerelt=="////")
-    verGenerelt.erase();
 
-
-  if(skyer=="////")
-    skyer.erase();
-
-  if(verTillegg=="////")
-    verTillegg.erase();
-
-  if(skyerEkstra1=="////")
-    skyerEkstra1.erase();
-
-  if(skyerEkstra2=="////")
-    skyerEkstra2.erase();
-
-  if(skyerEkstra3=="////")
-    skyerEkstra3.erase();
-
-  if(skyerEkstra4=="////")
-    skyerEkstra4.erase();
-  
-  if(snoeMark=="////")
-    snoeMark.erase();
 }
 
 
@@ -313,182 +327,145 @@ BufrData::setData(const int  &param,
     sprintf(buf, "%d", im);
 
     switch(param){
-    case 211: tempNaa=fData;       break; //TA
-    case 212: tempMid=fData;       break; //TAM
-    case 213: tempMin=fData;       break; //TAN
-    case 215: tempMax=fData;       break; //TAX
-    case 262: fuktNaa=fData;       break; //UU
-    case 263: fuktMid=fData;       break; //UM
-    case  81: vindHastNaa=fData;   break; //FF
-    case  85: vindHastMid=fData;   break; //FM
-    case  90: vindHastGust=fData;  break; //FG_1
-    case  93: FX_3=fData;          break; //FX_3
-    case  87: vindHastMax=fData;   break; //FX_1
-    case  61: vindRetnNaa=fData;   break; //DD
-    case  64: vindRetnMid=fData;   break; //DM
-    case  63: vindRetnGust=fData;  break; //DG
-    case  67: vindRetnMax=fData;   break; //DX
-    case 104: nedboerTot=fData;    break; //RA
-    case 106: nedboer1Time=fData;  break; //RR_1
-    case 107: nedboer3Time=fData;  break; //RR_3
-    case 108: nedboer6Time=fData;  break; //RR_6
-    case 109: nedboer12Time=fData; break; //RR_12
-    case 110: nedboer24Time=fData; break; //RR_24
-    case 119: nedboer2Time=fData;  break; //RR_2
-    case 120: nedboer9Time=fData;  break; //RR_9
-    case 123: nedboerJa=fData;     break; //RT_1
-    case 125: nedboer15Time=fData; break; //RR_15
-    case 126: nedboer18Time=fData; break; //RR_18
-    case 173: trykkQFENaa=fData;   break; //PO
-    case 174: trykkQFEMid=fData;   break; //POM
-    case 175: trykkQFEMin=fData;   break; //PON
-    case 176: trykkQFEMax=fData;   break; //POX
-    case 172: trykkQNHNaa=fData;   break; //PH
-    case 178: trykkQFFNaa=fData;   break; //PR
-    case 177: trykkTendens=fData;  break; //PP
-    case 214: TAN_12=fData;        break; //TAN_12
-    case 216: TAX_12=fData;        break; //TAX_12
-    case 242: TW=fData;            break; //TW
-    case 244: TWN=fData;           break; //TWN
-    case 243: TWM=fData;           break; //TWM
-    case 245: TWX=fData;           break; //TWX
-    case 223: TGN=fData;           break; //TGN
-    case 224: TGN_12=fData;        break; //TGN_12
-    case  83: FG=fData;            break; //FG
-    case  86: FX=fData;            break; //FX  
-    case  56: HLN=fData;           break; //HLN
-    case  49: WAWA=fData;          break; //WaWa
-    case   7: EM=fData;            break; //E (snow state to the ground) in E'sss
-    case 112: SA=fData;            break; //sss (snow depth) in E'sss
-    case   9:                             //IR, _irix
-              IIR=buf;
-	      nedboerInd_verInd.replace(0, 1, buf);
-	      break;
-    case  10:                             //IX, _irix
- 	      nedboerInd_verInd.replace(1, 1, buf);
-	      break;
-    case  55:  HL=fData;           break; //HL, _hVV
-/*	      ch=HLKode(fData);
-	      hoeyde_sikt[0]=ch;
-	      break;*/
-    case 271: Vmor = fData;        break; //Vmor, _hVV
-    case 273: VV = fData;          break; //VV, _hVV
-    /*	      s=VVKode(fData);
-	      if( ! s.empty() )
-	         hoeyde_sikt.replace(1, 2, s);
-	      break; */
-    case 15:                                //NN, _N
-	      skydekke=buf;
-	      break;
-    case 12:                                //ITR, _RRRtr
-	      ITR=buf;
-	      break;
-    case 41:                                //WW, _wwW1W2
-              sprintf(buf, "%02d", im);
-              verGenerelt.replace(0, 2, buf);
-	      break;
-    case 42:                                //W1, _wwW1W2
-	      verGenerelt.replace(2, 1, buf);
-	      break;
-    case 43:                                //W2, _wwW1W2
-	      verGenerelt.replace(3, 1, buf);
-	      break;
-    case 14:                                //NH, _NhClCmCh")
-	      skyer.replace(0, 1, buf);
-	      break;
-    case 23:                                //CL, _NhClCmCh")
-	      skyer.replace(1, 1, buf);
-	      break;
-    case 24:                                //CM, _NhClCmCh")
-	      skyer.replace(2, 1, buf);
-	      break;
-    case 22:                                //CH, _NhClCmCh")
-	      skyer.replace(3, 1, buf);
-	      break;
-    case 44:                                //X1WD"_RtWdWdWd")
-	      verTillegg.replace(1, 1, buf);
-	      break;
-    case 45:                                //X2WD"_RtWdWdWd")
-	      verTillegg.replace(2, 1, buf);
-	      break;
-    case 46:                                //X3WD"_RtWdWdWd")
-	      verTillegg.replace(3, 1, buf);
-	      break;
-    case 25:                                //NS1, "_1NsChshs")
-              skyerEkstra1.replace(0, 1, buf);
-              break;
-    case 26:                                //NS2, "_2NsChshs")
-              skyerEkstra2.replace(0, 1, buf);
-              break;
-    case 27:                                //NS3, "_3NsChshs")
-              skyerEkstra3.replace(0, 1, buf);
-              break;
-    case 28:                                //NS4, "_4NsChshs")
-              skyerEkstra4.replace(0, 1, buf);
-              break;
-    case 305:                                //CC1, "_1NsChshs")
-              skyerEkstra1.replace(1, 1, buf);
-              break;
-    case 306:                                //CC2, "_2NsChshs")
-              skyerEkstra2.replace(1, 1, buf);
-              break;
-    case 307:                                //CC3, "_3NsChshs")
-              skyerEkstra3.replace(1, 1, buf);
-              break;
-    case 308:                                //CC4, "_4NsChshs")
-              skyerEkstra4.replace(1, 1, buf);
-              break;
-    case 301:                                //HS1, "_1NsChshs")
-              sprintf(buf, "%02d", im);
-              skyerEkstra1.replace(2, 2, buf);
-              break;
-    case 302:                                //HS2, "_2NsChshs")
-              sprintf(buf, "%02d", im);
-              skyerEkstra2.replace(2, 2, buf);
-              break;
-    case 303:                                //HS3, "_3NsChshs")
-              sprintf(buf, "%02d", im);
-              skyerEkstra3.replace(2, 2, buf);
-              break;
-    case 304:                                //HS4, "_4NsChshs")
-              sprintf(buf, "%02d", im);
-              skyerEkstra4.replace(2, 2, buf);
-              break;
-	      
-    case  19:                                 //_S
-              sjoegang=buf;
-	      break;
-    /*case   7:        
-              if(fData>=0)//EM, _Esss
-		snoeMark.replace(0, 1, buf);
-	      break;
-    case 112:                                 //SA, _Esss
-         if(im==-2){ // 2005.06.21, Bxrge, Endret fra -1.
-		       snoeMark.replace(1, 3, "998");
-	      }else if(im==-3){
-		       snoeMark.replace(1, 3, "999");
-	      }else if(im==998 || im==997 || im==999){
-            //Bxrge Moe
-		      //2005.01.20
-		      //Denne er ikke i bruk og kan fjernes
-            sprintf(buf,"%03d", im);
-            snoeMark.replace(1, 3, buf);
-         }else if(fData>=0  && fData<0.5){
-            snoeMark.replace(1, 3, "997");
-	      }else if(fData>=0.5 && fData<997.0){
-	         im=static_cast<int>(fabs(floor(static_cast<double>(fData)+0.5)));
-	         sprintf(buf,"%03d", im);
-	         snoeMark.replace(1, 3, buf);
-	      }
-	     break;
-	     */
-    case  13:                                 //ITZ, "_tz")
-	      ITZ=buf;
-	      break;
-	      
-    case   1:                                 //AA, _aa
-              AA=buf;
-	      break;
+    case 211: TA=fData;     break; //TA
+    case 212: TAM=fData;    break; //TAM
+    case 213: TAN=fData;    break; //TAN
+    case 215: TAX=fData;    break; //TAX
+    case 262: UU=fData;     break; //UU
+    case 263: UM=fData;     break; //UM
+    case  81: FF=fData;     break; //FF
+    case  85: FM=fData;     break; //FM
+    case  90: FG_1=fData;   break; //FG_1
+    case  93: FX_3=fData;   break; //FX_3
+    case  87: FX_1=fData;   break; //FX_1
+    case  61: DD=fData;     break; //DD
+    case  64: DM=fData;     break; //DM
+    case  63: DG=fData;     break; //DG
+    case  67: DX=fData;     break; //DX
+    case 104: RA=fData;     break; //RA
+    case 106: RR_1=fData;   break; //RR_1
+    case 107: RR_3=fData;   break; //RR_3
+    case 108: RR_6=fData;   break; //RR_6
+    case 109: RR_12=fData;  break; //RR_12
+    case 110: RR_24=fData;  break; //RR_24
+    case 119: RR_2=fData;   break; //RR_2
+    case 120: RR_9=fData;   break; //RR_9
+    case 123: RT_1=fData;   break; //RT_1
+    case 125: RR_15=fData;  break; //RR_15
+    case 126: RR_18=fData;  break; //RR_18
+    case 173: PO=fData;     break; //PO
+    case 174: POM=fData;    break; //POM
+    case 175: PON=fData;    break; //PON
+    case 176: POX=fData;    break; //POX
+    case 172: PH=fData;     break; //PH
+    case 178: PR=fData;     break; //PR
+    case 177: PP=fData;     break; //PP
+    case 214: TAN_12=fData; break; //TAN_12
+    case 216: TAX_12=fData; break; //TAX_12
+    case 242: TW=fData;     break; //TW
+    case 244: TWN=fData;    break; //TWN
+    case 243: TWM=fData;    break; //TWM
+    case 245: TWX=fData;    break; //TWX
+    case 223: TGN=fData;    break; //TGN
+    case 224: TGN_12=fData; break; //TGN_12
+    case  83: FG=fData;     break; //FG
+    case  86: FX=fData;     break; //FX
+    case  56: HLN=fData;    break; //HLN
+    case  49: WAWA=fData;   break; //WaWa
+    case   7: EM=fData;     break; //E (snow state to the ground) in E'sss
+    case 112: SA=fData;     break; //sss (snow depth) in E'sss
+    case   9: IR = fData;   break; //IR, _irix
+    case  10: IX = fData;   break; //IX, _irix
+    case  55: HL=fData;     break; //HL, _hVV
+    case 271: Vmor = fData; break; //Vmor, _hVV
+    case 273: VV = fData;   break; //VV, _hVV
+    case  15: N = fData;    break; //NN, _N
+    case  12: ITR = fData;  break; //ITR, _RRRtr
+    case  41: ww = fData;   break; //WW, _wwW1W2
+    case  42: W1 = fData;   break; //W1, _wwW1W2
+    case  43: W2 = fData;   break; //W2, _wwW1W2
+    case  14: NH = fData;   break; //NH, _NhClCmCh")D
+    case  23: CL = fData;   break; //CL, _NhClCmCh")
+    case  24: CM = fData;   break; //CM, _NhClCmCh")
+    case  22: CH=fData;     break; //CH, _NhClCmCh")
+    case  44: X1WD = fData; break; //X1WD"_RtWdWdWd")
+    case  45: X2WD = fData; break; //X2WD"_RtWdWdWd")
+    case  46: X3WD = fData; break; //X3WD"_RtWdWdWd")
+    case 25:                       //NS1, "_1NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 1, fData ) )
+             break;
+
+          cloudExtra[0].Ns = fData;
+          break;
+    case 26:                       //NS2, "_2NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 2, fData ) )
+             break;
+
+          cloudExtra[1].Ns = fData;
+          break;
+    case 27:                       //NS3, "_3NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 3, fData ) )
+             break;
+
+          cloudExtra[2].Ns = fData;
+          break;
+    case 28:                       //NS4, "_4NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 4, fData ) )
+             break;
+
+          cloudExtra[3].Ns = fData;
+          break;
+    case 305:                      //CC1, "_1NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 1, fData ) )
+             break;
+
+          cloudExtra[0].C = fData;
+          break;
+    case 306:                      //CC2, "_2NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 2, fData ) )
+             break;
+
+          cloudExtra[1].C = fData;
+          break;
+    case 307:                      //CC3, "_3NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 3, fData ) )
+             break;
+
+          cloudExtra[2].C = fData;
+          break;
+    case 308:                      //CC4, "_4NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 4, fData ) )
+             break;
+
+          cloudExtra[3].C = fData;
+          break;
+    case 301:                      //HS1, "_1NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 1, fData ) )
+             break;
+
+          cloudExtra[0].hshs = fData;
+          break;
+    case 302:                      //HS2, "_2NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 2, fData ) )
+             break;
+
+          cloudExtra[1].hshs = fData;
+          break;
+    case 303:                      //HS3, "_3NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 3, fData ) )
+             break;
+
+          cloudExtra[2].hshs = fData;
+          break;
+    case 304:                      //HS4, "_4NsChshs")
+          if( ! resizeAndCheckData( cloudExtra, 4, fData ) )
+             break;
+
+          cloudExtra[3].hshs = fData;
+          break;
+    case  19: S = fData;  break;   //_S
+    case  13: ITZ=fData;  break;   //ITZ, "_tz")
+    case   1: AA = fData; break;   //AA, _aa
     default:
       return false;
     }
@@ -745,6 +722,62 @@ BufrDataList::BufrDataProxy::operator BufrData()const //rvalue use
   return *it;
 }
 
+std::ostream
+&operator<<(std::ostream &o, const BufrData::CloudDataExtra &cd )
+{
+   o << "vsci: ";
+
+   if( cd.vsci == FLT_MAX )
+      o << "NA";
+   else
+      o << cd.vsci;
+
+   o << " Ns: ";
+   if( cd.Ns == FLT_MAX )
+      o << "NA";
+   else
+      o << cd.Ns;
+
+
+   o << " C: ";
+   if( cd.C == FLT_MAX )
+      o << "NA";
+   else
+      o << cd.C;
+
+   o << " hshs: ";
+   if( cd.hshs == FLT_MAX )
+      o << "NA";
+   else
+      o << cd.hshs;
+
+   return o;
+}
+
+std::ostream&
+operator<<(std::ostream &o, const BufrData::Wind &wind )
+{
+   o << "ff: ";
+   if( wind.ff == FLT_MAX )
+      o << "NA";
+   else
+      o << wind.ff;
+
+   o << " dd: ";
+
+   if( wind.dd == FLT_MAX )
+      o << "NA";
+   else
+      o << wind.dd;
+
+   o << " i: ";
+   if( wind.i == FLT_MAX )
+      o << "NA";
+   else
+      o << wind.i;
+
+   return o;
+}
 
 std::ostream& 
 operator<<(std::ostream& ost, const BufrData& sd)
@@ -755,71 +788,74 @@ operator<<(std::ostream& ost, const BufrData& sd)
   else
     ost << "obsTime                    : " << sd.time_ <<  endl;
   
-  ost << "tempNaa                (TA): " << sd.tempNaa           << endl 
-      << "tempMid               (TAM): " << sd.tempMid           << endl
-      << "tempMin               (TAN): " << sd.tempMin           << endl
-      << "tempMax               (TAX): " << sd.tempMax           << endl
+  ost << "tempNaa                (TA): " << sd.TA           << endl 
+      << "tempMid               (TAM): " << sd.TAM           << endl
+      << "tempMin               (TAN): " << sd.TAN           << endl
+      << "tempMax               (TAX): " << sd.TAX           << endl
       << "tempMin       (12t)(TAN_12): " << sd.TAN_12            << endl
       << "tempMax       (12t)(TAX_12): " << sd.TAX_12            << endl
-      << "fuktNaa                (UU): " << sd.fuktNaa           << endl
-      << "fuktMid                (UM): " << sd.fuktMid           << endl
-      << "vindHastNaa            (FF): " << sd.vindHastNaa       << endl
-      << "vindHastMid            (FM): " << sd.vindHastMid       << endl
-      << "vindHastGust         (FG_1): " << sd.vindHastGust      << endl
+      << "fuktNaa                (UU): " << sd.UU           << endl
+      << "fuktMid                (UM): " << sd.UM           << endl
+      << "vindHastNaa            (FF): " << sd.FF       << endl
+      << "vindHastMid            (FM): " << sd.FM       << endl
+      << "vindHastGust         (FG_1): " << sd.FG_1      << endl
       << "FG (Since last obs.)       : " << sd.FG                << endl
-      << "vindHastMax          (FX_1): " << sd.vindHastMax       << endl
+      << "vindHastMax          (FX_1): " << sd.FX_1       << endl
       << "FX_3                       : " << sd.FX_3              << endl
-      << "FX  (Since last obs.)      : " << sd.FX                << endl
-      << "vindRetnNaa            (DD): " << sd.vindRetnNaa       << endl
-      << "vindRetnMid            (DM): " << sd.vindRetnMid       << endl
-      << "vindRetnGust           (DG): " << sd.vindRetnGust      << endl
-      << "vindRetnMax            (DX): " << sd.vindRetnMax       << endl
+      << "FX  (Siden forige obs.)    : " << sd.FX                << endl
+      << "vindRetnNaa            (DD): " << sd.DD       << endl
+      << "vindRetnMid            (DM): " << sd.DM       << endl
+      << "vindRetnGust           (DG): " << sd.DG      << endl
+      << "vindRetnMax            (DX): " << sd.DX       << endl
       << "DX_3                       : " << sd.DX_3              << endl
-      << "nedboerTot             (RA): " << sd.nedboerTot        << endl
-      << "nedboer1Time           (RR): " << sd.nedboer1Time      << endl
-      << "nedboer2Time         (RR_2): " << sd.nedboer2Time      << endl
-      << "nedboer3Time         (RR_3): " << sd.nedboer3Time      << endl
-      << "nedboer6Time         (RR_6): " << sd.nedboer6Time      << endl
-      << "bedboer9Time         (RR_9): " << sd.nedboer9Time      << endl
-      << "nedboer12Time       (RR_12): " << sd.nedboer12Time     << endl
-      << "nedboer15Time       (RR_15): " << sd.nedboer15Time     << endl
-      << "nedboer18Time       (RR_18): " << sd.nedboer18Time     << endl
-      << "nedboer24Time       (RR_24): " << sd.nedboer24Time     << endl
-      << "Nedbï¿½r indikator      (IIR): " << sd.IIR               << endl
-      << "Nedbï¿½r periode        (ITR): " << sd.ITR               << endl
-      << "sjï¿½temperatur          (TW): " << sd.TW                << endl
+      << "maxWind            tzFxFxFx: " << sd.FxMax             << endl
+      << "nedboerTot             (RA): " << sd.RA        << endl
+      << "nedboer1Time           (RR): " << sd.RR_1      << endl
+      << "nedboer2Time         (RR_2): " << sd.RR_2      << endl
+      << "nedboer3Time         (RR_3): " << sd.RR_3      << endl
+      << "nedboer6Time         (RR_6): " << sd.RR_6      << endl
+      << "bedboer9Time         (RR_9): " << sd.RR_9      << endl
+      << "nedboer12Time       (RR_12): " << sd.RR_12     << endl
+      << "nedboer15Time       (RR_15): " << sd.RR_15     << endl
+      << "nedboer18Time       (RR_18): " << sd.RR_18     << endl
+      << "nedboer24Time       (RR_24): " << sd.RR_24     << endl
+      << "Nedbør periode         (Ir): " << sd.IR                << endl
+      << "Verindikator           (Ix): " << sd.IX                << endl
+      << "sjøtemperatur          (TW): " << sd.TW                << endl
       << "TWN                   (TWN): " << sd.TWN               << endl
       << "TWM                   (TWM): " << sd.TWM               << endl 
       << "TWX                   (TWX): " << sd.TWX               << endl
-      << "nedboerJa (min)      (RT_1): " << sd.nedboerJa         << endl
-      << "trykkQFENaa            (PO): " << sd.trykkQFENaa       << endl
-      << "trykkQFEMid           (POM): " << sd.trykkQFEMid       << endl
-      << "trykkQFEMin           (PON): " << sd.trykkQFEMin       << endl
-      << "trykkQFEMax           (POX): " << sd.trykkQFEMax       << endl
-      << "trykkQNHNaa            (PH): " << sd.trykkQNHNaa       << endl
-      << "trykkQFFNaa            (PR): " << sd.trykkQFFNaa       << endl
-      << "trykkTendens           (PP): " << sd.trykkTendens      << endl
+      << "nedboerJa (min)      (RT_1): " << sd.RT_1         << endl
+      << "trykkQFENaa            (PO): " << sd.PO       << endl
+      << "trykkQFEMid           (POM): " << sd.POM       << endl
+      << "trykkQFEMin           (PON): " << sd.PON       << endl
+      << "trykkQFEMax           (POX): " << sd.POX       << endl
+      << "trykkQNHNaa            (PH): " << sd.PH       << endl
+      << "trykkQFFNaa            (PR): " << sd.PR       << endl
+      << "trykkTendens           (PP): " << sd.PP      << endl
       << "trykkKarakter          (AA): " << sd.AA                << endl
-      << "nedboerInd_verInd   (_irix): " << sd.nedboerInd_verInd << endl
       << "Vmor (automatic VV)  (_hVV): " << sd.Vmor              << endl
       << "VV (estimated VV)    (_hVV): " << sd.VV                << endl
-      << "hoeyde_sikt          (_hVV): " << sd.hoeyde_sikt       << endl
       << "HLN                        : " << sd.HLN               << endl
-      << "skydekke               (_N): " << sd.skydekke          << endl
-    //      << "nedboermengde      (_RRRtr): " << sd.nedboermengde     << endl
-      << "verGenerelt       (_wwW1W2): " << sd.verGenerelt       << endl
-      << "WAWA   (ww automatisk mÃ¥lt): " << sd.WAWA              << endl
-      << "skyer           (_NhClCmCh): " << sd.skyer             << endl
-      << "verTillegg      (_RtWdWdWd): " << sd.verTillegg        << endl
-      << "skyerEkstra1    (_1NsChshs): " << sd.skyerEkstra1      << endl
-      << "skyerEkstra2    (_2NsChshs): " << sd.skyerEkstra2      << endl
-      << "skyerEkstra3    (_3NsChshs): " << sd.skyerEkstra3      << endl
-      << "skyerEkstra4    (_4NsChshs): " << sd.skyerEkstra4      << endl
-      << "sjoeTemp        (_snTwTwTw): " << sd.sjoeTemp          << endl
+      << "skydekke               (_N): " << sd.N                 << endl
+      << "verGenerelt       (_wwW1W2): " << printOut( "ww", sd.ww )
+      <<                                    printOut( "W1", sd.W1 )
+      <<                                    printOut( "W2", sd.W2 ) << endl
+      << "WAWA    (ww automatisk måt): " << sd.WAWA             << endl
+      << "skyer           (_NhClCmCh): " << printOut( "Nh", sd.NH )
+      <<                                    printOut( "Cl", sd.CL )
+      <<                                    printOut( "Cm", sd.CM )
+      <<                                    printOut( "Ch", sd.CH ) << endl
+      << "verTillegg      (_RtWdWdWd): " << printOut( "Wd1", sd.X1WD )
+      <<                                    printOut( "Wd2", sd.X2WD )
+      <<                                    printOut( "Wd3", sd.X3WD ) << endl
+      << "skyerEkstra1    (_1NsChshs): " << (sd.cloudExtra.size()>0?sd.cloudExtra[0]:BufrData::CloudDataExtra()) << endl
+      << "skyerEkstra2    (_2NsChshs): " << (sd.cloudExtra.size()>1?sd.cloudExtra[1]:BufrData::CloudDataExtra()) << endl
+      << "skyerEkstra3    (_3NsChshs): " << (sd.cloudExtra.size()>2?sd.cloudExtra[2]:BufrData::CloudDataExtra()) << endl
+      << "skyerEkstra4    (_4NsChshs): " << (sd.cloudExtra.size()>3?sd.cloudExtra[3]:BufrData::CloudDataExtra()) << endl
       << "gressTemp             (TGN): " << sd.TGN               << endl
       << "gressTemp_12       (TGN_12): " << sd.TGN_12            << endl
-      << "sjoegang               (_S): " << sd.sjoegang          << endl
-      << "snoeMark            (_Esss): " << sd.snoeMark          << endl
+      << "sjoegang               (_S): " << sd.S                 << endl
       << "Naar intraff FX       (ITZ): " << sd.ITZ               << endl;
   
   return ost;

@@ -70,7 +70,6 @@ class Bufr
     int  Vis_ir_Kode(const std::string &str);
     bool Sjekk_Gruppe(int grpNr, std::string &kode, const std::string &str);
     void Tid_Kode(std::string &kode, int time);
-    void windAtObstime( const BufrData &data, BufrData &res );
     void Naa_Vind_Kode(std::string &kode, float retn, float hast);
     void Temp_Kode(std::string &kode, float temp);
     
@@ -91,7 +90,7 @@ class Bufr
      *
      * @see doNedboerKode
      */
-    void precip(std::string &kode,           //RRRtr
+    void Nedboer_Kode(std::string &kode,           //RRRtr
 		      std::string &vertilleggKode, //555 ... 4RtWdWdWd
 		      std::string &sRR24Kode,          //333 ... 7RR24
 		      float totalNedboer,
@@ -99,38 +98,41 @@ class Bufr
 		      int time,
 		      int &tr,
 		      int ir);
-    void doPrecip(std::string &nedboerKode,
+    void doNedboerKode(std::string &nedboerKode,
 		       std::string &verTilleggKode,
 		       std::string &rr24,
 		       int         &tr,
 		       BufrDataList &sd);
-    int  precipFromRA(float &nedbor, float &fRR24, int &tr, BufrDataList &sd);
-    int  precipFromRR(float &nedbor, float &fRR24, int &tr, BufrDataList &sd);
-    int  precipFromRrN(float &nedbor,
+    int  nedborFromRA(float &nedbor, float &fRR24, int &tr, BufrDataList &sd);
+    int  nedborFromRR(float &nedbor, float &fRR24, int &tr, BufrDataList &sd);
+    int  nedborFromRR_N(float &nedbor, 
 			float &fRR24, 
 			int   &tr, 
 			BufrDataList &sd);
-    int  precipFromRRRtr(float &nedbor,
+    int  nedborFromRRRtr(float &nedbor,
 			 float &fRR24, 
 			 int   &tr, 
 			 BufrDataList &sd);
-    int rr24FromRrN(BufrDataList &sd, float &fRR24);
+    int RR_24_from_RR_N(BufrDataList &sd, float &fRR24);
  	 
-    void dewPoint( const BufrData &data, BufrData &res );
-    void minMax(std::string &kode, BufrDataList &sd);
-    void maxMin(std::string &kode, BufrDataList &sd);
-    void maxWindGust(std::string &kode, BufrDataList &sd);
-    void maxWindMax( BufrData::Wind &wind, BufrDataList &sd);
-    float pressure( float presure );
-    void doPressureTrend( const BufrDataList &data, BufrData &res );
-    void computePressureTrend( const BufrDataList &data,
-                               BufrData &res);
-    bool pressureTrend( const BufrData &data, BufrData &res );
-    void cloudCower( const BufrData &data, BufrData &res );
+    void Dugg_Kode(std::string &kode, float temp, float fukt);
+    void Min_Max_Kode(std::string &kode, BufrDataList &sd);
+    void Max_Min_Kode(std::string &kode, BufrDataList &sd);
+    void Max_Vind_Gust_Kode(std::string &kode, BufrDataList &sd);
+    void Max_Vind_Max_Kode(std::string &kode, BufrDataList &sd);
+    void Trykk_Kode(int prefix, std::string &kode, float trykk);
+    void Tendens_Kode(std::string &kode, 
+		      int   time, 
+		      float trykk1, 
+		      float trykk2, 
+		      float trykk3, 
+		      float trykk4);
+    void Tendens_Kode(std::string &kode, const BufrData &data);
+    void Skydekke_Kode(std::string &kode, const std::string &str);
     void Hoyde_Sikt_Kode(std::string &kode, const BufrData &data);
     int  ix_Kode(const std::string &str);
-    bool doGeneralWeather( BufrData &res, const BufrData &data);
-    bool seaTemp( const BufrData &data, BufrData &res );
+    bool doVerGenerelt(std::string &kode, int &ix, const BufrData &data);
+    bool SjoeTempKode(std::string &kode, const BufrData &data);
     bool SjekkEsss(std::string &kode, const std::string &str);
     void doEsss( std::string &kode, const BufrData &data );
     void GressTempKode(std::string &kode, BufrDataList &sd);
@@ -155,24 +157,24 @@ class Bufr
      *        pï¿½ formen 'CCCXXX'  som senere skal skiftes
      *        ut med aktuell CCA verdi.
      */
-    bool    doBufr( int                  bufrno,
-                    const std::string    &usteder,
-                    int                  listenummer,
-                    std::string          &bufr,
-                    StationInfoPtr       info,
-                    BufrDataList         &bufrData,
-                    bool                 create_CCA_template=false);
+    bool    doBufr(int                  bufrno,
+		    const std::string    &usteder,
+		    int                  listenummer,
+		    std::string          &bufr,
+		    StationInfoPtr       info,
+		    BufrDataList        &bufrData,
+		    bool                 create_CCA_template=false);
 
     bool doBufr( StationInfoPtr       info,
-                 BufrDataList         &bufrData,
-                 BufrData             &bufr,
-                 bool                 create_CCA_template=false
-               );
+    		      BufrDataList        &bufrData,
+    		      std::string          &bufr,
+    		      bool                 create_CCA_template=false
+    		    );
 
     /**
      * replaceCCCXXX erstatter CCCXXX templaten, hvis den finnes,
      * med verdien angitt med ccx. Hvis ccx er 0 skal vi bare fjerne
-     * templaten, for ccx=1 får vi CCA, for ccx=2 får vi CCB osv. Hvis
+     * templaten, for ccx=1 fï¿½r vi CCA, for ccx=2 fï¿½r vi CCB osv. Hvis
      * ccx > 26, blir templaten bare fjernet.
      */
     static void replaceCCCXXX(std::string &bufr, int ccx);

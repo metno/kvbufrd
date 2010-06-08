@@ -315,7 +315,8 @@ BufrWorker::newObs(ObsEvent &event)
 	EReadData      dataRes;
   	DataEntryList  data;   
   	BufrDataList  bufrData;
-  	Bufr          bufr;
+  	Bufr          bufrEncoder;
+  	BufrData      bufr;
   	string         sBufr;
   	StationInfoPtr info;
   	ostringstream  ost;
@@ -446,13 +447,11 @@ BufrWorker::newObs(ObsEvent &event)
   	bool bufrOk;
 
   	try{
-    	bufrOk=bufr.doBufr(info->wmono(),
-			  				   	 info->owner(),
-									 atoi(info->list().c_str()),
-			  				  		 sBufr,
-			  				  		 info,
-			  				  		 bufrData,
-			  				  		 true);
+
+    	bufrOk=bufrEncoder.doBufr( info,
+    	                           bufrData,
+    	                           bufr,
+    	                           true);
   	}
   	catch(std::out_of_range &e){
     	LOGWARN("EXCEPTION: out_of_range: wmono: " << info->wmono() <<
@@ -587,6 +586,7 @@ BufrWorker::readData(dnmi::db::Connection &con,
   	miutil::miTime                  from(event.obstime());
   	miutil::miTime                  to(event.obstime());
   	bool                            hasObstime=false;
+  	kvdatacheck::Validate validate( kvdatacheck::Validate::UseOnlyUseInfo );
 
   	data.clear();
 
@@ -628,10 +628,13 @@ BufrWorker::readData(dnmi::db::Connection &con,
 				if(event.hasReceivedTypeid(dit->stationID(), 
 				  									dit->typeID(),
 				   								doLogTypeidInfo)){
-	  				data.insert(*dit);
-	  
-	  				if(!hasObstime && dit->obstime()==event.obstime())
-	    				hasObstime=true;
+
+				   if( validate( *dit ) ) {
+				      data.insert(*dit);
+
+				      if(!hasObstime && dit->obstime()==event.obstime())
+				         hasObstime=true;
+				   }
 				}
 
 				doLogTypeidInfo=false;

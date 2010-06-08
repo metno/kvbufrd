@@ -176,21 +176,63 @@ kvdatacheck::
 Validate::
 validDataUseOnlyUseInfo( const Data &data )
 {
-  kvUseInfo uinfo=data.useinfo();
+   kvUseInfo uinfo=data.useinfo();
+   kvControlInfo cinfo=data.controlinfo();
 
-  int uinfo_2; // QA level for original data value.
-  int uinfo_3; //Treatment of original data value.
+   int uinfo_2=uinfo.flag( 2 ); // QA level for original data value.
+   int uinfo_3=uinfo.flag( 3 ); //Treatment of original data value.
+   int cinfo_mis = cinfo.flag( f_fmis );
 
-  uinfo_2=data.useinfo().flag( 2 );
-  uinfo_3=data.useinfo().flag( 3 );
+   LOGDEBUG("Validate: stationid: " << data.stationID() << " typeid: " << data.typeID()
+            << " obstime: " << data.obstime()
+            << " paramid: " << data.paramID()
+            << " original: " << data.original()
+            << " cflags: " << data.controlinfo()
+            << " uflags: " << data.useinfo() << " u2: " << uinfo_2 << " u3: " << uinfo_3 << " cmis: "<< cinfo_mis );
 
-  if( ! (uinfo_3 == 0 || uinfo_3 == 9)  )
-	  return false;
+   if( atoi( data.original().c_str() ) == -32767 ) {
+      LOGINFO("REJECTED -32767: stationid: " << data.stationID() << " typeid: " << data.typeID()
+              << " obstime: " << data.obstime()
+              << " paramid: " << data.paramID()
+              << " original: " << data.original());
 
-  if( (uinfo_2 <= 1) || uinfo_2 == 9  )
-	  return true;
+      return false;
+   }
 
-  return false;
+   if( ! check_useinfo1( uinfo, data.paramID() ) ) {
+      LOGINFO("REJECTED useinfo(1)=" << uinfo.flag( 1 ) << " :  stationid: " << data.stationID()  << " typeid: " << data.typeID()
+              << " obstime: " << data.obstime()
+              << " paramid: " << data.paramID()
+              << " original: " << data.original());
+      return false;
+   }
+
+   if( ! check_fmis( cinfo, data.paramID() ) ) {
+      LOGINFO("REJECTED fmis=" << cinfo.flag(f_fmis) <<  " : stationid: " << data.stationID() << " typeid: " << data.typeID()
+              << " obstime: " << data.obstime()
+              << " paramid: " << data.paramID()
+              << " original: " << data.original());
+      return false;
+   }
+
+   if( ! (uinfo_3 == 0 || uinfo_3 == 9)  ) {
+      LOGINFO("REJECTED useinfo(3)="<< uinfo_3 << " : stationid: " << data.stationID() << " typeid: " << data.typeID()
+              << " obstime: " << data.obstime()
+              << " paramid: " << data.paramID()
+              << " original: " << data.original());
+
+      return false;
+   }
+   if( ! (uinfo_2 <= 2 || uinfo_2 == 9) ) {
+      LOGINFO("REJECTED useinfo(2)="<< uinfo_2 << " : stationid: " << data.stationID() << " typeid: " << data.typeID()
+              << " obstime: " << data.obstime()
+              << " paramid: " << data.paramID()
+              << " original: " << data.original());
+
+      return false;
+   }
+
+   return true;
 }
 
 

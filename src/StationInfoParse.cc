@@ -28,6 +28,8 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
+#include <float.h>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
@@ -132,8 +134,13 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
       int wmono)
 {
    const char *keywords[]={"stationid", "delay", "precipitation",
-         "typepriority", "list",
-         "copy", "copyto", "owner", "loglevel", 0};
+                           "typepriority", "list",
+                           "copy", "copyto", "owner", "loglevel",
+                           "latitude", "longitude", "height",
+                           "height-visibility", "height-precip",
+                           "height-pressure", "height-temperature",
+                           "height-wind",
+                           0 };
 
    list<std::string>           keys;
    list<std::string>::iterator it;
@@ -227,6 +234,22 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
             st->copyto_=doDefCopyto(value, st->wmono());
          }else if( strcmp( keywords[i], "loglevel" ) == 0 ){
             st->loglevel_=doDefLogLevel(value, st->wmono());
+         } else if( strcmp( keywords[i], "height" ) == 0 ) {
+            doInt( st->height_, value );
+         } else if( strcmp( keywords[i], "height-precip" ) == 0 ) {
+            doInt( st->heightPrecip_, value );
+         }else if( strcmp( keywords[i], "height-pressure" ) == 0 ) {
+            doInt( st->heightPressure_, value );
+         }else if( strcmp( keywords[i], "height-temperature" ) == 0 ) {
+            doInt( st->heightTemperature_, value );
+         }else if( strcmp( keywords[i], "height-visibility" ) == 0 ) {
+            doInt( st->heightVisability_, value );
+         }else if( strcmp( keywords[i], "height-wind" ) == 0 ) {
+            doInt( st->heightWind_, value );
+         }else if( strcmp( keywords[i], "latitude" ) == 0 ) {
+            doFloat( st->latitude_, value );
+         }else if( strcmp( keywords[i], "longitude" ) == 0 ) {
+            doFloat( st->longitude_, value );
          }
 
          if(!ok){
@@ -842,5 +865,39 @@ doTypePri(const std::string &key,
       return false;
 
    return !st.typepriority_.empty();
+}
+
+void
+StationInfoParse::
+doInt( int &i, const miutil::conf::ValElementList &val )
+{
+   if( val.empty() ) {
+      i = INT_MAX;
+      return;
+   }
+
+   try{
+      i = val.begin()->valAsInt();
+   }
+   catch( ... ) {
+      i = INT_MAX;
+   }
+}
+
+void
+StationInfoParse::
+doFloat( float &f, const miutil::conf::ValElementList &val )
+{
+   if( val.empty() ) {
+      f = FLT_MAX;
+      return;
+   }
+
+   try {
+      f = val.begin()->valAsFloat();
+   }
+   catch( ... ) {
+      f = FLT_MAX;
+   }
 }
 

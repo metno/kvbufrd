@@ -121,6 +121,9 @@ class StationInfoParse
 		  miutil::conf::ValElementList &vl, 
 		  StationInfo &st);
 
+   void   doInt( int &i, const miutil::conf::ValElementList &val );
+   void doFloat( float &f, const miutil::conf::ValElementList &val );
+
 
    StationInfo* parseSection(miutil::conf::ConfSection *stationConf, 
 			     int wmono);
