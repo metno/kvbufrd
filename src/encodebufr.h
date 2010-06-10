@@ -50,21 +50,6 @@
 #include "StationInfo.h"
 
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
-extern void pbopen_(int *fd, char *filename, char *fmod, int *errorIndicator, int lengthOfFilename, int unknown /*set to 2*/);
-extern void pbclose_(int *fd, int *errorIndicator );
-extern void pbwrite_(int *fd, int *kbuff, int *nbytes, int *errorIndicator );
-extern void bufren_(int *ksec0, int *ksec1, int *ksec2, int *ksec3, int *ksec4,
-                    int *ktdlen, int *ktdlst, int *kdlen, int *kdata,
-                    int *kelem, int *kvals, double *values, char **cvals,
-                    int *kbufl, int *kbuff, int *errorIndicator);
-
-#if defined(__cplusplus)
-}
-#endif
 
 class BufrEncodeException : public std::exception
 {
