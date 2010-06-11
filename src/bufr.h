@@ -99,22 +99,20 @@ class Bufr
 		      int time,
 		      int &tr,
 		      int ir);
-    void doPrecip(std::string &nedboerKode,
-		       std::string &verTilleggKode,
-		       std::string &rr24,
-		       int         &tr,
-		       BufrDataList &sd);
-    int  precipFromRA(float &nedbor, float &fRR24, int &tr, BufrDataList &sd);
-    int  precipFromRR(float &nedbor, float &fRR24, int &tr, BufrDataList &sd);
+    void doPrecip(StationInfoPtr     info,
+                  const BufrDataList &bufrData,
+                  BufrData           &bufr );
+    int  precipFromRA(float &nedbor, float &fRR24, int &tr, const BufrDataList &sd);
+    int  precipFromRR(float &nedbor, float &fRR24, int &tr, const BufrDataList &sd);
     int  precipFromRrN(float &nedbor,
 			float &fRR24, 
 			int   &tr, 
-			BufrDataList &sd);
+			const BufrDataList &sd);
     int  precipFromRRRtr(float &nedbor,
 			 float &fRR24, 
 			 int   &tr, 
-			 BufrDataList &sd);
-    int rr24FromRrN(BufrDataList &sd, float &fRR24);
+			 const BufrDataList &sd);
+    int rr24FromRrN( const BufrDataList &sd, float &fRR24);
  	 
     void dewPoint( const BufrData &data, BufrData &res );
     void minMax(std::string &kode, BufrDataList &sd);

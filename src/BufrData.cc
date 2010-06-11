@@ -75,6 +75,7 @@ BufrData::BufrData():
     FF(FLT_MAX),
     FM(FLT_MAX),
     FG_1(FLT_MAX),
+    FG_010(FLT_MAX),
     FX_1(FLT_MAX),
     FX_3(FLT_MAX),
     DD(FLT_MAX),
@@ -150,6 +151,7 @@ BufrData::BufrData(const BufrData &p):
     FF(p.FF),
     FM(p.FM),
     FG_1(p.FG_1),
+    FG_010( p.FG_010 ),
     FX_1(p.FX_1),
     FX_3(p.FX_3),
     DD(p.DD),
@@ -231,6 +233,7 @@ BufrData::operator=(const BufrData &p)
     FF      = p.FF;
     FM      = p.FM;
     FG_1     = p.FG_1;
+    FG_010   = p.FG_010;
     FX_1      = p.FX_1;
     FX_3             = p.FX_3;
     DD      = p.DD;
@@ -336,6 +339,7 @@ BufrData::setData(const int  &param,
     case  81: FF=fData;     break; //FF
     case  85: FM=fData;     break; //FM
     case  90: FG_1=fData;   break; //FG_1
+    case  84: FG_010=fData; break; //FG_010
     case  93: FX_3=fData;   break; //FX_3
     case  87: FX_1=fData;   break; //FX_1
     case  61: DD=fData;     break; //DD
@@ -799,6 +803,7 @@ operator<<(std::ostream& ost, const BufrData& sd)
       << "vindHastNaa            (FF): " << sd.FF       << endl
       << "vindHastMid            (FM): " << sd.FM       << endl
       << "vindHastGust         (FG_1): " << sd.FG_1      << endl
+      << "FG_010                     : " << sd.FG_010 << endl
       << "FG (Since last obs.)       : " << sd.FG                << endl
       << "vindHastMax          (FX_1): " << sd.FX_1       << endl
       << "FX_3                       : " << sd.FX_3              << endl

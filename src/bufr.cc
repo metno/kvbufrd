@@ -151,6 +151,11 @@ doBufr( StationInfoPtr  info,
    bufr.PO     = pressure( bufrData[0].PO );
    bufr.PR     = pressure( bufrData[0].PR );
 
+
+
+
+
+   doPrecip( info, bufrData, bufr );
    doPressureTrend( bufrData, bufr );
    cloudCower( bufrData[0], bufr );
    windAtObstime( bufrData[0], bufr );
@@ -578,18 +583,26 @@ Bufr::Tid_Kode(std::string &kode, int time)
 void 
 Bufr::windAtObstime( const BufrData &data, BufrData &res )
 {  
-   char tmp[30];
-   string ffCode="//";
-   string ddCode="//";
-
    if( data.FF != FLT_MAX ) {
-      if( data.FF >= 0 || data.FF <= 98 )
-         res.FF = data.FF;
+      if( data.FF >= 0 && data.FF <= 98 ) {
+         res.FF = static_cast<float>( static_cast<int>( ( data.FF + 0.05 )*10 ) )/10;
+         if( res.FF < 1.0 ) { //No wind.
+            res.FF = 0;
+            res.DD = 0;
+            return;
+         }
+      }
    }
 
    if( data.DD != FLT_MAX ) {
-      if(data.DD >= 0 || data.DD <= 360 )
-         res.DD = data.DD;
+      if(data.DD >= 0 && data.DD <= 360 ) {
+         int dd = static_cast<int>( data.DD + 0.5);
+
+         if( dd == 0 )
+            res.DD = 360;
+         else
+            res.DD = dd;
+      }
    }
 }
 
@@ -1838,55 +1851,80 @@ Bufr::precip(std::string &kode,  //RRRtr
 
 
 void
-Bufr::doPrecip(std::string &nedboerKode,
-		     		 std::string &verTilleggKode,
-		     		 std::string &rr24Kode,
-		     		 int         &tr,
-		     		 BufrDataList &sd)
+Bufr::doPrecip( StationInfoPtr     info,
+                const BufrDataList &bufrData,
+                BufrData           &bufr )
 {
-  	BufrData     sisteTid;
+  	BufrData      sisteTid;
   	ostringstream ost;
   	int           ir;
   	float         nedboerTotal=0.0;
   	float         fRR24=FLT_MAX;
+  	int           tr=-1;
 
-  	tr=-1;
-  	rr24Kode.erase();
-  
-  	sisteTid = *sd.begin();
+  	precipitationParam=NoPrecipitation;
+  	StationInfo::TStringList precip=info->precipitation();
 
-  	ost << "doNedboerKode: sisteTid: " << sisteTid.time() << endl;;
+  	if( precip.size() > 0 ){
+  	   string rr=*precip.begin();
 
-  	if(precipitationParam==PrecipitationRA){
-    	ir = precipFromRA(nedboerTotal, fRR24, tr, sd);
-    	ost << "PrecipitationParam: RA    (Automatisk)" << endl
-			<< "Nedbï¿½r bereggning Ir:" << ir  << endl 
-			<< "   RR_24: " << fRR24          << endl
-			<< "  nedbï¿½r: " << nedboerTotal   << endl 
-			<< "      tr: " << tr             << endl;
-  	}else if(precipitationParam==PrecipitationRR){
-    	ir = precipFromRR(nedboerTotal, fRR24, tr, sd);
-    	ost << "EPrecipitationParam: RR    (Automatisk)" << endl
-			<< "Nedbï¿½r bereggning Ir:" << ir 
-			<< "  nedbï¿½r: " << nedboerTotal << endl;
-  	}else if(precipitationParam==PrecipitationRR_N){
-    	ost << "EPrecipitationParam: RR_N, hvor N=1,3,6,12,24" << endl;
-    	ir = precipFromRrN( nedboerTotal, fRR24, tr ,sd );
-    	//tr=4;
-    	ost << "Nedbï¿½r bereggning Ir:" << ir 
-			<< "  nedbï¿½r: " << nedboerTotal << endl;
-  	}else if(precipitationParam==PrecipitationRRR){
-    	ost << "PrecipitationParam: RRR  (Manuell)" << endl;
-    	ir=precipFromRRRtr(nedboerTotal, fRR24, tr, sd);
-  	}else{
-    	ost << "PrecipitationParam: UNKNOWN" << endl;
-    	ir=4;
+  	   if(rr=="RA"){
+  	      precipitationParam=PrecipitationRA;
+  	   }else if(rr=="RR_1" || rr=="RR"){
+  	      precipitationParam=PrecipitationRR;
+  	   }else if(rr=="RR_3" || rr=="RR_6"
+  	         || rr=="RR_12" || rr=="RR_24"){
+  	      precipitationParam=PrecipitationRR_N;
+  	   }else if( rr=="RRRtr"){
+  	      precipitationParam=PrecipitationRRR;
+  	   }else if( rr=="RR_01"){
+  	      //NOT implemented (Not needed) yet
+  	   }
   	}
 
-  	LOGDEBUG(ost.str());
+  	if(precipitationParam==NoPrecipitation)
+  	   return;
 
+
+  	sisteTid = *bufrData.begin();
+
+  	ost << "doPrecip: sisteTid: " << sisteTid.time() << endl;;
+
+  	if(precipitationParam==PrecipitationRA){
+    	ir = precipFromRA(nedboerTotal, fRR24, tr, bufrData);
+    	ost << "doPrecip: EPrecipitationParam: RA    (Automatisk)" << endl
+			<< "    Nedbør bereggning Ir: " << ir  << endl
+			<< "                   RR_24: " << fRR24          << endl
+			<< "                  nedbør: " << nedboerTotal   << endl
+			<< "                      tr: " << tr             << endl;
+  	}else if(precipitationParam==PrecipitationRR){
+    	ir = precipFromRR(nedboerTotal, fRR24, tr, bufrData);
+    	ost << "doPrecip: EPrecipitationParam: RR    (Automatisk)" << endl
+			<< "  Nedbør bereggning Ir: " << ir
+			<< "                nedbør: " << nedboerTotal << endl;
+  	}else if(precipitationParam==PrecipitationRR_N){
+    	ost << "doPrecip: EPrecipitationParam: RR_N, hvor N=1,3,6,12,24" << endl;
+    	ir = precipFromRrN( nedboerTotal, fRR24, tr ,bufrData );
+    	//tr=4;
+    	ost << "  Nedbør bereggning Ir:" << ir
+			<< "                 nedbør: " << nedboerTotal << endl;
+  	}else if(precipitationParam==PrecipitationRRR){
+    	ost << "doPrecip: PrecipitationParam: RRR  (Manuell)" << endl;
+    	ir=precipFromRRRtr(nedboerTotal, fRR24, tr, bufrData);
+    	ost << "    Nedbør bereggning Ir: " << ir  << endl
+          << "                   RR_24: " << fRR24          << endl
+          << "                  nedbør: " << nedboerTotal   << endl
+          << "                      tr: " << tr             << endl;
+  	}else{
+    	ost << "PrecipitationParam: UNKNOWN" << endl;
+    	return;
+  	}
+
+  	LOGDEBUG( ost.str() );
+  	/*
   	precip(nedboerKode, verTilleggKode, rr24Kode, nedboerTotal, fRR24, 
 			     sisteTid.time().hour(), tr, ir);
+  	 */
 }
 
 
@@ -1919,7 +1957,7 @@ Bufr::doPrecip(std::string &nedboerKode,
  * \return ir
  */
 int
-Bufr::precipFromRA(float &nedbor, float &fRR24, int &tr, BufrDataList &sd)
+Bufr::precipFromRA(float &nedbor, float &fRR24, int &tr, const BufrDataList &sd)
 {
   	const float limit=0.2;
   	const float bucketFlush=-10.0;
@@ -1928,7 +1966,7 @@ Bufr::precipFromRA(float &nedbor, float &fRR24, int &tr, BufrDataList &sd)
   	miutil::miTime t2;
   	BufrData d1;
   	BufrData d2;
-  	IBufrDataList it;
+  	CIBufrDataList it;
 
   	int   time=t.hour();
 
@@ -2013,7 +2051,7 @@ Bufr::precipFromRA(float &nedbor, float &fRR24, int &tr, BufrDataList &sd)
 }
 
 int
-Bufr::rr24FromRrN(BufrDataList &sd, float &fRR24)
+Bufr::rr24FromRrN(const BufrDataList &sd, float &fRR24)
 {
   	return 4;
 }
@@ -2030,7 +2068,7 @@ int
 Bufr::precipFromRrN( float &nedbor,
 		      	      float &fRR24,
 		      		   int &tr,
-		      		   BufrDataList &sd)
+		      		   const BufrDataList &sd)
 {
   	int t=sd.begin()->time().hour();
 
@@ -2152,7 +2190,7 @@ int
 Bufr::precipFromRRRtr(float &nedbor,
 		       float &fRR24, 
 		       int   &tr, 
-		       BufrDataList &sd)
+		       const BufrDataList &sd)
 {
 	nedbor=FLT_MAX;
   	fRR24 =FLT_MAX;
@@ -2320,7 +2358,7 @@ Bufr::precipFromRRRtr(float &nedbor,
  */
 
 int  
-Bufr::precipFromRR(float &nedbor, float &fRR24, int &tr, BufrDataList &sd)
+Bufr::precipFromRR(float &nedbor, float &fRR24, int &tr, const BufrDataList &sd)
 {
   	const float limit=0.2;
   	int   nTimeStr=sd.nContinuesTimes();

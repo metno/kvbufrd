@@ -98,6 +98,7 @@ class  BufrData
   	float  FF;   
   	float  FM;   
   	float  FG_1;
+  	float  FG_010; //Gust 10 last minutes before observation.
   	float  FX_1;   
   	float  FX_3;
   	float  DD;   

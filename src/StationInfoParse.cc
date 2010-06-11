@@ -205,7 +205,17 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
             LOGDEBUG6("NO VALUE: for key <" <<keywords[i] << "> in WMO section <"
                   << wmono << ">! Using default value!");
             st->loglevel_=defVal.loglevel;
-         }else{
+         } else if( strcmp( keywords[i], "height" ) == 0 ||
+                    strcmp( keywords[i], "height-precip" ) == 0 ||
+                    strcmp( keywords[i], "height-pressure" ) == 0 ||
+                    strcmp( keywords[i], "height-temperature" ) == 0 ||
+                    strcmp( keywords[i], "height-visibility" ) == 0 ||
+                    strcmp( keywords[i], "height-wind" ) == 0 ||
+                    strcmp( keywords[i], "latitude" ) == 0 ||
+                    strcmp( keywords[i], "longitude" ) == 0 ) {
+            LOGDEBUG( "NO VALUE: for key <" << keywords[i] << "> in WMO section <"
+                       << wmono << ">!. Ignore!");
+         } else {
             LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in WMO section <"
                   << wmono << ">! And no default value!" << endl);
             delete st;
