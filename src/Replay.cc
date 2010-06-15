@@ -73,7 +73,7 @@ Replay::operator()()
       continue;
     }
     
-    BufrData result;
+    kvbufrd::BufrData result;
 
     result.stationid=event->stationInfo()->wmono();
     result.termin=CORBA::string_dup(miutil::miTime::nowTime().isoTime().c_str());

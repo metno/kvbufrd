@@ -70,7 +70,7 @@ class Bufr
     int  Vis_ir_Kode(const std::string &str);
     bool Sjekk_Gruppe(int grpNr, std::string &kode, const std::string &str);
     void Tid_Kode(std::string &kode, int time);
-    void windAtObstime( const BufrData &data, BufrData &res );
+    void windAtObstime( const DataElement &data, DataElement &res );
     void Naa_Vind_Kode(std::string &kode, float retn, float hast);
     void Temp_Kode(std::string &kode, float temp);
     
@@ -91,48 +91,42 @@ class Bufr
      *
      * @see doNedboerKode
      */
-    void precip(std::string &kode,           //RRRtr
-		      std::string &vertilleggKode, //555 ... 4RtWdWdWd
-		      std::string &sRR24Kode,          //333 ... 7RR24
-		      float totalNedboer,
-		      float fRR24,
-		      int time,
-		      int &tr,
-		      int ir);
-    void doPrecip(StationInfoPtr     info,
-                  const BufrDataList &bufrData,
-                  BufrData           &bufr );
-    int  precipFromRA(float &nedbor, float &fRR24, int &tr, const BufrDataList &sd);
-    int  precipFromRR(float &nedbor, float &fRR24, int &tr, const BufrDataList &sd);
-    int  precipFromRrN(float &nedbor,
-			float &fRR24, 
-			int   &tr, 
-			const BufrDataList &sd);
-    int  precipFromRRRtr(float &nedbor,
-			 float &fRR24, 
-			 int   &tr, 
-			 const BufrDataList &sd);
-    int rr24FromRrN( const BufrDataList &sd, float &fRR24);
+    void precip( BufrData &bufr,
+                 float    RR1,
+                 float    totalNedboer,
+                 float    h_tr,
+                 float    fRR24 );
+    void doPrecip( StationInfoPtr     info,
+                   const DataElementList &bufrData,
+                   BufrData           &bufr );
+    float precipFromRA( float &nedbor, float &fRR24, const DataElementList &sd );
+    float precipFromRR( float &nedbor, float &fRR24, const DataElementList &sd );
+    float precipFromRrN( float &nedbor,
+                         float &fRR24,
+                         const DataElementList &sd );
+    float  precipFromRRRtr( float &nedbor,
+                          float &fRR24,
+                          const DataElementList &sd );
  	 
-    void dewPoint( const BufrData &data, BufrData &res );
-    void minMax(std::string &kode, BufrDataList &sd);
-    void maxMin(std::string &kode, BufrDataList &sd);
-    void maxWindGust(std::string &kode, BufrDataList &sd);
-    void maxWindMax( BufrData::Wind &wind, BufrDataList &sd);
+    void dewPoint( const DataElement &data, DataElement &res );
+    void minMax(std::string &kode, DataElementList &sd);
+    void maxMin(std::string &kode, DataElementList &sd);
+    void maxWindGust(std::string &kode, DataElementList &sd);
+    void maxWindMax( BufrData::Wind &wind, DataElementList &sd);
     float pressure( float presure );
-    void doPressureTrend( const BufrDataList &data, BufrData &res );
-    void computePressureTrend( const BufrDataList &data,
-                               BufrData &res);
-    bool pressureTrend( const BufrData &data, BufrData &res );
-    void cloudCower( const BufrData &data, BufrData &res );
-    void Hoyde_Sikt_Kode(std::string &kode, const BufrData &data);
+    void doPressureTrend( const DataElementList &data, DataElement &res );
+    void computePressureTrend( const DataElementList &data,
+                               DataElement &res);
+    bool pressureTrend( const DataElement &data, DataElement &res );
+    void cloudCower( const DataElement &data, DataElement &res );
+    void Hoyde_Sikt_Kode(std::string &kode, const DataElement &data);
     int  ix_Kode(const std::string &str);
-    bool doGeneralWeather( BufrData &res, const BufrData &data);
-    bool seaTemp( const BufrData &data, BufrData &res );
+    bool doGeneralWeather( DataElement &res, const DataElement &data);
+    bool seaTemp( const DataElement &data, DataElement &res );
     bool SjekkEsss(std::string &kode, const std::string &str);
-    void doEsss( std::string &kode, const BufrData &data );
-    void GressTempKode(std::string &kode, BufrDataList &sd);
-    void SplittStreng(std::string &streng, std::string::size_type index);
+    void doEsss( std::string &kode, const DataElement &data );
+    void GressTempKode(std::string &kode, DataElementList &sd);
+
 
  public:
     
@@ -158,22 +152,15 @@ class Bufr
                     int                  listenummer,
                     std::string          &bufr,
                     StationInfoPtr       info,
-                    BufrDataList         &bufrData,
+                    DataElementList         &bufrData,
                     bool                 create_CCA_template=false);
 
     bool doBufr( StationInfoPtr       info,
-                 BufrDataList         &bufrData,
+                 DataElementList         &bufrData,
                  BufrData             &bufr,
                  bool                 create_CCA_template=false
                );
 
-    /**
-     * replaceCCCXXX erstatter CCCXXX templaten, hvis den finnes,
-     * med verdien angitt med ccx. Hvis ccx er 0 skal vi bare fjerne
-     * templaten, for ccx=1 får vi CCA, for ccx=2 får vi CCB osv. Hvis
-     * ccx > 26, blir templaten bare fjernet.
-     */
-    static void replaceCCCXXX(std::string &bufr, int ccx);
 };
 
 #endif

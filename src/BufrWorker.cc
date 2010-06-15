@@ -314,7 +314,7 @@ BufrWorker::newObs(ObsEvent &event)
 {
 	EReadData      dataRes;
   	DataEntryList  data;   
-  	BufrDataList  bufrData;
+  	DataElementList  bufrData;
   	Bufr          bufrEncoder;
   	BufrData      bufr;
   	string         sBufr;
@@ -432,7 +432,7 @@ BufrWorker::newObs(ObsEvent &event)
 	     		   "BufrWorker::loadBufrData" << endl);
   	}
   
-  	CIBufrDataList it=bufrData.begin();
+  	CIDataElementList it=bufrData.begin();
   	ost.str("");
 
   	for(int i=0;it!=bufrData.end(); i++, it++)
@@ -521,7 +521,7 @@ BufrWorker::newObs(ObsEvent &event)
       	}
     	}
 
-    	Bufr::replaceCCCXXX(sBufr, ccx);
+    	//Bufr::replaceCCCXXX(sBufr, ccx);
 
     	if(newBufr){
       	miTime createTime(miTime::nowTime());
@@ -670,7 +670,7 @@ BufrWorker::readData(dnmi::db::Connection &con,
 
 void 
 BufrWorker::loadBufrData(const DataEntryList &dl,
-			   BufrDataList       &sd,
+			   DataElementList       &sd,
 			   StationInfoPtr      info)const
 {
    kvdatacheck::Validate validate( kvdatacheck::Validate::UseOnlyUseInfo );

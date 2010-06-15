@@ -26,6 +26,7 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   Data.cc Data.h \
                   BufrWorker.cc BufrWorker.h \
                   BufrData.cc BufrData.h \
+                  DataElementList.cc DataElementList.h \
                   DataList.cc DataList.h \
                   StationInfo.cc StationInfo.h \
                   StationInfoParse.cc StationInfoParse.h \
@@ -90,6 +91,7 @@ kvBufrEncodeTest_SOURCES = test/kvBufrEncodeTest.cc \
 							test/ReadDataFile.h test/ReadDataFile.cc \
 							Data.cc Data.h\
 							DataList.cc DataList.h \
+							DataElementList.cc DataElementList.h \
 		                    BufrData.cc BufrData.h \
 		                    StationInfo.cc StationInfo.h \
         		            StationInfoParse.cc StationInfoParse.h \

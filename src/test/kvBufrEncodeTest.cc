@@ -100,7 +100,7 @@ protected:
 
 TEST_F( BufrEncodeTest, RR24_for_RRRtr )
 {
-   BufrDataList data;
+   DataElementList data;
    StationInfoPtr stInfo;
    BufrData bufr;
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
@@ -110,37 +110,37 @@ TEST_F( BufrEncodeTest, RR24_for_RRRtr )
 
    loadBufrDataFromFile( "data_7010-1.dat", stInfo, data, validData );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr, false ) ) << "FAILED: Cant generate bufr for "<< 1389;
-   EXPECT_FLOAT_EQ( 0.3, bufr.RR_24 );
+   EXPECT_FLOAT_EQ( 0.3, bufr.precip24.RR );
    //EXPECT_EQ( bufr, "AAXX 23061 01389 16/// ///// 1//// 2//// 69912 333 70003 555 41///=") << "Generated bufr 1: " << bufr;
 
    //No precipitation.
    loadBufrDataFromFile( "data_7010-2.dat", stInfo, data, validData );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr, false ) ) << "FAILED: Cant generate bufr for "<< 1389;
-   EXPECT_FLOAT_EQ( 0.0, bufr.RR_24 );
+   EXPECT_FLOAT_EQ( 0.0, bufr.precip24.RR );
    //EXPECT_EQ( bufr, "AAXX 23061 01389 16/// ///// 1//// 2//// 60002 333 70000 555 40///=")<< "Generated bufr 2: " << bufr;
 
    //Trace of precipitation
    loadBufrDataFromFile( "data_7010-3.dat", stInfo, data, validData );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr, false ) ) << "FAILED: Cant generate bufr for "<< 1389;
-   EXPECT_FLOAT_EQ( -0.1, bufr.RR_24 );
+   EXPECT_FLOAT_EQ( -0.1, bufr.precip24.RR );
    //EXPECT_EQ( bufr, "AAXX 23061 01389 16/// ///// 1//// 2//// 60002 333 79999 555 40///=")<< "Generated bufr 3: " << bufr;
 
    loadBufrDataFromFile( "data_7010-4.dat", stInfo, data, validData );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr, false ) ) << "FAILED: Cant generate bufr for "<< 1389;
-   EXPECT_FLOAT_EQ( -0.1, bufr.RR_24 );
+   EXPECT_FLOAT_EQ( -0.1, bufr.precip24.RR );
    //EXPECT_EQ( bufr, "AAXX 23061 01389 16/// ///// 1//// 2//// 69902 333 79999 555 40///=")<< "Generated bufr 4: " << bufr;
 
 
    loadBufrDataFromFile( "data_7010-5.dat", stInfo, data, validData );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr, false ) ) << "FAILED: Cant generate bufr for "<< 1389;
-   EXPECT_FLOAT_EQ( 0.1, bufr.RR_24 );
+   EXPECT_FLOAT_EQ( 0.1, bufr.precip24.RR );
    //EXPECT_EQ( bufr, "AAXX 23061 01389 16/// ///// 1//// 2//// 69912 333 70001 555 41///=")<< "Generated bufr 5: " << bufr;
 }
 
 
 TEST_F( BufrEncodeTest, encode_TzFxFx )
 {
-	BufrDataList data;
+	DataElementList data;
 	StationInfoPtr stInfo;
 	BufrData bufr;
 	kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
@@ -190,8 +190,8 @@ TEST_F( BufrEncodeTest, encode_TzFxFx )
 TEST_F( BufrEncodeTest, encode_nddff )
 {
    using namespace miutil;
-   BufrDataList allData;
-   BufrDataList data;
+   DataElementList allData;
+   DataElementList data;
    StationInfoPtr stInfo;
    BufrData bufr;
    miTime dt;

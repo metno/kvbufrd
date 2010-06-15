@@ -56,17 +56,17 @@ closeBufrFile( const std::string &filename, int fd );
 
 
 bool
-set_sec0134( const StationInfoPtr station, const BufrData &data,
+set_sec0134( const StationInfoPtr station, const DataElement &data,
              int *ksec0, int *ksec1, int *ksec3, int *ksec4 );
 
 void set_values( const StationInfoPtr station,
-                 const BufrData &data,
+                 const DataElement &data,
                  Values &values, char cvals[][80], int kdata[]);
 }
 
 
 void
-encodeBufr( const BufrData &data, StationInfoPtr station )
+encodeBufr( const DataElement &data, StationInfoPtr station )
 { /* pbopen variables */
   int fd;
   int error;
@@ -116,7 +116,7 @@ namespace {
 
 bool
 set_sec0134( const StationInfoPtr station,
-             const BufrData &data,
+             const DataElement &data,
              int *ksec0, int *ksec1, int *ksec3, int *ksec4)
 {
   int year, month, day, hour, minute, second; /* Termin time */ 
@@ -157,7 +157,7 @@ set_sec0134( const StationInfoPtr station,
 
 /* Populate values and cvals with values according to WMO BUFR template 307080 */
 void set_values(const StationInfoPtr station,
-                const BufrData &data,
+                const DataElement &data,
                 Values &values, char cvals[][80], int kdata[])
 {
    double miss = RVIND;

@@ -72,7 +72,7 @@ class BufrWorker {
 		     ObsEvent             &event,
 		     DataEntryList        &data)const;
   
-  void loadBufrData(const DataEntryList &dl, BufrDataList &sd,
+  void loadBufrData(const DataEntryList &dl, DataElementList &sd,
 		     StationInfoPtr info)const;
 
   /**

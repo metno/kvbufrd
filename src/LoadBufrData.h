@@ -39,7 +39,7 @@
 
 void
 loadBufrData( const DataEntryList &dl,
-			   BufrDataList       &sd,
+			   DataElementList       &sd,
 			   StationInfoPtr      info,
 			   kvdatacheck::Validate &validate );
 

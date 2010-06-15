@@ -125,7 +125,7 @@ namespace {
 bool
 Bufr::
 doBufr( StationInfoPtr  info,
-        BufrDataList    &bufrData,
+        DataElementList    &bufrData,
         BufrData        &bufr,
         bool            create_CCA_template )
 {
@@ -171,8 +171,8 @@ doBufr( StationInfoPtr  info,
 bool
 Bufr::
 doBufr( StationInfoPtr info,
-        BufrDataList   &bufrData,
-        BufrData       &bufr,
+        DataElementList   &bufrData,
+        DataElement       &bufr,
         bool           create_CCA_template )
 {
 	milog::LogContext context("bufr");
@@ -224,11 +224,11 @@ doBufr( StationInfoPtr info,
     string rr24Kode;
     int    ITR;
     string tmpUtsteder(utsteder);
-    BufrData sisteTid;
+    DataElement sisteTid;
     int       nTimeStr=0;
     
 
-    bufr = BufrData(); //Clear the result bufr.
+    bufr = DataElement(); //Clear the result bufr.
     
     verGenerelt    = false;
      
@@ -242,7 +242,7 @@ doBufr( StationInfoPtr info,
     nTimeStr=bufrData.nContinuesTimes();
     
     sisteTid=*bufrData.begin();
-    IBufrDataList it=bufrData.end();
+    IDataElementList it=bufrData.end();
     it--;
 
 	 {
@@ -581,7 +581,7 @@ Bufr::Tid_Kode(std::string &kode, int time)
  *  
  ******/
 void 
-Bufr::windAtObstime( const BufrData &data, BufrData &res )
+Bufr::windAtObstime( const DataElement &data, DataElement &res )
 {  
    if( data.FF != FLT_MAX ) {
       if( data.FF >= 0 && data.FF <= 98 ) {
@@ -718,7 +718,7 @@ Bufr::Temp_Kode(std::string &kode, float temp)
  *  
  */
 void 
-Bufr::dewPoint(  const BufrData &data, BufrData &res  )
+Bufr::dewPoint(  const DataElement &data, DataElement &res  )
 {
    int index;
    float CK[9] = {
@@ -794,7 +794,7 @@ Bufr::dewPoint(  const BufrData &data, BufrData &res  )
  * i tid med data.
  */
 void 
-Bufr::minMax(std::string &kode, BufrDataList &sd)
+Bufr::minMax(std::string &kode, DataElementList &sd)
 {
     int         nTimeStr=sd.nContinuesTimes();
     float       min;
@@ -895,7 +895,7 @@ Bufr::minMax(std::string &kode, BufrDataList &sd)
  *
  */
 void 
-Bufr::maxMin(std::string &kode, BufrDataList &sd)
+Bufr::maxMin(std::string &kode, DataElementList &sd)
 {
     int nTimeStr=sd.nContinuesTimes();
     float min;
@@ -1048,7 +1048,7 @@ Bufr::maxMin(std::string &kode, BufrDataList &sd)
  * Rettet bugg for generering av Gust for 'pio'.
  */ 
 void 
-Bufr::maxWindGust(std::string &kode, BufrDataList &sd)
+Bufr::maxWindGust(std::string &kode, DataElementList &sd)
 {
     int   nTimeStr=sd.nContinuesTimes();
     float fMax;
@@ -1131,7 +1131,7 @@ Bufr::maxWindGust(std::string &kode, BufrDataList &sd)
  * Lagt inn stÃ¸tte for FX_3.
  */
 void 
-Bufr::maxWindMax( BufrData::Wind &wind, BufrDataList &sd)
+Bufr::maxWindMax( BufrData::Wind &wind, DataElementList &sd)
 {
    int   nTimeStr=sd.nContinuesTimes();
    int   nNeedTimes;
@@ -1163,7 +1163,7 @@ Bufr::maxWindMax( BufrData::Wind &wind, BufrDataList &sd)
          if((sd[0].time().hour()%6)==0){ //Hovedtermin!
             miutil::miTime prevTime=sd[0].time();
             prevTime.addHour(-3);
-            CIBufrDataList it=sd.find(prevTime);
+            CIDataElementList it=sd.find(prevTime);
     			
             if(it!=sd.end() && it->time()==prevTime &&
                it->FX_3!=FLT_MAX && it->FX_3>=0){
@@ -1271,7 +1271,7 @@ Bufr::pressure( float pressure )
 
 
 void
-Bufr::doPressureTrend( const BufrDataList &data, BufrData &res )
+Bufr::doPressureTrend( const DataElementList &data, DataElement &res )
 {
    bool ok = pressureTrend( data[0], res );
 
@@ -1289,8 +1289,8 @@ Bufr::doPressureTrend( const BufrDataList &data, BufrData &res )
  *
  */
 void 
-Bufr::computePressureTrend( const BufrDataList &data,
-                     BufrData &res )
+Bufr::computePressureTrend( const DataElementList &data,
+                     DataElement &res )
 {
    int a;
    float dP1;
@@ -1373,7 +1373,7 @@ Bufr::computePressureTrend( const BufrDataList &data,
  * trykkarakteristikk er gitt med DATASTRUCTTYPE1._aa
  */
 bool
-Bufr::pressureTrend( const BufrData &data, BufrData &res)
+Bufr::pressureTrend( const DataElement &data, DataElement &res)
 {
    float trend = FLT_MAX;
 
@@ -1402,7 +1402,7 @@ Bufr::pressureTrend( const BufrData &data, BufrData &res)
 **
 */
 void 
-Bufr::cloudCower( const BufrData &data, BufrData &res )
+Bufr::cloudCower( const DataElement &data, DataElement &res )
 {
    int N;
    if( data.N == FLT_MAX )
@@ -1421,7 +1421,7 @@ Bufr::cloudCower( const BufrData &data, BufrData &res )
 **
 */
 void 
-Bufr::Hoyde_Sikt_Kode(std::string &kode, const BufrData &data)
+Bufr::Hoyde_Sikt_Kode(std::string &kode, const DataElement &data)
 {
    float Vmor=data.Vmor;
    float VV=data.VV;
@@ -1473,7 +1473,7 @@ Bufr::ix_Kode(const std::string &str)
  *  
  */
 bool 
-Bufr::doGeneralWeather(BufrData &res, const BufrData &data)
+Bufr::doGeneralWeather(DataElement &res, const DataElement &data)
 {
 	bool verGenerelt;
 	
@@ -1574,7 +1574,7 @@ Bufr::SjekkEsss(std::string &kode, const std::string &str)
 
 void 
 Bufr::
-doEsss( std::string &kode, const BufrData &data )
+doEsss( std::string &kode, const DataElement &data )
 {
    kode.erase();
    
@@ -1684,7 +1684,7 @@ Bufr::Vis_ir_Kode(const std::string &str)
 } /* Vis_ir_Kode */
 
 bool 
-Bufr::seaTemp( const BufrData &data, BufrData &res)
+Bufr::seaTemp( const DataElement &data, DataElement &res)
 {
   
   	if(data.time().hour()!=12 || data.TW == FLT_MAX ) {
@@ -1705,7 +1705,7 @@ Bufr::seaTemp( const BufrData &data, BufrData &res)
  * vi trenger bare en timestreng.
  */
 void 
-Bufr::GressTempKode(std::string &kode, BufrDataList &sd)
+Bufr::GressTempKode(std::string &kode, DataElementList &sd)
 {
   	int nTimeStr=sd.nContinuesTimes();
   	float min;
@@ -1759,114 +1759,59 @@ Bufr::GressTempKode(std::string &kode, BufrDataList &sd)
  */
 
 void
-Bufr::precip(std::string &kode,  //RRRtr
-		    		std::string &verTilleggKode, //555 ... 4RtWdWdWd
-		    		std::string &rr24Kode,       //333 ... 7RR24
-		    		float totalNedboer, 
-		    		float fRR24,
-		    		int time,
-		    		int &tr,
-		    		int ir)
+Bufr::precip( BufrData &bufr,
+              float    RR1,
+              float    totalNedboer,
+              float    h_tr,
+		    	  float    fRR24 )
 {
-  	double dummy;
-  	float  nedboerTiDel=0.0;
-  	char   stmp[30];
+   int time = bufr.time().hour();
+   double dummy;
+   float  nedboerTiDel=0.0;
+   char   stmp[30];
 
-  	kode.erase();
-  	rr24Kode.erase();
 
-  	if(time==6){
-    	//Skal vi kode 24 (7RR24) timers nedbï¿½r i 333 seksjonen 
-    	if(fRR24!=FLT_MAX){
-      		if( fRR24 == FLT_MIN ) //FLT_MIN signals trace of precipitation
-      			rr24Kode=" 79999";
-      		else if(fRR24<0){
-				rr24Kode=" 70000";
-      		}else{
-				fRR24*=10;
+   if(time==6){
+      //Skal vi kode 24 (7RR24) timers nedbør i 333 seksjonen
+      if( fRR24 != FLT_MAX &&  fRR24 < 1000.0 ) {
+         bufr.precip24.hTr = -24;
+         bufr.precip24.RR = fRR24;
+      }
+   }
 
-				if(fRR24>9999.5){
-	  				rr24Kode=" 7////";
-				}else{
-	  				sprintf(stmp," 7%04.0f",fabs(floor((double)fRR24+0.5)));
-	  				rr24Kode=stmp;
-				}
-      		}
-    	}else{
-      		rr24Kode=" 7////";
-    	}
-  	}
-	  
-  	if(tr<0 || tr>9){
-    	if((time==0)||(time==12))
-      		tr=1;
-    	else if((time==6)||(time==18))      
-      		tr=2;
-    	else
-      		tr=5;
-  	}
-  
-  	if(verTilleggKode.length()!=6)
-    	verTilleggKode=" 4////";
+   if( h_tr == FLT_MAX || totalNedboer == FLT_MAX)
+      return;
 
-  	if(ir==1){
-    
-    	//Ugyldig verdi
-    	if(totalNedboer==FLT_MAX || totalNedboer<=-2.0){
-      		kode=" 6////";
-      		return;
-    	}else if(totalNedboer<0.0){ //Tï¿½rt
-      		sprintf(stmp, " 6000%1d", tr);
-      		kode=stmp;
-      		verTilleggKode[2]='0';
-      		return;
-    	}else if(totalNedboer<1.0){
-      		sprintf(stmp," 699%1.0f%1d",fabs(floor((double)totalNedboer*10+0.5)),tr);
-    	}else if((totalNedboer>=1.0)&&(totalNedboer<989.0)){
-      		sprintf(stmp," 6%03.0f%1d",fabs(floor((double)totalNedboer+0.5)), tr);
-    	}else{ // totalNedboer>=989.0
-      		sprintf(stmp," 6989%1d", tr);
-    	}
+   bufr.precipRegional.hTr = h_tr;
+   bufr.precipRegional.RR = totalNedboer;
 
-    	kode=stmp;
-    	nedboerTiDel = 10*modf((double)totalNedboer, &dummy);
-    
-    	//verTilleggKode er pï¿½ formen:
-    	// ' 4RtWdWdWd', det er Rt vi skal sette. Rt har indeks=2.
-    	//  012 3 4 5 , indekser.
-    	sprintf(stmp, "%1.0f", nedboerTiDel);
-    	verTilleggKode[2]=stmp[0];
-  	}else if(ir==3){
-    	sprintf(stmp, " 6000%1d", tr);
-    	kode=stmp;
-    	verTilleggKode[2]='0';
-  	}else if(ir==4){
-    	kode=" 6////";
-  	}else{
-    	LOGWARN("Nedboer (6RRRtr): Unknown ir <" << ir << ">!");
-    	kode=" 6////";
-  	}
-} /* Nedboer_Kode */
+   if( RR1 != FLT_MAX ) {
+      bufr.precipNational.hTr = -1;
+      bufr.precipNational.RR = RR1;
+   }
+ } /* Nedboer_Kode */
 
 
 
 void
 Bufr::doPrecip( StationInfoPtr     info,
-                const BufrDataList &bufrData,
+                const DataElementList &bufrData,
                 BufrData           &bufr )
 {
-  	BufrData      sisteTid;
   	ostringstream ost;
   	int           ir;
   	float         nedboerTotal=0.0;
   	float         fRR24=FLT_MAX;
-  	int           tr=-1;
+  	float         h_tr=FLT_MAX;
+
+  	if( bufrData.size() < 0 )
+  	   return;
 
   	precipitationParam=NoPrecipitation;
-  	StationInfo::TStringList precip=info->precipitation();
+  	StationInfo::TStringList precipDef=info->precipitation();
 
-  	if( precip.size() > 0 ){
-  	   string rr=*precip.begin();
+  	if( precipDef.size() > 0 ){
+  	   string rr=*precipDef.begin();
 
   	   if(rr=="RA"){
   	      precipitationParam=PrecipitationRA;
@@ -1886,45 +1831,38 @@ Bufr::doPrecip( StationInfoPtr     info,
   	   return;
 
 
-  	sisteTid = *bufrData.begin();
 
-  	ost << "doPrecip: sisteTid: " << sisteTid.time() << endl;;
+  	ost << "doPrecip: sisteTid: " << bufrData[0].time() << endl;;
 
   	if(precipitationParam==PrecipitationRA){
-    	ir = precipFromRA(nedboerTotal, fRR24, tr, bufrData);
+    	h_tr = precipFromRA(nedboerTotal, fRR24, bufrData);
     	ost << "doPrecip: EPrecipitationParam: RA    (Automatisk)" << endl
-			<< "    Nedbør bereggning Ir: " << ir  << endl
 			<< "                   RR_24: " << fRR24          << endl
 			<< "                  nedbør: " << nedboerTotal   << endl
-			<< "                      tr: " << tr             << endl;
+			<< "                    h_tr: " << h_tr             << endl;
   	}else if(precipitationParam==PrecipitationRR){
-    	ir = precipFromRR(nedboerTotal, fRR24, tr, bufrData);
+    	h_tr = precipFromRR( nedboerTotal, fRR24, bufrData);
     	ost << "doPrecip: EPrecipitationParam: RR    (Automatisk)" << endl
-			<< "  Nedbør bereggning Ir: " << ir
-			<< "                nedbør: " << nedboerTotal << endl;
+    	    << "                nedbør: " << nedboerTotal << endl
+    	    << "                  h_tr: " << h_tr << endl;
   	}else if(precipitationParam==PrecipitationRR_N){
     	ost << "doPrecip: EPrecipitationParam: RR_N, hvor N=1,3,6,12,24" << endl;
-    	ir = precipFromRrN( nedboerTotal, fRR24, tr ,bufrData );
-    	//tr=4;
-    	ost << "  Nedbør bereggning Ir:" << ir
-			<< "                 nedbør: " << nedboerTotal << endl;
+    	h_tr = precipFromRrN( nedboerTotal, fRR24, bufrData );
+    	ost << "                 nedbør: " << nedboerTotal << endl
+    	    << "                   h_tr: " << h_tr << endl;
   	}else if(precipitationParam==PrecipitationRRR){
     	ost << "doPrecip: PrecipitationParam: RRR  (Manuell)" << endl;
-    	ir=precipFromRRRtr(nedboerTotal, fRR24, tr, bufrData);
-    	ost << "    Nedbør bereggning Ir: " << ir  << endl
-          << "                   RR_24: " << fRR24          << endl
-          << "                  nedbør: " << nedboerTotal   << endl
-          << "                      tr: " << tr             << endl;
+    	ir=precipFromRRRtr(nedboerTotal, fRR24, bufrData);
+    	ost << "                   RR_24: " << fRR24          << endl
+          << "                  nedbør: " << nedboerTotal   << endl;
   	}else{
     	ost << "PrecipitationParam: UNKNOWN" << endl;
     	return;
   	}
 
   	LOGDEBUG( ost.str() );
-  	/*
-  	precip(nedboerKode, verTilleggKode, rr24Kode, nedboerTotal, fRR24, 
-			     sisteTid.time().hour(), tr, ir);
-  	 */
+
+  	precip( bufr, bufrData[0].RR_1, nedboerTotal, h_tr, fRR24 );
 }
 
 
@@ -1956,58 +1894,57 @@ Bufr::doPrecip( StationInfoPtr     info,
  * \param times  Time vi skal beregne nedbï¿½ren for.
  * \return ir
  */
-int
-Bufr::precipFromRA(float &nedbor, float &fRR24, int &tr, const BufrDataList &sd)
+float
+Bufr::
+precipFromRA( float &nedbor,
+              float &fRR24,
+              const DataElementList &sd )
 {
-  	const float limit=0.2;
-  	const float bucketFlush=-10.0;
+  	const float limit = 0.2;
+  	const float bucketFlush = -10.0;
   	int   nTimes;
-  	miutil::miTime t=sd.begin()->time();
+  	miutil::miTime t = sd.begin()->time();
   	miutil::miTime t2;
-  	BufrData d1;
-  	BufrData d2;
-  	CIBufrDataList it;
+  	DataElement d1;
+  	DataElement d2;
+  	CIDataElementList it;
 
-  	int   time=t.hour();
+  	int   time = t.hour();
 
-  	nedbor=FLT_MAX;
-  	fRR24=FLT_MAX;
+  	nedbor = FLT_MAX;
+  	fRR24 = FLT_MAX;
 
-  	if(time==6 || time==18){
-    	tr=2;
+  	if(time==6 || time==18)
     	nTimes=12;
-  	}else if(time==0 || time==12){
-    	tr=1;
+  	else if(time==0 || time==12)
     	nTimes=6;
-  	}else{
-    	tr=5;
+  	else
     	nTimes=1;
-  	}
 
   	d1=*sd.begin();
 
   	if(time==6){
-    	//Vi lager en RR_24 verdi til bruk i seksjonen 333 7RR_24
-    	t2=t;
-    	t2.addHour(-24);
-    
-    	it=sd.find(t2);
+  	   //Vi lager en RR_24 verdi til bruk i seksjonen 333 7RR_24
+  	   t2=t;
+  	   t2.addHour(-24);
 
-    	if(it!=sd.end() && it->time()==t2){
-      		d2=*it;
-      
-      		if(d1.RA!=FLT_MAX && d2.RA!=FLT_MAX){
-				fRR24=d1.RA-d2.RA;
-	
-				if(fRR24>bucketFlush){
-	  				if(fRR24<=limit)
-	    				fRR24=0.0;  //Tï¿½rt
-					}else{
-	  					//Bï¿½tta er tï¿½mt
-	  					fRR24=FLT_MAX;
-					}
-      		}
-    	}
+  	   it=sd.find(t2);
+
+  	   if(it!=sd.end() && it->time()==t2){
+  	      d2=*it;
+
+  	      if(d1.RA!=FLT_MAX && d2.RA!=FLT_MAX){
+  	         fRR24=d1.RA-d2.RA;
+
+  	         if(fRR24>bucketFlush){
+  	            if(fRR24<=limit)
+  	               fRR24=0.0;  //Tørt
+  	         }else{
+  	            //Bøtta er tømt
+  	            fRR24=FLT_MAX;
+  	         }
+  	      }
+  	   }
   	}
 
   	t2=t;
@@ -2016,45 +1953,40 @@ Bufr::precipFromRA(float &nedbor, float &fRR24, int &tr, const BufrDataList &sd)
   	it=sd.find(t2);
 
   	if(it==sd.end())
-    	return 4;
+    	return FLT_MAX;
 
   	d2=*it;
 
   	if(d2.time()!=t2)
-    	return 4;
+    	return FLT_MAX;
 
 
   	if(d1.RA==FLT_MAX || d2.RA==FLT_MAX)
-    	return 4;
+    	return FLT_MAX;
 
   	nedbor=d1.RA-d2.RA;
 
   	LOGDEBUG("bufrTidspunkt:          " << d1.time() << endl
-			 << "nedbor=" <<  nedbor << endl
-	   		 << " RR_24=" <<  fRR24 << endl
-	   		 << "    RA=" <<  d1.RA << endl 
-  	   		 << "bufrTidspunkt-" << nTimes << " timer : " << d2.time() << endl
-	   		 << "    RA=" <<  d2.RA << endl);
+			<< "   nedbor = " <<  nedbor << endl
+	      << "    RR_24 = " <<  fRR24 << endl
+	   	<< "       RA = " <<  d1.RA << endl
+  	   	<< " bufrTidspunkt-" << nTimes << " timer : " << d2.time() << endl
+	   	<< "       RA = " <<  d2.RA << endl);
 
   
   	if(nedbor>bucketFlush){
     	if(nedbor<=limit){
-      		nedbor=-1.0;
-      		return 3;
+      		nedbor=0.0;
+      		return -1*nTimes;
     	}
   	}else{ //Bï¿½tta er tï¿½mt
     	nedbor=FLT_MAX;
-    	return 4;
+    	return FLT_MAX;
   	}
 
-  	return 1;
+  	return -1*nTimes;
 }
 
-int
-Bufr::rr24FromRrN(const BufrDataList &sd, float &fRR24)
-{
-  	return 4;
-}
 
 
 /*
@@ -2064,106 +1996,104 @@ Bufr::rr24FromRrN(const BufrDataList &sd, float &fRR24)
  * Sï¿½ker i nedbï¿½rparametrene RR_N, hvor N=1, 3, 6, 12, 24
  * Sï¿½ker nedbï¿½ren fra den fï¿½rste som er gitt, sï¿½ker fra 24, 12, .. ,1
  */
-int  
+float
 Bufr::precipFromRrN( float &nedbor,
 		      	      float &fRR24,
-		      		   int &tr,
-		      		   const BufrDataList &sd)
+		      		   const DataElementList &sd)
 {
-  	int t=sd.begin()->time().hour();
+   float h_tr = FLT_MAX;
+   int t=sd.begin()->time().hour();
 
-  	nedbor=FLT_MAX;
-  	fRR24=FLT_MAX;
+   nedbor=FLT_MAX;
+   fRR24=FLT_MAX;
 
-  	if(t==6 && sd[0].RR_24!=FLT_MAX)
-    	fRR24=sd[0].RR_24;
+   if(t==6 && sd[0].RR_24!=FLT_MAX)
+      fRR24=sd[0].RR_24;
 
-  	if((t==6 || t==18) && sd[0].RR_12!=FLT_MAX){
-    	nedbor=sd[0].RR_12;
-    	tr=2;
-  	}else if((t==12 || t==0) && sd[0].RR_6!=FLT_MAX){
-    	nedbor=sd[0].RR_6;
-    	tr=1;
-  	}
+   if((t==6 || t==18) && sd[0].RR_12!=FLT_MAX){
+      nedbor=sd[0].RR_12;
+      h_tr = -12;
+   }else if((t==12 || t==0) && sd[0].RR_6!=FLT_MAX){
+      nedbor=sd[0].RR_6;
+      h_tr=-6;
+   }
 
-  	if(nedbor==FLT_MAX){
-    	if(sd[0].RR_24!=FLT_MAX){
-      		nedbor=sd[0].RR_24;
-      		tr=4;
-    	}else if(sd[0].RR_18!=FLT_MAX){
-      		nedbor=sd[0].RR_18;
-      		tr=3;
-    	}else if(sd[0].RR_15!=FLT_MAX){
-      		nedbor=sd[0].RR_15;
-      		tr=9;
-    	}else  if(sd[0].RR_12!=FLT_MAX){
-      		nedbor=sd[0].RR_12;
-      		tr=2;
-    	}else if(sd[0].RR_9!=FLT_MAX){
-      		nedbor=sd[0].RR_9;
-      		tr=8;
-    	}else if(sd[0].RR_6!=FLT_MAX){
-      		nedbor=sd[0].RR_6;
-      		tr=1;
-    	}else if(sd[0].RR_3!=FLT_MAX){
-      		nedbor=sd[0].RR_3;
-      		tr=7; 
-    	}else if(sd[0].RR_2!=FLT_MAX){
-      		nedbor=sd[0].RR_2;
-      		tr=6;
-    	}else if(sd[0].RR_1!=FLT_MAX){
-      		nedbor=sd[0].RR_1;
-      		tr=5; 
-    	}
-  	}
+   if(nedbor==FLT_MAX){
+      if(sd[0].RR_24!=FLT_MAX){
+         nedbor=sd[0].RR_24;
+         h_tr=24;
+      }else if(sd[0].RR_18!=FLT_MAX){
+         nedbor=sd[0].RR_18;
+         h_tr=-18;
+      }else if(sd[0].RR_15!=FLT_MAX){
+         nedbor=sd[0].RR_15;
+         h_tr= -15;
+      }else  if(sd[0].RR_12!=FLT_MAX){
+         nedbor=sd[0].RR_12;
+         h_tr= -12;
+      }else if(sd[0].RR_9!=FLT_MAX){
+         nedbor=sd[0].RR_9;
+         h_tr=-9;
+      }else if(sd[0].RR_6!=FLT_MAX){
+         nedbor=sd[0].RR_6;
+         h_tr=-6;
+      }else if(sd[0].RR_3!=FLT_MAX){
+         nedbor=sd[0].RR_3;
+         h_tr=-3;
+      }else if(sd[0].RR_2!=FLT_MAX){
+         nedbor=sd[0].RR_2;
+         h_tr=-2;
+      }else if(sd[0].RR_1!=FLT_MAX){
+         nedbor=sd[0].RR_1;
+         h_tr=-1;
+      }
+   }
 
-  	if(nedbor==FLT_MAX)
-    	return 4;
+   if(nedbor==FLT_MAX)
+      return FLT_MAX;
 
-  	if(t==6 && fRR24==FLT_MAX && sd.size()>1){
-    	CIBufrDataList it=sd.begin();
-    	miutil::miTime tt=it->time();
-    	
-    	tt.addHour(-12);	
-    
-    	CIBufrDataList it2=sd.find(tt);
-    	
-    	if(it2!=sd.end() && it2->time()==tt){
-    		bool hasPrecip=true;
-    		fRR24=0.0;
+   if(t==6 && fRR24==FLT_MAX && sd.size()>1){
+      CIDataElementList it=sd.begin();
+      miutil::miTime tt=it->time();
+
+      tt.addHour(-12);
+
+      CIDataElementList it2=sd.find(tt);
+
+      if(it2!=sd.end() && it2->time()==tt){
+         bool hasPrecip=true;
+         fRR24=0.0;
 
          //If there is measured no precip in the 12 hour time
          //periode the nedboer12Time=-1.0.
          //We cant just test for for nedboer12Time==-1.0. 
 
-			
-			if(it->RR_12!=FLT_MAX){
+
+         if(it->RR_12!=FLT_MAX){
             if(it->RR_12>=0.0)
-	  			   fRR24+=it->RR_12;
+               fRR24+=it->RR_12;
             else if(it->RR_12<=-1.5f)
                hasPrecip=false;
          }else if( static_cast<int>(it->IR) != 3)
-	  			hasPrecip=false;
-	  			
-	  		if(it2->RR_12!=FLT_MAX){
+            hasPrecip=false;
+
+         if(it2->RR_12!=FLT_MAX){
             if(it2->RR_12>=0.0)
-   	  			fRR24+=it2->RR_12;
+               fRR24+=it2->RR_12;
             else if(it2->RR_12<=-1.5f)
                hasPrecip=false;
          }else if( static_cast<int>(it2->IR) != 3 )
-	  			hasPrecip=false;
+            hasPrecip=false;
 
-			if(!hasPrecip)
-				fRR24=FLT_MAX;
-    	}
-  	}
-  
-  	if(nedbor<0.1){
-    	nedbor=0.0;
-    	return 3;
-  	}
+         if(!hasPrecip)
+            fRR24=FLT_MAX;
+      }
+   }
 
-   	return 1;
+   if(nedbor<0.1)
+      nedbor=0.0;
+
+   return h_tr;
 }  
 
 
@@ -2186,26 +2116,25 @@ Bufr::precipFromRrN( float &nedbor,
  *
  * Hvis ITR har en gyldig verdi og nedbï¿½ren er -1 angir dette tï¿½rt.
  */
-int  
-Bufr::precipFromRRRtr(float &nedbor,
-		       float &fRR24, 
-		       int   &tr, 
-		       const BufrDataList &sd)
+float
+Bufr::precipFromRRRtr( float &nedbor,
+                       float &fRR24,
+                       const DataElementList &sd )
 {
+   float h_tr = FLT_MAX;
 	nedbor=FLT_MAX;
   	fRR24 =FLT_MAX;
 
-  	if(sd.begin()->time().hour()==6) {
-  		CIBufrDataList it=sd.begin();
+  	if( sd.begin()->time().hour() == 6 ) {
+  		CIDataElementList it=sd.begin();
     	miutil::miTime tt=it->time();
 	
-    	tt.addHour(-12);	
+    	tt.addHour( -12 );
     
-    	CIBufrDataList it2=sd.find(tt);
+    	CIDataElementList it2=sd.find(tt);
     	
     	if( it2 != sd.end() && it2->time() == tt ){
     		bool hasPrecip=true;
-    		fRR24=-1.0;
 			
     		//If there is measured no precip in the 12 hour time
     		//periode the nedboer12Time=-1.0.
@@ -2215,118 +2144,137 @@ Bufr::precipFromRRRtr(float &nedbor,
     		//    <<"nedboer12Time2: " << it2->nedboer12Time << endl;
                     
 			if( it->RR_12 != FLT_MAX ){
-				if( it->RR_12 >= 0.0 ) {
-					if( fRR24 < 0  )
-						fRR24 = 0.0;
+				if( it->RR_12 >= 0.0 )
+	  			   fRR24 = it->RR_12;
+				else if( it->RR_12 < -1.001f || it->RR_12 > -0.999 )
+				   hasPrecip = false;
+				else if( static_cast<int>( it->RR_12 ) == -1 )
+				   fRR24 = -1;
+			}else if( static_cast<int>( it->IR ) == 3 )
+			   fRR24 = -1;
+			else
+			   hasPrecip = false;
 
-	  			   fRR24+=it->RR_12;
-				} else if( it->RR_12 <= -1.5f )
-					hasPrecip=false;
-			}else if( static_cast<int>( it->IR ) != 3 )
-				hasPrecip=false;
-	  			
 			if( it2->RR_12 != FLT_MAX){
 				if( it2->RR_12 >= 0.0) {
-					if( fRR24 < 0  )
+					if( fRR24 == FLT_MAX || static_cast<int>( fRR24 ) == -1 )
 						fRR24 = 0.0;
 
 					fRR24 += it2->RR_12;
-				} else if( it2->RR_12 <= -1.5f)
-					hasPrecip=false;
+				} else if( it2->RR_12 < -1.001 || it2->RR_12 > 0.999 )
+					hasPrecip = false;
+				else {
+				   if( fRR24 == FLT_MAX )
+				      fRR24 = -1;
+				}
 			}else if( static_cast<int>( it2->IR ) != 3 )
-				hasPrecip=false;
+				hasPrecip = false;
 
-			if(!hasPrecip)
-				fRR24=FLT_MAX;
-			else if( FEQ( fRR24, 0.0, 0.001 ) )
-				fRR24=FLT_MIN; //Use FLT_MIN to signal trace of precipitation.
+			if( !hasPrecip )
+				fRR24 = FLT_MAX;
+			else if( FEQ( fRR24, 0.0, 0.01 ) )
+				fRR24 = -0.1; //Trace of precipitation.
     	}
     	
-    	if(fRR24==FLT_MAX){
+    	if( fRR24 == FLT_MAX ){
     		//Do we have an RR_24 precip.
     		fRR24=sd.begin()->RR_24;
     		
-    		if(fRR24!=FLT_MAX && fRR24<0.0)
-    			fRR24=FLT_MAX;
-    	}
+    		if( fRR24 != FLT_MAX ) {
+    		   if( fRR24 < 0.0)
+    		      fRR24 = FLT_MAX;
+    		   else if( fRR24 > -1.1 && static_cast<int>( fRR24 ) == -1 )
+    		      fRR24 = 0.0;
+    		}
+    	} else if( fRR24 >= -1.01 && fRR24 <= -0.99 ) // fRR24 == -1
+    	   fRR24 = 0.0;
   	}
 
    //cerr << "sd[0].ITR: [" << (sd[0].ITR[0]-'0') << "]" << endl;
 
-  	if(sd[0].IR == FLT_MAX){
-  		if(sd[0].IR == FLT_MAX || sd[0].IR!=3)
-  			return 4;
+  	if( sd[0].ITR  == FLT_MAX) {
+  	   if( static_cast<int>( sd[0].IR ) == 3 )
+  	      nedbor = 0.0;
+  	   else {
+  	      nedbor = FLT_MAX;
+  	      return FLT_MAX;
+  	   }
 
-  		nedbor=0.0;
-    	return 3;
+  	   if( (sd.begin()->time().hour() % 6) != 0 ) {
+  	      nedbor = FLT_MAX;
+  	      return FLT_MAX;
+  	   } else if( sd.begin()->time().hour() == 12 || sd.begin()->time().hour() == 18 )
+  	      return -6;
+  	   else
+  	      return -12;
   	}
 
-  	switch( static_cast<int>( sd[0].IR ) ){
+  	switch( static_cast<int>( sd[0].ITR ) ){
   	case 1: 
     	if(sd[0].RR_6!=FLT_MAX){
       		nedbor=sd[0].RR_6;
-      		tr=1;
+      		h_tr = -6;
      	}
     	break;
   	case 2:
     	if(sd[0].RR_12!=FLT_MAX){
       		nedbor=sd[0].RR_12;
-      		tr=2;
+      		h_tr=-12;
      	}
     	break;
   	case 3:
     	if(sd[0].RR_18!=FLT_MAX){
       		nedbor=sd[0].RR_18;
-      		tr=3;
+      		h_tr=-18;
    		}
     	break;
   	case 4:
     	if(sd[0].RR_24!=FLT_MAX){
       		nedbor=sd[0].RR_24;
-      		tr=4;
+      		h_tr=-24;
      	}
     	break;
   	case 5:
     	if(sd[0].RR_1!=FLT_MAX){
       		nedbor=sd[0].RR_1;
-      		tr=5;
+      		h_tr=-1;
      	}
     	break;
   	case 6:
     	if(sd[0].RR_2!=FLT_MAX){
       		nedbor=sd[0].RR_2;
-      		tr=6;
+      		h_tr=-2;
     	}
     	break;
   	case 7:
     	if(sd[0].RR_3!=FLT_MAX){
       		nedbor=sd[0].RR_3;
-      		tr=7;
+      		h_tr=3;
      	}
     	break;
   	case 8:
     	if(sd[0].RR_9!=FLT_MAX){
       		nedbor=sd[0].RR_9;
-      		tr=8;
+      		h_tr=-9;
     	}
     	break;
   	case 9:
     	if(sd[0].RR_15!=FLT_MAX){
       		nedbor=sd[0].RR_15;
-      		tr=9;
+      		h_tr=-15;
     	}
     	break;
   	default:
-    	return 4;
+    	return FLT_MAX;
   	}
 
   	if(nedbor==FLT_MAX) 
-    	return 4;
+    	return FLT_MAX;
 
-  	if(static_cast<int>(round(nedbor))==-1) //tï¿½rt
-    	return 3;
+  	if( static_cast<int>( round( nedbor ) ) == -1 ) //tørt
+  	   nedbor = 0.0;
  
-  	return 1;
+  	return h_tr;
 }  
 
 
@@ -2357,8 +2305,9 @@ Bufr::precipFromRRRtr(float &nedbor,
  * \return ir
  */
 
-int  
-Bufr::precipFromRR(float &nedbor, float &fRR24, int &tr, const BufrDataList &sd)
+float
+Bufr::
+precipFromRR(float &nedbor, float &fRR24, const DataElementList &sd)
 {
   	const float limit=0.2;
   	int   nTimeStr=sd.nContinuesTimes();
@@ -2369,23 +2318,19 @@ Bufr::precipFromRR(float &nedbor, float &fRR24, int &tr, const BufrDataList &sd)
   	nedbor=FLT_MAX;
   	fRR24=FLT_MAX;
 
-  	if(time==6 || time==18){
-    	tr=2;
+  	if(time==6 || time==18)
     	nTimes=12;
-  	}else if(time==0 || time==12){
-    	tr=1;
+  	else if(time==0 || time==12)
     	nTimes=6;
-  	}else{
-    	tr=5;
+  	else
     	nTimes=1;
-  	}
   	
   	if(nTimeStr<nTimes)
-    	return 4; 
+    	return FLT_MAX;
 
   	for(int i=0; i<nTimes; i++){
     	if(sd[i].RR_1==FLT_MAX)
-      	return 4;
+      	return FLT_MAX;
     
     	if(sd[i].RR_1>=0)
       	sum+=sd[i].RR_1;
@@ -2408,67 +2353,12 @@ Bufr::precipFromRR(float &nedbor, float &fRR24, int &tr, const BufrDataList &sd)
     		fRR24=sum;
   	}
   
-  	LOGDEBUG("bufrTidspunkt:          " << sd[0].time()
-			 << "  RR=" <<  sd[0].RR_1 << endl
-			 << "bufrTidspunkt-" << nTimes << " timer : "
-			 << sd[nTimes-1].time() 
-			 << "  RR=" <<  sd[nTimes-1].RR_1 << endl);
+  	if(nedbor<=limit)
+    	nedbor=0.0;
 
-  
-  	if(nedbor<=limit){
-    	nedbor=-1.0;
-    	return 3;
-  	}
-
-  	return 1;
+  	return -1*nTimes;
 }
 
-
-/*
-** Funksjonen splittar strengen ved karakter nr. index (ved nï¿½raste space),
-** og legg inn linefeed og 6 space'ar ved denne.
-*/
-void 
-Bufr::SplittStreng(std::string &streng, std::string::size_type index)
-{
-  	std::string tmp;
-  	int         i;
-  	std::string::size_type t;
-  	std::string::size_type p;
-  	std::string::size_type n;
-  	const char        *seksjon[]={" 222// ",
-			                      " 333 ",
-			  				      " 444 ",
-			  				      " 555 ",
-			  				      0};
-  
-  	i = 0;
-  
-  	while(seksjon[i]){
-    	n=strlen(seksjon[i]);
-    	t = streng.find(seksjon[i]);
-    
-    
-    	if(t!=std::string::npos){      
-      		tmp=streng.substr(t);
-      		p=tmp.find_first_not_of(' ', n);
-      
-      		if(p!=std::string::npos){
-				if(p<7)
-	  				tmp.insert(n, 6-n, ' ');
-				
-				if(p>6)
-	  				tmp.erase(7, p-7);
-      		}
-      
-      		streng.erase(t);
-      		streng+="\r\r\n     ";
-      		streng+=tmp;
-    	}
-    
-   		i++;
-  	}
-} /* SplittStreng */
 
 
 
@@ -2486,22 +2376,6 @@ Bufr::~Bufr()
 {
 }
 
-void 
-Bufr::replaceCCCXXX(std::string &bufr, int ccx)
-{
-  	char tmp[10];
-  	std::string::size_type i=bufr.find(" CCCXXX");
-
-  	if(i==std::string::npos)
-    	return;
-
-  	tmp[0]='\0';
-
-  	if(ccx>0)
-    	sprintf(tmp, " CC%c", 'A'+(ccx-1));
-  
-  	bufr.replace(i, 7, tmp);
-}
 
 
 

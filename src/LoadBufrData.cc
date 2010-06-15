@@ -36,7 +36,7 @@ using namespace std;
 
 void
 loadBufrData(const DataEntryList &dl,
-			  BufrDataList       &sd,
+			  DataElementList       &sd,
 			  StationInfoPtr      info,
 			   kvdatacheck::Validate &validate )
 {
@@ -52,7 +52,7 @@ loadBufrData(const DataEntryList &dl,
 	it=dl.begin();
 
 	for(; it!=dl.end(); it++){
-		BufrData bufrData;
+		DataElement bufrData;
 
 		itt=types.rbegin();
 

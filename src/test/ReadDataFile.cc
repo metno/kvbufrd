@@ -101,7 +101,7 @@ readDataFile( const std::string &filename, DataEntryList &data, const miutil::mi
 bool
 loadBufrDataFromFile( const std::string &filename,
 					   StationInfoPtr      info,
-					   BufrDataList       &sd,
+					   DataElementList       &sd,
 					   kvdatacheck::Validate &validate ,
 					   const miutil::miTime &fromtime )
 {
