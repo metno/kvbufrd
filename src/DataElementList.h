@@ -141,6 +141,7 @@ class  DataElement
   	float AA;
   	float ITZ;
   	float ITR;
+  	int nSet;
 
   	DataElement();
   	DataElement(const DataElement &p);
@@ -157,7 +158,7 @@ class  DataElement
   	void           time(const miutil::miTime &t){time_=t;}
   	miutil::miTime time()const{ return time_;}
 
-  	bool undef()const{ return time_.undef();}
+  	bool undef()const{ return time_.undef() || nSet == 0;}
 
   	friend std::ostream& operator<<(std::ostream& ost,
 									  const DataElement& sd);

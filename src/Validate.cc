@@ -232,6 +232,12 @@ validDataUseOnlyUseInfo( const Data &data )
       return false;
    }
 
+   LOGERROR("Validate: stationid: " << data.stationID() << " typeid: " << data.typeID()
+               << " obstime: " << data.obstime()
+               << " paramid: " << data.paramID()
+               << " original: " << data.original()
+               << " cflags: " << data.controlinfo()
+               << " uflags: " << data.useinfo() << " u2: " << uinfo_2 << " u3: " << uinfo_3 << " cmis: "<< cinfo_mis );
    return true;
 }
 

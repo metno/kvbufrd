@@ -60,13 +60,13 @@ set_sec0134( const StationInfoPtr station, const DataElement &data,
              int *ksec0, int *ksec1, int *ksec3, int *ksec4 );
 
 void set_values( const StationInfoPtr station,
-                 const DataElement &data,
+                 const BufrData &data,
                  Values &values, char cvals[][80], int kdata[]);
 }
 
 
 void
-encodeBufr( const DataElement &data, StationInfoPtr station )
+encodeBufr( const BufrData &data, StationInfoPtr station )
 { /* pbopen variables */
   int fd;
   int error;
@@ -157,7 +157,7 @@ set_sec0134( const StationInfoPtr station,
 
 /* Populate values and cvals with values according to WMO BUFR template 307080 */
 void set_values(const StationInfoPtr station,
-                const DataElement &data,
+                const BufrData       &data,
                 Values &values, char cvals[][80], int kdata[])
 {
    double miss = RVIND;
@@ -213,7 +213,7 @@ void set_values(const StationInfoPtr station,
 
    /* Precipitation past 24 hours */
    values[26] = station->heightPrecip();      /* 007032 Height of sensor above local ground (for precipitation measurement) */
-   values[27].toBufr( "R24R24R24R24", data.RR_24 ); /* 013023 Total precipitation past 24 hours */
+   values[27].toBufr( "R24R24R24R24", data.precip24.RR ); /* 013023 Total precipitation past 24 hours */
    values[28] = RVIND;    /* 007032 Height of sensor above local ground (set to missing to cancel the previous value) */
 
    /* Cloud data */
@@ -284,21 +284,11 @@ void set_values(const StationInfoPtr station,
 
    /* Precipitation measurement */
    values[idx++] = station->heightPrecip();   /* 007032 Height of sensor above local ground (for precipitation measurement) */
-   if( obstime.hour() == 6 || obstime.hour()==18 ){
-      values[idx++].toBufr( "tR[0]", -12 ); /* 004024 Time period or displacement (regional) */
-      values[idx++].toBufr( "RRR[0]", data.RR_12 );/* 013011 Total precipitation/total water equivalent */
-   } else {
-      values[idx++].toBufr( "tR[0]", FLT_MAX ); /* 004024 Time period or displacement (regional) */
-      values[idx++].toBufr( "RRR[0]", FLT_MAX );/* 013011 Total precipitation/total water equivalent */
-   }
+   values[idx++].toBufr( "tR[0] (Regional)", data.precipRegional.hTr ); /* 004024 Time period or displacement (regional) */
+   values[idx++].toBufr( "RRR[0] (Regional)", data.precipRegional.RR );/* 013011 Total precipitation/total water equivalent */
 
-   if( data.RR_1 != FLT_MAX ) {
-      values[idx++].toBufr( "tR[1]", -1 ); /* 004024 Time period or displacement (national) */
-      values[idx++].toBufr( "RRR[1]", data.RR_1 );/* 013011 Total precipitation/total water equivalent */
-   } else {
-      values[idx++].toBufr( "tR[1]", FLT_MAX ); /* 004024 Time period or displacement (national) */
-      values[idx++].toBufr( "RRR[1]", FLT_MAX );/* 013011 Total precipitation/total water equivalent */
-   }
+   values[idx++].toBufr( "tR[1] (National)",  data.precipNational.hTr ); /* 004024 Time period or displacement (national) */
+   values[idx++].toBufr( "RRR[1] (National)", data.precipNational.RR );/* 013011 Total precipitation/total water equivalent */
 
    /* Extreme temperature data */
    values[idx++] = station->heightTemperature();   /* 007032 Height of sensor above local ground (for temperature measurement) */

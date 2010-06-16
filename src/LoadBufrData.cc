@@ -35,71 +35,70 @@
 using namespace std;
 
 void
-loadBufrData(const DataEntryList &dl,
-			  DataElementList       &sd,
-			  StationInfoPtr      info,
-			   kvdatacheck::Validate &validate )
+loadBufrData( const DataEntryList   &dl,
+              DataElementList       &sd,
+              StationInfoPtr        info,
+              kvdatacheck::Validate &validate )
 {
-	StationInfo::TLongList          types;
-	StationInfo::RITLongList        itt;
-	DataEntryList::CITDataEntryList it;
-	DataListEntry::ITDataList       itd;
-	DataListEntry::TDataList        dataList;
+   StationInfo::TLongList          types;
+   StationInfo::RITLongList        itt;
+   DataEntryList::CITDataEntryList it;
+   DataListEntry::ITDataList       itd;
+   DataListEntry::TDataList        dataList;
 
-	sd.clear();
+   sd.clear();
 
-	types=info->typepriority();
-	it=dl.begin();
+   types=info->typepriority();
+   it=dl.begin();
 
-	for(; it!=dl.end(); it++){
-		DataElement bufrData;
+   for(; it!=dl.end(); it++){
+      DataElement bufrData;
 
-		itt=types.rbegin();
+      itt=types.rbegin();
 
-		for(;itt!=types.rend(); itt++){
-			dataList=it->getTypeId(*itt);
+      for(;itt!=types.rend(); itt++){
+         dataList=it->getTypeId(*itt);
 
-			if(dataList.empty())
-				continue;
+         if(dataList.empty())
+            continue;
 
-			itd=dataList.begin();
-			bufrData.time(itd->obstime());
+         itd=dataList.begin();
+         bufrData.time(itd->obstime());
 
-			for(;itd!=dataList.end(); itd++){
-				//COMMENT:
-				//We use only the default sensor for every parameter, ie sensor=0.
-				//This may be to restrective. Shuld this be a configuration option for
-				//the parameters we wish to overide tis behavior for.
+         for(;itd!=dataList.end(); itd++){
+            //COMMENT:
+            //We use only the default sensor for every parameter, ie sensor=0.
+            //This may be to restrective. Shuld this be a configuration option for
+            //the parameters we wish to overide tis behavior for.
 
-				if(itd->sensor()==0 && itd->level()==0){
-					if( validate( *itd ) )
-						bufrData.setData(itd->paramID(), itd->original());
-					else {
-						LOGDEBUG("CheckData: do NOT use: " << itd->obstime() << " " << itd->paramID() << " " << itd->typeID() << " val: "
-								 << itd->original() << " cinfo: " << itd->controlinfo().flagstring() << " uinfo: "
-								 << itd->useinfo().flagstring() );
-					}
-				}else{
-					LOGINFO("loadBufr: sensor=" << itd->sensor() << " level=" << itd->level()
-							<< " not used!");
-				}
-			}
-		}
+            if(itd->sensor()==0 && itd->level()==0){
+               if( validate( *itd ) )
+                  bufrData.setData(itd->paramID(), itd->original());
+               else {
+                  LOGDEBUG("CheckData: do NOT use: " << itd->obstime() << " " << itd->paramID() << " " << itd->typeID() << " val: "
+                           << itd->original() << " cinfo: " << itd->controlinfo().flagstring() << " uinfo: "
+                           << itd->useinfo().flagstring() );
+               }
+            }else{
+               LOGINFO("loadBufr: sensor=" << itd->sensor() << " level=" << itd->level()
+                       << " not used!");
+            }
+         }
+      }
 
-	    if(!bufrData.undef()){
-	    	bufrData.cleanUpSlash();
+      if(!bufrData.undef() ){
 
-	    	try{
-	    		sd[bufrData.time()]=bufrData;
-	    	}
-	    	catch(out_of_range &ex){
-	    		LOGDEBUG("EXCEPTION(out_of_range): Should not happend!!!"<< endl);
-	    	}
-	    	catch(...){
-	    		LOGDEBUG("EXCEPTION(Unknown): Should never happend!" << endl);
-	    	}
-	    }
-	}
+         try{
+            sd[bufrData.time()]=bufrData;
+         }
+         catch(out_of_range &ex){
+            LOGDEBUG("EXCEPTION(out_of_range): Should not happend!!!"<< endl);
+         }
+         catch(...){
+            LOGDEBUG("EXCEPTION(Unknown): Should never happend!" << endl);
+         }
+      }
+   }
 }
 
 

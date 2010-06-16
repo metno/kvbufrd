@@ -133,7 +133,8 @@ DataElement::DataElement():
     X3WD( FLT_MAX ),
     AA( FLT_MAX ),
     ITZ( FLT_MAX ),
-    ITR( FLT_MAX )
+    ITR( FLT_MAX ),
+    nSet( 0 )
 
 {
 }
@@ -212,7 +213,8 @@ DataElement::DataElement(const DataElement &p):
     S( p.S ),
     AA(p.AA),
     ITZ(p.ITZ),
-    ITR(p.ITR)
+    ITR(p.ITR),
+    nSet( p.nSet )
 {
 }
 
@@ -287,13 +289,14 @@ DataElement::operator=(const DataElement &p)
     ww               = p.ww;
     W1               = p.W1;
     W2               = p.W2;
-    X1WD              = p.X1WD;
-    X2WD              = p.X2WD;
-    X3WD              = p.X3WD;
+    X1WD             = p.X1WD;
+    X2WD             = p.X2WD;
+    X3WD             = p.X3WD;
     S                = p.S;
     AA               = p.AA;
     ITZ              = p.ITZ;
     ITR              = p.ITR;
+    nSet             = p.nSet;
 
     return *this;
 }
@@ -311,8 +314,6 @@ DataElement::setData(const int  &param,
     float       fData;
     int         im;
     char        ch;
-    std::string s;
-    char        buf[256];
 
     if(data_.empty())
       return true;
@@ -323,7 +324,8 @@ DataElement::setData(const int  &param,
     }
 
     im=static_cast<int>(round(fData));
-    sprintf(buf, "%d", im);
+
+    nSet++;
 
     switch(param){
     case 211: TA=fData;     break; //TA
@@ -467,6 +469,7 @@ DataElement::setData(const int  &param,
     case  13: ITZ=fData;  break;   //ITZ, "_tz")
     case   1: AA = fData; break;   //AA, _aa
     default:
+       nSet--;
       return false;
     }
     

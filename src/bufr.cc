@@ -1771,7 +1771,7 @@ Bufr::precip( BufrData &bufr,
    char   stmp[30];
 
 
-   if(time==6){
+   if( time==6 ){
       //Skal vi kode 24 (7RR24) timers nedbør i 333 seksjonen
       if( fRR24 != FLT_MAX &&  fRR24 < 1000.0 ) {
          bufr.precip24.hTr = -24;
@@ -1782,12 +1782,17 @@ Bufr::precip( BufrData &bufr,
    if( h_tr == FLT_MAX || totalNedboer == FLT_MAX)
       return;
 
-   bufr.precipRegional.hTr = h_tr;
-   bufr.precipRegional.RR = totalNedboer;
+   if( (time == 6 || time == 18) && static_cast<int>( h_tr ) == 12 ) {
+      bufr.precipRegional.hTr = h_tr;
+      bufr.precipRegional.RR = totalNedboer;
+   }
 
    if( RR1 != FLT_MAX ) {
       bufr.precipNational.hTr = -1;
       bufr.precipNational.RR = RR1;
+   } else if( time != 6 && time != 18 ) {
+      bufr.precipNational.hTr = h_tr;
+      bufr.precipNational.RR = totalNedboer;
    }
  } /* Nedboer_Kode */
 

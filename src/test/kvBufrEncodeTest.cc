@@ -271,7 +271,22 @@ TEST_F( BufrEncodeTest, encode_nddff )
 }
 
 
+TEST_F( BufrEncodeTest, encode_noData )
+{
+   DataElementList data;
+   StationInfoPtr  stInfo;
+   BufrData bufr;
+   kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
+   int wmono=1384;
+   stInfo = findWmoNo( wmono );
 
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data_4780-1.dat", stInfo, data, validData );
+
+   EXPECT_TRUE( data.size() == 0 ) << "It is expected that the datalist is empty, but the size is: " << data.size();
+}
 
 int
 main(int argc, char **argv) {

@@ -673,7 +673,7 @@ BufrWorker::loadBufrData(const DataEntryList &dl,
 			   DataElementList       &sd,
 			   StationInfoPtr      info)const
 {
-   kvdatacheck::Validate validate( kvdatacheck::Validate::UseOnlyUseInfo );
+   kvdatacheck::Validate validate( kvdatacheck::Validate::NoCheck );
 	::loadBufrData( dl, sd, info, validate );
 }
 

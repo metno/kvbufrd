@@ -73,6 +73,6 @@ public:
  * @exception BufrEncodeException on error.
  */
 void
-encodeBufr( const DataElement &data, StationInfoPtr station );
+encodeBufr( const BufrData &data, StationInfoPtr station );
 
 #endif
