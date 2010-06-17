@@ -28,33 +28,19 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <milog/milog.h>
 #include "bufrencodehelper.h"
 #include <stdlib.h>
 #include <sstream>
+#include <fstream>
 
 using namespace std;
 
 namespace {
-
-void
-saveBufr( const StationInfoPtr station, int *buf, int buflen );
-
-/**
- *
- * @exception BufrEncodeException
- * @param station
- * @param filename if thge filename is set use it. If not set generate a filename and return it on exit.
- * @return An open file descriptor on success.
- */
-int
-openBufrFile( const StationInfoPtr station, std::string &filename );
-
-void
-closeBufrFile( const std::string &filename, int fd );
-
-
 bool
 set_sec0134( const StationInfoPtr station, const DataElement &data,
              int *ksec0, int *ksec1, int *ksec3, int *ksec4 );
@@ -65,12 +51,24 @@ void set_values( const StationInfoPtr station,
 }
 
 
+
+BufrEncoder::
+BufrEncoder(StationInfoPtr station_)
+   : station( station_ ), kbuff( 0 )
+{
+
+};
+
+
 void
-encodeBufr( const BufrData &data, StationInfoPtr station )
+BufrEncoder::
+encodeBufr( const BufrData &data )
 { /* pbopen variables */
   int fd;
   int error;
   string filename;
+
+  obstime = data.time();
 
 /* bufren variables */
   int kelem = KELEM, kvals = KVALS, kdlen = KDLEN;
@@ -82,14 +80,18 @@ encodeBufr( const BufrData &data, StationInfoPtr station )
                           * from values array */
   int ktdlen;            /* number of data descriptors in section 3 */
   int ktdlst[KELEM];     /* array containing data descriptors in section 3 */
-  int kbuflen;           /* length of bufr message (words) */
-  int kbuff[MAX_BUFLEN/4]; /* integer array containing bufr message */
 
 /* pbwrite variables */
   int nbytes;            /* number of bytes in bufr messages */
 
-  char* outfile = "synop.bufr";
-
+  if( ! kbuff ) {
+     try {
+        kbuff = new int[MAX_BUFLEN /4];
+     }
+     catch( ... ){
+        throw BufrEncodeException( "NOMEM to allocate a buffer to hold the bufr message.");
+     }
+  }
 
   /* Set input parameters to bufren */
   set_sec0134( station, data, ksec0, ksec1, ksec3, ksec4);
@@ -99,17 +101,102 @@ encodeBufr( const BufrData &data, StationInfoPtr station )
   ktdlst[0] = 307080;
 
   /* Encode BUFR message */
-  bufren_(ksec0, ksec1, ksec2, ksec3, ksec4, &ktdlen, ktdlst,
-	  &kdlen, kdata, &kelem, &kvals, values.values(), (char **) cvals,
-	  &kbuflen, kbuff, &error);
+  bufren_( ksec0, ksec1, ksec2, ksec3, ksec4, &ktdlen, ktdlst,
+           &kdlen, kdata, &kelem, &kvals, values.values(), (char **) cvals,
+           &kbuflen, kbuff, &error );
 
   if( error != 0 ) {
-    printf("ERROR: bufren returned %d\n", error );
-    exit(1);
+     ostringstream o;
+     o << "Failed to encode bufr for station '" << station->wmono() << "' obstime: " << data.time()
+       << ". bufren error code: " << error;
+     delete[] kbuff;
+     kbuff = 0;
+     throw BufrEncodeException( o.str() );
   }
-  
-  saveBufr( station, kbuff, kbuflen );
+}
 
+void
+BufrEncoder::
+saveToFile()const
+{
+   if( ! kbuff ) {
+      ostringstream o;
+      o << "Missing bufr encoding for station '" << station->wmono() << "' obstime: " << obstime;
+      throw BufrEncodeException( o.str() );
+   }
+
+   if( station->copy() )
+      saveToFile( station->copyto(), false );
+
+}
+
+
+void
+BufrEncoder::
+saveToFile( const std::string &path, bool overwrite )const
+{
+   ostringstream ost;
+   ofstream      f;
+   struct stat   sbuf;
+
+
+   if( !station->copy() )
+      return;
+
+   if(stat( path.c_str(), &sbuf)<0){
+      ostringstream o;
+      o << "Save to: '" << path << "'. ";
+      if(errno==ENOENT || errno==ENOTDIR){
+         o << "Invalid path!";
+      }else if(errno==EACCES){
+         o << "Permission denied!";
+      }else{
+         o << "stat unknown error!";
+      }
+
+      throw BufrEncodeException( o.str() );
+   }
+
+   if(!S_ISDIR(sbuf.st_mode)){
+      ostringstream o;
+      o << "Saveto: <" << path << "> not a directory!";
+      throw BufrEncodeException( o.str() );
+   }
+
+   for( int i = 0; i<100; ++i ) {
+      ost.str("");
+      if( i == 0 ) {
+         ost << path << "/" << station->wmono() << "-"
+               << setfill('0') << setw(2) << obstime.day() << setw(2)
+               << obstime.hour()
+               << ".bufr";
+      }else{
+         ost << path << "/" <<  station->wmono() << "-"
+               << setfill('0') << setw(2) << obstime.day() << setw(2)
+               << obstime.hour() << "-" << setfill('0') << setw(2) << i
+               << ".bufr";
+      }
+
+      if( stat( ost.str().c_str(), &sbuf) < 0 ) {
+         if( !(errno == ENOENT || errno == ENOTDIR) ) {
+            ostringstream o;
+            o << "Unexpected error from stat: errno: " << errno ;
+            throw BufrEncodeException( o.str() );
+         }
+      }
+
+      f.open( ost.str().c_str(), ios_base::trunc | ios_base::binary | ios_base::out );
+
+      if( f.is_open() ){
+         LOGINFO("Writing BUFR to file: " << ost.str());
+         f.write( reinterpret_cast< ofstream::char_type* >( kbuff ), kbuflen*4 );
+         f.close();
+         return;
+      }
+   }
+   ost.str("");
+   ost << "Failed to write BUFR file for station '" << station->wmono() << "' obstime: " << obstime;
+   throw BufrEncodeException( ost.str() );
 }
 
 namespace {
@@ -357,152 +444,6 @@ void set_values(const StationInfoPtr station,
    kdata[1] = 1;          /* Number of cloud layers with bases below station level */
 }
 
-
-/* This subroutine is merely initializing data. Should be replaced
- * with fetching data from Kvalobs.
- *
- * Note about names of variables: When a variable corresponds to a
- * parameter in synop FM 12, I have used the synop symbol for that
- * variable, except that the value is hard coded to missing value for
- * several parameters not currently used in Norwegian observations. In
- * addition, I have introduced symbols h_... for 007031 'Height of
- * sensor above local ground' (e.g. h_T for temperature), lat for
- * latitude, lon for longitude, ha for height of station, vsc for
- * vertical significance clouds, vsci[] for vertical significance
- * individual clouds, num_layers for number of cloud layers, EE for E
- * and E' (combined to one variable in BUFR), t_ww for the time period
- * past weather (W1 and W2) covers, t_911ff[] for the time period for
- * max wind gust
- */
-#if 0
-void get_data(double *Year, double *Month, double *YY, double *GG, double *gg,
-	      double *II, double *iii, double *ix, double *lat, double *lon, double *ha,
-	      double *hP, double *h_T, double *h_V, double *h_R, double *h_W,
-	      double *P0P0P0P0, double *PPPP, double *ppp, double *a,
-	      double *p24p24p24, double *a3, double *hhh,
-	      double *snTTT, double *snTdTdTd, double *UUU, double *VV,
-	      double *N, double *vsc, double *Nh, double *h, double *CL, double *CM, double *CH,
-	      double *num_layers, double vsci[], double Ns[], double C[], double hshs[],
-	      double *EE, double *sss, double *snTgTg,
-	      double *ww, double *t_ww, double *W1, double *W2,
-	      double *SS, double *SSS,
-	      double *R24R24R24R24, double tR[], double RRR[],
-	      double *snTxTxTx, double *snTnTnTn,
-	      double *iw, double *dd, double *ff, double t_911ff[], double ff911[],
-	      char name[]) {
-
-  *Year = 2007;
-  *Month = 10;
-  *YY = 2;
-  *GG = 6;
-  *gg = 20;
-  *II = 1;
-  *iii = 492;
-  *ix = 2;
-  *lat = 59.9427;
-  *lon = 10.7207;
-  *ha = 94;
-  *hP = 96;
-  *h_T = 2;
-  *h_V = RVIND;
-  *h_R = RVIND;
-  *h_W = 10;
-  *P0P0P0P0 = 1012.2 * 100; /* 173=PO? (Pa)*/
-  *PPPP = 1024.1 * 100; /* 178=PR? (Pa) */
-  *ppp = 0.5 * 100; /* 177=PP? (Pa) */
-  *a = RVIND; /* What is 'a' in Kvalobs? */
-  *p24p24p24 = RVIND;
-  *a3 = RVIND;
-  *hhh = RVIND;
-  *snTTT = -2.2 + 273.15; /* (K) 211=TA? */
-  *snTdTdTd = RVIND; /* 217=TD? */
-  *UUU = 90; /* (%) 262=UU? */
-  *VV = 65000; /* (m) 273=VV? */
-  *R24R24R24R24 = 0; /* (kg/m2) 110=RR_24? */
-  *N = 40; /* (%) 15=NN? Note: NN(=3 here) is in octas */
-           /* NN = 9 shall be coded in BUFR as 113 % */
-  *vsc = 7; /* See B/C 1.4.4.2 */
-  *Nh = 10; /* (%) 14=NH? Note: NH(=1 here) is in octas */
-  *h = 1500; /* (m) 55=HL? */
-  *CL = 5 + 30; /* 23=CL? */
-  *CM = 7 + 20; /* 24=CM? */
-  *CH = 8 + 10; /* 22=CH? */
-  *num_layers = 1; /* Looks like no other formats than synop (typeid=1)
-		   * reports individual cloud layers (333 8NsChshs in synop) */
-  vsci[0] = RVIND; 
-  Ns[0] = RVIND; /* 25=NS1? */
-  C[0] = RVIND; /* 305=CC1? */
-  hshs[0] = RVIND; /* 301=HS1? */
-  *EE = 31; /* 7=EM && SD=18? 
-            * 31 is missing value. How do we decode EM/SD=-1? */
-  *sss = RVIND; /* SA=112? */
-  *snTgTg = RVIND; /* TG=221? */
-  *ww = 2; /* WW=41 && WAWA=49? Note: ww=WW but ww=WAWA+100 */
-  *t_ww = -6; /* Period in hours since last main synoptic hour,
-	      * = -6 for termin 0,6,12,18
-	      * = -3 for termin 3,9,15,21 */
-  *W1 = 2; /* W1=42 && WA1=47? Note: W1 (BUFR) = WA1 + 10 */
-  *W2 = 0; /* W2=43 && WA2=48? Note: W2 (BUFR) = WA2 + 10 */
-  *SS = RVIND; /* OT_1=121? */
-  *SSS = RVIND; /* OT_24=122? */
-  tR[0] = -12; /* Regional decision (-12 for 6,18; RVIND for other termins?)*/
-  RRR[0] = 0; /* RR_12=109? Set to RVIND for termin not 6,18?*/
-  tR[1] = -1; /* National decision. Should we use RVIND here?*/
-  RRR[1] = RVIND; /* Blindern reports RA, so we could calculate R_1... */
-  *snTxTxTx = 8.3 + 273.15; /* (K) TAX_12=216? */
-  *snTnTnTn = 4.7 + 273.15; /* (K) TAN_12=214? */
-  *iw = 8 + 4; /* 8 = Bit 1 set: 'Certified instruments'
-		* 4 = Bit 2 set: 'Originally measured in knots' */
-  *dd = 59; /* DD=61? (degree) */
-  *ff = 0.8; /* (m/s) FF=81? */
-  t_911ff[0] = -10; 
-  ff911[0] = 1.2; /* (m/s) FG_010=84? */
-  t_911ff[1] = -60;
-  ff911[1] = 1.3; /* (m/s) FG_1=90? */
-  
-  strcpy(name, "OSLO - BLINDERN");
-} 
-#endif
-
-void
-saveBufr( const StationInfoPtr station, int *buf, int buflen )
-{
-
-}
-
-
-int
-openBufrFile( const StationInfoPtr station )
-{
-   int error;
-   int fd;
-   string filename;
-
-    /* Open bufr file - for write */
-    pbopen_( &fd, const_cast<char*>(filename.c_str()), "w", &error, filename.length(), 2 );
-    if ( error != 0 ) {
-       ostringstream o;
-
-       o << "Bufr: " << "Cant open file <" << filename << ">. Errorkode: " << error;
-      throw BufrEncodeException( o.str() );
-      return false;
-    }
-
-}
-
-void
-closeBufrFile( const std::string &filename, int fd )
-{
-   int error;
-   pbclose_( &fd, &error);
-
-   if( error != 0 ) {
-      ostringstream o;
-
-      o << "Bufr: " << "Cant close file <" << filename << ">. Errorkode: " << error;
-      throw BufrEncodeException( o.str() );
-   }
-}
 
 
 }

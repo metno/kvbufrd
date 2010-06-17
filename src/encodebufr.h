@@ -64,15 +64,29 @@ public:
 };
 
 
+class BufrEncoder {
+   BufrEncoder();
+   BufrEncoder( const BufrEncoder & );
+   BufrEncoder& operator=(const BufrEncoder &);
 
-/**
- * Encode the data in a BufrData to a bufr message.
- *
- * @param data The data to encode to bufr.
- * @param station Station information.
- * @exception BufrEncodeException on error.
- */
-void
-encodeBufr( const BufrData &data, StationInfoPtr station );
+   StationInfoPtr station;
+   int kbuflen;
+   int *kbuff; /* integer array containing bufr message */
+   miutil::miTime obstime;
+
+public:
+   BufrEncoder( StationInfoPtr station_ );
+
+   /**
+   * Encode the data in a BufrData to a bufr message.
+   *
+   * @param data The data to encode to bufr.
+   * @param station Station information.
+   * @exception BufrEncodeException on error.
+   */
+   void encodeBufr( const BufrData &data );
+   void saveToFile( const std::string &path, bool overwrite )const;
+   void saveToFile()const;
+};
 
 #endif
