@@ -108,7 +108,7 @@ class Bufr
                           float &fRR24,
                           const DataElementList &sd );
  	 
-    void dewPoint( const DataElement &data, DataElement &res );
+    void dewPoint( const DataElement &data, BufrData &res );
     void minMax(std::string &kode, DataElementList &sd);
     void maxMin(std::string &kode, DataElementList &sd);
     void maxWindGust(std::string &kode, DataElementList &sd);
@@ -121,7 +121,7 @@ class Bufr
     void cloudCower( const DataElement &data, DataElement &res );
     void Hoyde_Sikt_Kode(std::string &kode, const DataElement &data);
     int  ix_Kode(const std::string &str);
-    bool doGeneralWeather( DataElement &res, const DataElement &data);
+    void doGeneralWeather( BufrData &res, const DataElementList &data );
     bool seaTemp( const DataElement &data, DataElement &res );
     bool SjekkEsss(std::string &kode, const std::string &str);
     void doEsss( std::string &kode, const DataElement &data );

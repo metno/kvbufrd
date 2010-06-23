@@ -332,6 +332,7 @@ DataElement::setData(const int  &param,
     case 212: TAM=fData;    break; //TAM
     case 213: TAN=fData;    break; //TAN
     case 215: TAX=fData;    break; //TAX
+    case 217: TD=fData;     break; //TD, devpoint temperature
     case 262: UU=fData;     break; //UU
     case 263: UM=fData;     break; //UM
     case  81: FF=fData;     break; //FF
@@ -772,6 +773,7 @@ operator<<(std::ostream& ost, const DataElement& sd)
       << "tempMax               (TAX): " << sd.TAX           << endl
       << "tempMin       (12t)(TAN_12): " << sd.TAN_12            << endl
       << "tempMax       (12t)(TAX_12): " << sd.TAX_12            << endl
+      << "TD (devpoint temperature)  : " << sd.TD << endl
       << "fuktNaa                (UU): " << sd.UU           << endl
       << "fuktMid                (UM): " << sd.UM           << endl
       << "vindHastNaa            (FF): " << sd.FF       << endl

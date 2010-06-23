@@ -108,7 +108,7 @@ encodeBufr( const BufrData &data )
   if( error != 0 ) {
      ostringstream o;
      o << "Failed to encode bufr for station '" << station->wmono() << "' obstime: " << data.time()
-       << ". bufren error code: " << error;
+       << ". bufren error code: " << error << endl << values.log();
      delete[] kbuff;
      kbuff = 0;
      throw BufrEncodeException( o.str() );
@@ -125,9 +125,9 @@ saveToFile()const
       throw BufrEncodeException( o.str() );
    }
 
-   if( station->copy() )
+   if( station->copy() ) {
       saveToFile( station->copyto(), false );
-
+   }
 }
 
 
@@ -138,10 +138,6 @@ saveToFile( const std::string &path, bool overwrite )const
    ostringstream ost;
    ofstream      f;
    struct stat   sbuf;
-
-
-   if( !station->copy() )
-      return;
 
    if(stat( path.c_str(), &sbuf)<0){
       ostringstream o;
@@ -289,17 +285,17 @@ void set_values(const StationInfoPtr station,
    values[19].toBufr( "hhh", FLT_MAX );      /* 010009 Geopotential height */
 
    /* Temperature and humidity data */
-   values[20] = station->heightTemperature();      /* 007032 Height of sensor above local ground (or deck of marine platform) */
+   values[20].toBufr( "h_t", station->heightTemperature() );      /* 007032 Height of sensor above local ground (or deck of marine platform) */
    values[21].toBufr( "snTTT", data.TA );    /* 012101 Temperature/dry-bulb temperature */
    values[22].toBufr( "snTdTdTd", data.TD ); /* 012103 Dew-point temperature */
    values[23].toBufr( "UUU", data.UU );      /* 013003 Relative humidity */
 
    /* Visibility data */
-   values[24] = station->heightVisability();      /* 007032 Height of sensor above local ground (for visibility measurement) */
+   values[24].toBufr("h_V", station->heightVisability() );      /* 007032 Height of sensor above local ground (for visibility measurement) */
    values[25].toBufr( "VV", data.VV );       /* 020001 Horizontal visibility */
 
    /* Precipitation past 24 hours */
-   values[26] = station->heightPrecip();      /* 007032 Height of sensor above local ground (for precipitation measurement) */
+   values[26].toBufr( "h_P", station->heightPrecip() );      /* 007032 Height of sensor above local ground (for precipitation measurement) */
    values[27].toBufr( "R24R24R24R24", data.precip24.RR ); /* 013023 Total precipitation past 24 hours */
    values[28] = RVIND;    /* 007032 Height of sensor above local ground (set to missing to cancel the previous value) */
 
@@ -370,7 +366,7 @@ void set_values(const StationInfoPtr station,
    values[idx++].toBufr( "SSS", FLT_MAX );   /* 014031 Total sunshine OT_24*/
 
    /* Precipitation measurement */
-   values[idx++] = station->heightPrecip();   /* 007032 Height of sensor above local ground (for precipitation measurement) */
+   values[idx++].toBufr( "h_P", station->heightPrecip() );   /* 007032 Height of sensor above local ground (for precipitation measurement) */
    values[idx++].toBufr( "tR[0] (Regional)", data.precipRegional.hTr ); /* 004024 Time period or displacement (regional) */
    values[idx++].toBufr( "RRR[0] (Regional)", data.precipRegional.RR );/* 013011 Total precipitation/total water equivalent */
 
@@ -378,7 +374,7 @@ void set_values(const StationInfoPtr station,
    values[idx++].toBufr( "RRR[1] (National)", data.precipNational.RR );/* 013011 Total precipitation/total water equivalent */
 
    /* Extreme temperature data */
-   values[idx++] = station->heightTemperature();   /* 007032 Height of sensor above local ground (for temperature measurement) */
+   values[idx++].toBufr( "h_T",  station->heightTemperature() );   /* 007032 Height of sensor above local ground (for temperature measurement) */
    values[idx++] = -12;   /* 004024 Time period or displacement */
    values[idx++] = 0;     /* 004024 Time period or displacement */
    values[idx++].toBufr( "snTxTxTx", data.TAX_12 ); /* 012111 Maximum temperature, at height and over period specified */
@@ -387,7 +383,7 @@ void set_values(const StationInfoPtr station,
    values[idx++].toBufr( "snTnTnTn", data.TAN_12 ); /* 012112 Minimum temperature, at height and over period specified */
 
    /* Wind data */
-   values[idx++] = station->heightWind();   /* 007032 Height of sensor above local ground (for wind measurement) */
+   values[idx++].toBufr( "h_W", station->heightWind() );   /* 007032 Height of sensor above local ground (for wind measurement) */
    values[idx++].toBufr( "iw", 8+4 );    /* 002002 Type of instrumentation for wind measurement */
    values[idx++].toBufr( "Wind (time significance)", 2 );     /* 008021 Time significance (=2: time averaged) */
    values[idx++].toBufr( "Wind - Time periode", -10 );   /* 004025 Time period or displacement (minutes)*/

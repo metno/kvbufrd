@@ -232,7 +232,7 @@ validDataUseOnlyUseInfo( const Data &data )
       return false;
    }
 
-   LOGERROR("Validate: stationid: " << data.stationID() << " typeid: " << data.typeID()
+   LOGDEBUG1("Validate: stationid: " << data.stationID() << " typeid: " << data.typeID()
                << " obstime: " << data.obstime()
                << " paramid: " << data.paramID()
                << " original: " << data.original()

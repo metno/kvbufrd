@@ -90,24 +90,40 @@ public:
          double ret=val->miss;
 
          val->log_ << index << " : " << id << " : ";
-           if( value == INT_MIN || value ==INT_MAX ) {
-              val->log_ << "NA";
-              if( mustHaveValidValue ) {
-                 val->log_ << ". Exception: Mandatory value." << std::endl;
-                 throw BufrEncodeException( "Bufr: Missing mandatory value for <" + std::string(id) + ">." );
-              }
-           } else {
-              ret = static_cast<double>( value );
-              val->log_ << ret;
-           }
+         if( value == INT_MIN || value == INT_MAX ) {
+            val->log_ << "NA";
+            if( mustHaveValidValue ) {
+               val->log_ << ". Exception: Mandatory value." << std::endl;
+               throw BufrEncodeException( "Bufr: Missing mandatory value for <" + std::string(id) + ">." );
+            }
+         } else {
+            ret = static_cast<double>( value );
+            val->log_ << ret;
+         }
 
-           val->log_ << std::endl;
+         val->log_ << std::endl;
 
-           val->values_[index] = ret;
+         val->values_[index] = ret;
       }
 
-      void toBufr( const std::string &id, float val ){
+      void toBufr( const std::string &id, float value, bool mustHaveValidValue=false ){
+         double ret=val->miss;
 
+         val->log_ << index << " : " << id << " : ";
+         if( value == FLT_MIN || value == FLT_MAX ) {
+            val->log_ << "NA";
+            if( mustHaveValidValue ) {
+               val->log_ << ". Exception: Mandatory value." << std::endl;
+               throw BufrEncodeException( "Bufr: Missing mandatory value for <" + std::string(id) + ">." );
+            }
+         } else {
+            ret = static_cast<double>( value );
+            val->log_ << ret;
+         }
+
+         val->log_ << std::endl;
+
+         val->values_[index] = ret;
       }
    };
 
@@ -168,40 +184,39 @@ public:
          int ret=val->miss;
 
          val->log_ << index << " : " << id << " : ";
-           if( value == INT_MIN || value ==INT_MAX ) {
-              val->log_ << "NA";
-              if( mustHaveValidValue ) {
-                 val->log_ << ". Exception: Mandatory value." << std::endl;
-                 throw BufrEncodeException( "Bufr: Missing mandatory value for <" + std::string(id) + ">." );
-              }
-           } else {
-              ret =  value;
-              val->log_ << ret;
-           }
+         if( value == INT_MIN || value ==INT_MAX ) {
+            val->log_ << "NA";
+            if( mustHaveValidValue ) {
+               val->log_ << ". Exception: Mandatory value." << std::endl;
+               throw BufrEncodeException( "Bufr: Missing mandatory value for <" + std::string(id) + ">." );
+            }
+         } else {
+            ret =  value;
+            val->log_ << ret;
+         }
 
-           val->log_ << std::endl;
-
-           val->values_[index] = ret;
+         val->log_ << std::endl;
+         val->values_[index] = ret;
       }
 
       void toBufr( const std::string &id, float value, bool mustHaveValidValue=false ){
          int ret=val->miss;
 
          val->log_ << index << " : " << id << " : ";
-           if( value == FLT_MIN || value ==FLT_MAX ) {
-              val->log_ << "NA";
-              if( mustHaveValidValue ) {
-                 val->log_ << ". Exception: Mandatory value." << std::endl;
-                 throw BufrEncodeException( "Bufr: Missing mandatory value for <" + std::string(id) + ">." );
-              }
-           } else {
-              ret =  static_cast<int>( value );
-              val->log_ << ret;
-           }
+         if( value == FLT_MIN || value == FLT_MAX ) {
+            val->log_ << "NA";
+            if( mustHaveValidValue ) {
+               val->log_ << ". Exception: Mandatory value." << std::endl;
+               throw BufrEncodeException( "Bufr: Missing mandatory value for <" + std::string(id) + ">." );
+            }
+         } else {
+            ret =  static_cast<int>( value );
+            val->log_ << ret;
+         }
 
-           val->log_ << std::endl;
+         val->log_ << std::endl;
 
-           val->values_[index] = ret;
+         val->values_[index] = ret;
       }
    };
 

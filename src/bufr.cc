@@ -154,7 +154,7 @@ doBufr( StationInfoPtr  info,
 
 
 
-
+   doGeneralWeather( bufr, bufrData );
    doPrecip( info, bufrData, bufr );
    doPressureTrend( bufrData, bufr );
    cloudCower( bufrData[0], bufr );
@@ -718,7 +718,7 @@ Bufr::Temp_Kode(std::string &kode, float temp)
  *  
  */
 void 
-Bufr::dewPoint(  const DataElement &data, DataElement &res  )
+Bufr::dewPoint(  const DataElement &data, BufrData &res  )
 {
    int index;
    float CK[9] = {
@@ -737,44 +737,52 @@ Bufr::dewPoint(  const DataElement &data, DataElement &res  )
    float td;
    float fukt, temp;
 
+   res.TD = FLT_MAX;
+
    fukt = data.UU;
-   temp = data.TA - 273.15;
+   temp = data.TA;
    index = 0;
 
-   if(fukt==FLT_MAX || temp==FLT_MAX)
-     	return;
+   if( data.TD != FLT_MAX ) {
+       td = data.TD;
 
-   
-   LOGDEBUG("dewPoint: UU=" << fukt << "  TA=" << temp);
+       if( temp != FLT_MAX && td > temp )
+          td = temp;
+   } else {
+      if(fukt==FLT_MAX || temp==FLT_MAX)
+         return;
 
-  	if(fukt>100.0){
-   	LOGDEBUG("dewPoint: UU(" << fukt << ")>100");
-     
-		if(fukt<=104)
-		   res.TD = data.TA;
-		return;
-	}
+      LOGDEBUG("dewPoint: UU=" << fukt << "  TA=" << temp);
 
-   if(temp>0.0)
-      index = 6;
-    
-	/* Saturation vapor pressure */
-   SVP =  CK[index]*exp(CK[index+1]*temp/(CK[index+2]+temp));
-       
-   /* Actual vapor pressure */
-   VP = fukt*SVP/100;
-    
-   /* Dewpoint temperature */
-   Q1 = log(VP/CK[index]);
-   td = CK[index+2]*Q1/(CK[index+1]-Q1);
+      if(fukt>100.0){
+         LOGDEBUG("dewPoint: UU(" << fukt << ")>100");
 
-   LOGDEBUG("devPoint: " << endl     <<
-	  	 	 	"-- SVP=" << SVP << endl <<
-	  	 	 	"--  VP=" <<  VP << endl <<
-	  	 	 	"--  Q1=" <<  Q1 << endl <<
-	  	 	 	"--  TD=" <<  td);
+         if(fukt<=104)
+            res.TD = temp;
+         return;
+      }
 
- 	if(td>temp){
+      if(temp>0.0)
+         index = 6;
+
+      /* Saturation vapor pressure */
+      SVP =  CK[index]*exp(CK[index+1]*temp/(CK[index+2]+temp));
+
+      /* Actual vapor pressure */
+      VP = fukt*SVP/100;
+
+      /* Dewpoint temperature */
+      Q1 = log(VP/CK[index]);
+      td = CK[index+2]*Q1/(CK[index+1]-Q1);
+
+      LOGDEBUG("devPoint: " << endl     <<
+               "-- SVP=" << SVP << endl <<
+               "--  VP=" <<  VP << endl <<
+               "--  Q1=" <<  Q1 << endl <<
+               "--  TD=" <<  td);
+   }
+
+   if(td>temp){
    	if(td < ( temp+0.5 ) )
    		td = temp;
    	else
@@ -1472,36 +1480,68 @@ Bufr::ix_Kode(const std::string &str)
  * den automatiske ligger som WAWA.
  *  
  */
-bool 
-Bufr::doGeneralWeather(DataElement &res, const DataElement &data)
+void
+Bufr::
+doGeneralWeather( BufrData &res, const DataElementList &data )
 {
-	bool verGenerelt;
-	
-	
-	if( data.IX == FLT_MAX )
-	   res.IX = 6;
+   bool pastWeather=false;
 
-	verGenerelt = data.ww != FLT_MAX && data.W1 != FLT_MAX && data.W2 != FLT_MAX;
-    
-   if(verGenerelt){
-   	res.IX = 1;
-   }else if( data.WAWA!=FLT_MAX ){
-   	int i=static_cast<int>(round( data.WAWA) );
-   	
-   	if(i>=0 && i<100){
-   	   res.ww = i;
-    		res.IX = 7;
-    		verGenerelt=true;
-   	}else{
-   		res.IX = 6;
-   	}
+   if( data.size() == 0 )
+      return;
+
+   cerr << "doGeneralWeather: " << data[0].time() << " size: " << data.size() << endl;
+
+	if( data[0].ww != FLT_MAX ) {
+	   res.ww = data[0].ww;
+	} else if( data[0].WAWA!=FLT_MAX ){
+      int i=static_cast<int>(round( data[0].WAWA) );
+
+      if(i>=0 && i<100)
+         res.ww = i;
    }
-   
-   if( static_cast<int>( res.IX ) == 1 && !verGenerelt)
-   	res.IX=6;
-   
-   return verGenerelt;
-}	
+
+	
+	if( data[0].W1 != FLT_MAX ) {
+	   pastWeather = true;
+	   res.W1 = data[0].W1;
+	}
+
+	if( data[0].W2 != FLT_MAX ) {
+	   pastWeather = true;
+	   res.W2 = data[0].W2;
+	}
+
+	if( pastWeather ) {
+	   miutil::miTime prevWeather;
+	   CIDataElementList it = data.begin();
+	   ++it;
+
+	   for( ; it != data.end(); ++it ) {
+	      if( it->ww != FLT_MAX ) {
+	         prevWeather = it->time();
+	         break;
+	      }
+	   }
+
+	   if( prevWeather.undef() ) {
+	      int h = data[0].time().hour();
+
+	      if( h%6 == 0 )
+	         res.tWeatherPeriod = -6;
+	      else if( h%3 == 0 )
+	         res.tWeatherPeriod = -3;
+	      else {
+	         res.W1 = FLT_MAX;
+	         res.W2 = FLT_MAX;
+	      }
+	   } else {
+	      int d = miutil::miTime::hourDiff( prevWeather, data[0].time()  );
+	      cerr << "Weather: prev: "<< prevWeather << " time: " << data[0].time() << " d: " << d << endl;
+	      res.tWeatherPeriod = d;
+	   }
+	}
+    
+ }
  
 
 /**
@@ -1759,17 +1799,14 @@ Bufr::GressTempKode(std::string &kode, DataElementList &sd)
  */
 
 void
-Bufr::precip( BufrData &bufr,
-              float    RR1,
-              float    totalNedboer,
-              float    h_tr,
-		    	  float    fRR24 )
+Bufr::
+precip( BufrData &bufr,
+        float    RR1,
+        float    totalNedboer,
+        float    h_tr,
+        float    fRR24 )
 {
    int time = bufr.time().hour();
-   double dummy;
-   float  nedboerTiDel=0.0;
-   char   stmp[30];
-
 
    if( time==6 ){
       //Skal vi kode 24 (7RR24) timers nedbør i 333 seksjonen
@@ -1782,7 +1819,7 @@ Bufr::precip( BufrData &bufr,
    if( h_tr == FLT_MAX || totalNedboer == FLT_MAX)
       return;
 
-   if( (time == 6 || time == 18) && static_cast<int>( h_tr ) == 12 ) {
+   if( (time == 6 || time == 18) && static_cast<int>( h_tr ) == -12 ) {
       bufr.precipRegional.hTr = h_tr;
       bufr.precipRegional.RR = totalNedboer;
    }
@@ -1804,7 +1841,6 @@ Bufr::doPrecip( StationInfoPtr     info,
                 BufrData           &bufr )
 {
   	ostringstream ost;
-  	int           ir;
   	float         nedboerTotal=0.0;
   	float         fRR24=FLT_MAX;
   	float         h_tr=FLT_MAX;
@@ -1836,7 +1872,6 @@ Bufr::doPrecip( StationInfoPtr     info,
   	   return;
 
 
-
   	ost << "doPrecip: sisteTid: " << bufrData[0].time() << endl;;
 
   	if(precipitationParam==PrecipitationRA){
@@ -1857,7 +1892,7 @@ Bufr::doPrecip( StationInfoPtr     info,
     	    << "                   h_tr: " << h_tr << endl;
   	}else if(precipitationParam==PrecipitationRRR){
     	ost << "doPrecip: PrecipitationParam: RRR  (Manuell)" << endl;
-    	ir=precipFromRRRtr(nedboerTotal, fRR24, bufrData);
+    	h_tr=precipFromRRRtr(nedboerTotal, fRR24, bufrData);
     	ost << "                   RR_24: " << fRR24          << endl
           << "                  nedbør: " << nedboerTotal   << endl;
   	}else{
@@ -2122,9 +2157,10 @@ Bufr::precipFromRrN( float &nedbor,
  * Hvis ITR har en gyldig verdi og nedbï¿½ren er -1 angir dette tï¿½rt.
  */
 float
-Bufr::precipFromRRRtr( float &nedbor,
-                       float &fRR24,
-                       const DataElementList &sd )
+Bufr::
+precipFromRRRtr( float &nedbor,
+                 float &fRR24,
+                 const DataElementList &sd )
 {
    float h_tr = FLT_MAX;
 	nedbor=FLT_MAX;
@@ -2276,8 +2312,10 @@ Bufr::precipFromRRRtr( float &nedbor,
   	if(nedbor==FLT_MAX) 
     	return FLT_MAX;
 
+  	//cerr << "RRRtr(+): nedbor=" << nedbor << " h_tr= " << h_tr << endl;
   	if( static_cast<int>( round( nedbor ) ) == -1 ) //tørt
   	   nedbor = 0.0;
+  	//cerr << "RRRtr(-): nedbor=" << nedbor << " h_tr= " << h_tr << endl;
  
   	return h_tr;
 }  

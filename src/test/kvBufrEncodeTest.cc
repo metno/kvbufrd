@@ -44,6 +44,7 @@
 #include <sstream>
 #include "ReadDataFile.h"
 #include <gtest/gtest.h>
+#include <encodebufr.h>
 
 using namespace std;
 
@@ -287,6 +288,39 @@ TEST_F( BufrEncodeTest, encode_noData )
 
    EXPECT_TRUE( data.size() == 0 ) << "It is expected that the datalist is empty, but the size is: " << data.size();
 }
+
+TEST_F( BufrEncodeTest, encode_bufr )
+{
+   DataElementList data;
+   StationInfoPtr  stInfo;
+   BufrData bufr;
+   kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
+   int wmono=1492;
+   stInfo = findWmoNo( wmono );
+
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data-18700-1.dat", stInfo, data, validData );
+
+   EXPECT_TRUE( data.size() != 0 ) << "It is expected that the datalist is empty, but the size is: " << data.size();
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr, false ) ) << "FAILED: Cant generate bufr for "<< 1492;
+
+   BufrEncoder encoder( stInfo );
+   try {
+      encoder.encodeBufr( bufr );
+   }
+   catch ( BufrEncodeException &ex ) {
+      cerr << "EXCEPTION: " << ex.what() << endl;
+   }
+   catch( ... ) {
+      cerr << "EXCEPTION: Unknown."<< endl;
+   }
+   //ASSERT_NO_THROW( encoder.encodeBufr( bufr ) );
+   ASSERT_NO_THROW( encoder.saveToFile( ".", true ) );
+
+}
+
 
 int
 main(int argc, char **argv) {

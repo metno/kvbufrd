@@ -98,10 +98,15 @@ kvBufrEncodeTest_SOURCES = test/kvBufrEncodeTest.cc \
 		                    bufr.cc bufr.h \
 		                    Validate.cc Validate.h \
 		                    InitLogger.cc InitLogger.h \
-		                    LoadBufrData.h LoadBufrData.cc 
-		                    
+		                    bufrencodehelper.h \
+		                    encodebufr.cc encodebufr.h \
+		                    LoadBufrData.h LoadBufrData.cc
+
  
 kvBufrEncodeTest_CPPFLAGS = $(AM_CPPFLAGS) -DTESTDATADIR="\""$(top_srcdir)/src/test"\""
 
-kvBufrEncodeTest_LDADD = -lgtest \
-						  $(kvcpp_LIBS)
+kvBufrEncodeTest_LDADD =  -lgtest \
+						  $(kvcpp_LIBS) \
+						  -L/disk1/local/lib -lbufr -lgfortran \
+						  -lm
+						  

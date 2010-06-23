@@ -125,7 +125,10 @@ heightWind()const
    if( heightWind_ != INT_MAX )
       return heightWind_;
 
-   return height_ + 10;
+   if( height_ != INT_MAX )
+      return height_ + 10;
+
+   return height_;
 }
 
 
