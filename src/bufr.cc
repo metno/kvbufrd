@@ -136,15 +136,20 @@ doBufr( StationInfoPtr  info,
    bufr.time( bufrData.firstTime() );
 
 
-   bufr.TGN    = c2kelvin( bufrData[0].TGN );
-   bufr.TGN_12 = c2kelvin( bufrData[0].TGN_12 );
-   bufr.TW     = c2kelvin( bufrData[0].TW );
-   bufr.TWM    = c2kelvin( bufrData[0].TWM );
-   bufr.TWN    = c2kelvin( bufrData[0].TWN );
-   bufr.TWX    = c2kelvin( bufrData[0].TWX );
    bufr.TA     = c2kelvin( bufrData[0].TA );
    bufr.PO     = pressure( bufrData[0].PO );
    bufr.PR     = pressure( bufrData[0].PR );
+   bufr.UU     = bufrData[0].UU;
+   bufr.VV     = bufrData[0].VV;
+
+   if( bufrData[0].typeidList.size() == 1 ) {
+      if( *bufrData[0].typeidList.begin() == 312 )
+         bufr.IX = 1;
+      else
+         bufr.IX = 0;
+   } else {
+      bufr.IX = 2;
+   }
 
    soilTemp( bufrData, bufr );
    doEsss( bufrData, bufr );
@@ -158,341 +163,9 @@ doBufr( StationInfoPtr  info,
    windAtObstime( bufrData[0], bufr );
    dewPoint( bufrData[0], bufr );
 
-
    return true;
 }
 
-
-#if 0
-
-bool
-Bufr::
-doBufr( StationInfoPtr info,
-        DataElementList   &bufrData,
-        DataElement       &bufr,
-        bool           create_CCA_template )
-{
-	milog::LogContext context("bufr");
-
-	if( !info ) {
-		LOGERROR( "Cant create bufr. Missing station information.");
-		return false;
-	}
-
-	using std::string;
-
-	string utsteder = info->owner();
-	int wmono = info->wmono();
-    int listenummer = atoi( info->list().c_str() );
-    int    ir;
-    int    ix;
-    char   tmp[512];
-    string buf;
-    string dato_tid;
-    string bufrStr;
-    string tempStr;
-    string tidsKode;
-    string luftTempKode;
-    string RRRtr;
-    string nedboerKodeSect3;
-    string nedboerKodeSect1;
-    string duggTempKode;
-    string minMaxKode;
-    string maxMinKode;
-    string naaVindKode;
-    string maxVindGustKode;
-    string maxVindMaxKode;
-    string trykkQFFKode;
-    string trykkQFEKode;
-    string tendensKode;
-    string skydekkeKode;
-    string hoyde_siktKode;
-    string verGenereltKode;
-    string verTilleggKode;
-    string skyerKode;
-    string snoeMarkKode;
-    string skyerEkstraKode1;
-    string skyerEkstraKode2;
-    string skyerEkstraKode3;
-    string skyerEkstraKode4;
-    string sjoeTempKode;
-    string gressTemp;
-    bool   verGenerelt;
-    string rr24Kode;
-    int    ITR;
-    string tmpUtsteder(utsteder);
-    DataElement sisteTid;
-    int       nTimeStr=0;
-    
-
-    bufr = DataElement(); //Clear the result bufr.
-    
-    verGenerelt    = false;
-     
-    errorMsg.erase();
-
-    if(bufrData.size()==0){
-      errorMsg="No data!";
-      return false;
-    }
-
-    nTimeStr=bufrData.nContinuesTimes();
-    
-    sisteTid=*bufrData.begin();
-    IDataElementList it=bufrData.end();
-    it--;
-
-	 {
-     		precipitationParam=NoPrecipitation;
-      	StationInfo::TStringList precip=info->precipitation();
-     
-      	if(precip.size()>0){
-			string rr=*precip.begin();
-	
-			if(rr=="RA"){
-	 			 precipitationParam=PrecipitationRA;
-			}else if(rr=="RR_1" || rr=="RR"){
-	  			precipitationParam=PrecipitationRR;
-			}else if(rr=="RR_3" || rr=="RR_6" 
-		  			 || rr=="RR_12" || rr=="RR_24"){
-	  			precipitationParam=PrecipitationRR_N;
-			}else if( rr=="RRRtr"){
-	  			precipitationParam=PrecipitationRRR;
-			}else if( rr=="RR_01"){
-	  			//NOT implemented (Not needed) yet
-			}
-      	}
-    }
-
-    if(precipitationParam==NoPrecipitation)
-      	ir=4;
-    else
-      	ir=1;
-
-  
-    LOGDEBUG("nTimeStr (cont): " << nTimeStr << endl <<
-	    	 "Tot times:       " << bufrData.size() << endl <<
-	     	 "sisteTid:        " << sisteTid.time() << endl <<
-	    	 "f�rsteTid:       " << it->time() << endl <<
-	    	 "nedbor12t:       " << sisteTid.RR_12 << endl <<
-	    	 //	     "nedbormen:       " << sisteTid.nedboermengde << endl <<
-		     "verTillegg:      " << sisteTid.verTillegg << endl <<
-		     "nedboerTot (RA): " << sisteTid.RA);
-    
-  
-    sprintf(tmp,"%02d%02d",sisteTid.time().day(), sisteTid.time().hour() );
-    dato_tid=tmp;
-    
-    Sjekk_Gruppe(4,verTilleggKode,sisteTid.verTillegg);
-    
-    if(ir==1){
-      	doPrecip(RRRtr,
-				      verTilleggKode,
-		   			  rr24Kode,
-		   			  ITR,
-		    		  bufrData);
-    }
-
-    LOGDEBUG("Etter doNedboerKode:"
-	    	 << "\n   RRRtr:            " << RRRtr
-	    	 << "\n   verTilleggKode:   " << verTilleggKode
-	    	 << "\n   stasjonHarNedb�r: " << (ir==1?"true":"false")
-	    	 << "\n   ir:               " << ir
-	    	 << "\n   ITR:              " << ITR);
-
-	 // 7wwW1W2
-    verGenerelt=doVerGenerelt(verGenereltKode, ix, sisteTid);
-       
-    /* Lagar tidskoda SM|SI|SN */
-    Tid_Kode(tidsKode, sisteTid.time().hour());
-    
-    /* Lufttemperatur i bufr */
-    Temp_Kode(luftTempKode, sisteTid.TA);
-
-    /* Reknar ut duggtemp. vha. lufttemp. og fuktigheit */
-    dewPoint(duggTempKode, sisteTid.TA, sisteTid.UU);
- 
-    /* Reknar ut nattens min.temp ELLER dagens max.temp  */
-    minMax(minMaxKode, bufrData);
-
-    /* Reknar ut nattens max ELLER dagens min */
-    maxMin(maxMinKode, bufrData);
-
-    if(sisteTid.DD!=FLT_MAX && sisteTid.FF!=FLT_MAX){
-      	Naa_Vind_Kode(naaVindKode, 
-			   	      sisteTid.DD,
-		  			  sisteTid.FF);
-    }else{
-      	naaVindKode="////";
-    }
-    
-    /* Reknar ut max. vindgust kode sidan forrige hovud obs. (12t int.) */
-    maxWindGust(maxVindGustKode, bufrData);
-
-    /* Reknar ut max. vindkast kode sidan forrige hovud obs. (6t int.) */
-    Max_Vind_Max_Kode(maxVindMaxKode, bufrData);
-
-      //Regner ut gressTempereaturen
-    GressTempKode(gressTemp, bufrData);
-
-    pressure(4,trykkQFFKode, sisteTid.PR);
-    pressure(3,trykkQFEKode, sisteTid.PO);
-    
-    if(!sisteTid.AA.empty() && sisteTid.PP!=FLT_MAX ){
-      	pressureTrend(tendensKode, sisteTid);
-    }else if(nTimeStr>=4){
-		pressureTrend(tendensKode,
-				     sisteTid.time().hour(),
-		    		 bufrData[3].PO,
-		    		 bufrData[2].PO,
-		    		 bufrData[1].PO,
-		    		 sisteTid.PO);
-    }
-
-  
-    cloudCower(skydekkeKode, sisteTid.skydekke);
-    Hoyde_Sikt_Kode(hoyde_siktKode, sisteTid);
-    //SjekkEsss(snoeMarkKode, sisteTid.snoeMark);
-    doEsss( snoeMarkKode, sisteTid );
-    Sjekk_Gruppe(8, skyerKode, sisteTid.skyer);
-    Sjekk_Gruppe(8, skyerEkstraKode1, sisteTid.skyerEkstra1);
-    Sjekk_Gruppe(8, skyerEkstraKode2, sisteTid.skyerEkstra2);
-    Sjekk_Gruppe(8, skyerEkstraKode3, sisteTid.skyerEkstra3);
-    Sjekk_Gruppe(8, skyerEkstraKode4, sisteTid.skyerEkstra4);
-    Sjekk_Gruppe(0, sjoeTempKode, sisteTid.sjoeTemp);
-    
-    if( ! test ) {
-    	bufr="\r\r\nZCZC\r\r\n";
-    	bufr+=tidsKode;
-    	bufr+="NO";
-    	sprintf(tmp,"%02d ", listenummer);
-    	bufr+=tmp;
-    
-    	while(tmpUtsteder.length()<4)
-    		tmpUtsteder.insert(0," ");
-
-		tmpUtsteder+=" ";
-		bufr+=tmpUtsteder;
-		bufr+=dato_tid;
-		bufr.append("00");
-
-		if(create_CCA_template)
-			bufr+=" CCCXXX";
-    }
-
-    if(ir==1){
-      	if(!(sisteTid.time().hour()%6) && ITR>=1 && ITR<=4)
-			nedboerKodeSect1=RRRtr;
-      	else if(RRRtr.find("////")!=string::npos)
-			ir=4;
-      	else{
-			ir=2;
-			nedboerKodeSect3=RRRtr;
-      	}
-    }
-
-  
-    /**
-     * Changed the wind unit from knop to m/s
-     * 
-     * AAXX DDhhW 
-     * 
-     * Where DD is the day.
-     *       hh is the termin (hour).
-     *       W  wind unit, 
-     *          W = 4 - knop
-     *          W = 1 - m/s
-     * 
-     * IW is defined in bufr.h
-     */
-    sprintf(tmp,"\r\nAAXX %s%1d", dato_tid.c_str(), IW);
-    bufr+=tmp;
-      
-    sprintf(tmp, "\r\n%05d %1d%1d", wmono, ir, ix);
-    bufr+=tmp;
-    bufr+=hoyde_siktKode;
-    bufr+=string(" ")+skydekkeKode+naaVindKode;
-    bufr+=" 1";
-    bufr+=luftTempKode+duggTempKode;
-
-    bufr+= trykkQFEKode+trykkQFFKode+tendensKode;
-    
-    if(ir==1 && !nedboerKodeSect1.empty())
-      	bufrStr+=nedboerKodeSect1;
-    
-    if(verGenerelt)
-		bufrStr+=verGenereltKode;
-    
-    if(skyerKode.length()>0 && 
-       skydekkeKode[0]!='0' && 
-       skydekkeKode[0]!='9')
-		bufrStr+=skyerKode;
-    
-    
-    //Seksjon 222
-    //Kyststajoner som f�r beskjed
-    if(sisteTid.time().hour()==12){
-      	if(SjoeTempKode(sjoeTempKode, sisteTid)){
-			bufrStr+=" 222// ";
-			bufrStr+=sjoeTempKode;
-      	}
-    }
-    
-    
-    /**
-     * COMMENT:
-     * komentert ut rr24Kode intil vi bestemmer oss 
-     * for � ha den med.
-     */
-    if(!minMaxKode.empty()       ||
-       !nedboerKodeSect3.empty() ||
-       !maxVindGustKode.empty()  ||
-       !snoeMarkKode.empty()     ||
-       !rr24Kode.empty()         ||
-       !skyerEkstraKode1.empty() ||
-       !skyerEkstraKode2.empty() ||
-       !skyerEkstraKode3.empty() ||
-       !skyerEkstraKode4.empty()){
-      	/* Gruppe 333 */
-      	bufrStr+=" 333 ";
-      	bufrStr+=minMaxKode;
-      	bufrStr+=snoeMarkKode;
-      	bufrStr+=nedboerKodeSect3;
-      	bufrStr+=rr24Kode;
-      	bufrStr+=skyerEkstraKode1;
-      	bufrStr+=skyerEkstraKode2;
-      	bufrStr+=skyerEkstraKode3;
-      	bufrStr+=skyerEkstraKode4;
-      	bufrStr+=maxVindGustKode;
-    }
-    
-    if(!maxVindMaxKode.empty() || 
-       !maxMinKode.empty()     || 
-       !verTilleggKode.empty() ||
-       !gressTemp.empty()){
-      	/* Gruppe 555 */
-      	bufrStr+=" 555 ";
-      	bufrStr+=maxVindMaxKode;
-      	bufrStr+=maxMinKode;
-      	bufrStr+=gressTemp;
-      	bufrStr+=verTilleggKode;
-    }
-
-    // Avslutting av data-streng 
-    bufrStr+="=";
-   
-    // Datastrengen kan ikke vere lenger enn 69 karakterar 
-    SplittStreng(bufrStr, 69);
-    
-    bufr+=bufrStr;
-    
-    if( ! test ) {
-    	bufr+="\r\n\r\r\n\n\n\n\n\n\n\nNNNN\r\n";
-    }
-
-    return true;
-}
-#endif
 
 
 
@@ -602,66 +275,6 @@ Bufr::windAtObstime( const DataElement &data, DataElement &res )
       }
    }
 }
-
-
-#if 0
-void
-Bufr::Naa_Vind_Kode(std::string &kode, float retn, float hast)
-{
-  	char tmp[30];
-  	
-  	kode="////";
-  
-  	if( hast < 0.1 )
-    	hast = 0.0;
-  
-  	if( retn < 1 )
-    	retn = 360;
-  
-  	if( fabs(retn) > 360){ /* Grensefeil */
-    	if(hast > 98 ){     /* Grensefeil */
-    		kode="////";
-    	}else{
-    		hast *=KNOPFAKTOR;  
-    		hast = floor( (double) hast+0.5);
-      
-    		if(hast<1.0)
-    			kode="0000";
-    		else if(hast >= 99.0){
-    			sprintf(tmp,"//99 00%03.0f",hast);
-				kode=tmp;
-    		}else{
-				sprintf(tmp,"//%02.0f",hast);
-				kode=tmp;
-    		}
-    	}
-  	}else{
-    	if(retn>=5)
-    		retn = floor( (double)(retn/10)+0.5 );
-    	else   
-    		retn = 36;
-    
-    	if(fabs(hast) > 98 ){     /* Grensefeil */
-    		sprintf(tmp,"%02.0f//",retn);
-    		kode=tmp;
-    	}else{
-    		hast *= KNOPFAKTOR;
-    		hast = floor( (double) hast+0.5);
-      
-    		if(hast<1.0)
-				kode="0000";
-    		else if(hast>=99.0){
-				sprintf(tmp,"%02.0f99 00%03.0f",retn,hast);
-				kode=tmp;
-    		}else{
-				sprintf(tmp,"%02.0f%02.0f",retn,hast);
-				kode=tmp;
-    		}
-    	}
-  	}
-}
-#endif
-
 
 /*
 ** Lagar temperaturkode p� format SnTTT der Sn er forteikn
@@ -1287,7 +900,7 @@ Bufr::pressureTrend( const DataElement &data, DataElement &res)
   	}
 
   	res.AA = trend;
-  	res.PP = pressure( data.PP );
+  	res.PP = data.PP * 100;
   	return true;
 }
 
@@ -1311,7 +924,9 @@ Bufr::cloudCower( const DataElement &data, DataElement &res )
    else if( N == 0 )
       res.N = 0;
    else
-      res.N = N/8 * 100;
+      res.N = (static_cast<float>(N)/8.0) * 100;
+
+   cerr << "cloudCower: NN in: " << data.N << " out: " << res.N << " %" << endl;
 } /* Skydekke_Kode */
 
 /*

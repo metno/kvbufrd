@@ -433,6 +433,7 @@ public:
   void checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
 					 const std::string &logid="");
 
+  void getStations();
 
 };
 

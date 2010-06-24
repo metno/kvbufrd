@@ -139,7 +139,7 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
                            "latitude", "longitude", "height",
                            "height-visibility", "height-precip",
                            "height-pressure", "height-temperature",
-                           "height-wind",
+                           "height-wind", "name",
                            0 };
 
    list<std::string>           keys;
@@ -212,7 +212,8 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
                     strcmp( keywords[i], "height-visibility" ) == 0 ||
                     strcmp( keywords[i], "height-wind" ) == 0 ||
                     strcmp( keywords[i], "latitude" ) == 0 ||
-                    strcmp( keywords[i], "longitude" ) == 0 ) {
+                    strcmp( keywords[i], "longitude" ) == 0  ||
+                    strcmp( keywords[i], "name" )) {
             LOGDEBUG( "NO VALUE: for key <" << keywords[i] << "> in WMO section <"
                        << wmono << ">!. Ignore!");
          } else {
@@ -260,6 +261,12 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
             doFloat( st->latitude_, value );
          }else if( strcmp( keywords[i], "longitude" ) == 0 ) {
             doFloat( st->longitude_, value );
+         } else if( strcmp( keywords[i], "name" ) == 0 ) {
+            IValElementList it=value.begin();
+            if(it != value.end() ) {
+               if( it->type() == STRING  )
+                  st->name( it->valAsString() );
+            }
          }
 
          if(!ok){

@@ -134,7 +134,8 @@ DataElement::DataElement():
     AA( FLT_MAX ),
     ITZ( FLT_MAX ),
     ITR( FLT_MAX ),
-    nSet( 0 )
+    nSet( 0 ),
+    onlyTypeid1( true )
 
 {
 }
@@ -214,7 +215,9 @@ DataElement::DataElement(const DataElement &p):
     AA(p.AA),
     ITZ(p.ITZ),
     ITR(p.ITR),
-    nSet( p.nSet )
+    nSet( p.nSet ),
+    onlyTypeid1( p.onlyTypeid1 ),
+    typeidList( p.typeidList )
 {
 }
 
@@ -297,6 +300,8 @@ DataElement::operator=(const DataElement &p)
     ITZ              = p.ITZ;
     ITR              = p.ITR;
     nSet             = p.nSet;
+    onlyTypeid1      = p.onlyTypeid1;
+    typeidList       = p.typeidList;
 
     return *this;
 }
@@ -308,8 +313,9 @@ DataElement::~DataElement()
 
 
 bool
-DataElement::setData(const int  &param,
-		   const std::string &data_)
+DataElement::setData( int  param,
+                      int typeid_,
+                      const std::string &data_)
 {
     float       fData;
     int         im;
@@ -324,8 +330,6 @@ DataElement::setData(const int  &param,
     }
 
     im=static_cast<int>(round(fData));
-
-    nSet++;
 
     switch(param){
     case 211: TA=fData;     break; //TA
@@ -470,10 +474,23 @@ DataElement::setData(const int  &param,
     case  13: ITZ=fData;  break;   //ITZ, "_tz")
     case   1: AA = fData; break;   //AA, _aa
     default:
-       nSet--;
       return false;
     }
+
+    nSet++;
+
+    if( typeid_ != 1 )
+       onlyTypeid1 = false;
     
+    std::list<int>::iterator it = typeidList.begin();
+
+    for( ; it != typeidList.end(); ++it )
+       if( *it == typeid_ )
+          break;
+
+    if( it == typeidList.end() )
+       typeidList.push_back( typeid_ );
+
     return true;
 }
 

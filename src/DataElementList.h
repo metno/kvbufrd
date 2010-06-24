@@ -142,14 +142,17 @@ class  DataElement
   	float ITZ;
   	float ITR;
   	int nSet;
+  	bool onlyTypeid1;
+  	std::list<int> typeidList;
 
   	DataElement();
   	DataElement(const DataElement &p);
   	DataElement& operator=(const DataElement &p);
   	~DataElement();
 
-  	bool setData(const int  &param, 
-				 const std::string &data_);
+  	bool setData( int  param,
+  	              int  typeid_,
+				     const std::string &data_ );
 
   	/**
   	 * Removes data that only generates groups with slashes.

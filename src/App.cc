@@ -1121,3 +1121,43 @@ checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
     }
   }
 }
+
+void
+App::
+getStations()
+{
+   std::list<kvalobs::kvStation> kvStationList;
+   std::list<kvalobs::kvStation>::iterator sit;
+   string name;
+
+   try {
+      if( ! getKvStations( kvStationList ) )
+         return;
+
+      for( IStationList it=stationList.begin();
+           it != stationList.end();
+           it++ )
+      {
+         for( sit=kvStationList.begin(); sit!=kvStationList.end(); ++sit )
+            if( sit->wmonr() == (*it)->wmono() )
+               break;
+
+         if( sit == kvStationList.end() )
+            continue;
+
+         (*it)->height( sit->height() );
+         (*it)->latitude( sit->lat() );
+         (*it)->longitude( sit->lon() );
+
+         //TODO: Must convert all national characters Å->A, Ø->O, Æ->E.
+         name = sit->name();
+
+         if( name.length() > 20 ) //Truncate the name if it is longer than 20 chars long.
+            name = name.substr( 0, 20 );
+
+         (*it)->name( name );
+      }
+   }
+   catch( ... ) {
+   }
+}

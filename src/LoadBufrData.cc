@@ -73,7 +73,7 @@ loadBufrData( const DataEntryList   &dl,
 
             if(itd->sensor()==0 && itd->level()==0){
                if( validate( *itd ) )
-                  bufrData.setData(itd->paramID(), itd->original());
+                  bufrData.setData( itd->paramID(), itd->typeID(), itd->original() );
                else {
                   LOGDEBUG("CheckData: do NOT use: " << itd->obstime() << " " << itd->paramID() << " " << itd->typeID() << " val: "
                            << itd->original() << " cinfo: " << itd->controlinfo().flagstring() << " uinfo: "
