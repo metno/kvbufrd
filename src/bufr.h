@@ -109,10 +109,10 @@ class Bufr
                           const DataElementList &sd );
  	 
     void dewPoint( const DataElement &data, BufrData &res );
-    void minMax(std::string &kode, DataElementList &sd);
-    void maxMin(std::string &kode, DataElementList &sd);
-    void maxWindGust(std::string &kode, DataElementList &sd);
-    void maxWindMax( BufrData::Wind &wind, DataElementList &sd);
+    void minMaxTemperature(const DataElementList &sd, BufrData &res );
+    void maxWindGust( const DataElementList &sd, BufrData &res  );
+    void maxWindMax( BufrData::Wind &wind, DataElementList &sd );
+    void cloudData( const DataElementList &data, BufrData &res );
     float pressure( float presure );
     void doPressureTrend( const DataElementList &data, DataElement &res );
     void computePressureTrend( const DataElementList &data,
@@ -121,11 +121,11 @@ class Bufr
     void cloudCower( const DataElement &data, DataElement &res );
     void Hoyde_Sikt_Kode(std::string &kode, const DataElement &data);
     int  ix_Kode(const std::string &str);
-    void doGeneralWeather( BufrData &res, const DataElementList &data );
+    void doGeneralWeather( const DataElementList &data, BufrData &res );
     bool seaTemp( const DataElement &data, DataElement &res );
     bool SjekkEsss(std::string &kode, const std::string &str);
-    void doEsss( std::string &kode, const DataElement &data );
-    void GressTempKode(std::string &kode, DataElementList &sd);
+    void doEsss( const DataElementList &data, BufrData &res );
+    void soilTemp( const DataElementList &data, BufrData &res );
 
 
  public:

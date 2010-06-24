@@ -136,8 +136,6 @@ doBufr( StationInfoPtr  info,
    bufr.time( bufrData.firstTime() );
 
 
-   bufr.TAN_12 = c2kelvin( bufrData[0].TAN_12 );
-   bufr.TAX_12 = c2kelvin( bufrData[0].TAX_12 );
    bufr.TGN    = c2kelvin( bufrData[0].TGN );
    bufr.TGN_12 = c2kelvin( bufrData[0].TGN_12 );
    bufr.TW     = c2kelvin( bufrData[0].TW );
@@ -145,16 +143,15 @@ doBufr( StationInfoPtr  info,
    bufr.TWN    = c2kelvin( bufrData[0].TWN );
    bufr.TWX    = c2kelvin( bufrData[0].TWX );
    bufr.TA     = c2kelvin( bufrData[0].TA );
-   bufr.TAM    = c2kelvin( bufrData[0].TAM );
-   bufr.TAN    = c2kelvin( bufrData[0].TAN );
-   bufr.TAX    = c2kelvin( bufrData[0].TAX );
    bufr.PO     = pressure( bufrData[0].PO );
    bufr.PR     = pressure( bufrData[0].PR );
 
-
-
-
-   doGeneralWeather( bufr, bufrData );
+   soilTemp( bufrData, bufr );
+   doEsss( bufrData, bufr );
+   doGeneralWeather( bufrData, bufr );
+   maxWindGust( bufrData, bufr );
+   cloudData( bufrData, bufr );
+   minMaxTemperature( bufrData, bufr );
    doPrecip( info, bufrData, bufr );
    doPressureTrend( bufrData, bufr );
    cloudCower( bufrData[0], bufr );
@@ -802,191 +799,61 @@ Bufr::dewPoint(  const DataElement &data, BufrData &res  )
  * i tid med data.
  */
 void 
-Bufr::minMax(std::string &kode, DataElementList &sd)
+Bufr::
+minMaxTemperature(const DataElementList &sd, BufrData &res )
 {
-    int         nTimeStr=sd.nContinuesTimes();
-    float       min;
-    float       max;
-    std::string str;
+   int   nTimeStr=sd.nContinuesTimes();
+   float min = FLT_MAX;
+   float max = FLT_MIN;
 
-    min =  200.0;
-    max = -200.0;
-
-    if(nTimeStr<12){
-      	switch(sd[0].time().hour()){
-      	case 6:
-			if(sd[0].TAN_12==FLT_MAX)
-	  			return;
-	
-			Temp_Kode(str, sd[0].TAN_12);
-			kode=" 2";
-			kode+=str;
-			return; 
-	
-      	case 18:
-			if(sd[0].TAX_12==FLT_MAX)
-	  			return;
-	
-			Temp_Kode(str, sd[0].TAX_12);
-			kode=" 1";
-			kode+=str;
-			break;
-	
-      	default:
-			return;
-      	}
-      
-      	return;
-    }
-
-
-    switch(sd[0].time().hour()){
-    case 6: /* Nattens minimumstemp. */
-		for(int i=0; i<12; i++){
-	  		if(sd[i].TAN==FLT_MAX)
-	    		return;
-	  
-	  		if(sd[i].TAN<min)
-	     		min=sd[i].TAN;
-		}
-	
-		if(sd[0].TA<min)
-	  		min=sd[0].TA;
-	
-		/* Ved feil paa data vil min ha defaultverdien 200 */
-		if(min>199.0)
-	    	return;
-	
-		/* Temperatur kode paa format TTT */         
-		Temp_Kode(str, min);
-		kode=" 2";
-		kode+=str;
-		return;
-	
-    case 18: /* Dagens maksimumstemp. */
-		for(int i=0; i<12; i++){
-	  		if(sd[i].TAX==FLT_MAX)
-	    		return;
-	  
-	  		if(sd[i].TAX>max)
-	    		max=sd[i].TAX;
-		}
-
-		if(sd[0].TA>max)
-	    	max = sd[0].TA;         
-
-		/* Ved feil paa data vil max ha defaultverdien -200 */
-		if(max<-199.0)
-	    	return;
-	
-		Temp_Kode(str, max);
-		kode=" 1";
-		kode+=str;
-		return;
-	
-    	default:
-      		return;
-    }
-} /* Min_Max_Kode */
-
-
-/* 25.11.97
- * Bxrge Moe
- *
- * Regner ut nattens maksimumstemperatur hvis klokken er 06,
- * eller dagens minimumstemperatur hvis klokken er 18.
- *
- * Rutinen er endret slik at vi ikke trenger 24 timer tilbake 
- * i tid med data.
- *
- * nTimeStr holder antall timer med data vi har.
- *
- */
-void 
-Bufr::maxMin(std::string &kode, DataElementList &sd)
-{
-    int nTimeStr=sd.nContinuesTimes();
-    float min;
-    float max;
-    std::string str;
-
-    min =  200.0;
-    max = -200.0;
-
-    kode.erase();
-
-    if(nTimeStr<12){
-      	switch(sd[0].time().hour()){
-      	case 6:
-			if(sd[0].TAX_12==FLT_MAX)
-	  			return;
-	
-			Temp_Kode(str, sd[0].TAX_12);
-			kode=" 1";
-			kode+=str;
-			break; 
-	
-      	case 18:
-			if(sd[0].TAN_12==FLT_MAX)
-	  			return;
-	
-			Temp_Kode(str,sd[0].TAN_12);
-			kode=" 2";
-			kode+=str;
-			break; 
-	
-      	default:
-			return;
-      }
-      
+   if( ! (sd[0].time().hour() == 6 || sd[0].time().hour() == 18) )
       return;
-    }
-    
-    switch(sd[0].time().hour()){
-    case 6:
-      	for(int i=0; i<12; i++){
-			if(sd[i].TAX==FLT_MAX)
-	  			return;
-	
-		if(sd[i].TAX>max)
-	  		max = sd[i].TAX;
-      	}
-      
-      	if(sd[0].TA>max)
-			max = sd[0].TA;         
-      
-      	if(max<-199.0)
-			return;
-            
-      	Temp_Kode(str,max);
-      	kode=" 1";
-      	kode+=str;
-      	return;
-      
-	case 18:
-      	for(int i=0; i<12; i++){
-			if(sd[i].TAN==FLT_MAX)
-	  			return;
-	
-			if(sd[i].TAN<min)
-	  			min=sd[i].TAN;
-      	}
-      
-      	if(sd[0].TA<min)
-			   min=sd[0].TA;         
-        
-      	if(min>199.0)
-			return;
-            
-      	Temp_Kode(str,min);
-      	kode=" 2";
-     	kode+=str;
-      	return;
-      
-    default:
-    	return;
-    }
-} /* Max_Min_Kode */
+
+   if(nTimeStr<12){
+      if(sd[0].TAN_12 != FLT_MAX)
+         res.TAN_12 = sd[0].TAN_12;
+
+      if(sd[0].TAX_12 != FLT_MAX)
+         res.TAX_12 = sd[0].TAX_12;
+
+      return;
+   }
+
+
+   for(int i=0; i<12; i++){
+      if(sd[i].TAN==FLT_MAX) {
+         min = FLT_MAX;
+         break;
+      }
+
+      if(sd[i].TAN<min)
+         min=sd[i].TAN;
+   }
+
+   if( sd[0].TA < min)
+      min = sd[0].TA;
+
+   if( min != FLT_MAX )
+      res.TAN_12 = c2kelvin( min );
+
+   for(int i=0; i<12; i++){
+      if( sd[i].TAX == FLT_MAX ) {
+         max = FLT_MIN;
+         break;
+      }
+
+      if( sd[i].TAX > max)
+         max = sd[i].TAX;
+   }
+
+   if( max!=FLT_MIN && sd[0].TA != FLT_MAX && sd[0].TA > max )
+      max = sd[0].TA;
+
+   if( max != FLT_MIN )
+      res.TAX_12 = c2kelvin( max );
+}
+
+
 
 
 /* 16.01.98
@@ -1056,60 +923,65 @@ Bufr::maxMin(std::string &kode, DataElementList &sd)
  * Rettet bugg for generering av Gust for 'pio'.
  */ 
 void 
-Bufr::maxWindGust(std::string &kode, DataElementList &sd)
+Bufr::
+maxWindGust( const DataElementList &data, BufrData &res )
 {
-    int   nTimeStr=sd.nContinuesTimes();
-    float fMax;
+    int   nTimeStr=data.nContinuesTimes();
+    float fMax = FLT_MIN;
     std::string::iterator it;
-    char  stmp[30];
 
-    fMax=-1.0;
-    kode.erase();
+    if( nTimeStr == 0 )
+       return;
+
+    res.FG_010 = data[0].FG_010;
     
-    if((sd[0].time().hour())%6 != 0)
-		return;
+    if( ( data[0].time().hour() ) % 6 != 0 ) {
+       if( data[0].FG_1 != FLT_MAX ) {
+          res.FG = data[0].FG;
+          res.tFG = -60;
+       }
+       return;
+    }
 
     if(nTimeStr<6){
-     	if(sd[0].FG==FLT_MAX || sd[0].FG<0)
+     	if( data[0].FG == FLT_MAX || data[0].FG<0)
      		return;
 
-      fMax=sd[0].FG;
-      fMax *= KNOPFAKTOR;
-      fMax = floor((double) fMax + 0.5);
+      fMax=data[0].FG;
       
-      if(fMax>=99.0 && fMax<=176){
-      	sprintf(stmp, " 91199 00%03.0f", fMax);
-      	kode=stmp;
-      }else if(fMax<99.0){
-      	sprintf(stmp, " 911%02.0f", fMax);
-      	kode=stmp;
+      CIDataElementList it = data.begin();
+      ++it;
+
+      for( ; it != data.end(); ++it ) {
+         if( it->FG != FLT_MAX ) {
+            break;
+         }
+      }
+
+      if( it == data.end() ) {
+         res.tFG = -360; //  6 hours, in minutes.
+      } else {
+         int d = miutil::miTime::hourDiff( it->time(), data[0].time()  );
+         cerr << "maxWindGust: prev: "<< it->time() << " time: " << data[0].time() << " d: " << d << endl;
+         res.tFG = d*60;
       }
 
       return;
     }
 
-    
-
     for(int i=0; i<6; i++){
-      if(sd[i].FG_1==FLT_MAX)
-			return;
+       if( data[i].FG_1 == FLT_MAX)
+          return;
       
-      if(sd[i].FG_1>fMax)
-			fMax=sd[i].FG_1;
+       if( data[i].FG_1 > fMax)
+          fMax = data[i].FG_1;
     }
 
     if(fMax<0)
       return;
-    
-    fMax *= KNOPFAKTOR;
-    fMax = floor((double) fMax+0.5);
-    
-    if(fMax>=99.0)
-     	sprintf(stmp, " 91199 00%03.0f", fMax);
-    else
-     	sprintf(stmp, " 911%02.0f", fMax);
 
-    kode=stmp;
+    res.FG = fMax;
+    res.tFG = -360;
 }
 
 
@@ -1253,6 +1125,23 @@ Bufr::maxWindMax( BufrData::Wind &wind, DataElementList &sd)
     
    wind.ff = iMax;
    wind.i  = iTidsAngiv;
+}
+
+void
+Bufr::
+cloudData( const DataElementList &data, BufrData &res )
+{
+   if( data.size() == 0 )
+      return;
+
+   res.NH = data[0].NH;
+   res.HL = data[0].HL;
+   res.CL = data[0].CL;
+   res.CM = data[0].CM;
+   res.CH = data[0].CH;
+
+   res.cloudExtra = data[0].cloudExtra;
+
 }
 
 /*
@@ -1482,7 +1371,7 @@ Bufr::ix_Kode(const std::string &str)
  */
 void
 Bufr::
-doGeneralWeather( BufrData &res, const DataElementList &data )
+doGeneralWeather( const DataElementList &data, BufrData &res )
 {
    bool pastWeather=false;
 
@@ -1614,51 +1503,32 @@ Bufr::SjekkEsss(std::string &kode, const std::string &str)
 
 void 
 Bufr::
-doEsss( std::string &kode, const DataElement &data )
+doEsss( const DataElementList &data, BufrData &res  )
 {
-   kode.erase();
-   
-   char buf[16];
    string em;
    string sa;
    int    iSA;
    
-   if( data.SA == FLT_MAX )
-   	iSA = INT_MAX;
-   else
-   	iSA = (int) floor((double) data.SA + 0.5 );
-   
-   if( data.EM == FLT_MAX && iSA == INT_MAX )
-      return;
-   
-   if( data.EM == FLT_MAX || data.EM < 0 || data.EM > 10 )
-      em = "/";
-   else {
-      sprintf( buf, "%01.0f", data.EM );
-      em = buf;
-   }
-   
-   if( iSA == INT_MAX  || iSA < -3 || iSA > 996 )
-      sa = "///";
-   else if( iSA == -1 ) {
-	   if( em =="/" )
-		   sa = "///";
-	   else
-		   sa = "998";
-   }else if( iSA == 0 )
-	   sa = "997";
-   else if( iSA == -3 )
-	   sa = "999";
-   else if( iSA < 0 )
-	   sa="///";
-   else {
-      sprintf( buf, "%03d", iSA );
-      sa = buf;
+   if( data[0].SA != FLT_MAX ) {
+      iSA= (int) floor((double) data[0].SA + 0.5 );
+      if( iSA == -1 )
+         res.SA = -0.02;
+      else if( iSA == 0 )
+         res.SA = -0.01;
+      else if( iSA == -3 )
+         res.SA = 0;
+      else if( data[0].SA > 0 )
+         res.SA = data[0].SA;
    }
 
-      
-   //Creates the code 4E'sss
-   kode = " 4" + em + sa;
+   
+   if( data[0].EM == FLT_MAX )
+      return;
+   
+   if( data[0].EM < 0 || data[0].EM > 10 )
+      return;
+   
+   res.EM = (int) floor((double) data[0].EM + 0.5 );
 }
 
 
@@ -1745,46 +1615,41 @@ Bufr::seaTemp( const DataElement &data, DataElement &res)
  * vi trenger bare en timestreng.
  */
 void 
-Bufr::GressTempKode(std::string &kode, DataElementList &sd)
+Bufr::
+soilTemp( const DataElementList &data, BufrData &res )
 {
-  	int nTimeStr=sd.nContinuesTimes();
+  	int nTimeStr=data.nContinuesTimes();
   	float min;
   	int i;
-  	std::string str;
   
+  	if( nTimeStr == 0 )
+  	   return;
+
   	min=FLT_MAX;
   
-  	kode.erase();
-  
-  	if(sd[0].time().hour()!=6)
+  	if(data[0].time().hour() != 6)
     	return;
   
-  	if(nTimeStr<13){
-    	if(sd[0].TGN_12==FLT_MAX)
-      		return;
+  	if( nTimeStr < 13 || data[0].TGN_12 != FLT_MAX ){
+    	if( data[0].TGN_12 == FLT_MAX )
+    	   return;
     
-    	Temp_Kode(kode, sd[0].TGN_12);
-    	kode.insert(0, " 3");
-    
+    	res.TGN_12 = c2kelvin( data[0].TGN_12 );
     	return;
   	}
   
   	i=0;
   
-  	while(i<12){
-    	if(sd[i].TGN!=FLT_MAX && sd[i].TGN<min)
-      		min=sd[i].TGN;
-    
+  	while( i < 12 ){
+  	   if( data[i].TGN == FLT_MAX )
+  	      return;
+
+    	if( data[i].TGN < min )
+    	   min = data[i].TGN;
     	i++;
   	}
   
-  	if(min==FLT_MAX)
-    	return;
-  
-  	Temp_Kode(kode, min);
-  	kode.insert(0, " 3");
-  
-  	return;
+  	res.TGN_12 = c2kelvin( min );
 }
 
 

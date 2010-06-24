@@ -32,7 +32,8 @@
 #include "BufrData.h"
 
 BufrData::
-BufrData(): tWeatherPeriod( FLT_MAX )
+BufrData():
+   tWeatherPeriod( FLT_MAX ), tFG( FLT_MAX )
 {
 }
 
@@ -40,6 +41,7 @@ BufrData::
 BufrData( const BufrData &bd ):
    DataElement( static_cast<DataElement>( bd ) ),
    FxMax( bd.FxMax ), tWeatherPeriod( bd.tWeatherPeriod ),
+   tFG( bd.tFG ),
    precip24( bd.precip24 ),
    precipRegional( bd.precipRegional ),
    precipNational( bd.precipNational )
@@ -54,6 +56,7 @@ operator=( const BufrData &rhs )
       *static_cast<DataElement*>(this)=static_cast<DataElement>(rhs);
       FxMax = rhs.FxMax;
       tWeatherPeriod = rhs.tWeatherPeriod;
+      tFG = rhs.tFG;
       precip24 = rhs.precip24;
       precipRegional = rhs.precipRegional;
       precipNational = rhs.precipNational;

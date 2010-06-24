@@ -79,6 +79,7 @@ public:
 
    Wind  FxMax;
    float tWeatherPeriod; //Time since last weather observation (clouds etc.).
+   float tFG;
    Precip precip24;
    Precip precipRegional;
    Precip precipNational;

@@ -125,6 +125,27 @@ public:
 
          val->values_[index] = ret;
       }
+
+      void toBufrIf( const std::string &id, float value, bool valid, bool mustHaveValidValue=false ){
+         double ret=val->miss;
+
+         val->log_ << index << " : " << id << " : ";
+         if( value == FLT_MIN || value == FLT_MAX || !valid  ) {
+            val->log_ << "NA";
+            if( mustHaveValidValue ) {
+               val->log_ << ". Exception: Mandatory value." << std::endl;
+               throw BufrEncodeException( "Bufr: Missing mandatory value for <" + std::string(id) + ">." );
+            }
+         } else {
+            ret = static_cast<double>( value );
+            val->log_ << ret;
+         }
+
+         val->log_ << std::endl;
+
+         val->values_[index] = ret;
+      }
+
    };
 
    Values():miss( RVIND ), values_(0), size_( 0 ){};

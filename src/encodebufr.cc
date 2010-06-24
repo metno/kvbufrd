@@ -375,10 +375,10 @@ void set_values(const StationInfoPtr station,
 
    /* Extreme temperature data */
    values[idx++].toBufr( "h_T",  station->heightTemperature() );   /* 007032 Height of sensor above local ground (for temperature measurement) */
-   values[idx++] = -12;   /* 004024 Time period or displacement */
+   values[idx++].toBufrIf("t_TxTxTx", -12, data.TAX_12 != FLT_MAX );   /* 004024 Time period or displacement */
    values[idx++] = 0;     /* 004024 Time period or displacement */
    values[idx++].toBufr( "snTxTxTx", data.TAX_12 ); /* 012111 Maximum temperature, at height and over period specified */
-   values[idx++] = -12;   /* 004024 Time period or displacement */
+   values[idx++].toBufrIf("t_TnTnTn", -12, data.TAN_12 != FLT_MAX );   /* 004024 Time period or displacement */
    values[idx++] = 0;     /* 004024 Time period or displacement */
    values[idx++].toBufr( "snTnTnTn", data.TAN_12 ); /* 012112 Minimum temperature, at height and over period specified */
 
@@ -392,21 +392,15 @@ void set_values(const StationInfoPtr station,
    values[idx++] = miss;  /* 008021 Time significance */
 
 
-   values[idx++].toBufr( "t_911ff[0]", FLT_MAX );/* 004025 Time period or displacement (minutes) */
+   values[idx++].toBufrIf( "t_910ff[0]", -10, data.FG_010 != FLT_MAX );/* 004025 Time period or displacement (minutes) */
    values[idx++] = miss;  /* 011043 Maximum wind gust direction */
-   values[idx++].toBufr( "ff911[0]", FLT_MAX );/* 011041 Maximum wind gust speed */
+   values[idx++].toBufr( "ff910[0]", data.FG_010 );/* 011041 Maximum wind gust speed */
 
-   if( data.FG_1 != FLT_MAX ) {
-      values[idx++].toBufr( "t_911ff[1]", -60 );/* 004025 Time period or displacement (minutes) */
-      values[idx++] = miss;  /* 011043 Maximum wind gust direction */
-      values[idx++].toBufr( "ff911[1]", data.FG_1 ) ;/* 011041 Maximum wind gust speed */
-      values[idx++] = RVIND; /* 007032 Height of sensor above local ground (set to missing to cancel the previous value) */
-   } else {
-      values[idx++].toBufr( "t_911ff[1]", FLT_MAX );/* 004025 Time period or displacement (minutes) */
-      values[idx++] = miss;  /* 011043 Maximum wind gust direction */
-      values[idx++].toBufr( "ff911[1]", FLT_MAX ) ;/* 011041 Maximum wind gust speed */
-      values[idx++] = RVIND; /* 007032 Height of sensor above local ground (set to missing to cancel the previous value) */
-   }
+   values[idx++].toBufr( "t_911ff[1]", data.tFG );/* 004025 Time period or displacement (minutes) */
+   values[idx++] = miss;  /* 011043 Maximum wind gust direction */
+   values[idx++].toBufr( "ff911[1]", data.FG ) ;/* 011041 Maximum wind gust speed */
+   values[idx++].toBufr( "h_W", station->heightWind() ); /* 007032 Height of sensor above local ground (set to missing to cancel the previous value) */
+
    /* Evaporation data */
    values[idx++] = miss;  /* 004024 Time period or displacement */
    values[idx++] = miss;  /* 002004 Type of instrumentation for evaporation measurement or crop type for evaporation */
