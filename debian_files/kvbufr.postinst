@@ -89,7 +89,7 @@ case "$1" in
     #do not exist.
 
     if [ ! -f /var/lib/kvbufrd/kvbufferd.sqlite ]; then
-	/usr/bin/kvbufrd_initdb
+		/usr/bin/kvbufrd_initdb
     fi
 
     

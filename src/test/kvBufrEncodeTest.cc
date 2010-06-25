@@ -32,6 +32,7 @@
 #include <float.h>
 #include <limits.h>
 #include <string>
+#include <fstream>
 #include <puTools/miTime.h>
 #include <miutil/cmprspace.h>
 #include <kvalobs/kvData.h>
@@ -72,10 +73,13 @@ protected:
 	virtual void SetUp() {
 		using namespace miutil::conf;
 		ConfParser confParser;
-		istringstream iconf(testconf);
-
+		//istringstream iconf(testconf);
+		std::string conffile(string(TESTDATADIR) + "/kvBufrEncodeTest.conf" );
+		ifstream iconf( conffile.c_str() );
 		//Turn off almost all logging.
 		milog::Logger::logger().logLevel( milog::ERROR );
+
+		ASSERT_TRUE( iconf.is_open() ) << "Cant open conf file <" << conffile << ">.";
 
 		bufrEncoder.setTest( true );
 		//cerr << "[" << endl << testconf << endl << "]" << endl;

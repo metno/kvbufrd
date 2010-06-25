@@ -213,7 +213,7 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
                     strcmp( keywords[i], "height-wind" ) == 0 ||
                     strcmp( keywords[i], "latitude" ) == 0 ||
                     strcmp( keywords[i], "longitude" ) == 0  ||
-                    strcmp( keywords[i], "name" )) {
+                    strcmp( keywords[i], "name" ) == 0 ) {
             LOGDEBUG( "NO VALUE: for key <" << keywords[i] << "> in WMO section <"
                        << wmono << ">!. Ignore!");
          } else {

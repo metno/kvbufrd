@@ -34,6 +34,29 @@
 
 using namespace std;
 
+namespace {
+   std::string printOut( int i )
+   {
+      if( i == INT_MAX  || i == INT_MIN  )
+         return "";
+
+      std::ostringstream o;
+      o << i;
+      return o.str();
+   }
+
+   std::string printOut( float i )
+   {
+      if( i == FLT_MAX || i == FLT_MIN )
+         return "";
+
+      std::ostringstream o;
+      o << i;
+      return o.str();
+   }
+}
+
+
 StationInfo::
 StationInfo():
    height_( INT_MAX ),
@@ -61,6 +84,7 @@ StationInfo(const StationInfo &i)
    latitude_ = i.latitude_;
    longitude_ = i.longitude_;
    wmono_=i.wmono_;
+   name_ = i.name_;
   	stationid_=i.stationid_;
   	typepriority_=i.typepriority_;
   	precipitation_=i.precipitation_;
@@ -77,6 +101,25 @@ StationInfo::
 ~StationInfo()
 {
 }
+
+void
+StationInfo::
+height( int h, bool ifUnset )
+{
+   if( !ifUnset || height_ == INT_MAX )
+      height_ = h;
+}
+
+int
+StationInfo::
+heightAdd( int ammount )const
+{
+   if( height_ != INT_MAX )
+       return height_ + ammount;
+
+   return height_;
+}
+
 
 int
 StationInfo::
@@ -95,7 +138,7 @@ heightTemperature()const
    if( heightTemperature_ != INT_MAX )
       return  heightTemperature_;
 
-   return height_;
+   return 2;
 }
 
 int
@@ -105,7 +148,7 @@ heightPressure() const
    if( heightPressure_ != INT_MAX )
       return heightPressure_;
 
-   return height_;
+   return heightAdd( 2 );
 }
 
 int
@@ -115,7 +158,7 @@ heightPrecip()const
    if( heightPrecip_ != INT_MAX )
       return heightPrecip_;
 
-   return height_;
+   return 2;
 }
 
 int
@@ -125,12 +168,31 @@ heightWind()const
    if( heightWind_ != INT_MAX )
       return heightWind_;
 
-   if( height_ != INT_MAX )
-      return height_ + 10;
-
-   return height_;
+   return 10;
+}
+void
+StationInfo::
+latitude( float lat, bool ifUnset )
+{
+   if( !ifUnset || latitude_ == FLT_MAX )
+      latitude_ = lat;
 }
 
+void
+StationInfo::
+longitude( float lon, bool ifUnset )
+{
+   if( !ifUnset || longitude_ == FLT_MAX )
+      longitude_ = lon;
+}
+
+void
+StationInfo::
+name( const std::string &n, bool ifUnset )
+{
+   if( ! ifUnset || name_.empty() )
+      name_ = n;
+}
 
 bool      
 StationInfo::
@@ -291,6 +353,7 @@ equalTo(const StationInfo &st)
     	return true;
 
   	if(wmono_==st.wmono_                 &&
+  	   name_ == st.name_                  &&
        stationid_==st.stationid_         &&
        typepriority_==st.typepriority_   &&
        precipitation_==st.precipitation_ &&
@@ -324,6 +387,8 @@ keyToString(const std::string &key)
   	if(key=="wmono"){
     	ost << wmono();
     	return ost.str();
+  	}else  if(key=="name"){
+  	   return name();
   	}else  if(key=="stationid"){
     	bool first=true;
     	for(StationInfo::CITLongList it=stationid_.begin(); 
@@ -447,6 +512,7 @@ operator<<(std::ostream& ost,
 	   const StationInfo& sd)
 {
   	ost << "StationInfo: " << sd.wmono() << endl;
+  	ost << "           name: " << sd.name() << endl;
   	ost << "      stationid: ";
   
   	for(StationInfo::CITLongList it=sd.stationid_.begin(); 
@@ -490,14 +556,14 @@ operator<<(std::ostream& ost,
     	ost << sd.delayUntil_;
 
   	ost << endl;
-   ost << "           latitude: " << sd.latitude_ << endl;
-   ost << "          longitude: " << sd.longitude_ << endl;
-  	ost << "             height: " << sd.height_ << endl;
-  	ost << "  height-visibility: " << sd.heightVisability() << endl;
-   ost << "      height-precip: " << sd.heightPrecip() << endl;
-   ost << "    height-pressure: " << sd.heightPressure() << endl;
-   ost << " height-temperature: " << sd.heightTemperature() << endl;
-   ost << "        height-wind: " << sd.heightWind() << endl;
+   ost << "           latitude: " << printOut( sd.latitude_) << endl;
+   ost << "          longitude: " << printOut( sd.longitude_ )<< endl;
+  	ost << "             height: " << printOut( sd.height_ ) << endl;
+  	ost << "  height-visibility: " << printOut( sd.heightVisability() ) << endl;
+   ost << "      height-precip: " << printOut( sd.heightPrecip() )<< endl;
+   ost << "    height-pressure: " << printOut( sd.heightPressure() ) << endl;
+   ost << " height-temperature: " << printOut( sd.heightTemperature() )<< endl;
+   ost << "        height-wind: " << printOut( sd.heightWind() ) << endl;
   	ost << "               list: " << sd.list_ << endl;
   	ost << "               copy: " << (sd.copy_?"TRUE":"FALSE") << endl;
   	ost << "             copyto: " << sd.copyto_ << endl;

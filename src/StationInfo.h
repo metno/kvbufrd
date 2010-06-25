@@ -392,19 +392,20 @@ class StationInfo
 
 
   int       height()const{ return height_; }
-  void      height( int h ){ height_ = h; }
+  int       heightAdd( int ammount )const;
+  void      height( int h, bool ifUnset = true );
   int       heightVisability() const;
   int       heightTemperature()const;
   int       heightPressure() const;
   int       heightPrecip()const;
   int       heightWind()const;
   float     latitude()const { return latitude_; }
-  void      latitude( float lat ){ latitude_ = lat; }
+  void      latitude( float lat, bool ifUnset=true );
   float     longitude()const { return longitude_; }
-  void      longitude( float lon ){ longitude_=lon; }
+  void      longitude( float lon, bool ifUnset=true );
   int       wmono()const{ return wmono_;}
   std::string name()const{ return name_; }
-  void      name( const std::string &n ) { name_ = n; }
+  void      name( const std::string &n, bool ifUnset=true );
 
   TLongList stationID()const { return stationid_;}
   bool      hasStationId(long stid)const;

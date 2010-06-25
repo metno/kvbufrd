@@ -66,203 +66,205 @@ main(int argn, char **argv)
   milog::Logger::logger().logLevel(milog::INFO);
   
   for(int i=1; i<argn; i++){
-    if(string(argv[i])=="-f"){
-      i++;
+     cerr << "arg[" << i << "] >>"<< argv[i] << "<<" << endl;
+     if(string(argv[i])=="-f"){
+        i++;
 
-      if(i<argn)
-	file=argv[i];
-      
-      if(file.empty() || file[0]=='-'){
-	cerr << "Missing file!" << endl<<endl;
-	use(1);
-      }
-    }else if(string(argv[1])=="-w"){
-      if(hasCmd)
-	use(1);
-      
-      listWmono=true;
-      hasCmd=true;
-    }else if(string(argv[1])=="-l"){
-      if(hasCmd)
-	use(1);
-      
-      hasCmd=true;
-      listconf=true;
-    }else if(string(argv[1])=="-t"){
-      if(hasCmd)
-	use(1);
-      
-      hasCmd=true;
-      listconftab=true;
-    }else if(string(argv[i])=="-c"){
-      if(hasCmd)
-	use(1);
-      
-      hasCmd=true;
-      check=true;
-      i++;
+        if(i<argn)
+           file=argv[i];
 
-      if(i<argn)
-	wmonoFile=argv[i];
-      
-      if(wmonoFile.empty() || wmonoFile[0]=='-'){
-	cerr << "Missing file!" << endl<<endl;
-	use(1);
-      }
-    }else{
-      cerr << "\n\tUnknown option: " <<argv[1] << endl;
-      use(1);
-    }
+        if( file.empty() || file[0]=='-'){
+           cerr << "Missing file!" << endl<<endl;
+           use(1);
+        }
+     }else if(string(argv[i])=="-w"){
+        if(hasCmd)
+           use(1);
+
+        listWmono=true;
+        hasCmd=true;
+     }else if(string(argv[i])=="-l"){
+        if(hasCmd)
+           use(1);
+
+        hasCmd=true;
+        listconf=true;
+     }else if(string(argv[i])=="-t"){
+        if(hasCmd)
+           use(1);
+
+        hasCmd=true;
+        listconftab=true;
+     }else if(string(argv[i])=="-c"){
+        if(hasCmd)
+           use(1);
+
+        hasCmd=true;
+        check=true;
+        i++;
+
+        if(i<argn)
+           wmonoFile=argv[i];
+
+        if(wmonoFile.empty() || wmonoFile[0]=='-'){
+           cerr << "Missing file!" << endl<<endl;
+           use(1);
+        }
+     }else{
+        cerr << "\n\tUnknown option: " <<argv[i] << endl;
+        use(1);
+     }
   }
-  
-  file = kvPath("sysconfdir")+"/kvbufferd.conf";
-  
+
+  if( file.empty() )
+     file = kvPath("sysconfdir")+"/kvbufferd.conf";
+
   cerr << "Reading file: " << file << endl;
 
   if(!readConfFile(file, stationList)){
-    cerr << "FATAL: error in SYNOP sections in the configuration file!";
-    return 1;
+     cerr << "FATAL: error in SYNOP sections in the configuration file!";
+     return 1;
   }
 
   if(listWmono){
-    for(std::list<StationInfoPtr>::iterator it=stationList.begin();
-	it!=stationList.end(); it++){
-      cout << (*it)->wmono() << " ";
-    }
-    cout << endl;
+     for(std::list<StationInfoPtr>::iterator it=stationList.begin();
+           it!=stationList.end(); it++){
+        cout << (*it)->wmono() << " ";
+     }
+     cout << endl;
   }else if(listconftab){
-    cout <<setw(6) << left << "WMONO" << "|" 
-	 << setw(15) << left << "typepriority" << "|"  
-	 << setw(8) << "mhTypes" << "|"
-	 << setw(16) << left << "precipitation" << "|"  
-	 << setw(16) << "delay" << "|"
-	 << setw(5) << "list" <<   "|"
-	 << setw(5) << "owner" << endl;
-    cout << setfill('-') << setw(77) << "-" << setfill(' ') << endl;
-    for(std::list<StationInfoPtr>::iterator it=stationList.begin();
-	it!=stationList.end(); it++){
-      cout << setw(6)  << left << (*it)->wmono() << "|"
-	   << setw(15) << left << (*it)->keyToString("typepriority") << "|"
-	   << setw(8)  << left << (*it)->keyToString("mustHaveTypes") << "|"
-	   << setw(16) << left << (*it)->keyToString("precipitation") << "|"
-	   << setw(16) << left << (*it)->keyToString("delay") << "|"
-	   << setw(5)  << left << (*it)->keyToString("list") << "|"
-	   << setw(5)  << left << (*it)->keyToString("owner") 
-	   << endl;
-    }
-    cout << endl;
+     cout <<setw(6) << left << "WMONO" << "|"
+           << setw(15) << left << "typepriority" << "|"
+           << setw(8) << "mhTypes" << "|"
+           << setw(16) << left << "precipitation" << "|"
+           << setw(16) << "delay" << "|"
+           << setw(5) << "list" <<   "|"
+           << setw(5) << "owner" << endl;
+     cout << setfill('-') << setw(77) << "-" << setfill(' ') << endl;
+     for(std::list<StationInfoPtr>::iterator it=stationList.begin();
+           it!=stationList.end(); it++){
+        cout << setw(6)  << left << (*it)->wmono() << "|"
+              << setw(15) << left << (*it)->keyToString("typepriority") << "|"
+              << setw(8)  << left << (*it)->keyToString("mustHaveTypes") << "|"
+              << setw(16) << left << (*it)->keyToString("precipitation") << "|"
+              << setw(16) << left << (*it)->keyToString("delay") << "|"
+              << setw(5)  << left << (*it)->keyToString("list") << "|"
+              << setw(5)  << left << (*it)->keyToString("owner")
+              << endl;
+     }
+     cout << endl;
   }else if(listconf){
-    for(std::list<StationInfoPtr>::iterator it=stationList.begin();
-	it!=stationList.end(); it++){
-      cout << **it << endl;
-    }
+     for(std::list<StationInfoPtr>::iterator it=stationList.begin();
+           it!=stationList.end(); it++){
+        cout << **it << endl;
+     }
   }else if(check){
-    list<long> wmoList;
-    list<long> kvWmoList;
+     list<long> wmoList;
+     list<long> kvWmoList;
 
-    readWmonoFromFile(wmonoFile, wmoList);
+     readWmonoFromFile(wmonoFile, wmoList);
 
-    for(list<StationInfoPtr>::iterator kvit=stationList.begin();
-	kvit!=stationList.end(); kvit++){
-      kvWmoList.push_back((*kvit)->wmono());
-    }
-    
-    list<long>::iterator pos;
-    list<long>::iterator it;
+     for(list<StationInfoPtr>::iterator kvit=stationList.begin();
+           kvit!=stationList.end(); kvit++){
+        kvWmoList.push_back((*kvit)->wmono());
+     }
 
-    cout << "WMO numbers in " << endl
-	 << "file: " << wmonoFile << endl
-	 << "MISSING in " << endl
-	 << "file: " << file <<  endl<< endl;
+     list<long>::iterator pos;
+     list<long>::iterator it;
 
-    for(it=wmoList.begin();it!=wmoList.end(); it++){
-      pos=find(kvWmoList.begin(), kvWmoList.end(), *it);
-      if(pos==kvWmoList.end())
-	cout << *it << endl;
-    }
-    
-    cout << "\n\n -----------------------------------------------------\n\n";
+     cout << "WMO numbers in " << endl
+           << "file: " << wmonoFile << endl
+           << "MISSING in " << endl
+           << "file: " << file <<  endl<< endl;
 
-    cout << "WMO numbers in " << endl
-	 << "file: " << file << endl
-	 << "MISSING in " << endl
-	 << "file: " << wmonoFile <<  endl<< endl;
+     for(it=wmoList.begin();it!=wmoList.end(); it++){
+        pos=find(kvWmoList.begin(), kvWmoList.end(), *it);
+        if(pos==kvWmoList.end())
+           cout << *it << endl;
+     }
 
-    for(it=kvWmoList.begin();it!=kvWmoList.end(); it++){
-      pos=find(wmoList.begin(), wmoList.end(), *it);
-      if(pos==wmoList.end())
-	cout << *it << endl;
-    
-    }
+     cout << "\n\n -----------------------------------------------------\n\n";
+
+     cout << "WMO numbers in " << endl
+           << "file: " << file << endl
+           << "MISSING in " << endl
+           << "file: " << wmonoFile <<  endl<< endl;
+
+     for(it=kvWmoList.begin();it!=kvWmoList.end(); it++){
+        pos=find(wmoList.begin(), wmoList.end(), *it);
+        if(pos==wmoList.end())
+           cout << *it << endl;
+
+     }
   }
-  
+
 }
 
 bool
 readConfFile(const string &file,  std::list<StationInfoPtr> &stationList)
 {
-  StationInfoParse theSynParser;
-  ifstream    fs;
-  ConfSection *conf;
-  ConfParser  theParser;
+   StationInfoParse theSynParser;
+   ifstream    fs;
+   ConfSection *conf;
+   ConfParser  theParser;
 
-  fs.open(file.c_str());
+   fs.open(file.c_str());
 
-  if(!fs){
-    cerr << "Cant open file <" << file << ">!" << endl;
-    use(1);
-  }
+   if(!fs){
+      cerr << "Cant open file <" << file << ">!" << endl;
+      use(1);
+   }
 
-  conf=theParser.parse(fs);
+   conf=theParser.parse(fs);
 
-  if(!conf){
-    cerr << "Error while parsing file <" << file << ">!" << endl;
-    cerr << theParser.getError() << endl;
-    use(1);
-  }
+   if(!conf){
+      cerr << "Error while parsing file <" << file << ">!" << endl;
+      cerr << theParser.getError() << endl;
+      use(1);
+   }
 
-  cerr << "No syntax error!\n";
+   cerr << "No syntax error!\n";
 
-  return theSynParser.parse(conf, stationList);
+   return theSynParser.parse(conf, stationList);
 }
 
 void 
 use(int retval)
 {
-  cerr << endl << endl 
-       <<"\tkvbufferdparse [-f confile]  [-l|-w|-t] filename" << endl
-       <<"\t\t-f confile Use confile instead of the default file" << endl
-       <<"\t\t           $KVALOBS/etc/kvbufferd.conf" << endl
-       <<"\t\t-w list all wmonumbers that is configured!" << endl
-       <<"\t\t-t list the configuration for all station (tabulated)!" << endl
-       <<"\t\t-l list the configuration for all station!" << endl
-       << endl;
+   cerr << endl << endl
+         <<"\tkvbufferdparse [-f confile]  [-l|-w|-t] filename" << endl
+         <<"\t\t-f confile Use confile instead of the default file" << endl
+         <<"\t\t           $KVALOBS/etc/kvbufferd.conf" << endl
+         <<"\t\t-w list all wmonumbers that is configured!" << endl
+         <<"\t\t-t list the configuration for all station (tabulated)!" << endl
+         <<"\t\t-l list the configuration for all station!" << endl
+         << endl;
 
-  
-  exit(retval);
+
+   exit(retval);
 }
 
 
 void 
 readWmonoFromFile(const string &file, list<long> &wmoList)
 {
-  ifstream    fs;
+   ifstream    fs;
 
-  fs.open(file.c_str());
+   fs.open(file.c_str());
 
-  if(!fs){
-    cerr << "Cant open file <" << file << ">!" << endl;
-    use(1);
-  }
-  
-  while(fs){
-    string val;
-    getline(fs, val);
-    
-    if(fs){
-      wmoList.push_back(atol(val.c_str()));
-    }
-  }
-  
+   if(!fs){
+      cerr << "Cant open file <" << file << ">!" << endl;
+      use(1);
+   }
+
+   while(fs){
+      string val;
+      getline(fs, val);
+
+      if(fs){
+         wmoList.push_back(atol(val.c_str()));
+      }
+   }
+
 }
-  
+

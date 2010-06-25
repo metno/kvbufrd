@@ -1,9 +1,9 @@
 #! /bin/sh
 
 prefix=@prefix@
-DBSCHEMA="@datadir@/kvsynopd/kvsynopd_schema.sql"
+DBSCHEMA="@datadir@/kvbufrd/kvbufrd_schema.sql"
 DBDIR="@localstatedir@/lib/@PACKAGE_NAME@"
-DBNAME="kvsynopd.sqlite"
+DBNAME="kvbufr.sqlite"
 
 if ! mkdir -p "${DBDIR}" ; then
 	echo "Cant create the directory $DBDIR."
