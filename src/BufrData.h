@@ -32,6 +32,7 @@
 #ifndef __BUFRDATA_H__
 #define __BUFRDATA_H__
 
+#include <stdexcept>
 #include "DataElementList.h"
 
 /**
@@ -77,19 +78,72 @@ public:
       friend std::ostream &operator<<(std::ostream &o, const Precip &precip );
    };
 
+   struct CloudDataExtra {
+      float vsci;
+      float Ns;
+      float C;
+      float hshs;
+
+      CloudDataExtra():
+         vsci( FLT_MAX ), Ns( FLT_MAX ), C( FLT_MAX ), hshs( FLT_MAX )
+      {}
+      CloudDataExtra& operator=( const CloudDataExtra &rhs )
+      {
+         if( this != &rhs ) {
+            vsci = rhs.vsci;
+            Ns = rhs.Ns;
+            C = rhs.C;
+            hshs = rhs.hshs;
+         }
+         return *this;
+      }
+
+      friend std::ostream &operator<<(std::ostream &o, const CloudDataExtra &cd );
+   };
+
+   class CloudExtra {
+      std::vector<CloudDataExtra> cloudData;
+      int nElements_;
+
+   public:
+      CloudExtra();
+      CloudExtra( const CloudExtra &ce );
+      CloudExtra& operator=( const CloudExtra &rhs );
+
+      int size()const { return nElements_; }
+
+      /**
+       *
+       * @param cd
+       * @param index
+       * @throw std::range_error
+       */
+      void add( const CloudDataExtra &cd, int index=-1 );
+
+      /**
+       *
+       * @param index
+       * @return
+       * @throw std::range_error
+       */
+      CloudDataExtra& operator[]( int index )const;
+   };
+
    Wind  FxMax;
    float tWeatherPeriod; //Time since last weather observation (clouds etc.).
    float tFG;
    Precip precip24;
    Precip precipRegional;
    Precip precipNational;
+   CloudExtra cloudExtra;
 
    BufrData();
    BufrData( const BufrData &bd );
 
-   BufrData operator=( const BufrData &rhs );
+   BufrData& operator=( const BufrData &rhs );
 };
 
+std::ostream &operator<<(std::ostream &o, const BufrData::CloudDataExtra &cd );
 std::ostream &operator<<(std::ostream &o, const BufrData::Wind &wind );
 std::ostream &operator<<(std::ostream &o, const BufrData::Precip &precip );
 

@@ -28,14 +28,15 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __BufrData_h__
-#define __BufrData_h__
+#ifndef __DataElementList_h__
+#define __DataElementList_h__
 
 #include <float.h>
 #include <stdexcept>
 #include <list>
 #include <string>
 #include <puTools/miTime.h>
+#include "KvParam.h"
 
 
 
@@ -45,110 +46,89 @@ class  DataElement
 
   	friend class DataElementList;
   	//  friend class BufrDataList::BufrDataProxy
+  	
  public:
-
-   struct CloudDataExtra {
-      float vsci;
-      float Ns;
-      float C;
-      float hshs;
-
-      CloudDataExtra():
-         vsci( FLT_MAX ), Ns( FLT_MAX ), C( FLT_MAX ), hshs( FLT_MAX )
-      {}
-      CloudDataExtra& operator=( const CloudDataExtra &rhs )
-      {
-         if( this != &rhs ) {
-            vsci = rhs.vsci;
-            Ns = rhs.Ns;
-            C = rhs.C;
-            hshs = rhs.hshs;
-         }
-         return *this;
-      }
-
-      friend std::ostream &operator<<(std::ostream &o, const CloudDataExtra &cd );
-   };
-
-  	float  TA;       
-  	float  TAM;       
-  	float  TAN;       
-  	float  TAX;
-  	float  TD;
-  	float  UU;       
-  	float  UM;       
-  	float  FF;   
-  	float  FM;   
-  	float  FG_1;
-  	float  FG_010; //Gust 10 last minutes before observation.
-  	float  FX_1;   
-  	float  FX_3;
-  	float  DD;   
-  	float  DM;   
-  	float  DG;  
-  	float  DX;
-  	float  DX_3;   
-  	float  RA;    
-  	float  RR_1; 
-  	float  RR_2;
-  	float  RR_3;  
-  	float  RR_6;
-  	float  RR_9;
-  	float  RR_12;
-  	float  RR_15;
-  	float  RR_18;
-  	float  RR_24;
-  	float  RT_1;     
-  	float  PO;  //PO, stasjonstrykk.    
-  	float  POM;  //POM, stasjonstrykk.  
-  	float  PON;  //PON, stasjonstrykk.  
-  	float  POX;  //POX, stasjonstrykk.  
-  	float  PH;  //PH, trykk redusert til havets nivï¿½, ICAO standard.   
-  	float  PR;  //PR, trykk redusert til havets nivï¿½.
-  	float  PP;  
-  	float  TAN_12;
-  	float  TAX_12;
-  	float  TW;
-  	float  TWM;
-  	float  TWN;
-  	float  TWX;
-  	float  TGN;
-  	float  TGN_12;
-  	float  FG;    //Gust since last observation
-  	float  FX;    //Max wind since last observation
-  	float  WAWA;
-  	float  HLN;
-  	float  EM;    //Snow state to the gound (Markas tilstand).
-  	float  SA;    //Snow depth.
-  	float  Vmor;  //Automatic measured horizontal visibility
-  	float  VV;    //Human estimated horizontal visibility
-  	float  HL;
-  	std::vector<CloudDataExtra> cloudExtra;
-  	float NH;     //NhClCmCh
-  	float CL;     //NhClCmCh
-  	float CM;     //NhClCmCh
-  	float CH;     //NhClCmCh
-  	float IR;   //Nedbørindikator.
-  	float IX;   //Værindikator
-  	float N;    //Skydekke
-  	float ww;    //ww,  wwW1W2
-  	float W1;    //W1,  wwW1W2
-  	float W2;    //W2,  wwW1W2
-  	float X1WD;
-  	float X2WD;
-  	float X3WD;
-  	float S;
-  	float AA;
-  	float ITZ;
-  	float ITR;
+	
+	KvParamList params;
+  	KvParam  TA;       
+  	KvParam  TAM;       
+  	KvParam  TAN;       
+  	KvParam  TAX;
+  	KvParam  TD;
+  	KvParam  UU;       
+  	KvParam  UM;       
+  	KvParam  FF;   
+  	KvParam  FM;   
+  	KvParam  FG_1;
+  	KvParam  FG_010; //Gust 10 last minutes before observation.
+  	KvParam  FX_1;   
+  	KvParam  FX_3;
+  	KvParam  DD;   
+  	KvParam  DM;   
+  	KvParam  DG;  
+  	KvParam  DX;
+  	KvParam  DX_3;   
+  	KvParam  RA;    
+  	KvParam  RR_1; 
+  	KvParam  RR_2;
+  	KvParam  RR_3;  
+  	KvParam  RR_6;
+  	KvParam RR_9;
+  	KvParam RR_12;
+  	KvParam  RR_15;
+  	KvParam RR_18;
+  	KvParam  RR_24;
+  	KvParam  RT_1;     
+  	KvParam  PO;  //PO, stasjonstrykk.    
+  	KvParam  POM;  //POM, stasjonstrykk.  
+  	KvParam PON;  //PON, stasjonstrykk.  
+  	KvParam  POX;  //POX, stasjonstrykk.  
+  	KvParam  PH;  //PH, trykk redusert til havets nivï¿½, ICAO standard.   
+  	KvParam  PR;  //PR, trykk redusert til havets nivï¿½.
+  	KvParam  PP;  
+  	KvParam  TAN_12;
+  	KvParam TAX_12;
+  	KvParam TW;
+  	KvParam  TWM;
+  	KvParam  TWN;
+  	KvParam TWX;
+  	KvParam  TGN;
+  	KvParam TGN_12;
+  	KvParam  FG;    //Gust since last observation
+  	KvParam  FX;    //Max wind since last observation
+  	KvParam WAWA;
+  	KvParam  HLN;
+  	KvParam  EM;    //Snow state to the gound (Markas tilstand).
+  	KvParam SA;    //Snow depth.
+  	KvParam Vmor;  //Automatic measured horizontal visibility
+  	KvParam VV;    //Human estimated horizontal visibility
+  	KvParam HL;
+  	KvParam NH;     //NhClCmCh
+  	KvParam CL;     //NhClCmCh
+  	KvParam CM;     //NhClCmCh
+  	KvParam CH;     //NhClCmCh
+  	KvParam IR;   //Nedbørindikator.
+  	KvParam IX;   //Værindikator
+  	KvParam N;    //Skydekke
+  	KvParam ww;    //ww,  wwW1W2
+  	KvParam W1;    //W1,  wwW1W2
+  	KvParam W2;    //W2,  wwW1W2
+  	KvParam X1WD;
+  	KvParam X2WD;
+  	KvParam X3WD;
+  	KvParam S;
+  	KvParam AA;
+  	KvParam ITZ;
+  	KvParam ITR;
   	int nSet;
   	bool onlyTypeid1;
   	std::list<int> typeidList;
 
   	DataElement();
   	DataElement(const DataElement &p);
-  	DataElement& operator=(const DataElement &p);
   	~DataElement();
+
+  	DataElement& operator=(const DataElement &p);
 
   	bool setData( int  param,
   	              int  typeid_,
@@ -175,7 +155,7 @@ typedef std::list<DataElement>::const_iterator  CIDataElementList;
 class DataElementList{
   	TDataElementList  dataList;
 
-  	friend class BufrDataProxy;
+  	friend class DataElementProxy;
 
   	//setTime is a hack to set the time_ field in BufrData. It is
   	//needed because I cant manage to make BufrDataProxy
@@ -272,11 +252,13 @@ public:
 
   	DataElementList subData( const miutil::miTime &from, const miutil::miTime &to=miutil::miTime() ) const;
 
+  	DataElementList& operator=( const DataElementList &rhs );
+
   	friend std::ostream& operator<<(std::ostream& ost,
 				 					  const DataElementList& sd);
 };
 
-std::ostream &operator<<(std::ostream &o, const DataElement::CloudDataExtra &cd );
+
 
 
 std::ostream& operator<<(std::ostream& ost,

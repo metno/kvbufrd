@@ -93,6 +93,8 @@ App(int argn, char **argv,
 {
   ValElementList valElem;
   string         val;
+  string         bufr_tables( DATADIR );
+  bool           bufr_tables_names( false );
 
   LogContext context("ApplicationInit");
 
@@ -103,10 +105,45 @@ App(int argn, char **argv,
 
   //If a station is set up whith this types delay them if
   //they has not at least 4 hours with data.
-  continuesTypeID_.push_back(311);
-  continuesTypeID_.push_back(310);
-  continuesTypeID_.push_back(3);
-  continuesTypeID_.push_back(330);
+  continuesTypeID_.push_back( 311 );
+  continuesTypeID_.push_back( 310 );
+  continuesTypeID_.push_back( 3 );
+  continuesTypeID_.push_back( 330 );
+
+  valElem=conf->getValue("bufr_tables");
+
+  if( !valElem.empty() ) {
+     string t=valElem[0].valAsString();
+
+     if( ! t.empty() && t[0] == '/' ) {
+        if( *bufr_tables.rbegin() != '/')
+           t += '/';
+
+        bufr_tables = t;
+     }
+  }
+
+  valElem=conf->getValue("bufr_tables_names");
+
+  if( !valElem.empty() ) {
+     string t=valElem[0].valAsString();
+
+     if(!t.empty() && (t[0]=='t' || t[0]=='T'))
+         bufr_tables_names = true;
+  }
+
+
+  IDLOGINFO("main", "BUFR_TABLES=" << bufr_tables );
+
+  setenv( "BUFR_TABLES", bufr_tables.c_str(), 1 );
+
+  if( bufr_tables_names ) {
+     IDLOGINFO("main", "BUFR_TABLE_NAMES=true" );
+     setenv( "PRINT_TABLE_NAMES", "true", 1 );
+  } else {
+     IDLOGINFO("main", "BUFR_TABLE_NAMES=false" );
+     setenv( "PRINT_TABLE_NAMES", "false", 1 );
+  }
 
   valElem=conf->getValue("accept_all_obstimes");
 
@@ -123,10 +160,9 @@ App(int argn, char **argv,
     IDLOGINFO("main", "Rejecting obstimes that is too old or to early.");
   }
 
-
   valElem=conf->getValue("database.driver");
 
-  if(valElem.empty()){
+  if( valElem.empty() ) {
     LOGFATAL("No <database.driver> in the configurationfile!");
     exit(1);
   }

@@ -753,7 +753,7 @@ cloudData( const DataElementList &data, BufrData &res )
    res.CM = data[0].CM;
    res.CH = data[0].CH;
 
-   res.cloudExtra = data[0].cloudExtra;
+  // res.cloudExtra = data[0].cloudExtra;
 
 }
 
@@ -924,7 +924,7 @@ Bufr::cloudCower( const DataElement &data, DataElement &res )
    else if( N == 0 )
       res.N = 0;
    else
-      res.N = (static_cast<float>(N)/8.0) * 100;
+      res.N = (N/8.0) * 100;
 
    cerr << "cloudCower: NN in: " << data.N << " out: " << res.N << " %" << endl;
 } /* Skydekke_Kode */

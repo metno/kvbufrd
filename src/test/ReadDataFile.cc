@@ -120,7 +120,13 @@ loadBufrDataFromFile( const std::string &filename,
 	}
 
 	loadBufrData( rawdata, sd, info, validate );
-
+	/*
+	cerr << "---- START ---\n";
+	for( CIDataElementList it=sd.begin(); it != sd.end(); ++it ) {
+	   cerr << it->time() << ", " << it->FF << ", " << it->DD << endl;
+	}
+	cerr << "---- END ---\n";
+	*/
 	//cerr << sd << endl;
 	return true;
 }

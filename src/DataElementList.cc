@@ -31,6 +31,7 @@
 #include <math.h>
 #include <float.h>
 #include <sstream>
+#include <iostream>
 #include <decodeutility/decodeutility.h>
 #include "DataElementList.h"
 
@@ -63,158 +64,158 @@ namespace {
    }
 }
 using namespace decodeutility;
+using namespace std;
 
 DataElement::DataElement():
-    TA(FLT_MAX),
-    TAM(FLT_MAX), 
-    TAN(FLT_MAX),
-    TAX(FLT_MAX),
-    TD( FLT_MAX ),
-    UU(FLT_MAX),
-    UM(FLT_MAX),
-    FF(FLT_MAX),
-    FM(FLT_MAX),
-    FG_1(FLT_MAX),
-    FG_010(FLT_MAX),
-    FX_1(FLT_MAX),
-    FX_3(FLT_MAX),
-    DD(FLT_MAX),
-    DM(FLT_MAX),
-    DG(FLT_MAX),
-    DX(FLT_MAX),
-    DX_3(FLT_MAX),
-    RA(FLT_MAX), 
-    RR_1(FLT_MAX),
-    RR_2(FLT_MAX),
-    RR_3(FLT_MAX),  
-    RR_6(FLT_MAX),
-    RR_9(FLT_MAX),
-    RR_12(FLT_MAX),
-    RR_15(FLT_MAX),
-    RR_18(FLT_MAX),
-    RR_24(FLT_MAX),
-    RT_1(FLT_MAX),
-    PO(FLT_MAX),
-    POM(FLT_MAX),
-    PON(FLT_MAX),
-    POX(FLT_MAX),
-    PH(FLT_MAX),
-    PR(FLT_MAX),
-    PP(FLT_MAX), 
-    TAN_12(FLT_MAX),
-    TAX_12(FLT_MAX),
-    TW(FLT_MAX),
-    TWM(FLT_MAX),
-    TWN(FLT_MAX),
-    TWX(FLT_MAX),
-    TGN(FLT_MAX),
-    TGN_12(FLT_MAX),
-    FG(FLT_MAX),
-    FX(FLT_MAX),
-    WAWA(FLT_MAX),
-    HLN(FLT_MAX),
-    EM(FLT_MAX),
-    SA(FLT_MAX),
-    Vmor(FLT_MAX),
-    VV(FLT_MAX),
-    HL(FLT_MAX),
-    NH( FLT_MAX ),
-    CL( FLT_MAX ),
-    CM( FLT_MAX ),
-    CH( FLT_MAX ),
-    IR( FLT_MAX ),
-    IX( FLT_MAX ),
-    N( FLT_MAX ),
-    ww( FLT_MAX ),
-    W1( FLT_MAX ),
-    W2( FLT_MAX ),
-    X1WD( FLT_MAX ),
-    X2WD( FLT_MAX ),
-    X3WD( FLT_MAX ),
-    AA( FLT_MAX ),
-    ITZ( FLT_MAX ),
-    ITR( FLT_MAX ),
+    TA( params, "TA", 211 ),
+    TAM( params, "TAM", 212 ),
+    TAN( params, "TAN", 213),
+    TAX( params, "TAX", 215),
+    TD( params, "TD", 217),
+    UU( params, "UU", 262),
+    UM( params, "UM", 263),
+    FF( params, "FF", 81 ),
+    FM( params, "FM", 85 ),
+    FG_1( params, "FG_1", 90),
+    FG_010(params, "FG_010", 84 ),
+    FX_1(params, "FX_1", 87 ),
+    FX_3(params, "FX_3", 93 ),
+    DD( params, "DD", 61),
+    DM(params, "DM",  64 ),
+    DG(params, "DG", 63 ),
+    DX(params, "DX", 67 ),
+    DX_3(params, "DX_3", INT_MAX),
+    RA(params, "RA", 104), 
+    RR_1(params, "RR_1", 106),
+    RR_2(params, "RR_2", 119),
+    RR_3(params, "RR_3", 107 ),  
+    RR_6(params, "RR_6", 108),
+    RR_9(params, "RR_9", 120 ),
+    RR_12(params, "RR_12", 109),
+    RR_15(params, "RR_15", 125),
+    RR_18(params, "RR_18", 126),
+    RR_24(params, "RR_24", 110),
+    RT_1(params, "RT_1", 123 ),
+    PO(params, "PO", 173),
+    POM(params, "POM", 174),
+    PON(params, "PON", 175),
+    POX(params, "POX", 176 ),
+    PH(params, "PH", 172 ),
+    PR(params, "PR", 178),
+    PP(params, "PP", 177), 
+    TAN_12(params, "TAN_12", 214),
+    TAX_12(params, "TAX_12", 216),
+    TW(params, "TW", 242 ),
+    TWM(params, "TWM", 243 ),
+    TWN(params, "TWN2", 244 ),
+    TWX(params, "TWX", 245 ),
+    TGN(params, "TGN", 223),
+    TGN_12(params, "TGN_12", 224 ),
+    FG(params, "FG", 83 ),
+    FX(params, "FX", 86 ),
+    WAWA(params, "WAWA", 49),
+    HLN(params, "HLN", INT_MAX ),
+    EM(params, "EM", 7),
+    SA(params, "SA", 112 ),
+    Vmor(params, "VMOR", 271 ),
+    VV(params, "VV", 273),
+    HL(params, "HL", 55 ),
+    NH( params, "NH",14 ),
+    CL( params, "CL", 23 ),
+    CM( params, "CM", 24 ),
+    CH( params, "CH", 22 ),
+    IR( params, "IR", 9 ),
+    IX( params, "IX", 10 ),
+    N( params, "N", 15 ),
+    ww( params, "ww", 41 ),
+    W1( params, "W1", 42 ),
+    W2( params, "W2", 43 ),
+    X1WD( params, "X1WD", 44 ),
+    X2WD( params, "X2WD", 45 ),
+    X3WD( params, "X3WD", 46 ),
+    S( params, "S", 19 ),
+    AA( params, "AA", 1 ),
+    ITZ( params, "ITZ", 13 ),
+    ITR( params, "ITR", 12 ),
     nSet( 0 ),
     onlyTypeid1( true )
 
 {
 }
 
-
-
-DataElement::DataElement(const DataElement &p):
+DataElement::
+DataElement( const DataElement &p):
     time_(p.time_), 
-    TA(p.TA),
-    TAM(p.TAM), 
-    TAN(p.TAN),
-    TAX(p.TAX),
-    TD( p.TD ),
-    UU(p.UU),
-    UM(p.UM),
-    FF(p.FF),
-    FM(p.FM),
-    FG_1(p.FG_1),
-    FG_010( p.FG_010 ),
-    FX_1(p.FX_1),
-    FX_3(p.FX_3),
-    DD(p.DD),
-    DM(p.DM),
-    DG(p.DG),
-    DX(p.DX),
-    DX_3(p.DX_3),
-    RA(p.RA), 
-    RR_1(p.RR_1),  
-    RR_2(p.RR_2),
-    RR_3(p.RR_3),
-    RR_6(p.RR_6),
-    RR_9(p.RR_9),
-    RR_12(p.RR_12),
-    RR_15(p.RR_15),
-    RR_18(p.RR_18),
-    RR_24(p.RR_24),
-    RT_1(p.RT_1),
-    PO(p.PO),   
-    POM(p.POM),
-    PON(p.PON),
-    POX(p.POX),
-    PH(p.PH),
-    PR(p.PR),
-    PP(p.PP),
-    TAN_12(p.TAN_12),
-    TAX_12(p.TAX_12),
-    TW(p.TW),
-    TWM(p.TWM),
-    TWN(p.TWN),
-    TWX(p.TWX),
-    TGN(p.TGN),
-    TGN_12(p.TGN_12),
-    FG(p.FG),
-    FX(p.FX),
-    WAWA(p.WAWA),
-    HLN(p.HLN),
-    EM(p.EM),
-    SA(p.SA),
-    Vmor(p.Vmor),
-    VV(p.VV),
-    HL(p.HL),
-    cloudExtra( p.cloudExtra ),
-    NH( p.NH ),
-    CL( p.CL ),
-    CM( p.CM ),
-    CH( p.CH ),
-    IR( p.IR ),
-    IX( p.IX ),
-    N( p.N ),
-    ww( p.ww ),
-    W1( p.W1 ),
-    W2( p.W2 ),
-    X1WD( p.X1WD ),
-    X2WD( p.X2WD ),
-    X3WD( p.X3WD ),
-    S( p.S ),
-    AA(p.AA),
-    ITZ(p.ITZ),
-    ITR(p.ITR),
+    TA( params, p.TA),
+    TAM( params, p.TAM), 
+    TAN( params, p.TAN),
+    TAX( params, p.TAX),
+    TD(  params, p.TD ),
+    UU( params, p.UU),
+    UM( params, p.UM),
+    FF( params, p.FF),
+    FM( params, p.FM),
+    FG_1( params, p.FG_1),
+    FG_010( params, p.FG_010 ),
+    FX_1( params, p.FX_1),
+    FX_3( params, p.FX_3),
+    DD( params, p.DD),
+    DM( params, p.DM),
+    DG( params, p.DG),
+    DX( params, p.DX),
+    DX_3( params, p.DX_3),
+    RA( params, p.RA), 
+    RR_1( params, p.RR_1),  
+    RR_2( params, p.RR_2),
+    RR_3( params, p.RR_3),
+    RR_6( params, p.RR_6),
+    RR_9( params, p.RR_9),
+    RR_12( params, p.RR_12),
+    RR_15( params, p.RR_15),
+    RR_18( params, p.RR_18),
+    RR_24( params, p.RR_24),
+    RT_1( params, p.RT_1),
+    PO( params, p.PO),   
+    POM( params, p.POM),
+    PON( params, p.PON),
+    POX( params, p.POX),
+    PH( params, p.PH),
+    PR( params, p.PR),
+    PP( params, p.PP),
+    TAN_12( params, p.TAN_12),
+    TAX_12( params, p.TAX_12),
+    TW( params, p.TW),
+    TWM( params, p.TWM),
+    TWN( params, p.TWN),
+    TWX( params, p.TWX),
+    TGN( params, p.TGN),
+    TGN_12( params, p.TGN_12),
+    FG( params, p.FG),
+    FX( params, p.FX),
+    WAWA( params, p.WAWA),
+    HLN( params, p.HLN),
+    EM( params, p.EM),
+    SA( params, p.SA),
+    Vmor( params, p.Vmor),
+    VV( params, p.VV),
+    HL( params, p.HL),
+    NH( params,  p.NH ),
+    CL( params, p.CL ),
+    CM( params, p.CM ),
+    CH( params, p.CH ),
+    IR( params, p.IR ),
+    IX( params, p.IX ),
+    N( params, p.N ),
+    ww( params, p.ww ),
+    W1( params, p.W1 ),
+    W2( params, p.W2 ),
+    X1WD( params, p.X1WD ),
+    X2WD( params, p.X2WD ),
+    X3WD( params, p.X3WD ),
+    S( params, p.S ),
+    AA( params, p.AA),
+    ITZ( params, p.ITZ),
+    ITR( params, p.ITR),
     nSet( p.nSet ),
     onlyTypeid1( p.onlyTypeid1 ),
     typeidList( p.typeidList )
@@ -224,87 +225,36 @@ DataElement::DataElement(const DataElement &p):
 DataElement&
 DataElement::operator=(const DataElement &p)
 {
-    if(this==&p)
-	return *this;
 
-    time_            = p.time_;
-    TA          = p.TA;
-    TAM          = p.TAM;
-    TAN          = p.TAN;
-    TAX          = p.TAX;
-    TD         = p.TD;
-    UU          = p.UU;
-    UM          = p.UM;
-    FF      = p.FF;
-    FM      = p.FM;
-    FG_1     = p.FG_1;
-    FG_010   = p.FG_010;
-    FX_1      = p.FX_1;
-    FX_3             = p.FX_3;
-    DD      = p.DD;
-    DM      = p.DM;
-    DG     = p.DG;
-    DX      = p.DX;
-    DX_3             = p.DX_3;
-    RA       = p.RA;
-    RR_1     = p.RR_1;
-    RR_2     = p.RR_2;
-    RR_3     = p.RR_3;
-    RR_6     = p.RR_6;
-    RR_9     = p.RR_9;
-    RR_12    = p.RR_12;
-    RR_15    = p.RR_15;
-    RR_18    = p.RR_18;
-    RR_24    = p.RR_24;
-    RT_1        = p.RT_1;
-    PO      = p.PO;
-    POM      = p.POM;
-    PON      = p.PON;
-    POX      = p.POX;
-    PH      = p.PH;
-    PR      = p.PR;
-    PP     = p.PP;
-    TAN_12           = p.TAN_12;
-    TAX_12           = p.TAX_12;
-    TW               = p.TW;
-    TWM              = p.TWM;
-    TWN              = p.TWN;
-    TWX              = p.TWX;
-    TGN              = p.TGN;
-    TGN_12           = p.TGN_12;
-    FG               = p.FG;
-    FX               = p.FX;
-    WAWA             = p.WAWA;
-    HLN              = p.HLN;
-    EM               = p.EM;
-    SA               = p.SA;
-    Vmor             = p.Vmor;
-    VV               = p.VV;
-    HL               = p.HL;
-    cloudExtra       = p.cloudExtra;
-    NH          = p.NH;
-    CL          = p.CL;
-    CM          = p.CM;
-    CH          = p.CH;
-    IR               = p.IR;
-    IX               = p.IX;
-    N                = p.N;
-    ww               = p.ww;
-    W1               = p.W1;
-    W2               = p.W2;
-    X1WD             = p.X1WD;
-    X2WD             = p.X2WD;
-    X3WD             = p.X3WD;
-    S                = p.S;
-    AA               = p.AA;
-    ITZ              = p.ITZ;
-    ITR              = p.ITR;
-    nSet             = p.nSet;
-    onlyTypeid1      = p.onlyTypeid1;
-    typeidList       = p.typeidList;
+   if(this != &p) {
+      if( params.size() != p.params.size() ) {
+         cerr << "FATAL BUG: Something nasty have happend.  DataElement Operator= params size differ!" << params.size() << " " << p.params.size() << endl;
+         cerr << "FATAL BUG: Check that the default CTOR and the copy CTOR have the same KvParams in the same order." << endl;
+         abort();
+      }
 
-    return *this;
+      time_            = p.time_;
+      KvParamList::const_iterator itSource = p.params.begin();
+      KvParamList::iterator itDest = params.begin();
+
+      for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
+         if( (*itSource)->id() != (*itDest)->id() ) {
+            cerr << "FATAL BUG: Something nasty have happend.  DataElement Operator= params id differ!" << (*itDest)->id() << " " << (*itSource)->id() << endl;
+            cerr << "FATAL BUG: Check that the default CTOR and the copy CTOR have the same KvParams in the same order." << endl;
+            abort();
+         }
+         **itDest = **itSource;
+      }
+
+      nSet             = p.nSet;
+      onlyTypeid1      = p.onlyTypeid1;
+      typeidList       = p.typeidList;
+
+   }
+
+   return *this;
 }
+
 
 DataElement::~DataElement()
 {
@@ -318,8 +268,6 @@ DataElement::setData( int  param,
                       const std::string &data_)
 {
     float       fData;
-    int         im;
-    char        ch;
 
     if(data_.empty())
       return true;
@@ -329,153 +277,18 @@ DataElement::setData( int  param,
       return false;
     }
 
-    im=static_cast<int>(round(fData));
+    
+    KvParamList::iterator pit = params.begin();
 
-    switch(param){
-    case 211: TA=fData;     break; //TA
-    case 212: TAM=fData;    break; //TAM
-    case 213: TAN=fData;    break; //TAN
-    case 215: TAX=fData;    break; //TAX
-    case 217: TD=fData;     break; //TD, devpoint temperature
-    case 262: UU=fData;     break; //UU
-    case 263: UM=fData;     break; //UM
-    case  81: FF=fData;     break; //FF
-    case  85: FM=fData;     break; //FM
-    case  90: FG_1=fData;   break; //FG_1
-    case  84: FG_010=fData; break; //FG_010
-    case  93: FX_3=fData;   break; //FX_3
-    case  87: FX_1=fData;   break; //FX_1
-    case  61: DD=fData;     break; //DD
-    case  64: DM=fData;     break; //DM
-    case  63: DG=fData;     break; //DG
-    case  67: DX=fData;     break; //DX
-    case 104: RA=fData;     break; //RA
-    case 106: RR_1=fData;   break; //RR_1
-    case 107: RR_3=fData;   break; //RR_3
-    case 108: RR_6=fData;   break; //RR_6
-    case 109: RR_12=fData;  break; //RR_12
-    case 110: RR_24=fData;  break; //RR_24
-    case 119: RR_2=fData;   break; //RR_2
-    case 120: RR_9=fData;   break; //RR_9
-    case 123: RT_1=fData;   break; //RT_1
-    case 125: RR_15=fData;  break; //RR_15
-    case 126: RR_18=fData;  break; //RR_18
-    case 173: PO=fData;     break; //PO
-    case 174: POM=fData;    break; //POM
-    case 175: PON=fData;    break; //PON
-    case 176: POX=fData;    break; //POX
-    case 172: PH=fData;     break; //PH
-    case 178: PR=fData;     break; //PR
-    case 177: PP=fData;     break; //PP
-    case 214: TAN_12=fData; break; //TAN_12
-    case 216: TAX_12=fData; break; //TAX_12
-    case 242: TW=fData;     break; //TW
-    case 244: TWN=fData;    break; //TWN
-    case 243: TWM=fData;    break; //TWM
-    case 245: TWX=fData;    break; //TWX
-    case 223: TGN=fData;    break; //TGN
-    case 224: TGN_12=fData; break; //TGN_12
-    case  83: FG=fData;     break; //FG
-    case  86: FX=fData;     break; //FX
-    case  56: HLN=fData;    break; //HLN
-    case  49: WAWA=fData;   break; //WaWa
-    case   7: EM=fData;     break; //E (snow state to the ground) in E'sss
-    case 112: SA=fData;     break; //sss (snow depth) in E'sss
-    case   9: IR = fData;   break; //IR, _irix
-    case  10: IX = fData;   break; //IX, _irix
-    case  55: HL=fData;     break; //HL, _hVV
-    case 271: Vmor = fData; break; //Vmor, _hVV
-    case 273: VV = fData;   break; //VV, _hVV
-    case  15: N = fData;    break; //NN, _N
-    case  12: ITR = fData;  break; //ITR, _RRRtr
-    case  41: ww = fData;   break; //WW, _wwW1W2
-    case  42: W1 = fData;   break; //W1, _wwW1W2
-    case  43: W2 = fData;   break; //W2, _wwW1W2
-    case  14: NH = fData;   break; //NH, _NhClCmCh")D
-    case  23: CL = fData;   break; //CL, _NhClCmCh")
-    case  24: CM = fData;   break; //CM, _NhClCmCh")
-    case  22: CH=fData;     break; //CH, _NhClCmCh")
-    case  44: X1WD = fData; break; //X1WD"_RtWdWdWd")
-    case  45: X2WD = fData; break; //X2WD"_RtWdWdWd")
-    case  46: X3WD = fData; break; //X3WD"_RtWdWdWd")
-    case 25:                       //NS1, "_1NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 1, fData ) )
-             break;
-
-          cloudExtra[0].Ns = fData;
-          break;
-    case 26:                       //NS2, "_2NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 2, fData ) )
-             break;
-
-          cloudExtra[1].Ns = fData;
-          break;
-    case 27:                       //NS3, "_3NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 3, fData ) )
-             break;
-
-          cloudExtra[2].Ns = fData;
-          break;
-    case 28:                       //NS4, "_4NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 4, fData ) )
-             break;
-
-          cloudExtra[3].Ns = fData;
-          break;
-    case 305:                      //CC1, "_1NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 1, fData ) )
-             break;
-
-          cloudExtra[0].C = fData;
-          break;
-    case 306:                      //CC2, "_2NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 2, fData ) )
-             break;
-
-          cloudExtra[1].C = fData;
-          break;
-    case 307:                      //CC3, "_3NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 3, fData ) )
-             break;
-
-          cloudExtra[2].C = fData;
-          break;
-    case 308:                      //CC4, "_4NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 4, fData ) )
-             break;
-
-          cloudExtra[3].C = fData;
-          break;
-    case 301:                      //HS1, "_1NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 1, fData ) )
-             break;
-
-          cloudExtra[0].hshs = fData;
-          break;
-    case 302:                      //HS2, "_2NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 2, fData ) )
-             break;
-
-          cloudExtra[1].hshs = fData;
-          break;
-    case 303:                      //HS3, "_3NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 3, fData ) )
-             break;
-
-          cloudExtra[2].hshs = fData;
-          break;
-    case 304:                      //HS4, "_4NsChshs")
-          if( ! resizeAndCheckData( cloudExtra, 4, fData ) )
-             break;
-
-          cloudExtra[3].hshs = fData;
-          break;
-    case  19: S = fData;  break;   //_S
-    case  13: ITZ=fData;  break;   //ITZ, "_tz")
-    case   1: AA = fData; break;   //AA, _aa
-    default:
-      return false;
+    for( ; pit != params.end(); ++pit ) {
+    	if( (*pit)->id() == param ) {
+    		**pit = fData;
+    		break;
+    	}
     }
+
+	if( pit == params.end() ) 
+		return false;
 
     nSet++;
 
@@ -698,19 +511,32 @@ DataElementList::subData( const miutil::miTime &from, const miutil::miTime &to )
    return retList;
 }
 
+DataElementList&
+DataElementList::
+operator=( const DataElementList &rhs )
+{
+   if( this != &rhs ) {
+      dataList.clear();
+      for( CIDataElementList it = rhs.begin(); it != rhs.end(); ++it )
+         dataList.push_back( *it );
+   }
+
+   return *this;
+}
+
 DataElementList::DataElementProxy&
 DataElementList::DataElementProxy::operator=(const DataElement &rhs) //lvalue use
 {
-  //std::cout << "BufrData: lvalue ...\n";
+  //std::cerr << "***** DataElementList::DataElementProxy:: lvalue ... rhs: '" << rhs.time() <<"' timeindex: '" << timeIndex << "'." <<  endl ;
   IDataElementList it=sdl->dataList.begin();
 
-  for(;it!=sdl->dataList.end(); it++){
-    if(it->time()<=timeIndex)
+  for( ;it!=sdl->dataList.end(); it++ ){
+    if( it->time() <= timeIndex )
       break;
   }
 
-  if(it==sdl->dataList.end()){
-    sdl->dataList.push_back(rhs);
+  if( it == sdl->dataList.end() ){
+    sdl->dataList.push_back( rhs );
     it=sdl->dataList.end();
     it--;
   }else if(it->time()==timeIndex)
@@ -726,15 +552,15 @@ DataElementList::DataElementProxy::operator=(const DataElement &rhs) //lvalue us
 
 DataElementList::DataElementProxy::operator DataElement()const //rvalue use
 {
-  //std::cerr << "BufrData: rvalue ...\n";
+
   IDataElementList it=sdl->dataList.begin();
 
   for(;it!=sdl->dataList.end(); it++){
     if(it->time()<=timeIndex)
       break;
   }
-  
-  if(it->time()!=timeIndex){
+
+  if(it==sdl->dataList.end() || it->time()!=timeIndex){
     std::ostringstream ost;
     ost << "NO BufrData at <" << timeIndex << ">!";
     throw std::out_of_range(ost.str());
@@ -743,37 +569,6 @@ DataElementList::DataElementProxy::operator DataElement()const //rvalue use
   return *it;
 }
 
-std::ostream
-&operator<<(std::ostream &o, const DataElement::CloudDataExtra &cd )
-{
-   o << "vsci: ";
-
-   if( cd.vsci == FLT_MAX )
-      o << "NA";
-   else
-      o << cd.vsci;
-
-   o << " Ns: ";
-   if( cd.Ns == FLT_MAX )
-      o << "NA";
-   else
-      o << cd.Ns;
-
-
-   o << " C: ";
-   if( cd.C == FLT_MAX )
-      o << "NA";
-   else
-      o << cd.C;
-
-   o << " hshs: ";
-   if( cd.hshs == FLT_MAX )
-      o << "NA";
-   else
-      o << cd.hshs;
-
-   return o;
-}
 
 std::ostream& 
 operator<<(std::ostream& ost, const DataElement& sd)
@@ -846,10 +641,10 @@ operator<<(std::ostream& ost, const DataElement& sd)
       << "verTillegg      (_RtWdWdWd): " << printOut( "Wd1", sd.X1WD )
       <<                                    printOut( "Wd2", sd.X2WD )
       <<                                    printOut( "Wd3", sd.X3WD ) << endl
-      << "skyerEkstra1    (_1NsChshs): " << (sd.cloudExtra.size()>0?sd.cloudExtra[0]:DataElement::CloudDataExtra()) << endl
-      << "skyerEkstra2    (_2NsChshs): " << (sd.cloudExtra.size()>1?sd.cloudExtra[1]:DataElement::CloudDataExtra()) << endl
-      << "skyerEkstra3    (_3NsChshs): " << (sd.cloudExtra.size()>2?sd.cloudExtra[2]:DataElement::CloudDataExtra()) << endl
-      << "skyerEkstra4    (_4NsChshs): " << (sd.cloudExtra.size()>3?sd.cloudExtra[3]:DataElement::CloudDataExtra()) << endl
+//      << "skyerEkstra1    (_1NsChshs): " << (sd.cloudExtra.size()>0?sd.cloudExtra[0]:DataElement::CloudDataExtra()) << endl
+//      << "skyerEkstra2    (_2NsChshs): " << (sd.cloudExtra.size()>1?sd.cloudExtra[1]:DataElement::CloudDataExtra()) << endl
+//      << "skyerEkstra3    (_3NsChshs): " << (sd.cloudExtra.size()>2?sd.cloudExtra[2]:DataElement::CloudDataExtra()) << endl
+//      << "skyerEkstra4    (_4NsChshs): " << (sd.cloudExtra.size()>3?sd.cloudExtra[3]:DataElement::CloudDataExtra()) << endl
       << "gressTemp             (TGN): " << sd.TGN               << endl
       << "gressTemp_12       (TGN_12): " << sd.TGN_12            << endl
       << "sjoegang               (_S): " << sd.S                 << endl

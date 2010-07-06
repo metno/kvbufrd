@@ -63,7 +63,7 @@ loadBufrData( const DataEntryList   &dl,
             continue;
 
          itd=dataList.begin();
-         bufrData.time(itd->obstime());
+         bufrData.time( itd->obstime() );
 
          for(;itd!=dataList.end(); itd++){
             //COMMENT:
@@ -72,9 +72,10 @@ loadBufrData( const DataEntryList   &dl,
             //the parameters we wish to overide tis behavior for.
 
             if(itd->sensor()==0 && itd->level()==0){
-               if( validate( *itd ) )
+               if( validate( *itd ) ) {
+                 // cerr << "LoadBufrData: '" << itd->obstime() << "' " << itd->paramID() << ", " << itd->typeID() << ", " << itd->original() << endl;
                   bufrData.setData( itd->paramID(), itd->typeID(), itd->original() );
-               else {
+               } else {
                   LOGDEBUG("CheckData: do NOT use: " << itd->obstime() << " " << itd->paramID() << " " << itd->typeID() << " val: "
                            << itd->original() << " cinfo: " << itd->controlinfo().flagstring() << " uinfo: "
                            << itd->useinfo().flagstring() );

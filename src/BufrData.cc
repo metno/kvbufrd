@@ -28,8 +28,60 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
+#include <iostream>
 #include "BufrData.h"
+
+using namespace std;
+
+
+BufrData::CloudExtra::
+CloudExtra(): cloudData( 4 ), nElements_( 0 )
+{}
+
+BufrData::CloudExtra::
+CloudExtra( const CloudExtra &ce )
+{
+}
+
+
+BufrData::CloudExtra&
+BufrData::CloudExtra::
+operator=( const CloudExtra &rhs )
+{
+   if( this != &rhs ) {
+      cloudData = rhs.cloudData;
+      nElements_ = rhs.nElements_;
+   }
+   return *this;
+}
+
+void
+BufrData::CloudExtra::
+add( const CloudDataExtra &cd, int index )
+{
+   if( index < 0 && nElements_ < cloudData.size() ) {
+      cloudData[ nElements_ ] = cd;
+      nElements_++;
+   } else if( index < cloudData.size() && (index <= nElements_) ) {
+      if( index == nElements_ )
+         nElements_++;
+
+      cloudData[ index ] = cd;
+   } else
+      throw std::range_error("BufrData::CloudExtra: out of bound [0,3].");
+}
+
+BufrData::CloudDataExtra&
+BufrData::CloudExtra::
+operator[]( int index )const
+{
+   if( index < cloudData.size() ) {
+      return const_cast<CloudExtra*>(this)->cloudData[index];
+   } else {
+      throw std::range_error("BufrData::CloudExtra: out of bound [0,3].");
+   }
+}
+
 
 BufrData::
 BufrData():
@@ -44,27 +96,62 @@ BufrData( const BufrData &bd ):
    tFG( bd.tFG ),
    precip24( bd.precip24 ),
    precipRegional( bd.precipRegional ),
-   precipNational( bd.precipNational )
+   precipNational( bd.precipNational ),
+   cloudExtra( bd.cloudExtra )
 {
 }
 
-BufrData
+BufrData&
 BufrData::
 operator=( const BufrData &rhs )
 {
+
    if( this != &rhs ) {
-      *static_cast<DataElement*>(this)=static_cast<DataElement>(rhs);
+      *static_cast<DataElement*>(this) = static_cast<DataElement&>( const_cast<BufrData&>(rhs) );
       FxMax = rhs.FxMax;
       tWeatherPeriod = rhs.tWeatherPeriod;
       tFG = rhs.tFG;
       precip24 = rhs.precip24;
       precipRegional = rhs.precipRegional;
       precipNational = rhs.precipNational;
+      cloudExtra = rhs.cloudExtra;
    }
 
    return *this;
 }
 
+
+std::ostream
+&operator<<(std::ostream &o, const BufrData::CloudDataExtra &cd )
+{
+   o << "vsci: ";
+
+   if( cd.vsci == FLT_MAX )
+      o << "NA";
+   else
+      o << cd.vsci;
+
+   o << " Ns: ";
+   if( cd.Ns == FLT_MAX )
+      o << "NA";
+   else
+      o << cd.Ns;
+
+
+   o << " C: ";
+   if( cd.C == FLT_MAX )
+      o << "NA";
+   else
+      o << cd.C;
+
+   o << " hshs: ";
+   if( cd.hshs == FLT_MAX )
+      o << "NA";
+   else
+      o << cd.hshs;
+
+   return o;
+}
 
 std::ostream&
 operator<<(std::ostream &o, const BufrData::Wind &wind )

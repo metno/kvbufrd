@@ -26,6 +26,7 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   Data.cc Data.h \
                   BufrWorker.cc BufrWorker.h \
                   BufrData.cc BufrData.h \
+                  KvParam.cc KvParam.h \
                   DataElementList.cc DataElementList.h \
                   DataList.cc DataList.h \
                   StationInfo.cc StationInfo.h \
@@ -46,7 +47,7 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   LoadBufrData.h LoadBufrData.cc \
                   encodebufr.h encodebufr.cc
 
-kvbufrd_CPPFLAGS = $(AM_CPPFLAGS) 
+kvbufrd_CPPFLAGS = $(AM_CPPFLAGS) -DDATADIR="\""$(datadir)/kvbufrd/bufrtables"\"" 
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
 kvbufrd_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
@@ -100,6 +101,7 @@ kvBufrEncodeTest_SOURCES = test/kvBufrEncodeTest.cc \
 		                    InitLogger.cc InitLogger.h \
 		                    bufrencodehelper.h \
 		                    encodebufr.cc encodebufr.h \
+		                    KvParam.cc KvParam.h \
 		                    LoadBufrData.h LoadBufrData.cc
 
  
