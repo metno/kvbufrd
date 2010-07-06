@@ -47,13 +47,14 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   LoadBufrData.h LoadBufrData.cc \
                   encodebufr.h encodebufr.cc
 
-kvbufrd_CPPFLAGS = $(AM_CPPFLAGS) -DDATADIR="\""$(datadir)/kvbufrd/bufrtables"\"" 
+kvbufrd_CPPFLAGS = $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" 
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
 kvbufrd_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
                 -L/disk1/local/lib -lbufr -lgfortran \
                  -lm         
-EXTRA_DIST = kvbufrd_schema.sql
+EXTRA_DIST = kvbufrd_schema.sql 
+
  
 kvbufrclt_SOURCES = kvbufrclt.cc \
                      kvbufrCltBufrcbImp.cc kvbufrCltBufrcbImp.h \

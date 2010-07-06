@@ -1,4 +1,4 @@
-SUBDIRS = src 
+SUBDIRS = src share/bufrtables
 ACLOCAL_AMFLAGS = -I m4
 sqldir = $(datadir)/kvbufrd
 sql_DATA = cleanbufrdb.sql 
