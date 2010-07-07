@@ -30,13 +30,21 @@
 */
 
 #include "KvParam.h"
-
+#include "DataElementList.h"
 
 KvParamList::
 KvParamList()
 {
 }
 
+KvParam::KvParam()
+   : id_(INT_MAX), value_(FLT_MAX )
+{
+   KvParamList *params = DataElement::pParams.get();
+
+   if( params )
+      params->params.push_back( this );
+}
 
 KvParam::
 KvParam( KvParamList &paramList, const char *name, int id )

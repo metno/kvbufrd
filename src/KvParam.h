@@ -44,7 +44,7 @@ class KvParam {
    float       value_;
 
 public:
-   KvParam():id_(INT_MAX), value_(FLT_MAX ) {};
+   KvParam();
    KvParam( const KvParam &param)
       : name_( param.name_ ), id_( param.id_ ), value_(param.value_){};
 

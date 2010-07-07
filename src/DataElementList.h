@@ -35,21 +35,46 @@
 #include <stdexcept>
 #include <list>
 #include <string>
+#include <sstream>
+#include <boost/cstdint.hpp>
+#include <boost/crc.hpp>
+#include <boost/thread/tss.hpp>
 #include <puTools/miTime.h>
 #include "KvParam.h"
 
 
 
 class  DataElement
-{          
+{
+   friend class KvParam;
+
+   class ParamListPtrHelper {
+      KvParamList *paramList;
+   public:
+      ParamListPtrHelper():paramList( 0 ) {}
+      ParamListPtrHelper( KvParamList *paramList_ ): paramList( paramList_ ){
+         DataElement::pParams.reset( paramList );
+      }
+
+      ~ParamListPtrHelper() {
+         if( paramList )
+            DataElement::pParams.reset( 0 );
+      }
+   };
+
+protected:
+   KvParamList params;
+
+private:
+   static boost::thread_specific_ptr<KvParamList> pParams;
+   ParamListPtrHelper setParamPointer;
+
   	miutil::miTime time_;
 
   	friend class DataElementList;
   	//  friend class BufrDataList::BufrDataProxy
   	
  public:
-	
-	KvParamList params;
   	KvParam  TA;       
   	KvParam  TAM;       
   	KvParam  TAN;       
@@ -142,6 +167,9 @@ class  DataElement
   	miutil::miTime time()const{ return time_;}
 
   	bool undef()const{ return time_.undef() || nSet == 0;}
+  	boost::uint16_t crc() const;
+
+  	void writeTo( std::ostream &header, std::ostream &data  )const;
 
   	friend std::ostream& operator<<(std::ostream& ost,
 									  const DataElement& sd);
@@ -253,6 +281,8 @@ public:
   	DataElementList subData( const miutil::miTime &from, const miutil::miTime &to=miutil::miTime() ) const;
 
   	DataElementList& operator=( const DataElementList &rhs );
+
+  	void writeTo( std::ostream &o )const;
 
   	friend std::ostream& operator<<(std::ostream& ost,
 				 					  const DataElementList& sd);

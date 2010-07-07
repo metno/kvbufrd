@@ -29,19 +29,6 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-
-/* PS 2007-10-06
- *
- * Usage: encodebufr
- *
- * Example program in C to show how a SYNOP may be encoded into BUFR using
- * WMO template 307080. Calling Fortran library libbufr. 
- *
- * Note: ought to be rewritten using WMO template 307079
- *
- * Output: BUFR file containing the encoded BUFR message, named 'synop.bufr'
- */
-
 #ifndef __ENCODE_BUFR__
 #define __ENCODE_BUFR__
 

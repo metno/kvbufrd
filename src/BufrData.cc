@@ -121,6 +121,7 @@ operator=( const BufrData &rhs )
 }
 
 
+
 std::ostream
 &operator<<(std::ostream &o, const BufrData::CloudDataExtra &cd )
 {

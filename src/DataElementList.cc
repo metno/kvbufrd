@@ -62,9 +62,15 @@ namespace {
       o << " ";
       return o.str();
    }
+
+   void noFreeCleanUp( KvParamList * ) {
+      //NOOP
+   }
 }
 using namespace decodeutility;
 using namespace std;
+
+boost::thread_specific_ptr<KvParamList> DataElement::pParams( noFreeCleanUp );
 
 DataElement::DataElement():
     TA( params, "TA", 211 ),
@@ -145,81 +151,23 @@ DataElement::DataElement():
 
 DataElement::
 DataElement( const DataElement &p):
-    time_(p.time_), 
-    TA( params, p.TA),
-    TAM( params, p.TAM), 
-    TAN( params, p.TAN),
-    TAX( params, p.TAX),
-    TD(  params, p.TD ),
-    UU( params, p.UU),
-    UM( params, p.UM),
-    FF( params, p.FF),
-    FM( params, p.FM),
-    FG_1( params, p.FG_1),
-    FG_010( params, p.FG_010 ),
-    FX_1( params, p.FX_1),
-    FX_3( params, p.FX_3),
-    DD( params, p.DD),
-    DM( params, p.DM),
-    DG( params, p.DG),
-    DX( params, p.DX),
-    DX_3( params, p.DX_3),
-    RA( params, p.RA), 
-    RR_1( params, p.RR_1),  
-    RR_2( params, p.RR_2),
-    RR_3( params, p.RR_3),
-    RR_6( params, p.RR_6),
-    RR_9( params, p.RR_9),
-    RR_12( params, p.RR_12),
-    RR_15( params, p.RR_15),
-    RR_18( params, p.RR_18),
-    RR_24( params, p.RR_24),
-    RT_1( params, p.RT_1),
-    PO( params, p.PO),   
-    POM( params, p.POM),
-    PON( params, p.PON),
-    POX( params, p.POX),
-    PH( params, p.PH),
-    PR( params, p.PR),
-    PP( params, p.PP),
-    TAN_12( params, p.TAN_12),
-    TAX_12( params, p.TAX_12),
-    TW( params, p.TW),
-    TWM( params, p.TWM),
-    TWN( params, p.TWN),
-    TWX( params, p.TWX),
-    TGN( params, p.TGN),
-    TGN_12( params, p.TGN_12),
-    FG( params, p.FG),
-    FX( params, p.FX),
-    WAWA( params, p.WAWA),
-    HLN( params, p.HLN),
-    EM( params, p.EM),
-    SA( params, p.SA),
-    Vmor( params, p.Vmor),
-    VV( params, p.VV),
-    HL( params, p.HL),
-    NH( params,  p.NH ),
-    CL( params, p.CL ),
-    CM( params, p.CM ),
-    CH( params, p.CH ),
-    IR( params, p.IR ),
-    IX( params, p.IX ),
-    N( params, p.N ),
-    ww( params, p.ww ),
-    W1( params, p.W1 ),
-    W2( params, p.W2 ),
-    X1WD( params, p.X1WD ),
-    X2WD( params, p.X2WD ),
-    X3WD( params, p.X3WD ),
-    S( params, p.S ),
-    AA( params, p.AA),
-    ITZ( params, p.ITZ),
-    ITR( params, p.ITR),
-    nSet( p.nSet ),
-    onlyTypeid1( p.onlyTypeid1 ),
-    typeidList( p.typeidList )
+   setParamPointer( &params ),
+   time_(p.time_),
+   nSet( p.nSet ),
+   onlyTypeid1( p.onlyTypeid1 ),
+   typeidList( p.typeidList )
 {
+   if( params.size() != p.params.size() ) {
+      cerr << "FATAL BUG: Something nasty have happend.  DataElement copy CTOR  size differ!" << params.size() << " " << p.params.size() << endl;
+      abort();
+   }
+
+   KvParamList::const_iterator itSource = p.params.begin();
+   KvParamList::iterator itDest = params.begin();
+
+   for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
+      **itDest = **itSource;
+   }
 }
 
 DataElement&
@@ -263,9 +211,10 @@ DataElement::~DataElement()
 
 
 bool
-DataElement::setData( int  param,
-                      int typeid_,
-                      const std::string &data_)
+DataElement::
+setData( int  param,
+         int typeid_,
+         const std::string &data_)
 {
     float       fData;
 
@@ -305,6 +254,33 @@ DataElement::setData( int  param,
        typeidList.push_back( typeid_ );
 
     return true;
+}
+
+void
+DataElement::
+writeTo( std::ostream &header, std::ostream &data )const
+{
+   for( KvParamList::const_iterator it = params.begin(); it != params.end(); ++it ) {
+      header << (it==params.begin()?"obstime":",") << (*it)->name();
+      data << (it==params.begin()?time():",");
+
+      if( **it != FLT_MAX )
+         data << **it;
+   }
+}
+
+boost::uint16_t
+DataElement::
+crc() const
+{
+   boost::crc_ccitt_type crcChecker;
+   string msg;
+   ostringstream header, data;
+
+   writeTo( header, data );
+   msg = header.str()+"\n"+data.str()+"\n";
+   crcChecker.process_bytes( msg.c_str(),  msg.length() );
+   return crcChecker.checksum();
 }
 
 
@@ -525,7 +501,8 @@ operator=( const DataElementList &rhs )
 }
 
 DataElementList::DataElementProxy&
-DataElementList::DataElementProxy::operator=(const DataElement &rhs) //lvalue use
+DataElementList::DataElementProxy::
+operator=(const DataElement &rhs) //lvalue use
 {
   //std::cerr << "***** DataElementList::DataElementProxy:: lvalue ... rhs: '" << rhs.time() <<"' timeindex: '" << timeIndex << "'." <<  endl ;
   IDataElementList it=sdl->dataList.begin();
@@ -550,7 +527,8 @@ DataElementList::DataElementProxy::operator=(const DataElement &rhs) //lvalue us
   return *this;
 }
 
-DataElementList::DataElementProxy::operator DataElement()const //rvalue use
+DataElementList::DataElementProxy::
+operator DataElement()const //rvalue use
 {
 
   IDataElementList it=sdl->dataList.begin();
@@ -569,6 +547,27 @@ DataElementList::DataElementProxy::operator DataElement()const //rvalue use
   return *it;
 }
 
+void
+DataElementList::
+writeTo( std::ostream &o )const
+{
+   ostringstream header, data;
+   TDataElementList::const_reverse_iterator it=dataList.rbegin();
+
+   if( it != dataList.rend() ) {
+      it->writeTo( header, data );
+      o << header.str() << endl;
+      o << data.str();
+      ++it;
+   }
+
+   for( ; it != dataList.rend(); ++it ) {
+      it->writeTo( header, data );
+      o << data.str();
+      header.str("");
+      data.str("");
+   }
+}
 
 std::ostream& 
 operator<<(std::ostream& ost, const DataElement& sd)
