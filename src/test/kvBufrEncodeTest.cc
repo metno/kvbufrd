@@ -310,9 +310,9 @@ TEST_F( BufrEncodeTest, encode_bufr )
    EXPECT_TRUE( data.size() != 0 ) << "It is expected that the datalist is empty, but the size is: " << data.size();
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr, false ) ) << "FAILED: Cant generate bufr for "<< 1492;
 
-   BufrEncoder encoder( stInfo );
+   BufrEncoder encoder( stInfo, true );
    try {
-      encoder.encodeBufr( bufr );
+      encoder.encodeBufr( bufr, 0 );
    }
    catch ( BufrEncodeException &ex ) {
       cerr << "EXCEPTION: " << ex.what() << endl;

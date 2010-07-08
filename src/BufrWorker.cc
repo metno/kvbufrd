@@ -47,6 +47,7 @@
 #include "bufr.h"
 #include <kvalobs/kvPath.h>
 #include "LoadBufrData.h"
+#include "encodebufr.h"
 
 using namespace std;
 using namespace kvalobs;
@@ -320,6 +321,9 @@ BufrWorker::newObs(ObsEvent &event)
   	string         sBufr;
   	StationInfoPtr info;
   	ostringstream  ost;
+   boost::uint16_t  oldcrc=0;
+   int              ccx=0;
+   list<TblBufr>   tblBufrList;
 
   	info=event.stationInfo();
   
@@ -442,6 +446,16 @@ BufrWorker::newObs(ObsEvent &event)
    		  "Continues: " << bufrData.nContinuesTimes() << endl <<
 	   	  "Time(s): " << endl << ost.str());
   
+  	if( app.getSavedBufrData(info->wmono(), event.obstime(), tblBufrList, *con)){
+  	   if(tblBufrList.size()>0){
+  	      ccx=tblBufrList.front().ccx();
+  	      oldcrc=tblBufrList.front().crc();
+  	      ++ccx;
+  	      LOGDEBUG("An BUFR messages for wmono: " << info->wmono() << " obstime: " << event.obstime()
+  	               << " allready exist. ccx=" << ccx-1 << " crc: " << oldcrc );
+  	   }
+  	}
+
   	LOGDEBUG6(bufrData);
 
   	bool bufrOk;
@@ -486,61 +500,36 @@ BufrWorker::newObs(ObsEvent &event)
       	if(bufrData.size()==0)
 				event.msg() << "NODATA:(" << event.obstime() <<") cant create bufr!";
       	else
-				event.msg() << "SYNOPERROR:(" << event.obstime() <<") cant create bufr!";
+				event.msg() << "BUFR ERROR:(" << event.obstime() <<") cant create bufr!";
     	}
 
     	LOGERROR("Cant create SYNOP for <"<< info->wmono()<<"> obstime: " <<
 	     		   event.obstime());
     	swmsg << "Cant create a bufr!" << endl;
   	}else{
-    	boost::crc_ccitt_type crcChecker;
-    	boost::uint16_t       crc;
-    	boost::uint16_t       oldcrc=0;
-    	int                   ccx=0;
-    	list<TblBufr>        tblBufrList;
-    	bool                  newBufr=true;
-    	bool                  bccx=false;
-    	string                myBufr;
-
-    	crcChecker.process_bytes(sBufr.c_str(), sBufr.length());
-    	crc=crcChecker.checksum();
+    	boost::uint16_t       crc=bufr.crc();
+    	bool newBufr( crc != oldcrc );
     
-    	if(app.getSavedBufrData(info->wmono(), event.obstime(), tblBufrList, *con)){
-      	if(tblBufrList.size()>0){
-				ccx=tblBufrList.front().ccx();
-				oldcrc=tblBufrList.front().crc();
-	
-				if(oldcrc!=crc){
-	  				myBufr=tblBufrList.front().wmomsg();
-	  				myBufr+="\n\n";
-	  				ccx++;
-	  				bccx=true;
-				}else{
-	  				newBufr=false;
-				}
-      	}
-    	}
 
     	//Bufr::replaceCCCXXX(sBufr, ccx);
 
     	if(newBufr){
       	miTime createTime(miTime::nowTime());
-      	ostringstream myost(myBufr);
-      
-      	myost << "[Created: " << createTime << "]" << endl;
-      	myost << sBufr;
+      	ostringstream dataOst;
 
-      	if(app.saveBufrData(TblBufr(info->wmono(), event.obstime(),
-				 				 		createTime, crc, ccx, myost.str()), 
-			   					 	*con))
-				LOGINFO("Bufr information saved to database!");
-
-     		saveTo(info, event.obstime(), sBufr, ccx);
+      	bufrData.writeTo( dataOst );
       
-     		if(!bccx)
-				swmsg << "New bufr created!" << endl;
-     		else
-				swmsg << "New bufr created (CC" << ('A'+(ccx-1)) << ")!" << endl;
+      	if(app.saveBufrData( TblBufr( info->wmono(), event.obstime(),
+				 				 		         createTime, crc, ccx, dataOst.str() ),
+			   					 	*con)) {
+				LOGINFO("BUFR information saved to database! ccx: " << ccx << " crc: " << crc );
+      	} else {
+      	   LOGERROR("FAILED to svae BUFR information to the database! ccx: " << ccx << " crc: " << crc );
+      	}
+
+      	saveTo(info, bufr, ccx);
+      
+      	swmsg << "New bufr created!" << endl;
 
     	}else{
      		LOGINFO("DUPLICATE: wmono=" << info->wmono() << " obstime: " 
@@ -555,13 +544,7 @@ BufrWorker::newObs(ObsEvent &event)
     	}
 
     	ost.str("");
-
-    	if(bccx)
-      	ost << " (CC" << ('A'+(ccx-1)) << ")";
     	
-    	LOGINFO("SYNOP "<< info->wmono() << " crc=" << crc << " oldcrc=" << oldcrc
-	    		  << ost.str() << " : " << endl << sBufr << endl);
-    
     	if(event.hasCallback()){
       	//If we have a callback registred. Return the bufr
       	event.bufr(sBufr);
@@ -740,58 +723,20 @@ checkTypes(const DataEntryList  &data,
 
 void
 BufrWorker::
-saveTo(StationInfoPtr info, 
-       const miutil::miTime &obstime, 
-       const std::string &wmomsg,
-       int ccx)
+saveTo( StationInfoPtr info,
+        BufrData  &bufr,
+        int ccx) const
 {
-  ostringstream ost;
-  ofstream      f;
-  struct stat   sbuf; 
-  
-  if(!info->copy())
-    return;
+   BufrEncoder encodeBufr( info );
 
-  if(stat(info->copyto().c_str(), &sbuf)<0){
-    if(errno==ENOENT || errno==ENOTDIR){
-      LOGERROR("copyto: <"<<info->copyto()<<"> invalid path!");
-    }else if(errno==EACCES){
-      LOGERROR("copyto: <"<<info->copyto()<<"> permission denied!");
-    }else{
-      LOGERROR("copyto: <"<<info->copyto()<<">, lstat unknown error!");
-    }
-    
-    return;
-  }
-
-  if(!S_ISDIR(sbuf.st_mode)){
-    LOGERROR("copyto: <"<<info->copyto()<<"> not a directory!");
-    return;
-  }
-
-  if(ccx==0){
-    ost << info->copyto() << "/" <<  info->wmono() << "-" 
-	<< setfill('0') << setw(2) << obstime.day() << setw(2) 
-	<< obstime.hour()
-	<< ".bufr";
-  }else{ 
-    ost << info->copyto() << "/" <<  info->wmono() << "-" 
-	<< setfill('0') << setw(2) << obstime.day() << setw(2) 
-	<< obstime.hour() << "-" << static_cast<char>('A'+(ccx-1))
-	<< ".bufr";
-  }
-
-  f.open(ost.str().c_str());
-
-  if(f.is_open()){
-    LOGINFO("Writing SYNOP to file: " << ost.str());
-    f << wmomsg;
-    f.close();
-  }else{
-    LOGERROR("Cant write  SYNOP to file: " << ost.str());
-  }  
+   try {
+      encodeBufr.encodeBufr( bufr, ccx );
+      encodeBufr.saveToFile();
+   }
+   catch( const exception &ex ) {
+      LOGERROR("Failed to encode to BUFR: wmono: " << info->wmono() << " obstime: " << bufr.time() << ". Reason: " << ex.what());
+   }
 }
-    
 
 bool 
 BufrWorker::

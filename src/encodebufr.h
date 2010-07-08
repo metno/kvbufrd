@@ -60,9 +60,11 @@ class BufrEncoder {
    int kbuflen;
    int *kbuff; /* integer array containing bufr message */
    miutil::miTime obstime;
+   int ccx;
+   bool test;
 
 public:
-   BufrEncoder( StationInfoPtr station_ );
+   BufrEncoder( StationInfoPtr station_, bool test=false );
 
    /**
    * Encode the data in a BufrData to a bufr message.
@@ -71,8 +73,8 @@ public:
    * @param station Station information.
    * @exception BufrEncodeException on error.
    */
-   void encodeBufr( const BufrData &data );
-   void saveToFile( const std::string &path, bool overwrite )const;
+   void encodeBufr( const BufrData &data, int ccx );
+   void saveToFile( const std::string &path, bool overwrite=false )const;
    void saveToFile()const;
 };
 

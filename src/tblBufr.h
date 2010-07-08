@@ -1,4 +1,4 @@
-/*
+   /*
   Kvalobs - Free Quality Control Software for Meteorological Observations
 
   $Id: tblSynop.h,v 1.2.6.2 2007/09/27 09:02:23 paule Exp $
@@ -40,7 +40,7 @@ private:
   miutil::miTime   createtime_;
   int              crc_;
   int              ccx_;
-  std::string      wmomsg_;
+  std::string      data_;
 
   void createSortIndex();
 
@@ -53,15 +53,15 @@ public:
 	   const miutil::miTime &createtime,
 	   int                  crc,
 	   int                  ccx,
-	   const std::string    &wmomsg)
-  { set(wmono, obtime, createtime, crc, ccx, wmomsg);}
+	   const std::string    &data)
+  { set(wmono, obtime, createtime, crc, ccx, data);}
 
   bool set(int                  wmono,
 	   const miutil::miTime &obtime,
 	   const miutil::miTime &createtime,
 	   int                  crc,
 	   int                  ccx,
-	   const std::string    &wmomsg);
+	   const std::string    &data);
 
   bool set(const dnmi::db::DRow&);
   bool set(const TblBufr &bufr );
@@ -84,13 +84,13 @@ public:
   miutil::miTime   createtime()  const { return createtime_;}
   int              crc()         const { return crc_;       }
   int              ccx()         const { return ccx_;       }
-  std::string      wmomsg()      const { return wmomsg_;    }
+  std::string      data()      const { return data_;    }
 
   void createtime(const miutil::miTime &t){ createtime_=t;}
   void crc(int c)                         { crc_=c;       }
   void incCcx()                           { ccx_++;       }
   void ccx(int c)                         { ccx_=c;       }
-  void wmomsg(const std::string &s)       { wmomsg_=s;    }
+  void data(const std::string &s)       { data_=s;    }
 };
 
 #endif

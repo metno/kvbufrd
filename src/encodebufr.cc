@@ -42,7 +42,7 @@ using namespace std;
 
 namespace {
 bool
-set_sec0134( const StationInfoPtr station, const DataElement &data,
+set_sec0134( const StationInfoPtr station, const DataElement &data, int ccx,
              int *ksec0, int *ksec1, int *ksec3, int *ksec4 );
 
 void set_values( const StationInfoPtr station,
@@ -53,8 +53,8 @@ void set_values( const StationInfoPtr station,
 
 
 BufrEncoder::
-BufrEncoder(StationInfoPtr station_)
-   : station( station_ ), kbuff( 0 )
+BufrEncoder(StationInfoPtr station_, bool test_)
+   : station( station_ ), kbuff( 0 ), test( test_ )
 {
 
 };
@@ -62,12 +62,12 @@ BufrEncoder(StationInfoPtr station_)
 
 void
 BufrEncoder::
-encodeBufr( const BufrData &data )
+encodeBufr( const BufrData &data, int ccx_ )
 { /* pbopen variables */
   int fd;
   int error;
   string filename;
-
+  ccx = ccx_;
   obstime = data.time();
 
 /* bufren variables */
@@ -94,7 +94,7 @@ encodeBufr( const BufrData &data )
   }
 
   /* Set input parameters to bufren */
-  set_sec0134( station, data, ksec0, ksec1, ksec3, ksec4);
+  set_sec0134( station, data, ccx, ksec0, ksec1, ksec3, ksec4);
   set_values( station, data, values, cvals, kdata);
 
   ktdlen = 1;
@@ -138,6 +138,52 @@ saveToFile( const std::string &path, bool overwrite )const
    ostringstream ost;
    ofstream      f;
    struct stat   sbuf;
+   string header;
+   string tmpOwner=station->owner();
+   char tmp[16];
+   char dateTime[16];
+
+   if( ! test ) {
+      sprintf( dateTime,"%02d%02d", obstime.day(), obstime.hour() );
+      header="\r\r\nZCZC\r\r\n";
+      switch( obstime.hour() ){
+      case 0:
+      case 6:
+      case 12:
+      case 18:
+         header+="ISMD";
+            break;
+      case 3:
+      case 9:
+      case 15:
+      case 21:
+         header+="ISID";
+            break;
+      default:
+         header+="ISND";
+            break;
+      }
+
+      header+="NO";
+      sprintf(tmp,"%02c ", station->list().c_str() );
+      header+=tmp;
+
+      while( tmpOwner.length()<4)
+         tmpOwner.insert(0, " ");
+
+      tmpOwner+=" ";
+      header+=tmpOwner;
+      header+=dateTime;
+      header.append("00");
+
+      if( ccx > 0 ) {
+         sprintf(tmp, " CC%c", 'A'+(ccx-1));
+         header+=tmp;
+      }
+      header+="\r\r\n";
+   }
+
+
 
    if(stat( path.c_str(), &sbuf)<0){
       ostringstream o;
@@ -185,7 +231,12 @@ saveToFile( const std::string &path, bool overwrite )const
 
       if( f.is_open() ){
          LOGINFO("Writing BUFR to file: " << ost.str());
+         f << header;
          f.write( reinterpret_cast< ofstream::char_type* >( kbuff ), kbuflen*4 );
+
+         if( ! test )
+            f << "\r\n\r\r\n\n\n\n\n\n\n\nNNNN\r\n";
+
          f.close();
          return;
       }
@@ -200,6 +251,7 @@ namespace {
 bool
 set_sec0134( const StationInfoPtr station,
              const DataElement &data,
+             int ccx,
              int *ksec0, int *ksec1, int *ksec3, int *ksec4)
 {
   int year, month, day, hour, minute, second; /* Termin time */ 
@@ -215,7 +267,7 @@ set_sec0134( const StationInfoPtr station,
   ksec1[ 0] = 22;      /* Length of section 1 (bytes). Must be set by user */ 
   ksec1[ 1] = 4;       /* BUFR edition number */
   ksec1[ 2] = 88;      /* Originating centre */
-  ksec1[ 3] = 0;       /* Update sequence number */
+  ksec1[ 3] = ccx;       /* Update sequence number */
   ksec1[ 4] = 0;       /* Flag (presence of section 2) */
   ksec1[ 5] = 0;       /* BUFR message type */
   ksec1[ 6] = 0;       /* BUFR message subtype */

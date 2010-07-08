@@ -55,7 +55,7 @@ clean()
   createtime_ = miTime::nowTime();
   crc_        = 0;
   ccx_        = 0;
-  wmomsg_.erase();     
+  data_.erase();
 
   createSortIndex();
 }
@@ -84,8 +84,8 @@ set(const dnmi::db::DRow &r_)
 	crc_=atoi(buf.c_str());
       }else if(*it=="ccx"){
 	ccx_=atoi(buf.c_str());
-      }else if(*it=="wmomsg"){
-	wmomsg_=buf;
+      }else if(*it=="data"){
+	data_=buf;
       }else{
 	LOGWARN("TblBufr::set .. unknown entry:" << *it << std::endl);
       }
@@ -108,7 +108,7 @@ set(const TblBufr &s)
   createtime_ = s.createtime_;
   crc_        = s.crc_;
   ccx_        = s.ccx_;
-  wmomsg_     = s.wmomsg_;     
+  data_     = s.data_;
 
   createSortIndex();
 
@@ -124,14 +124,14 @@ set(int                  wmono,
     const miutil::miTime &createtime,    
     int                  crc,
     int                  ccx,
-    const std::string    &wmomsg)
+    const std::string    &data)
 {
   wmono_      = wmono;  
   obstime_    = obtime;  
   createtime_ = createtime;
   crc_        = crc;
   ccx_        = ccx;
-  wmomsg_     = wmomsg;     
+  data_     = data;
 
   createSortIndex();
 
@@ -150,7 +150,7 @@ toSend() const
       << quoted(createtime_)<< ","        
       << crc_               << ","         
       << ccx_               << ","          
-      << quoted(wmomsg_)    
+      << quoted(data_)
       << ")";      
 
   return ost.str();
@@ -180,7 +180,7 @@ toUpdate()const
   ost << "SET createtime=" << quoted(createtime_) << "," 
       <<            "crc=" << crc_                << ","
       <<            "ccx=" << ccx_                << ","
-      <<         "wmomsg=" << quoted(wmomsg_)     
+      <<         "data=" << quoted(data_)
       << " WHERE   wmono=" << wmono_ << " AND "
       << "       obstime=" << quoted(obstime_.isoTime());
 

@@ -232,7 +232,7 @@ getBufrAndOutput(Options &opt,
     }
     
     if(opt.outputdir.empty()){
-      cout << it->wmomsg() << endl;
+      cout << it->data() << endl;
       continue;
     }
 
@@ -263,7 +263,7 @@ getBufrAndOutput(Options &opt,
       continue;
     }
 
-    fst <<  it->wmomsg() << endl;
+    fst <<  it->data() << endl;
     fst.close();
   }
 }

@@ -117,10 +117,9 @@ class BufrWorker {
    * \param wmomsg The wmo message to save to disk.
    * \param ccx The CC? indicator.
    */
-  void saveTo(StationInfoPtr inf,  
-	      const miutil::miTime &obstime, 
-	      const std::string &wmomsg, 
-	      int ccx);
+  void saveTo(StationInfoPtr info,
+              BufrData  &bufr,
+              int ccx ) const;
 
   bool checkContinuesTypes(ObsEvent            &event, 
 			   const DataEntryList &data)const;
