@@ -74,6 +74,7 @@ public:
    * @exception BufrEncodeException on error.
    */
    void encodeBufr( const BufrData &data, int ccx );
+   const char* getBufr( int &nSize )const;
    void saveToFile( const std::string &path, bool overwrite=false )const;
    void saveToFile()const;
 };

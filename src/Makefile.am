@@ -51,7 +51,7 @@ kvbufrd_CPPFLAGS = $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
 kvbufrd_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
-                -L/disk1/local/lib -lbufr -lgfortran \
+                -L$(HOME)/lib -lbufr -lgfortran \
                  -lm         
 EXTRA_DIST = kvbufrd_schema.sql 
 
@@ -110,6 +110,6 @@ kvBufrEncodeTest_CPPFLAGS = $(AM_CPPFLAGS) -DTESTDATADIR="\""$(top_srcdir)/src/t
 
 kvBufrEncodeTest_LDADD =  -lgtest \
 						  $(kvcpp_LIBS) \
-						  -L/disk1/local/lib -lbufr -lgfortran \
+						  -L$(HOME)/lib -lbufr -lgfortran \
 						  -lm
 						  

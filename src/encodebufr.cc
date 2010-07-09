@@ -115,6 +115,18 @@ encodeBufr( const BufrData &data, int ccx_ )
   }
 }
 
+const char*
+BufrEncoder::
+getBufr( int &nSize )const
+{
+   nSize = 0;
+   if( ! kbuff )
+      return 0;
+
+   nSize = kbuflen*4;
+   return reinterpret_cast<char*>( kbuff );
+}
+
 void
 BufrEncoder::
 saveToFile()const
