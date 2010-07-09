@@ -43,7 +43,7 @@ DIRS="/usr/share/kvbufrd
       /var/lib/kvalobs/service
       /var/lib/kvalobs/service/subscribers"     
 
-SQLLITE_DB="/var/lib/kvbufrd/kvbufrd.sqlite"
+SQLLITE_DB="/var/lib/kvbufrd/kvbufr.sqlite"
 
 case "$1" in
   configure)
