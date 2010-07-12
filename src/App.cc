@@ -137,6 +137,12 @@ App(int argn, char **argv,
 
   setenv( "BUFR_TABLES", bufr_tables.c_str(), 1 );
 
+  if( getenv( "BUFR_TABLES" ) ) {
+     LOGINFO("BUFR_TABLES='" << getenv( "BUFR_TABLES") << "'." );
+  } else {
+     LOGINFO("Failed to set BUFR_TABLES.");
+  }
+
   if( bufr_tables_names ) {
      IDLOGINFO("main", "BUFR_TABLE_NAMES=true" );
      setenv( "PRINT_TABLE_NAMES", "true", 1 );
