@@ -112,15 +112,16 @@ App(int argn, char **argv,
 
   valElem=conf->getValue("bufr_tables");
 
-  if( !valElem.empty() ) {
-     string t=valElem[0].valAsString();
+  if( !valElem.empty() )
+     bufr_tables=valElem[0].valAsString();
 
-     if( ! t.empty() && t[0] == '/' ) {
-        if( *bufr_tables.rbegin() != '/')
-           t += '/';
-
-        bufr_tables = t;
+  if( ! bufr_tables.empty() ) {
+     if( bufr_tables[0] != '/' ) {
+        LOGERROR( "bufr_tables must be an absolute path '" << bufr_tables << "'.");
      }
+
+     if( *bufr_tables.rbegin() != '/')
+        bufr_tables += '/';
   }
 
   valElem=conf->getValue("bufr_tables_names");
