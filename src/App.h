@@ -433,7 +433,11 @@ public:
   void checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
 					 const std::string &logid="");
 
-  void getStations();
+  /**
+   * Update thes stationList with station information from kvalobs.
+   * @param stationList The list to be updated.
+   */
+  void getStations( StationList &stationList )const;
 
 };
 

@@ -371,6 +371,8 @@ readStationInfo(miutil::conf::ConfSection *conf)
 
   stationList=tmpList;
   
+  getStations( stationList );
+
   return true;
 }
 
@@ -396,7 +398,9 @@ readStationInfo(std::list<StationInfoPtr> &stList)const
     LOGWARN("Cant parse the BUFFER configuration!" << endl
 	    << "File: <" << confFile << ">" << endl );
     ret = false;
-  }    
+  } else {
+     getStations( stList );
+  }
 
   delete conf;
 
@@ -1167,18 +1171,18 @@ checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
 
 void
 App::
-getStations()
+getStations( StationList &stationList_ )const
 {
    std::list<kvalobs::kvStation> kvStationList;
    std::list<kvalobs::kvStation>::iterator sit;
    string name;
 
    try {
-      if( ! getKvStations( kvStationList ) )
+      if( ! const_cast<App*>(this)->getKvStations( kvStationList ) )
          return;
 
-      for( IStationList it=stationList.begin();
-           it != stationList.end();
+      for( IStationList it=stationList_.begin();
+           it != stationList_.end();
            it++ )
       {
          for( sit=kvStationList.begin(); sit!=kvStationList.end(); ++sit )
