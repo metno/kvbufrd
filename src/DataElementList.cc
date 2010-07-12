@@ -260,9 +260,17 @@ void
 DataElement::
 writeTo( std::ostream &header, std::ostream &data )const
 {
-   for( KvParamList::const_iterator it = params.begin(); it != params.end(); ++it ) {
-      header << (it==params.begin()?"obstime":",") << (*it)->name();
-      data << (it==params.begin()?time():",");
+   KvParamList::const_iterator it = params.begin();
+
+   if( it != params.end()  ) {
+      header << "obstime";
+      data << time().isoTime( true, true );
+      ++it;
+   }
+
+   for( ; it != params.end(); ++it ) {
+      header << "," << (*it)->name();
+      data << ",";
 
       if( **it != FLT_MAX )
          data << **it;
@@ -557,15 +565,15 @@ writeTo( std::ostream &o )const
    if( it != dataList.rend() ) {
       it->writeTo( header, data );
       o << header.str() << endl;
-      o << data.str();
+      o << data.str() << endl;
       ++it;
    }
 
    for( ; it != dataList.rend(); ++it ) {
-      it->writeTo( header, data );
-      o << data.str();
       header.str("");
       data.str("");
+      it->writeTo( header, data );
+      o << data.str() << endl;
    }
 }
 
