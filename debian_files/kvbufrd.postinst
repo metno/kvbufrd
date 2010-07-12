@@ -88,7 +88,7 @@ case "$1" in
     #Setup the agregator and kvsynop cache databases if they 
     #do not exist.
 
-    if [ ! -f /var/lib/kvbufrd/kvbufferd.sqlite ]; then
+    if [ ! -f $SQLLITE_DB ]; then
 		/usr/bin/kvbufrd_initdb
     fi
 
