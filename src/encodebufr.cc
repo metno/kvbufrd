@@ -129,7 +129,7 @@ getBufr( int &nSize )const
 
 void
 BufrEncoder::
-saveToFile()const
+saveToFile( bool overwrite)const
 {
    if( ! kbuff ) {
       ostringstream o;
@@ -138,7 +138,7 @@ saveToFile()const
    }
 
    if( station->copy() ) {
-      saveToFile( station->copyto(), false );
+      saveToFile( station->copyto(), overwrite );
    }
 }
 
@@ -154,6 +154,7 @@ saveToFile( const std::string &path, bool overwrite )const
    string tmpOwner=station->owner();
    char tmp[16];
    char dateTime[16];
+   int  ccx_=ccx;
 
    if( ! test ) {
       sprintf( dateTime,"%02d%02d", obstime.day(), obstime.hour() );
@@ -177,7 +178,7 @@ saveToFile( const std::string &path, bool overwrite )const
       }
 
       header+="NO";
-      sprintf(tmp,"%02c ", station->list().c_str() );
+      sprintf(tmp,"%02.2s ", station->list().c_str() );
       header+=tmp;
 
       while( tmpOwner.length()<4)
@@ -188,8 +189,10 @@ saveToFile( const std::string &path, bool overwrite )const
       header+=dateTime;
       header.append("00");
 
-      if( ccx > 0 ) {
-         sprintf(tmp, " CC%c", 'A'+(ccx-1));
+      if( ccx_ > 0 ) {
+         if( ccx_ >= 10 )
+            ccx_ = 9;
+         sprintf(tmp, " CC%c", 'A'+(ccx_-1));
          header+=tmp;
       }
       header+="\r\r\n";
@@ -219,23 +222,32 @@ saveToFile( const std::string &path, bool overwrite )const
 
    for( int i = 0; i<100; ++i ) {
       ost.str("");
-      if( i == 0 ) {
-         ost << path << "/" << station->wmono() << "-"
-               << setfill('0') << setw(2) << obstime.day() << setw(2)
-               << obstime.hour()
-               << ".bufr";
-      }else{
-         ost << path << "/" <<  station->wmono() << "-"
-               << setfill('0') << setw(2) << obstime.day() << setw(2)
-               << obstime.hour() << "-" << setfill('0') << setw(2) << i
-               << ".bufr";
-      }
+      ost << path << "/" << station->wmono() << "-"
+                    << setfill('0') << setw(2) << obstime.day() << setw(2)
+                    << obstime.hour();
+
+      if( ccx_ > 0 )
+         ost << "-ccx" << setfill('0') << setw(2) << ccx_;
+
+      if( i !=0 )
+         ost << "-" << setfill('0') << setw(2) << i;
+
+      ost << ".bufr";
 
       if( stat( ost.str().c_str(), &sbuf) < 0 ) {
          if( !(errno == ENOENT || errno == ENOTDIR) ) {
             ostringstream o;
             o << "Unexpected error from stat: errno: " << errno ;
             throw BufrEncodeException( o.str() );
+         }
+      } else if( ! overwrite ) {
+         //If the file is
+         miutil::miTime today(miutil::miTime::nowTime() );
+         miutil::miTime t( sbuf.st_mtime );
+
+         if( t.date() >= today.date() ) {
+            LOGDEBUG( "A bufr <"  << ost.str() << "> exist and is produced today and overwrite is false.");
+            continue;
          }
       }
 
@@ -251,8 +263,16 @@ saveToFile( const std::string &path, bool overwrite )const
 
          f.close();
          return;
+      } else {
+         string filename=ost.str();
+         ost.str("");
+         ost << "Failed to write BUFR file for station '" << station->wmono() << "' obstime: " << obstime
+             << ". File <" << filename << ">.";
+         LOGDEBUG( ost.str() << " Overwrite: "<< (overwrite?"true":"false") );
+         throw BufrEncodeException( ost.str() );
       }
    }
+
    ost.str("");
    ost << "Failed to write BUFR file for station '" << station->wmono() << "' obstime: " << obstime;
    throw BufrEncodeException( ost.str() );

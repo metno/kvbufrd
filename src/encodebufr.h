@@ -75,8 +75,35 @@ public:
    */
    void encodeBufr( const BufrData &data, int ccx );
    const char* getBufr( int &nSize )const;
+
+   /**
+    * @see saveToFile( const std::string &path, bool overwrite=false )const
+    * @param path
+    * @param overwrite
+    */
    void saveToFile( const std::string &path, bool overwrite=false )const;
-   void saveToFile()const;
+
+   /**
+    * Save the file to the path defined by copyto in the configuration file.
+    *
+    * The name of the file is generated to be: wmono-ddhh(-cxxN)(-I).bufr
+    *
+    *
+    * Where N is a number in the range 1-9 and I is a sequence number to make the name uniqe.
+    * dd is the day in month and hh is the hour in the day.
+    *
+    * The -cxxN part is missing if the cxx is 0. The (-I) part is missing if not needed.
+    *
+    * If overwrite is true the file is unconditionally overwritten if it exist. If overwrite
+    * is false the file is not overwritten if the modification time is the same as today, and
+    * overwritten if the file is before today.
+    *
+    * The file is only written if the "copy" parameter in the configuration file is set to true for
+    * the station.
+    *
+    * @param overwrite
+    */
+   void saveToFile( bool overwrite=false )const;
 };
 
 #endif
