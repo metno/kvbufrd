@@ -128,7 +128,8 @@ heightVisability() const
    if( heightVisability_ != INT_MAX )
       return heightVisability_;
 
-   return height_;
+   //Average height of male norwegians military recruits was 179.9 cm in 2006. ssb.no
+   return 1.8;
 }
 
 int
@@ -137,6 +138,7 @@ heightTemperature()const
 {
    if( heightTemperature_ != INT_MAX )
       return  heightTemperature_;
+
 
    return 2;
 }
