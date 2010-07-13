@@ -1192,7 +1192,9 @@ getStations( StationList &stationList_ )const
          if( sit == kvStationList.end() )
             continue;
 
+         cerr << "App::getStation: incomming height: " << sit->height() << " Station: " << (*it)->wmono() << endl;
          (*it)->height( sit->height() );
+         cerr << "App::getStation: station height: " << (*it)->height() << " Station: " << (*it)->wmono() << endl;
          (*it)->latitude( sit->lat() );
          (*it)->longitude( sit->lon() );
 
