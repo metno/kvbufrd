@@ -97,6 +97,8 @@ encodeBufr( const BufrData &data, int ccx_ )
   set_sec0134( station, data, ccx, ksec0, ksec1, ksec3, ksec4);
   set_values( station, data, values, cvals, kdata);
 
+  LOGDEBUG("Bufr values: " << values.log() );
+
   ktdlen = 1;
   ktdlst[0] = 307080;
 
