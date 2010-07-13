@@ -28,6 +28,7 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+#include <ctype.h>
 #include <list>
 #include <string>
 #include <sstream>
@@ -1176,6 +1177,7 @@ getStations( StationList &stationList_ )const
    std::list<kvalobs::kvStation> kvStationList;
    std::list<kvalobs::kvStation>::iterator sit;
    string name;
+   string newName;
 
    try {
       if( ! const_cast<App*>(this)->getKvStations( kvStationList ) )
@@ -1196,13 +1198,26 @@ getStations( StationList &stationList_ )const
          (*it)->latitude( sit->lat() );
          (*it)->longitude( sit->lon() );
 
-         //TODO: Must convert all national characters Å->A, Ø->O, Æ->E.
+         //TODO: The conversion here is NOT UTF8 compatible. It must be changed.
          name = sit->name();
 
-         if( name.length() > 20 ) //Truncate the name if it is longer than 20 chars long.
-            name = name.substr( 0, 20 );
+         for( string::iterator nit = name.begin(); nit != name.end(); ++nit ) {
+            if( *nit == 'Å' || *nit == 'å' )
+               newName += "A";
+            else if( *nit == 'Æ' || *nit == 'æ' )
+               newName += "E";
+            else if( *nit == 'Ø' || *nit == 'ø' )
+               newName += "O";
+            else if ( islower( *nit ) )
+               newName += toupper( *nit );
+            else
+               newName += *nit;
+         }
 
-         (*it)->name( name );
+         if( newName.length() > 20 ) //Truncate the name if it is longer than 20 chars long.
+            newName = newName.substr( 0, 20 );
+
+         (*it)->name( newName );
       }
    }
    catch( ... ) {

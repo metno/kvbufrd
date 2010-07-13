@@ -141,6 +141,7 @@ doBufr( StationInfoPtr  info,
    bufr.PR     = pressure( bufrData[0].PR );
    bufr.UU     = bufrData[0].UU;
    bufr.VV     = bufrData[0].VV;
+   bufr.HL     = bufrData[0].HL;
 
    if( bufrData[0].typeidList.size() == 1 ) {
       if( *bufrData[0].typeidList.begin() == 312 )
@@ -170,32 +171,6 @@ doBufr( StationInfoPtr  info,
 
 
 
-
-/*
-** Returnerar  ein streng ; anten "SM","SI",el. "SN"
-*/
-void 
-Bufr::Tid_Kode(std::string &kode, int time)
-{
-   switch(time){
-   case 0:
-   case 6:
-   case 12:
-   case 18:
-     	kode="SM";
-      	break;
-   case 3:
-   case 9:
-   case 15:
-   case 21:
-      	kode="SI";
-      	break;
-   default:
-      	kode="SN";
-      	break;
-   }
-   return;
-} /* LagTidKode */
 
 
 
@@ -275,34 +250,6 @@ Bufr::windAtObstime( const DataElement &data, DataElement &res )
       }
    }
 }
-
-/*
-** Lagar temperaturkode p� format SnTTT der Sn er forteikn
-*/
-void 
-Bufr::Temp_Kode(std::string &kode, float temp)
-{
- 	char stmp[30];
-  
-  	kode="////";
-  
-  	/* Ugyldige verdiar */
-  	if(temp==FLT_MAX)
-    	return;
-  
-  
-  	if((temp>=0.0)&&(temp<200.0)){
-    	/* Positiv verdi (0 som prefix)*/
-    	sprintf(stmp,"0%03.0f",fabs(rint((double)temp*10)));
-  	}else if((temp<0.0)&&(temp>-200.0)){
-    	/* Negativ verdi (1 som prefix)*/
-    	sprintf(stmp,"1%03.0f",fabs(rint((double)temp*10)));
-  	}else{
-    	return;
-  	}
-
-  	kode=stmp;
-} /* Temp_Kode */
 
 
 /*
@@ -962,19 +909,6 @@ Bufr::Hoyde_Sikt_Kode(std::string &kode, const DataElement &data)
 }
 
 
-/*
-**
-*/
-int 
-Bufr::ix_Kode(const std::string &str)
-{
-  	if(str.length()!=2 || !(isdigit(str[1])))
-    	return 6;
-  
-  	return atoi(&(str.c_str())[1]);
-
-} /* ix_Kode */
-
 
 /**
  * Funksjonen lager koden 7wwW1W2 i seksjon 1, samt setter ix.
@@ -1048,43 +982,6 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
  }
  
 
-/**
- * B�rge Moe
- * 1999.06.10
- *
- * Endringer av tolkning av Esss gitt av klimaavdelingen.
- * En Esss kode p� formen /000 skal ikke tas med i bufren
- * men den angir en lovlig verdi for koden. I f�lge bufr
- * kodingen (spec) er ikke sss=0 en lovlig verdi, men er tillatt
- * slik at man kan sende Esss hele �ret, ogs� n�r det ikke er
- * sn�.
- */
-bool 
-Bufr::SjekkEsss(std::string &kode, const std::string &str)
-{
-  	std::string::const_iterator it;
-  
-  	if(str.length()!=4 || str=="////" || str=="/000"){
-    	kode="";
-    	return false;
-  	}else{
-    	it=str.begin();
-    
-    	while(it!=str.end()){
-     		if(!(isdigit(*it) || *it == '/')){
-				kode="";
-				return false;
-     		}
-     		it++;
-    	}
-    
-    	kode=" 4";
-    	kode+=str;
-  	}
-  
-  	return true;
-}
-
 
 /**
  * Coding of E'sss.
@@ -1146,67 +1043,6 @@ doEsss( const DataElementList &data, BufrData &res  )
    res.EM = (int) floor((double) data[0].EM + 0.5 );
 }
 
-
-/*
-** Sjekkar kode for grupper med 4 teikn;
-** maa innehalde anten tal eller '/'
-*/
-bool
-Bufr::Sjekk_Gruppe(int grpNr, std::string &kode, const std::string &str)
-{
-  	std::string::const_iterator it;
-  	char tmp[30];
-  
-  	//std::cerr <<  "Sjekk_Gruppe (in) grpnr(" << grpNr << "): " << str << "\n";  
-
-  	if(str.length()!=4 || str=="////"){
-    	kode="";
-    	//std::cerr <<  "Sjekk_Gruppe (err1): \n";  
-    	return false;
-  	}else{
-    	it=str.begin();
-    	while(it!=str.end()){
-      
-     		if(!isdigit(*it) && *it != '/'){
-				kode="";
-				//std::cerr <<  "Sjekk_Gruppe (err2): \n";  
-				return false;
-     		}
-      		it++;
-    	}
-  
-    	sprintf(tmp," %1d%4s",grpNr,str.c_str());
-    	kode=tmp;
-  	}
-  
-  	//std::cerr <<  "Sjekk_Gruppe (ut): " << kode << "\n";  
-  	return true;
-
-} /* Sjekk_Gruppe */
-
-/*
-** Sjekkar den manuelt inntasta koda "ir"
-*/
-int 
-Bufr::Vis_ir_Kode(const std::string &str)
-{
-   	std::string s;
-   	std::string::iterator it;
-
-   	s=str;
-   	it=s.begin();
-   
-   	if(it==s.end())
-    	return 4;
-   
-   	if(s.size()!=2 || !(isdigit(*it)))
-      	return 4;
-
-   	s.erase(1);
-
-   	return atoi(s.c_str());
-
-} /* Vis_ir_Kode */
 
 bool 
 Bufr::seaTemp( const DataElement &data, DataElement &res)

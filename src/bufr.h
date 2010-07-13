@@ -67,12 +67,7 @@ class Bufr
     std::string    errorMsg;
     EPrecipitation precipitationParam;
 
-    int  Vis_ir_Kode(const std::string &str);
-    bool Sjekk_Gruppe(int grpNr, std::string &kode, const std::string &str);
-    void Tid_Kode(std::string &kode, int time);
     void windAtObstime( const DataElement &data, DataElement &res );
-    void Naa_Vind_Kode(std::string &kode, float retn, float hast);
-    void Temp_Kode(std::string &kode, float temp);
     
 
     /**
@@ -120,10 +115,8 @@ class Bufr
     bool pressureTrend( const DataElement &data, DataElement &res );
     void cloudCower( const DataElement &data, DataElement &res );
     void Hoyde_Sikt_Kode(std::string &kode, const DataElement &data);
-    int  ix_Kode(const std::string &str);
     void doGeneralWeather( const DataElementList &data, BufrData &res );
     bool seaTemp( const DataElement &data, DataElement &res );
-    bool SjekkEsss(std::string &kode, const std::string &str);
     void doEsss( const DataElementList &data, BufrData &res );
     void soilTemp( const DataElementList &data, BufrData &res );
 
