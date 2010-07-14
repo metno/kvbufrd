@@ -1217,6 +1217,9 @@ getStations( StationList &stationList_ )const
          if( newName.length() > 20 ) //Truncate the name if it is longer than 20 chars long.
             newName = newName.substr( 0, 20 );
 
+         LOGDEBUG( "Set station name:    '" << name << "'" << endl <<
+                   "Set station newName: '" << newName << "'");
+
          (*it)->name( newName );
       }
    }

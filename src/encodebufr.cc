@@ -513,6 +513,7 @@ void set_values(const StationInfoPtr station,
    values[idx++] = miss;  /* 004024 Time period or displacement */
    values[idx++] = miss;  /* 012049 Temperature change over period specified */
 
+   LOGDEBUG( "Encodebufr name: " << station->name() );
    strcpy(cvals[0], station->name().c_str() );/* Station or site name */
 
    /* Delayed replication factors */
