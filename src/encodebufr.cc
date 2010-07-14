@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
 #include <errno.h>
 #include <milog/milog.h>
 #include "bufrencodehelper.h"
@@ -514,6 +515,7 @@ void set_values(const StationInfoPtr station,
    values[idx++] = miss;  /* 012049 Temperature change over period specified */
 
    LOGDEBUG( "Encodebufr name: " << station->name() );
+   memset( cvals[0], '\0', 20 );
    strcpy(cvals[0], station->name().c_str() );/* Station or site name */
 
    /* Delayed replication factors */
