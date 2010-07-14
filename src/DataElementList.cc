@@ -72,7 +72,8 @@ using namespace std;
 
 boost::thread_specific_ptr<KvParamList> DataElement::pParams( noFreeCleanUp );
 
-DataElement::DataElement():
+DataElement::
+DataElement():
     TA( params, "TA", 211 ),
     TAM( params, "TAM", 212 ),
     TAN( params, "TAN", 213),
@@ -171,7 +172,8 @@ DataElement( const DataElement &p):
 }
 
 DataElement&
-DataElement::operator=(const DataElement &p)
+DataElement::
+operator=(const DataElement &p)
 {
 
    if(this != &p) {
@@ -204,7 +206,8 @@ DataElement::operator=(const DataElement &p)
 }
 
 
-DataElement::~DataElement()
+DataElement::
+~DataElement()
 {
 }
 
@@ -258,7 +261,7 @@ setData( int  param,
 
 void
 DataElement::
-writeTo( std::ostream &header, std::ostream &data )const
+writeTo( std::ostream &header, std::ostream &data, bool withId )const
 {
    KvParamList::const_iterator it = params.begin();
 
@@ -270,6 +273,10 @@ writeTo( std::ostream &header, std::ostream &data )const
 
    for( ; it != params.end(); ++it ) {
       header << "," << (*it)->name();
+
+      if( withId )
+         header << ":" << (*it)->id();
+
       data << ",";
 
       if( **it != FLT_MAX )
@@ -292,29 +299,22 @@ crc() const
 }
 
 
-DataElementList::DataElementList()
+DataElementList::
+DataElementList()
 {
 } 
 
-DataElementList::DataElementList(const DataElementList &d)
+DataElementList::
+DataElementList(const DataElementList &d)
 {
   dataList=d.dataList;
 }
 
 
-DataElementList::~DataElementList()
+DataElementList::
+~DataElementList()
 {
 }  
-  
-//BufrDataList&
-//BufrDataList::operator=(const BufrDataList &rhs)
-//{
-//  if(this!=&rhs){
-//    dataList=rhs.dataList;
-//  }
-//}
-
-
 
 miutil::miTime
 DataElementList::
@@ -328,11 +328,12 @@ firstTime() const
     return it->time();
 
 }
-  /**
-   * \exception 
-   */
+/**
+* \exception
+*/
 const DataElementList::DataElementProxy
-DataElementList::operator[](const miutil::miTime &t)const
+DataElementList::
+operator[](const miutil::miTime &t)const
 {
   //std::cerr << "const [miTime] operator\n";
   
@@ -340,7 +341,8 @@ DataElementList::operator[](const miutil::miTime &t)const
 }
 
 DataElementList::DataElementProxy
-DataElementList::operator[](const miutil::miTime &t)
+DataElementList::
+operator[](const miutil::miTime &t)
 {
   //std::cerr << "[miTime] operator\n";
   
@@ -351,7 +353,8 @@ DataElementList::operator[](const miutil::miTime &t)
  * \exception  
  */
 const DataElement&
-DataElementList::operator[](const int index)const
+DataElementList::
+operator[](const int index)const
 {
   CIDataElementList it=dataList.begin();
 
@@ -370,7 +373,8 @@ DataElementList::operator[](const int index)const
 }
 
 DataElement&
-DataElementList::operator[](const int index)
+DataElementList::
+operator[](const int index)
 {
    IDataElementList it=dataList.begin();
 
@@ -389,7 +393,8 @@ DataElementList::operator[](const int index)
 }
 
 int 
-DataElementList::nContinuesTimes()const
+DataElementList::
+nContinuesTimes()const
 {
   CIDataElementList it=dataList.begin();
   miutil::miTime  prevT;
@@ -420,9 +425,10 @@ DataElementList::nContinuesTimes()const
 
   
 bool      
-DataElementList::insert(const miutil::miTime &timeIndex,
-		      const DataElement            &sd,
-		      bool                 replace)
+DataElementList::
+insert(const miutil::miTime &timeIndex,
+       const DataElement            &sd,
+       bool                 replace)
 {
   IDataElementList it=dataList.begin();
 
@@ -452,7 +458,8 @@ DataElementList::insert(const miutil::miTime &timeIndex,
 
 
 IDataElementList
-DataElementList::find(const miutil::miTime &from)
+DataElementList::
+find(const miutil::miTime &from)
 {
   IDataElementList it=dataList.begin();
 
@@ -469,7 +476,8 @@ DataElementList::find(const miutil::miTime &from)
 
 
 CIDataElementList
-DataElementList::find(const miutil::miTime &from)const
+DataElementList::
+find(const miutil::miTime &from)const
 {
   CIDataElementList it=dataList.begin();
 
@@ -485,7 +493,8 @@ DataElementList::find(const miutil::miTime &from)const
 }
 
 DataElementList
-DataElementList::subData( const miutil::miTime &from, const miutil::miTime &to ) const
+DataElementList::
+subData( const miutil::miTime &from, const miutil::miTime &to ) const
 {
    DataElementList retList;
 
@@ -557,13 +566,13 @@ operator DataElement()const //rvalue use
 
 void
 DataElementList::
-writeTo( std::ostream &o )const
+writeTo( std::ostream &o, bool withId )const
 {
    ostringstream header, data;
    TDataElementList::const_reverse_iterator it=dataList.rbegin();
 
    if( it != dataList.rend() ) {
-      it->writeTo( header, data );
+      it->writeTo( header, data, withId );
       o << header.str() << endl;
       o << data.str() << endl;
       ++it;
@@ -572,7 +581,7 @@ writeTo( std::ostream &o )const
    for( ; it != dataList.rend(); ++it ) {
       header.str("");
       data.str("");
-      it->writeTo( header, data );
+      it->writeTo( header, data, false );
       o << data.str() << endl;
    }
 }

@@ -169,7 +169,7 @@ private:
   	bool undef()const{ return time_.undef() || nSet == 0;}
   	boost::uint16_t crc() const;
 
-  	void writeTo( std::ostream &header, std::ostream &data  )const;
+  	void writeTo( std::ostream &header, std::ostream &data, bool withId=true  )const;
 
   	friend std::ostream& operator<<(std::ostream& ost,
 									  const DataElement& sd);
@@ -282,7 +282,7 @@ public:
 
   	DataElementList& operator=( const DataElementList &rhs );
 
-  	void writeTo( std::ostream &o )const;
+  	void writeTo( std::ostream &o, bool withId=true )const;
 
   	friend std::ostream& operator<<(std::ostream& ost,
 				 					  const DataElementList& sd);
