@@ -1200,6 +1200,7 @@ getStations( StationList &stationList_ )const
 
          //TODO: The conversion here is NOT UTF8 compatible. It must be changed.
          name = sit->name();
+         newName.erase();
 
          for( string::iterator nit = name.begin(); nit != name.end(); ++nit ) {
             if( *nit == 'Å' || *nit == 'å' )
