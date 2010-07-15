@@ -101,7 +101,7 @@ encodeBufr( const BufrData &data, int ccx_ )
   LOGDEBUG("Bufr values: " << values.log() );
 
   ktdlen = 1;
-  ktdlst[0] = 307080;
+  ktdlst[0] = 307079;
 
   /* Encode BUFR message */
   bufren_( ksec0, ksec1, ksec2, ksec3, ksec4, &ktdlen, ktdlst,
@@ -307,13 +307,13 @@ set_sec0134( const StationInfoPtr station,
   ksec1[ 5] = 0;       /* BUFR message type */
   ksec1[ 6] = 0;       /* BUFR message subtype */
   ksec1[ 7] = 0;       /* Version number of local table used */
-  ksec1[ 8] = obsTime.hour();
+  ksec1[ 8] = obsTime.year();
   ksec1[ 9] = obsTime.month();
   ksec1[10] = obsTime.day();
   ksec1[11] = obsTime.hour();
   ksec1[12] = obsTime.min();
   ksec1[13] = 0;       /* BUFR master table */
-  ksec1[14] = 13;      /* Version number of master table used */
+  ksec1[14] = 14;      /* Version number of master table used */
   ksec1[15] = 0;       /* Originating sub-centre */
   ksec1[16] = 0;       /* International sub-category (see common table C-13) */
   ksec1[17] = obsTime.sec();
@@ -332,6 +332,7 @@ void set_values(const StationInfoPtr station,
 {
    double miss = RVIND;
    int idx, i;
+   int iDelay=0;
 
    float t_ww;          /* Present and past weather */
    miutil::miTime obstime = data.time();
@@ -347,7 +348,7 @@ void set_values(const StationInfoPtr station,
    /* Fixed surface station identification, time, horizontal and vertical coordinates */
    values[0].toBufr( "II", static_cast<int>( station->wmono()/1000 ) ) ;        /* 001001 WMO block number  II*/
    values[1].toBufr( "iii", static_cast<int>( station->wmono()%1000 ) );        /* 001002 WMO station number  iii*/
-   values[2] = 1020;      /* Pointer to cvals (001015 Station or site name) */
+   values[2] = miss; //1020;      /* Pointer to cvals (001015 Station or site name) */
    values[3].toBufr( "ix", data.IX );       /* 002001 Type of station ix*/
    values[4].toBufr( "Year", obstime.year() );      /* 004001 Year */
    values[5].toBufr( "Month", obstime.month() );     /* 004002 Month */
@@ -399,6 +400,7 @@ void set_values(const StationInfoPtr station,
    /* Looks like Norwegian stations do not report these parameters, except for
     * those sending synop. So the loop below can probably be simplified */
    values[36].toBufr( "num-cloud-layers", static_cast<int>(data.cloudExtra.size()) ); /* 031001 Delayed descriptor replication factor */
+   kdata[iDelay++] = static_cast<int>(data.cloudExtra.size()); /* Number of cloud layers */
    idx = 37;
    for (i=0; i < data.cloudExtra.size(); i++) {
       values[idx++].toBufr( "vsci[i]", data.cloudExtra[i].vsci );/* 008002 Vertical significance (surface observations) */
@@ -407,39 +409,94 @@ void set_values(const StationInfoPtr station,
       values[idx++].toBufr( "hshs[i]", data.cloudExtra[i].hshs );/* 020013 Height of base of cloud */
    }
 
-   /* Clouds with bases below station level */
+   /* 3 02 036
+    * Clouds with bases below station level */
    /* These are not reported for Norwegian observations. Are we allowed to set
     * delayed replication to 0? */
-   values[idx++] = 1;     /* 031001 Delayed descriptor replication factor */
+   values[idx++] = 0;     /* 031001 Delayed descriptor replication factor */
+   kdata[iDelay++] = 0;
+#if 0
    values[idx++] = miss;  /* 008002 Vertical significance (surface observations) */
    values[idx++] = miss;  /* 020011 Cloud amount (N') */
    values[idx++] = miss;  /* 020012 Cloud type (C') */
    values[idx++] = miss;  /* 020014 Height of top of cloud (H'H') */
-   values[idx++] = miss;  /* 020014 Height of top of cloud (Ct) */
+   values[idx++] = miss;  /* 020017 Height of top of cloud (Ct) */
+#endif
 
-   /* Direction of cloud drift (56DLDMDH) */
+   /* 3 02 047
+    * Direction of cloud drift (56DLDMDH)
+    */
+   values[idx++] = 0;     /* 031000 Delayed descriptor replication factor */
+   kdata[iDelay++] = 0;
+#if 0
    values[idx++] = miss;  /* 008002 Vertical significance (surface observations) */
    values[idx++] = miss;  /* 020054 True direction from which clouds are moving */
    values[idx++] = miss;  /* 008002 Vertical significance (surface observations) */
    values[idx++] = miss;  /* 020054 True direction from which clouds are moving */
    values[idx++] = miss;  /* 008002 Vertical significance (surface observations) */
    values[idx++] = miss;  /* 020054 True direction from which clouds are moving */
+#endif
    values[idx++] = RVIND; /* 008002 Vertical significance, set to missing to cancel the previous value */
 
-   /* Direction and elevation of clouds (57CDaec) */
+   /* 3 02 048
+    * Direction and elevation of clouds (57CDaec)
+    */
+   values[idx++] = 0;     /* 0 31 000 replication factor. */
+   kdata[iDelay++] = 0;
+#if 0
    values[idx++] = miss;  /* 005021 Bearing or azimuth */
    values[idx++] = miss;  /* 007021 Elevation (see note 2) */
    values[idx++] = miss;  /* 020012 Cloud type */
    values[idx++] = RVIND; /* 005021 Bearing or azimuth, set to missing to cancel the previous value */
    values[idx++] = RVIND; /* 007021 Elevation, set to missing to cancel the previous value */
+#endif
 
-   /* State of ground, snow depth, ground minimum temperature */
+   /* 3 02 037
+    *  State of ground, snow depth, ground minimum temperature
+    */
    values[idx++].toBufr( "EE", data.EM );    /* 020062 State of the ground (with or without snow) */
    values[idx++].toBufr( "sss", data.SA );   /* 013013 Total snow depth */
    values[idx++].toBufr( "snTgTg", data.TGN );/* 012113 Ground minimum temperature, past 12 hours */
 
-   /* Basic synoptic "period data" */
+   /* State of the sea. */
+   values[idx++] = (data.SG.valid()?1:0); /* 0 31 000 replication factor. */
+   kdata[iDelay++]=(data.SG.valid()?1:0);
+   if( data.SG.valid() ) {
+      values[idx++].toBufr( "S", data.SG );  // 0 22 061 State of sea
+      values[idx++].toBufr( "VS", FLT_MAX ); // 0 20 058 Visibility seawards from coastal station
+   }
 
+   /* 3 02 056
+    * Sea/water surface temperature, method of measurement, and depth below sea surface
+    */
+   values[idx++] = (data.TW.valid()?1:0); /* 0 31 000 replication factor. */
+   kdata[iDelay++]=(data.TW.valid()?1:0);
+   if( data.TW.valid() ) {
+      values[idx++].toBufr( "Method of measurement", 14 );          //0 02 038 Method of sea/water temperature measurement. 14 = Other
+      values[idx++].toBufr("Sea/water depth of measurement", 0.5f ); //0 07 063 Depth below sea/water surface.
+      values[idx++].toBufr("TW", data.TW );                         //0 22 043 Sea/water temperature
+      values[idx++].toBufr("Sea/water depth of measurement", FLT_MAX ); //0 07 063 Depth below sea/water surface.
+   }                                                                    //(Set to missing to cancel the previous value. (What does this mean?)
+
+   /* 3 02 055 Icing and Ice.
+    * At the momment we do not report this.
+    */
+   values[idx++] = 0;  /* 0 31 000 replication factor. */
+   kdata[iDelay++]=0;
+#if 0
+   values[idx++].toBufr( "EsEs", FLT_MAX );  //0 20 031 Ice deposit (thicknes).
+   values[idx++].toBufr( "Rs", FLT_MAX );    //0 20 032 Rate of ice accreation.
+   values[idx++].toBufr( "Is", FLT_MAX );    //0 20 033 Cause of ice accreation.
+   values[idx++].toBufr( "Ci", FLT_MAX );    //0 20 034 Sea ice concentration.
+   values[idx++].toBufr( "Bi", FLT_MAX );    //0 20 035 Amount and type of ice.
+   values[idx++].toBufr( "Zi", FLT_MAX );    //0 20 036 Ice situation.
+   values[idx++].toBufr( "Si", FLT_MAX );    //0 20 037 Ice development.
+   values[idx++].toBufr( "Di", FLT_MAX );    //0 20 038 Bearing of ice edge.
+#endif
+
+   /* 3 02 043
+    * Basic synoptic "period data"
+    */
    /* Present and past weather */
    values[idx++].toBufr( "ww", data.ww );    /* 020003 Present weather (see note 1) */
    values[idx++].toBufr( "t_ww", t_ww );  /* 004024 Time period or displacement (for W1 and W2) */
@@ -456,7 +513,6 @@ void set_values(const StationInfoPtr station,
    values[idx++].toBufr( "h_P", station->heightPrecip() );   /* 007032 Height of sensor above local ground (for precipitation measurement) */
    values[idx++].toBufr( "tR[0] (Regional)", data.precipRegional.hTr ); /* 004024 Time period or displacement (regional) */
    values[idx++].toBufr( "RRR[0] (Regional)", data.precipRegional.RR );/* 013011 Total precipitation/total water equivalent */
-
    values[idx++].toBufr( "tR[1] (National)",  data.precipNational.hTr ); /* 004024 Time period or displacement (national) */
    values[idx++].toBufr( "RRR[1] (National)", data.precipNational.RR );/* 013011 Total precipitation/total water equivalent */
 
@@ -488,12 +544,17 @@ void set_values(const StationInfoPtr station,
    values[idx++].toBufr( "ff911[1]", data.FG ) ;/* 011041 Maximum wind gust speed */
    values[idx++].toBufr( "h_W", station->heightWind() ); /* 007032 Height of sensor above local ground (set to missing to cancel the previous value) */
 
-   /* Evaporation data */
+   /* 3 02 044
+    * Evaporation data */
    values[idx++] = miss;  /* 004024 Time period or displacement */
    values[idx++] = miss;  /* 002004 Type of instrumentation for evaporation measurement or crop type for evaporation */
    values[idx++] = miss;  /* 013033 Evaporation/evapotranspiration */
 
-   /* Radiation data (1 hour and 24 hour period) */
+   /* 3 02 045
+    * Radiation data (1 hour and 24 hour period) */
+   values[idx++] = 0;
+   kdata[iDelay++]=0;
+#if 0
    values[idx++] = -1;    /* 004024 Time period or displacement */
    values[idx++] = miss;  /* 014002 Long-wave radiation, integrated over period specified */
    values[idx++] = miss;  /* 014004 Short-wave radiation, integrated over period specified */
@@ -508,19 +569,25 @@ void set_values(const StationInfoPtr station,
    values[idx++] = miss;  /* 014028 Global solar radiation (high accuracy), integrated over period specified */
    values[idx++] = miss;  /* 014029 Diffuse solar radiation (high accuracy), integrated over period specified */
    values[idx++] = miss;  /* 014030 Direct solar radiation (high accuracy), integrated over period specified */
+#endif
 
-   /* Temperature change (54g0sndT) */
+   /* 3 02 046
+    * Temperature change (54g0sndT) */
+   values[idx++] = 0;
+   kdata[iDelay++]=0;
+#if 0
    values[idx++] = miss;  /* 004024 Time period or displacement */
    values[idx++] = miss;  /* 004024 Time period or displacement */
    values[idx++] = miss;  /* 012049 Temperature change over period specified */
+#endif
 
    LOGDEBUG( "Encodebufr name: " << station->name() );
    memset( cvals[0], '\0', 20 );
    strcpy(cvals[0], station->name().c_str() );/* Station or site name */
 
    /* Delayed replication factors */
-   kdata[0] = static_cast<int>(data.cloudExtra.size()); /* Number of cloud layers */
-   kdata[1] = 1;          /* Number of cloud layers with bases below station level */
+
+   //kdata[1] = 1;          /* Number of cloud layers with bases below station level */
 }
 
 

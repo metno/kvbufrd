@@ -141,7 +141,7 @@ private:
   	KvParam X1WD;
   	KvParam X2WD;
   	KvParam X3WD;
-  	KvParam S;
+  	KvParam SG;
   	KvParam AA;
   	KvParam ITZ;
   	KvParam ITR;

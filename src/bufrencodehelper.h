@@ -151,9 +151,19 @@ public:
    Values():miss( RVIND ), values_(0), size_( 0 ){};
 
    Values( int i ):miss( RVIND ), size_( i )  {
-      values_ = new double[size_];
-      for( int i=0; i<size_; ++i )
-         values_[i] = miss;
+      try{
+         values_ = new double[size_];
+         for( int i=0; i<size_; ++i )
+            values_[i] = miss;
+      }
+      catch( ... ) {
+         values_=0;
+      }
+   }
+
+   ~Values() {
+      if( values_ )
+         delete[] values_;
    }
 
    const Proxy operator[]( int index )const
@@ -244,9 +254,19 @@ public:
    Kvalues():miss( INT_MAX ), values_(0), size_( 0 ){};
 
    Kvalues( int i ):miss( INT_MAX ), size_( i )  {
-      values_ = new int[size_];
-      for( int i=0; i<size_; ++i )
-         values_[i] = miss;
+      try{
+         values_ = new int[size_];
+         for( int i=0; i<size_; ++i )
+            values_[i] = miss;
+      }
+      catch( ... ) {
+         values_ = 0;
+      }
+   }
+
+   ~Kvalues() {
+      if( values_)
+         delete[] values_;
    }
 
    const Proxy operator[]( int index )const

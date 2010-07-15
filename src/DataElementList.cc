@@ -8,7 +8,8 @@
   Contact information:
   Norwegian Meteorological Institute
   Box 43 Blindern
-  0313 OSLO
+  0313 OSLO19
+
   NORWAY
   email: kvalobs-dev@met.no
 
@@ -140,7 +141,7 @@ DataElement():
     X1WD( params, "X1WD", 44 ),
     X2WD( params, "X2WD", 45 ),
     X3WD( params, "X3WD", 46 ),
-    S( params, "S", 19 ),
+    SG( params, "SG", 19 ),
     AA( params, "AA", 1 ),
     ITZ( params, "ITZ", 13 ),
     ITR( params, "ITR", 12 ),
@@ -663,7 +664,7 @@ operator<<(std::ostream& ost, const DataElement& sd)
 //      << "skyerEkstra4    (_4NsChshs): " << (sd.cloudExtra.size()>3?sd.cloudExtra[3]:DataElement::CloudDataExtra()) << endl
       << "gressTemp             (TGN): " << sd.TGN               << endl
       << "gressTemp_12       (TGN_12): " << sd.TGN_12            << endl
-      << "sjoegang               (_S): " << sd.S                 << endl
+      << "sjoegang               (_S): " << sd.SG                 << endl
       << "Naar intraff FX       (ITZ): " << sd.ITZ               << endl;
   
   return ost;
