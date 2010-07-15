@@ -65,7 +65,7 @@ class BufrEncoder {
 
 public:
    BufrEncoder( StationInfoPtr station_, bool test=false );
-
+   ~BufrEncoder();
    /**
    * Encode the data in a BufrData to a bufr message.
    *

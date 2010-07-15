@@ -60,7 +60,12 @@ BufrEncoder(StationInfoPtr station_, bool test_)
 
 };
 
-
+BufrEncoder::
+~BufrEncoder()
+{
+   if( kbuff )
+      delete[] kbuff;
+}
 void
 BufrEncoder::
 encodeBufr( const BufrData &data, int ccx_ )
@@ -348,7 +353,7 @@ void set_values(const StationInfoPtr station,
    /* Fixed surface station identification, time, horizontal and vertical coordinates */
    values[0].toBufr( "II", static_cast<int>( station->wmono()/1000 ) ) ;        /* 001001 WMO block number  II*/
    values[1].toBufr( "iii", static_cast<int>( station->wmono()%1000 ) );        /* 001002 WMO station number  iii*/
-   values[2] = miss; //1020;      /* Pointer to cvals (001015 Station or site name) */
+   values[2] = 1020;      /* Pointer to cvals (001015 Station or site name) */
    values[3].toBufr( "ix", data.IX );       /* 002001 Type of station ix*/
    values[4].toBufr( "Year", obstime.year() );      /* 004001 Year */
    values[5].toBufr( "Month", obstime.month() );     /* 004002 Month */
