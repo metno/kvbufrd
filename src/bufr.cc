@@ -142,6 +142,7 @@ doBufr( StationInfoPtr  info,
    bufr.UU     = bufrData[0].UU;
    bufr.VV     = bufrData[0].VV;
    bufr.HL     = bufrData[0].HL;
+   bufr.SG     = c2kelvin( bufrData[0].SG );
 
    if( bufrData[0].typeidList.size() == 1 ) {
       if( *bufrData[0].typeidList.begin() == 312 )
