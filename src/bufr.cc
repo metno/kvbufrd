@@ -142,7 +142,8 @@ doBufr( StationInfoPtr  info,
    bufr.UU     = bufrData[0].UU;
    bufr.VV     = bufrData[0].VV;
    bufr.HL     = bufrData[0].HL;
-   bufr.SG     = c2kelvin( bufrData[0].SG );
+   bufr.TW     = c2kelvin( bufrData[0].TW );
+   bufr.SG     = bufrData[0].SG;
 
    if( bufrData[0].typeidList.size() == 1 ) {
       if( *bufrData[0].typeidList.begin() == 312 )
@@ -153,6 +154,7 @@ doBufr( StationInfoPtr  info,
       bufr.IX = 2;
    }
 
+   doSeaOrWaterTemperature( bufrData, bufr );
    soilTemp( bufrData, bufr );
    doEsss( bufrData, bufr );
    doGeneralWeather( bufrData, bufr );
@@ -1045,16 +1047,14 @@ doEsss( const DataElementList &data, BufrData &res  )
 }
 
 
-bool 
-Bufr::seaTemp( const DataElement &data, DataElement &res)
+void
+Bufr::
+doSeaOrWaterTemperature(  const DataElementList &data, BufrData &res )
 {
-  
-  	if(data.time().hour()!=12 || data.TW == FLT_MAX ) {
-  	   res.TW = FLT_MAX;
-  	   return false;
+  	if( data[0].TW != FLT_MAX || data[0].TWF != FLT_MAX ) {
+  	   res.TW = data[0].TW!=FLT_MAX?data[0].TW:data[0].TWF;
+  	   res.TW = c2kelvin( res.TW );
   	}
-  
-  	return true;
 }
 
 /**

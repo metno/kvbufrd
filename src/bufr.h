@@ -116,9 +116,9 @@ class Bufr
     void cloudCower( const DataElement &data, DataElement &res );
     void Hoyde_Sikt_Kode(std::string &kode, const DataElement &data);
     void doGeneralWeather( const DataElementList &data, BufrData &res );
-    bool seaTemp( const DataElement &data, DataElement &res );
     void doEsss( const DataElementList &data, BufrData &res );
     void soilTemp( const DataElementList &data, BufrData &res );
+    void doSeaOrWaterTemperature(  const DataElementList &data, BufrData &res );
 
 
  public:
