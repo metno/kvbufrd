@@ -113,6 +113,7 @@ private:
   	KvParam  PP;  
   	KvParam  TAN_12;
   	KvParam TAX_12;
+  	KvParam TWF;
   	KvParam TW;
   	KvParam  TWM;
   	KvParam  TWN;
