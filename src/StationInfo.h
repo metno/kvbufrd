@@ -516,6 +516,7 @@ class StationInfo
 };
 
 typedef boost::shared_ptr<StationInfo> StationInfoPtr;
+typedef std::list<StationInfoPtr> StationList;
 
 std::ostream& operator<<(std::ostream& ost,
 			 const StationInfo& sd);
