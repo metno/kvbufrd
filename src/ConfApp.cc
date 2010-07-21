@@ -36,6 +36,7 @@
 #include "ConfApp.h"
 
 using namespace std;
+using namespace miutil::conf;
 
 ConfApp::
 ConfApp( int argn, char **argv,
@@ -86,11 +87,12 @@ void
 ConfApp::
 createGlobalLogger(const std::string &id)
 {
+   ostringstream ost;
+
+   ost << kvPath("logdir") << "/" << id << ".log";
+
    try{
       milog::FLogStream *logs=new milog::FLogStream(2, 204800); //200k
-      std::ostringstream ost;
-
-      ost << kvPath("logdir") << "/kvbufr/" << id << ".log";
 
       if(logs->open(ost.str())){
          if(!milog::LogManager::createLogger(id, logs)){
@@ -101,7 +103,6 @@ createGlobalLogger(const std::string &id)
 
          return;
       }else{
-         LOGERROR("Cant open the logfile <" << ost.str() << ">!");
          cerr << "*** Cant create log file <" << ost.str() << ">." << endl;
          delete logs;
          exit(1);

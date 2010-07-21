@@ -28,47 +28,53 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __tblStInfoSysParam_h__
-#define __tblStInfoSysParam_h__
+#ifndef __tblStInfoSysSensorInfo_h__
+#define __tblStInfoSysSensorInfo_h__
 
 #include <kvalobs/kvDbBase.h>
 
-class TblStInfoSysParam : public kvalobs::kvDbBase {
+class TblStInfoSysSensorInfo : public kvalobs::kvDbBase {
+   int equipmentid_;
    int paramid_;
-   std::string name_;
-   int hlevel_scale_;
-   int standard_hlevel_;
-   int standard_physical_height_;
+   int stationid_;
+   int sensor_;
+   int hlevel_;
+   bool operational_;
+   int physical_height_;
+   int measurement_methodid_;
 
   void createSortIndex();
 
 public:
-  TblStInfoSysParam() {clean();}
-  TblStInfoSysParam(const TblStInfoSysParam &param){ set(param);}
-  TblStInfoSysParam(const dnmi::db::DRow &r){set(r);}
+  TblStInfoSysSensorInfo() {clean();}
+  TblStInfoSysSensorInfo(const TblStInfoSysSensorInfo &info){ set( info );}
+  TblStInfoSysSensorInfo(const dnmi::db::DRow &r){set(r);}
 
   bool set(const dnmi::db::DRow&);
-  bool set(const TblStInfoSysParam &param );
+  bool set(const TblStInfoSysSensorInfo &param );
 
-  TblStInfoSysParam& operator=(const TblStInfoSysParam &param ){
-                  if( &param != this)
-                     set(param);
+  TblStInfoSysSensorInfo& operator=(const TblStInfoSysSensorInfo &info ){
+                  if( &info != this)
+                     set(info);
                   return *this;
                 }
 
   void clean();
 
-  const char* tableName() const {return "param";}
+  const char* tableName() const {return "sensor_info";}
 
   miutil::miString toSend()    const { return ""; } //NOT used
   miutil::miString toUpdate()  const{ return ""; }  //NOT used
   miutil::miString uniqueKey() const;
 
-  int paramid() const { return paramid_ ; }
-  std::string name() const { return name_; }
-  int hlevel_scale() const { return hlevel_scale_;}
-  int standard_hlevel() const { return standard_hlevel_; }
-  int standard_physical_height()const { return standard_physical_height_;}
+  int equipmentid()const { return equipmentid_; }
+  int paramid() const { return paramid_; }
+  int stationid() const { return stationid_; }
+  int sensor() const { return sensor_; }
+  int hlevel() const { return hlevel_; }
+  bool operational() const { return operational_; }
+  int physical_height() const { return physical_height_; }
+  int measurement_methodid() const { return measurement_methodid_; }
 };
 
 #endif

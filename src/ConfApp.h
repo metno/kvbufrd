@@ -32,9 +32,9 @@
 #ifndef __ConfApp_h__
 #define __ConfApp_h__
 
-#include <kvdb/dbdrivermgr.h>
 #include <list>
 #include <puTools/miTime.h>
+#include <kvdb/dbdrivermgr.h>
 #include "StationInfo.h"
 
 class ConfApp
@@ -72,3 +72,5 @@ public:
    void                 releaseDbConnection(dnmi::db::Connection *con);
 
 };
+
+#endif
