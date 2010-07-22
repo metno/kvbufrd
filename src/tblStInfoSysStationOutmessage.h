@@ -28,53 +28,46 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __tblStInfoSysSensorInfo_h__
-#define __tblStInfoSysSensorInfo_h__
+
+#ifndef __tblStInfoSysStationOutmessage_h__
+#define __tblStInfoSysStationOutmessage_h__
 
 #include <kvalobs/kvDbBase.h>
 
-class TblStInfoSysSensorInfo : public kvalobs::kvDbBase {
-   int equipmentid_;
-   int paramid_;
+class TblStInfoSysStationOutmessage : public kvalobs::kvDbBase {
    int stationid_;
-   int sensor_;
-   int hlevel_;
-   bool operational_;
-   int physical_height_;
-   int measurement_methodid_;
+   std::string productcoupling_;
+   std::string coupling_delay_;
+   std::string priority_precip_;
 
   void createSortIndex();
 
 public:
-  TblStInfoSysSensorInfo() {clean();}
-  TblStInfoSysSensorInfo(const TblStInfoSysSensorInfo &info){ set( info );}
-  TblStInfoSysSensorInfo(const dnmi::db::DRow &r){set(r);}
+  TblStInfoSysStationOutmessage() {clean();}
+  TblStInfoSysStationOutmessage(const TblStInfoSysStationOutmessage &station){ set( station );}
+  TblStInfoSysStationOutmessage(const dnmi::db::DRow &r){set(r);}
 
-  bool set(const dnmi::db::DRow&);
-  bool set(const TblStInfoSysSensorInfo &param );
+  bool set(const dnmi::db::DRow &r);
+  bool set(const TblStInfoSysStationOutmessage &station );
 
-  TblStInfoSysSensorInfo& operator=(const TblStInfoSysSensorInfo &info ){
-                  if( &info != this)
-                     set(info);
+  TblStInfoSysStationOutmessage& operator=(const TblStInfoSysStationOutmessage &station ){
+                  if( &station != this)
+                     set( station );
                   return *this;
                 }
 
   void clean();
 
-  const char* tableName() const {return "sensor_info";}
+  const char* tableName() const {return "station_outmessage";}
 
   miutil::miString toSend()    const { return ""; } //NOT used
   miutil::miString toUpdate()  const{ return ""; }  //NOT used
   miutil::miString uniqueKey() const;
 
-  int equipmentid()const { return equipmentid_; }
-  int paramid() const { return paramid_; }
+  std::string couplingDelay() const { return coupling_delay_; }
+  std::string priorityPrecip() const { return priority_precip_; }
+  std::string productcoupling() const { return productcoupling_; }
   int stationid() const { return stationid_; }
-  int sensor() const { return sensor_; }
-  int hlevel() const { return hlevel_; }
-  bool operational() const { return operational_; }
-  int physicalHeight() const { return physical_height_; }
-  int measurementMethodid() const { return measurement_methodid_; }
 };
 
 #endif

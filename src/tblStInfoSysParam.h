@@ -66,9 +66,9 @@ public:
 
   int paramid() const { return paramid_ ; }
   std::string name() const { return name_; }
-  int hlevel_scale() const { return hlevel_scale_;}
-  int standard_hlevel() const { return standard_hlevel_; }
-  int standard_physical_height()const { return standard_physical_height_;}
+  int hlevelScale() const { return hlevel_scale_;}
+  int standardHlevel() const { return standard_hlevel_; }
+  int standardPhysicalHeight()const { return standard_physical_height_;}
 };
 
 #endif

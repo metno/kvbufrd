@@ -52,24 +52,85 @@ void
 TblStInfoSysSensorInfo::
 createSortIndex()
 {
+   ostringstream ost;
+
+   ost << equipmentid_ <<  paramid_<< stationid_
+       << sensor_<<   hlevel_ ;
+   sortBy_ = ost.str();
+
 }
 
 
 bool
 TblStInfoSysSensorInfo::
-set(const dnmi::db::DRow&)
+set(const dnmi::db::DRow &r_)
 {
+   db::DRow      &r=const_cast<db::DRow&>(r_);
+   bool error=false;
+   string        buf;
+   list<string>  names=r.getFieldNames();
+   list<string>::iterator it=names.begin();
+
+   for(;it!=names.end(); it++){
+      try{
+         buf=r[*it];
+
+         if(*it=="equipmentid"){
+            equipmentid_ = atoi( buf.c_str() );
+         }else if(*it=="paramid"){
+            paramid_ = atoi( buf.c_str() );
+         }else if(*it=="stationid"){
+            stationid_ = atoi( buf.c_str() );
+         }else if(*it=="sensor"){
+            sensor_ = atoi( buf.c_str() );
+         }else if(*it=="hlevel"){
+            hlevel_ = atoi( buf.c_str() );
+         }else if(*it=="operational"){
+            operational_= (!buf.empty() && ( buf[0]=='t' || buf[0]=='T'))?true:false;
+         }else if(*it=="physical_height"){
+            physical_height_ = atoi( buf.c_str() );
+         }else if(*it=="measurement_methodid"){
+            measurement_methodid_ = atoi( buf.c_str() );
+         }
+      }
+      catch(...){
+         LOGWARN("TblKeyVal: unexpected exception ..... \n");
+         error = true;
+      }
+   }
+
+   createSortIndex();
+   return !error;
+
 }
  bool
  TblStInfoSysSensorInfo::
- set(const TblStInfoSysSensorInfo &param )
+ set(const TblStInfoSysSensorInfo &info )
  {
+    equipmentid_ = info.equipmentid_;
+    paramid_ = info.paramid_;
+    stationid_ = info.stationid_;
+    sensor_ = info.sensor_;
+    hlevel_ = info.hlevel_;
+    operational_ = info.operational_;
+    physical_height_ = info.physical_height_;
+    measurement_methodid_ = info.measurement_methodid_;
+
+
  }
 
  void
  TblStInfoSysSensorInfo::
  clean()
  {
+    equipmentid_ = INT_MAX;
+    paramid_ = INT_MAX;
+    stationid_ = INT_MAX;
+    sensor_ = INT_MAX;
+    hlevel_ = INT_MAX;
+    operational_ = false;
+    physical_height_ = INT_MAX;
+    measurement_methodid_ = INT_MAX;
  }
 
 
@@ -77,5 +138,13 @@ set(const dnmi::db::DRow&)
  TblStInfoSysSensorInfo::
  uniqueKey() const
  {
+    ostringstream ost;
+
+    ost << " WHERE paramid=" << paramid_
+        << " AND equipmentid=" << equipmentid_
+        << " AND stationid=" << stationid_
+        << " AND sensor=" << sensor_
+        << " AND hlevel=" << hlevel_;
+    return ost.str();
  }
 

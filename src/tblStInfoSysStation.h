@@ -28,32 +28,33 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __tblStInfoSysSensorInfo_h__
-#define __tblStInfoSysSensorInfo_h__
+
+#ifndef __tblStInfoSysStation_h__
+#define __tblStInfoSysStation_h__
 
 #include <kvalobs/kvDbBase.h>
 
-class TblStInfoSysSensorInfo : public kvalobs::kvDbBase {
-   int equipmentid_;
-   int paramid_;
+class TblStInfoSysStation : public kvalobs::kvDbBase {
    int stationid_;
-   int sensor_;
-   int hlevel_;
-   bool operational_;
-   int physical_height_;
-   int measurement_methodid_;
+   float lat_;
+   float lon_;
+   int   hs_;
+   int   hv_;
+   int   hp_;
+   std::string name_;
+   int   wmono_;
 
   void createSortIndex();
 
 public:
-  TblStInfoSysSensorInfo() {clean();}
-  TblStInfoSysSensorInfo(const TblStInfoSysSensorInfo &info){ set( info );}
-  TblStInfoSysSensorInfo(const dnmi::db::DRow &r){set(r);}
+  TblStInfoSysStation() {clean();}
+  TblStInfoSysStation(const TblStInfoSysStation &station){ set( station );}
+  TblStInfoSysStation(const dnmi::db::DRow &r){set(r);}
 
-  bool set(const dnmi::db::DRow&);
-  bool set(const TblStInfoSysSensorInfo &param );
+  bool set(const dnmi::db::DRow &r);
+  bool set(const TblStInfoSysStation &param );
 
-  TblStInfoSysSensorInfo& operator=(const TblStInfoSysSensorInfo &info ){
+  TblStInfoSysStation& operator=(const TblStInfoSysStation &info ){
                   if( &info != this)
                      set(info);
                   return *this;
@@ -61,20 +62,21 @@ public:
 
   void clean();
 
-  const char* tableName() const {return "sensor_info";}
+  const char* tableName() const {return "station";}
 
   miutil::miString toSend()    const { return ""; } //NOT used
   miutil::miString toUpdate()  const{ return ""; }  //NOT used
   miutil::miString uniqueKey() const;
 
-  int equipmentid()const { return equipmentid_; }
-  int paramid() const { return paramid_; }
+  int hp() const { return hp_; }
+  int hs() const { return hs_; }
+  int hv() const { return hv_; }
+  float lat() const { return lat_; }
+  float lon() const { return lon_; }
+  std::string name() const { return name_; }
   int stationid() const { return stationid_; }
-  int sensor() const { return sensor_; }
-  int hlevel() const { return hlevel_; }
-  bool operational() const { return operational_; }
-  int physicalHeight() const { return physical_height_; }
-  int measurementMethodid() const { return measurement_methodid_; }
+  int wmono() const { return wmono_; }
+
 };
 
 #endif

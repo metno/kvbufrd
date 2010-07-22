@@ -35,7 +35,12 @@
 #include <list>
 #include <puTools/miTime.h>
 #include <kvdb/dbdrivermgr.h>
+#include "tblStInfoSysParam.h"
+#include "tblStInfoSysStationOutmessage.h"
 #include "StationInfo.h"
+
+typedef std::list<TblStInfoSysParam> StInfoSysParamList;
+typedef std::list<TblStInfoSysStationOutmessage> StInfoSysStationOutmessageList;
 
 class ConfApp
 {
@@ -44,11 +49,11 @@ class ConfApp
    std::string             dbConnect;
    std::string             dbDriverId;
    StationList             stationList;
-
+   StInfoSysParamList      stInfoSysParamList;
 
 public:
    ConfApp( int argn, char **argv,
-        const std::string &confFile_, miutil::conf::ConfSection *conf);
+            const std::string &confFile_, miutil::conf::ConfSection *conf);
    ~ConfApp();
 
    void createGlobalLogger(const std::string &id);
@@ -70,6 +75,9 @@ public:
     * \param con The connection to release.
     */
    void                 releaseDbConnection(dnmi::db::Connection *con);
+
+
+   void loadDataFromStInfoSys();
 
 };
 
