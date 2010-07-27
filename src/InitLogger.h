@@ -31,7 +31,14 @@
 #ifndef __initlogger_h__
 #define __initlogger_h__
 
+/**
+ *
+ * @param argn
+ * @param argv
+ * @param logname
+ */
+
 void
-InitLogger(int argn, char **argv, const std::string &logname);
+InitLogger(int &argn, char **argv, const std::string &logname);
 
 #endif

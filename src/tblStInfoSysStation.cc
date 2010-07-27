@@ -77,7 +77,10 @@ set(const dnmi::db::DRow &r_)
          }else if(*it=="name"){
             name_=buf;
          }else if(*it=="wmono"){
-            wmono_ = atoi( buf.c_str() );
+            if( !buf.empty() )
+               wmono_ = atoi( buf.c_str() );
+            else
+               wmono_ = INT_NULL;
          }
       }
       catch(...){

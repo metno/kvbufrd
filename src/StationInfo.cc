@@ -71,7 +71,20 @@ StationInfo():
   	cacheReloaded48_(true)
 {
 }
-
+StationInfo::
+StationInfo( int wmono ):
+   height_( INT_MAX ),
+   heightVisability_( INT_MAX ),
+   heightTemperature_( INT_MAX ),
+   heightPressure_( INT_MAX ),
+   heightPrecip_( INT_MAX ),
+   heightWind_( INT_MAX ),
+   latitude_( FLT_MAX ),
+   longitude_( FLT_MAX ),
+   wmono_( wmono ),
+   cacheReloaded48_(true)
+{
+}
 StationInfo::
 StationInfo(const StationInfo &i)
 {

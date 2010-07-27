@@ -35,12 +35,17 @@
 #include <list>
 #include <puTools/miTime.h>
 #include <kvdb/dbdrivermgr.h>
+#include <kvalobs/kvDbGate.h>
 #include "tblStInfoSysParam.h"
 #include "tblStInfoSysStationOutmessage.h"
+#include "tblStInfoSysStation.h"
+#include "tblStInfoSysSensorInfo.h"
 #include "StationInfo.h"
 
 typedef std::list<TblStInfoSysParam> StInfoSysParamList;
 typedef std::list<TblStInfoSysStationOutmessage> StInfoSysStationOutmessageList;
+typedef std::list<TblStInfoSysStation> StInfoSysStationList;
+typedef std::list<TblStInfoSysSensorInfo> StInfoSysSensorInfoList;
 
 class ConfApp
 {
@@ -50,10 +55,12 @@ class ConfApp
    std::string             dbDriverId;
    StationList             stationList;
    StInfoSysParamList      stInfoSysParamList;
+   dnmi::db::Connection    *connection;
+
+   dnmi::db::Connection* getDbConnection();
 
 public:
-   ConfApp( int argn, char **argv,
-            const std::string &confFile_, miutil::conf::ConfSection *conf);
+   ConfApp( int argn, char **argv, miutil::conf::ConfSection *conf);
    ~ConfApp();
 
    void createGlobalLogger(const std::string &id);
@@ -64,7 +71,7 @@ public:
     *
     * \return A database connection.
     */
-   dnmi::db::Connection *getNewDbConnection();
+   dnmi::db::Connection* getNewDbConnection();
 
    /**
     * \brief release a connection to the database.
@@ -77,7 +84,10 @@ public:
    void                 releaseDbConnection(dnmi::db::Connection *con);
 
 
-   void loadDataFromStInfoSys();
+   bool loadStationOutmessage( StInfoSysStationOutmessageList &stationOutmessages );
+   bool loadParams( StInfoSysParamList &params );
+   bool loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors );
+
 
 };
 

@@ -44,99 +44,101 @@
 
 class StationInfoParse
 {
-  struct DefaultVal{
-    std::string copyto;
-    bool        copy;
-    std::string owner;
-    std::list<std::string> precipitation;
-    std::string list;
-    milog::LogLevel loglevel;
 
-    StationInfo::TDelayList delay; 
-    
-    DefaultVal(): copy(false), loglevel(milog::INFO) {
-    }
+public:
+   StationInfoParse(){}
+   ~StationInfoParse(){}
 
-    DefaultVal(const DefaultVal &dv)
-      :copyto(dv.copyto), copy(dv.copy),owner(dv.owner),
-	 precipitation(dv.precipitation), list(dv.list),
-	 loglevel(dv.loglevel)
-    {
-    }
-    
-    DefaultVal& operator=(const DefaultVal &dv){
-      if(&dv!=this){
-	copyto=dv.copyto; 
-	copy=dv.copy;
-	owner=dv.owner;
-	precipitation=dv.precipitation;
-	list=dv.list;
-	delay=dv.delay;
-	loglevel=dv.loglevel;
+   struct DefaultVal{
+      std::string copyto;
+      bool        copy;
+      std::string owner;
+      std::list<std::string> precipitation;
+      std::string list;
+      milog::LogLevel loglevel;
+
+      StationInfo::TDelayList delay;
+
+      DefaultVal(): copy(false), loglevel(milog::INFO) {
       }
-      return *this;
-    }
 
-    bool valid()const;
+      DefaultVal(const DefaultVal &dv)
+      :copyto(dv.copyto), copy(dv.copy),owner(dv.owner),
+       precipitation(dv.precipitation), list(dv.list),
+       loglevel(dv.loglevel)
+      {
+      }
+
+      DefaultVal& operator=(const DefaultVal &dv){
+         if(&dv!=this){
+            copyto=dv.copyto;
+            copy=dv.copy;
+            owner=dv.owner;
+            precipitation=dv.precipitation;
+            list=dv.list;
+            delay=dv.delay;
+            loglevel=dv.loglevel;
+         }
+         return *this;
+      }
+
+      bool valid()const;
    };
-   
+
    bool doWmoDefault(miutil::conf::ConfSection *stationConf);
 
    std::string doDefList(miutil::conf::ValElementList &vl,
-			 int wmono);
+                         int wmono);
 
    std::string doDefOwner(miutil::conf::ValElementList &vl,
-			  int wmono);
-   
+                          int wmono);
+
    std::list<std::string> doDefPrecip(miutil::conf::ValElementList &vl,
-				      int wmono);
+                                      int wmono);
 
    milog::LogLevel doDefLogLevel(miutil::conf::ValElementList &vl,
-				 int wmono);
+                                 int wmono);
 
    bool doDefCopy(miutil::conf::ValElementList &vl,
-		  int wmono);
+                  int wmono);
 
    std::string doDefCopyto(miutil::conf::ValElementList &vl,
-			   int wmono);
+                           int wmono);
 
    StationInfo::TDelayList doDefDelay(miutil::conf::ValElementList &vl, 
-				      int wmono);
-   
+                                      int wmono);
+
    bool doStationid(const std::string &key,
-		    miutil::conf::ValElementList &vl, 
-		    StationInfo &st);
-   
+                    miutil::conf::ValElementList &vl,
+                    StationInfo &st);
+
    bool doDelay(const std::string &key,
-		miutil::conf::ValElementList &vl, 
-		StationInfo &st);
-   
+                miutil::conf::ValElementList &vl,
+                StationInfo &st);
+
 
    bool doPrecip(const std::string &key,
-		 miutil::conf::ValElementList &vl, 
-		 StationInfo &st);
-  
-  
+                 miutil::conf::ValElementList &vl,
+                 StationInfo &st);
+
+
    bool doTypePri(const std::string &key,
-		  miutil::conf::ValElementList &vl, 
-		  StationInfo &st);
+                  miutil::conf::ValElementList &vl,
+                  StationInfo &st);
 
    void   doInt( int &i, const miutil::conf::ValElementList &val );
    void doFloat( float &f, const miutil::conf::ValElementList &val );
 
 
    StationInfo* parseSection(miutil::conf::ConfSection *stationConf, 
-			     int wmono);
-   
+                             int wmono);
+
    DefaultVal defVal;
 
- public:
-  StationInfoParse(){}
-  ~StationInfoParse(){}
-  
-  bool parse(miutil::conf::ConfSection *stationConf,
-	     std::list<StationInfoPtr> &stationList);
-  
+
+   bool parse(miutil::conf::ConfSection *stationConf,
+              std::list<StationInfoPtr> &stationList);
+
 };
 
 

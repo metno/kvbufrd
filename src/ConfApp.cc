@@ -36,19 +36,17 @@
 #include "ConfApp.h"
 
 using namespace std;
+using namespace kvalobs;
 using namespace miutil::conf;
 
 ConfApp::
-ConfApp( int argn, char **argv,
-         const std::string &confFile_, miutil::conf::ConfSection *conf)
+ConfApp( int argn, char **argv, miutil::conf::ConfSection *conf)
+   : connection( 0 )
 {
    ValElementList valElem;
    string         val;
 
-   createGlobalLogger("kvbufrconf");
-   milog::LogManager::setDefaultLogger( "kvbufrconf" );
-
-   valElem=conf->getValue("database.driver");
+   valElem=conf->getValue("database.dbdriver");
 
    if( valElem.empty() ) {
      LOGFATAL("No <database.driver> in the configurationfile!");
@@ -57,10 +55,13 @@ ConfApp( int argn, char **argv,
 
    dbDriver=valElem[0].valAsString();
 
+   if( ! dbDriver.empty() &&  dbDriver[0]!='/' && dbDriver[0]!='.' ) //This count also for ..
+      dbDriver = kvPath("pkglibdir") + "/db/" + dbDriver;
+
    LOGINFO("Loading driver for database engine <" << dbDriver << ">!\n");
 
    if(!dbMgr.loadDriver(dbDriver, dbDriverId)){
-     LOGFATAL("Can't load driver <" << dbDriver << endl
+     LOGFATAL("Can't load driver <" << dbDriver << ">" << endl
          << dbMgr.getErr() << endl
          << "Check if the driver is in the directory $KVALOBS/lib/db???");
 
@@ -116,6 +117,23 @@ createGlobalLogger(const std::string &id)
 
 dnmi::db::Connection*
 ConfApp::
+getDbConnection()
+{
+   if( connection )
+      return connection;
+
+   connection = getNewDbConnection();
+
+   if( ! connection ) {
+      LOGFATAL( "Cant create a connection to the database." );
+      exit( 1 );
+   }
+
+   return connection;
+}
+
+dnmi::db::Connection*
+ConfApp::
 getNewDbConnection()
 {
   dnmi::db::Connection *con;
@@ -140,3 +158,67 @@ releaseDbConnection(dnmi::db::Connection *con)
   dbMgr.releaseConnection(con);
 }
 
+bool
+ConfApp::
+loadStationOutmessage( StInfoSysStationOutmessageList &stationOutmessages )
+{
+   dnmi::db::Connection *con = getDbConnection();
+   kvDbGate gate( con );
+
+   gate.select( stationOutmessages );
+
+   if( gate.getError() != kvDbGate::NoError ) {
+      LOGERROR( "DB: Failed to load StationOutmessage. '" << gate.getErrorStr() << "'.");
+      return false;
+   }
+
+   return true;
+}
+
+bool
+ConfApp::
+loadParams( StInfoSysParamList &params )
+{
+   dnmi::db::Connection *con = getDbConnection();
+   kvDbGate gate( con );
+
+   gate.select( params );
+
+   if( gate.getError() != kvDbGate::NoError ) {
+      LOGERROR( "DB: Failed to load Param. '" << gate.getErrorStr() << "'.");
+      return false;
+   }
+
+   return true;
+}
+
+bool
+ConfApp::
+loadStationData( int stationid, TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors )
+{
+   dnmi::db::Connection *con = getDbConnection();
+   kvDbGate gate( con );
+   ostringstream q;
+   StInfoSysStationList stations;
+
+   q << " WHERE stationid=" << stationid << " AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)";
+
+   gate.select( stations, q.str() );
+
+   if( stations.empty() )
+      return false;
+
+   if( stations.size() > 1 ) {
+      LOGWARN( "More than one record for the station <" << stationid << "> was selected from the 'station' table in stinfosys."
+               << endl << " Using the first selected.");
+   }
+
+   station = *stations.begin();
+
+   q.str("");
+   q << " WHERE stationid=" << stationid << " AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL) AND operational=true";
+
+   gate.select( sensors, q.str() );
+
+   return true;
+}

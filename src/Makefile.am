@@ -79,11 +79,16 @@ kvbufrdparse_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 kvbufrdparse_LDADD =  $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
                      -lm
                         
-kvbufrconf_SOURCES = tblStInfoSysParam.h tblStInfoSysParam.cc \
+kvbufrconf_SOURCES = StationInfo.cc StationInfo.h \
+                     StationInfoParse.cc StationInfoParse.h \
+                     tblStInfoSysParam.h tblStInfoSysParam.cc \
 					 tblStInfoSysSensorInfo.h tblStInfoSysSensorInfo.cc \
 					 tblStInfoSysStation.h tblStInfoSysStation.cc \
 					 tblStInfoSysStationOutmessage.h tblStInfoSysStationOutmessage.cc \
+					 checkfile.h checkfile.cc \
+					 ConfMaker.h ConfMaker.cc \
 					 ConfApp.h ConfApp.cc \
+					 InitLogger.cc InitLogger.h \
 					 kvbufrconf.cc
 kvbufrconf_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 kvbufrconf_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \

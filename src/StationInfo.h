@@ -376,6 +376,7 @@ class StationInfo
   StationInfo();
 
  public:
+  StationInfo( int wmono );
   StationInfo(const StationInfo &);
 
   ~StationInfo();
