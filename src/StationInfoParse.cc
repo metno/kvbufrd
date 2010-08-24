@@ -759,12 +759,13 @@ doStationid(const std::string &key,
 bool
 StationInfoParse::
 doDelay(const std::string &key,
-      miutil::conf::ValElementList &vl, StationInfo &st)
+      miutil::conf::ValElementList &vl, StationInfo &st,
+      bool mayUseDefaultValues )
 {
 
    st.delayList_=doDefDelay(vl, st.wmono());
 
-   if(st.delayList_.empty()){
+   if(st.delayList_.empty() && mayUseDefaultValues ){
       LOGWARN("Nol value for <delay> in WMO section " << st.wmono()
             << " using default!");
       st.delayList_=defVal.delay;

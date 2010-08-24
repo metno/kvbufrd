@@ -39,6 +39,7 @@
 #include <checkfile.h>
 #include "InitLogger.h"
 #include "ConfApp.h"
+#include "ConfMaker.h"
 
 
 using namespace std;
@@ -75,26 +76,9 @@ main( int argn, char **argv )
    }
 
    ConfApp app( argn, argv, conf );
-   StInfoSysStationOutmessageList wmoList;
-   TblStInfoSysStation station;
-   StInfoSysSensorInfoList sensors;
+   ConfMaker confMaker( app );
 
-   app.loadStationOutmessage( wmoList );
-
-   for( StInfoSysStationOutmessageList::const_iterator it=wmoList.begin(); it != wmoList.end(); ++it ) {
-      if( ! app.loadStationData( it->stationid(), station, sensors ) ) {
-         LOGINFO( "No metadata for station <" << it->stationid() << ">.");
-         continue;
-      }
-
-      cerr << it->stationid() << ", " << station.wmono() << ", " << station.name() << ", " << it->couplingDelay() << ", " << it->productcoupling() << ", " << it->priorityPrecip() << endl;
-      cerr << "SENSORS:";
-
-      for( StInfoSysSensorInfoList::const_iterator sit=sensors.begin(); sit != sensors.end(); ++sit )
-         cerr << " " << sit->paramid()<< "(" << sit->physicalHeight() << ")";
-
-      cerr << endl;
-   }
+   confMaker.doConf();
 }
 
 void

@@ -302,6 +302,29 @@ hasTypeId(int typeID, int hour)const
 
 bool 
 StationInfo::
+mustHaveType( int typeid_, int hour )const
+{
+   TLongList   ret;
+   CITTypeList it=typepriority_.begin();
+
+   //This is an error, we silent ignore it, and returns all typeids.
+   if(hour>23)
+      hour=-1;
+
+   for(;it!=typepriority_.end(); it++) {
+      if( typeid_ == it->typeID() ) {
+         if(it->mustHaveType() && (hour<0 || it->hour(hour)))
+            return true;
+         else
+            return false;
+      }
+   }
+
+   return false;
+}
+
+bool
+StationInfo::
 bufrForTime(int hh)const
 {
 	TLongList tp=typepriority(hh);
@@ -390,8 +413,6 @@ equalTo(const StationInfo &st)
   	else
     	return false;
 }
-
-
 
 std::string 
 StationInfo::

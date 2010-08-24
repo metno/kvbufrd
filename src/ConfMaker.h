@@ -37,17 +37,25 @@
 
 class ConfMaker
 {
+   ConfApp &app;
    StInfoSysParamList params;
    std::list<StationInfoPtr> stationList;
 
 
    StationInfoPtr findStation( int wmono )const;
 
+   bool decodeProductCoupling( const std::string &val );
+   std::string stationIdToConfString( StationInfoPtr station )const;
+   std::string typepriorityToConfString( StationInfoPtr station )const;
+
+   std::string doStationConf( StationInfoPtr station )const;
+
 public:
-   ConfMaker();
+   ConfMaker( ConfApp &app );
 
    bool setParams( const StInfoSysParamList &params );
    bool add( int stationid, TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors );
+   bool doConf();
 };
 
 

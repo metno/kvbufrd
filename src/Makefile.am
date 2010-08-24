@@ -88,6 +88,7 @@ kvbufrconf_SOURCES = StationInfo.cc StationInfo.h \
 					 checkfile.h checkfile.cc \
 					 ConfMaker.h ConfMaker.cc \
 					 ConfApp.h ConfApp.cc \
+					 splitstr.h splitstr.cc \
 					 InitLogger.cc InitLogger.h \
 					 kvbufrconf.cc
 kvbufrconf_LDFLAGS = -pthread $(BOOST_LDFLAGS)

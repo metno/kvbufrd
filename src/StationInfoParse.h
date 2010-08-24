@@ -114,7 +114,7 @@ public:
 
    bool doDelay(const std::string &key,
                 miutil::conf::ValElementList &vl,
-                StationInfo &st);
+                StationInfo &st, bool mayUseDefaultValues=true);
 
 
    bool doPrecip(const std::string &key,

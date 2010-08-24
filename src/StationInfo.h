@@ -347,6 +347,7 @@ class StationInfo
   
  private:
   friend class StationInfoParse;
+  friend class ConfMaker;
 
   StationInfo& operator=(const StationInfo &);
   int            height_;
@@ -451,6 +452,8 @@ class StationInfo
    */
   TLongList mustHaveTypes(int hour=-1)const;
 
+  bool mustHaveType( int typeid_, int hour=-1 )const;
+
 
   /**
    * \brief Do we have typeID in the list of typeriority_.
@@ -500,7 +503,7 @@ class StationInfo
 
   std::string keyToString(const std::string &key);
 
-
+  bool makeConfSection( std::string &confSection )const;
   /**
    * \brief Compare two StationInfo to se if they has the same 
    *  configuration data.
