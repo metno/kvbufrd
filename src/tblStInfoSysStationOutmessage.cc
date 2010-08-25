@@ -72,6 +72,8 @@ set(const dnmi::db::DRow &r_)
             coupling_delay_ = buf;
          }else if(*it=="priority_precip"){
             priority_precip_ = buf;
+         }else if( *it == "fromtime" ) {
+            fromTime_ = miutil::miTime( buf );
          }
       }
       catch(...){
@@ -92,6 +94,7 @@ set(const TblStInfoSysStationOutmessage &station )
    productcoupling_ = station.productcoupling_;
    coupling_delay_ = station.coupling_delay_;
    priority_precip_ = station.priority_precip_;
+   fromTime_ = station.fromTime_;
 }
 
 
@@ -103,6 +106,7 @@ clean()
    productcoupling_.erase();
    coupling_delay_.erase();
    priority_precip_.erase();
+   fromTime_ = miutil::miTime();
 }
 
 miutil::miString

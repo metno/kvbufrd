@@ -382,6 +382,9 @@ class StationInfo
 
   ~StationInfo();
   
+  std::string delayConf; //Holds the configuration line for the delay from the configuration file.
+                         //This information is hard to reconstruct from the delayInfo.
+
   std::string    list()const   { return list_; }
   void           list(const std::string &l){ list_=l;}
   bool           copy()const   { return copy_; }

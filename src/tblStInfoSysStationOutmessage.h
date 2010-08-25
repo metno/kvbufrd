@@ -32,6 +32,7 @@
 #ifndef __tblStInfoSysStationOutmessage_h__
 #define __tblStInfoSysStationOutmessage_h__
 
+#include <puTools/miTime.h>
 #include <kvalobs/kvDbBase.h>
 
 class TblStInfoSysStationOutmessage : public kvalobs::kvDbBase {
@@ -39,6 +40,7 @@ class TblStInfoSysStationOutmessage : public kvalobs::kvDbBase {
    std::string productcoupling_;
    std::string coupling_delay_;
    std::string priority_precip_;
+   miutil::miTime fromTime_;
 
   void createSortIndex();
 
@@ -68,6 +70,7 @@ public:
   std::string priorityPrecip() const { return priority_precip_; }
   std::string productcoupling() const { return productcoupling_; }
   int stationid() const { return stationid_; }
+  miutil::miTime fromTime()const{ return fromTime_; }
 };
 
 #endif

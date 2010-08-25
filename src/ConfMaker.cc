@@ -31,10 +31,13 @@
 
 //#include <kvalobs/kvDbBase.h>
 #include <iostream>
+#include <miconfparser/miconfparser.h>
+#include <miutil/trimstr.h>
 #include "Indent.h"
 #include "ConfMaker.h"
 #include "StationInfo.h"
 #include "splitstr.h"
+#include <StationInfoParse.h>
 
 using namespace std;
 using namespace kvalobs;
@@ -82,18 +85,173 @@ add( int stationid, TblStInfoSysStation &station, StInfoSysSensorInfoList &senso
 }
 bool
 ConfMaker::
-decodeProductCoupling( const std::string &val )
+decodeProductCoupling( const std::string &val_, StationInfoPtr station )
 {
-   vector<string> keyval = miutil::splitstr(val, '\n' );
-   if( keyval.size() > 1 ) {
-      cerr << "["<<val << "]" << endl;
-      for( vector<string>::size_type i = 0; i < keyval.size(); ++i )
-         cerr << "***" << keyval[i] << "***" << endl;
-      cerr << "*******************************\n";
+   vector<string> keyval;
+   string key;
+   string val;
+   stringstream toParse;
+   vector<string> line = miutil::splitstr(val_, '\n' );
+
+
+   for( vector<string>::size_type i = 0; i < line.size(); ++i ) {
+      keyval = miutil::splitstr( line[i], '=' );
+
+      if( keyval.size()!=2 )
+         continue;
+
+      key = keyval[0];
+      val = keyval[1];
+      miutil::trimstr( key );
+      miutil::trimstr( val );
+
+      if( key.empty() || val.empty() )
+         continue;
+
+      if( !val.empty() && val[0] != '(')
+         val.insert(0, "(");
+
+      if( !val.empty() && val[val.length()-1] != ')' )
+         val += ")";
+
+      if( key == "typepriority" ) {
+         string::size_type start=0;
+         string::size_type end;
+
+         while( start != string::npos ) {
+            start = val.find_first_of("*", start );
+
+            if( start == string::npos )
+               continue;
+
+            end = val.find_first_not_of("*0123456789", start );
+
+            if( end == string::npos )
+               break;
+
+            val.insert( end, "\"");
+            val.insert( start, "\"");
+            start = end;
+         }
+
+         if( end != string::npos ) {
+            toParse << key << "=" << val << endl;
+         }
+      } else if( key == "stationid") {
+         toParse << key << "=" << val << endl;
+      }
    }
 
+   miutil::conf::ConfParser parser;
+   miutil::conf::ConfSection *result;
+   miutil::conf::ValElementList valElement;
+   StationInfoParse stationInfoParser;
+   bool error=false;
+   result = parser.parse( toParse );
 
-   return false;
+   if( ! result ) {
+      cerr << "Result (NULL): <" << parser.getError() << ">" << endl;
+      return false;
+   }
+
+   std::list<std::string> keys = result->getKeys();
+
+   for(std::list<std::string>::iterator it = keys.begin(); it != keys.end(); ++it ) {
+      valElement = result->getValue( *it );
+
+      if( *it == "typepriority" ) {
+         if( ! stationInfoParser.doTypePri( *it, valElement, *station ) ) {
+            LOGWARN( "productcoupling: Failed to parse: <" << *it << ">" << endl );
+            error = true;
+         }
+      } else if( *it == "stationid" ) {
+
+         cerr << "ValElement: " << valElement << endl;
+         if( ! stationInfoParser.doStationid( *it, valElement, *station ) ) {
+            LOGWARN( "productcoupling: Failed to parse: <" << *it << ">" << endl );
+            error = true;
+         }
+
+
+      }
+   }
+
+   delete result;
+   return ! keys.empty() && ! error;
+}
+
+bool
+ConfMaker::
+decodeCouplingDelay( const std::string &val_, StationInfoPtr station)
+{
+   string val( val_ );
+   stringstream toParse;
+   ostringstream o;
+   vector<string> values;
+   int nValues=0;
+   miutil::trimstr( val );
+
+
+   //Remove ( and ) from start and end of the string, if any.
+   if( !val.empty() && val[0]=='(' )
+      val.erase( 0, 1);
+
+   if( !val.empty() && val[val.length()-1]==')' )
+      val.erase( val.length()-1, 1);
+
+   values= miutil::splitstr( val, ',' );
+
+
+
+   o << "(";
+
+   for( vector<string>::size_type i = 0; i < values.size(); ++i ) {
+      val = values[i];
+      miutil::trimstr( val );
+
+      if( val.empty() )
+         continue;
+
+      if( val[0] != '"' )
+         val.insert( 0, "\"" );
+
+      if( val[val.length()-1] != '"' )
+         val += "\"";
+
+      if( nValues>0 )
+         o << ",";
+
+      o << val;
+      nValues++;
+   }
+
+   if( nValues == 0 )
+      return true;
+
+   o << ")" << endl;
+
+   toParse << "delay=" << o.str() << endl;
+
+   miutil::conf::ConfParser parser;
+   miutil::conf::ConfSection *result;
+   miutil::conf::ValElementList valElement;
+   StationInfoParse stationInfoParser;
+   bool error=false;
+   result = parser.parse( toParse );
+
+   if( ! result ) {
+      cerr << "decodeCouplingDelay: Result (NULL): <" << parser.getError() << ">" << endl;
+      return false;
+   }
+
+   valElement = result->getValue( "delay" );
+
+   if( valElement.size() > 0 )
+      station->delayConf = o.str();
+
+   delete result;
+
+   return true;
 }
 
 std::string
@@ -144,7 +302,7 @@ typepriorityToConfString( StationInfoPtr station )const
          o << *it;
    }
 
-   o << ")" << endl;
+   o << ")";
    return o.str();
 }
 
@@ -161,6 +319,8 @@ doStationConf( StationInfoPtr station )const
    o << indent.spaces() << stationIdToConfString( station ) << endl;
    o << indent.spaces() << typepriorityToConfString( station ) << endl;
 
+   if( ! station->delayConf.empty() )
+      o << indent.spaces() << "delay="  << station->delayConf << endl;
 
    indent.decrementLevel();
    o << indent.spaces() << "}" << endl;
@@ -200,10 +360,11 @@ doConf()
          stationList.push_back( pStation );
       }
 
+      decodeProductCoupling( it->productcoupling(), pStation  );
+      decodeCouplingDelay( it->couplingDelay(), pStation );
+
       if( pStation->stationID().empty() )
          pStation->stationid_.push_back( it->stationid() );
-
-      decodeProductCoupling( it->productcoupling() );
 
       continue;
       cerr << it->stationid() << ", " << tblStation.wmono() << ", " << tblStation.name() << ", " << it->couplingDelay() << ", " << it->productcoupling() << ", " << it->priorityPrecip() << endl;
@@ -214,10 +375,9 @@ doConf()
 
       cerr << endl;
    }
-/*
+
    for( std::list<StationInfoPtr>::iterator it=stationList.begin(); it != stationList.end(); ++it )
       cerr << doStationConf( *it ) << endl;
-*/
 
    return true;
 }

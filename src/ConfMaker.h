@@ -44,7 +44,8 @@ class ConfMaker
 
    StationInfoPtr findStation( int wmono )const;
 
-   bool decodeProductCoupling( const std::string &val );
+   bool decodeProductCoupling( const std::string &val, StationInfoPtr station);
+   bool decodeCouplingDelay( const std::string &val, StationInfoPtr station);
    std::string stationIdToConfString( StationInfoPtr station )const;
    std::string typepriorityToConfString( StationInfoPtr station )const;
 

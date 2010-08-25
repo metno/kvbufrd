@@ -162,14 +162,32 @@ bool
 ConfApp::
 loadStationOutmessage( StInfoSysStationOutmessageList &stationOutmessages )
 {
+   StInfoSysStationOutmessageList dbRes;
    dnmi::db::Connection *con = getDbConnection();
    kvDbGate gate( con );
 
-   gate.select( stationOutmessages );
+   gate.select( dbRes );
 
    if( gate.getError() != kvDbGate::NoError ) {
       LOGERROR( "DB: Failed to load StationOutmessage. '" << gate.getErrorStr() << "'.");
       return false;
+   }
+
+   stationOutmessages.clear();
+
+   for( StInfoSysStationOutmessageList::iterator it=dbRes.begin(); it!=dbRes.end(); ++it ) {
+      StInfoSysStationOutmessageList::iterator itFind=stationOutmessages.begin();
+      for(; itFind != stationOutmessages.end(); ++itFind ) {
+         if( itFind->stationid() == it->stationid() ) {
+            if( it->fromTime() > itFind->fromTime() )
+               *itFind = *it;
+
+            break;
+         }
+      }
+
+      if( itFind == stationOutmessages.end() )
+         stationOutmessages.push_back( *it );
    }
 
    return true;
