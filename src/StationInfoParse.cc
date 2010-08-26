@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <milog/milog.h>
+#include <miutil/trimstr.h>
 #include "StationInfo.h"
 #include "StationInfoParse.h"
 
@@ -323,7 +324,7 @@ doWmoDefault(miutil::conf::ConfSection *stationConf)
       }else if(*it=="copyto"){
          defVal.copyto=doDefCopyto(value, 0);
       }else if(*it=="delay"){
-         defVal.delay=doDefDelay(value, 0);
+         defVal.delay=doDefDelay(value, 0, defVal.delayConf );
       }else if(*it=="loglevel"){
          defVal.loglevel=doDefLogLevel(value, 0);
       }else{
@@ -536,10 +537,10 @@ doDefCopyto(miutil::conf::ValElementList &vl, int wmono)
 
 StationInfo::TDelayList 
 StationInfoParse::
-doDefDelay(miutil::conf::ValElementList &vl, int wmono)
+doDefDelay(const miutil::conf::ValElementList &vl, int wmono,  std::string &delayConf )
 {
    StationInfo::TDelayList dl;
-   IValElementList it=vl.begin();
+   CIValElementList it=vl.begin();
    string::size_type i;
    string            val;
    string            sHH, sMM;
@@ -717,6 +718,32 @@ doDefDelay(miutil::conf::ValElementList &vl, int wmono)
 
    }
 
+   if( !dl.empty()  ) {
+      ostringstream o;
+      o << "(";
+
+      for( it=vl.begin(); it != vl.end(); ++it ) {
+         if( it->type() != STRING )
+            continue;
+
+         val = it->valAsString();
+         miutil::trimstr( val );
+
+         if( !val.empty() && val[0]!='"' )
+            val.insert( 0, "\"" );
+
+         if( !val.empty() && val[val.length()-1]!='"' )
+             val += "\"";
+
+         if( it != vl.begin() )
+            o << ",";
+
+         o << val;
+      }
+      o << ")";
+      delayConf = o.str();
+   }
+
    return dl;
 }
 
@@ -763,15 +790,16 @@ doDelay(const std::string &key,
       bool mayUseDefaultValues )
 {
 
-   st.delayList_=doDefDelay(vl, st.wmono());
+   st.delayList_=doDefDelay(vl, st.wmono(), st.delayConf );
 
-   if(st.delayList_.empty() && mayUseDefaultValues ){
+   if( st.delayList_.empty() && mayUseDefaultValues ){
       LOGWARN("Nol value for <delay> in WMO section " << st.wmono()
             << " using default!");
       st.delayList_=defVal.delay;
+      st.delayConf = defVal.delayConf;
    }
 
-   return true;
+   return ( vl.empty() && st.delayList_.empty() ) || ( !vl.empty() && !st.delayList_.empty() );
 }
 
 
@@ -784,7 +812,7 @@ doPrecip(const std::string &key,
 
    st.precipitation_=RR;
 
-   return !RR.empty();
+   return ( vl.empty() && st.precipitation_.empty() ) || ( !vl.empty() && !st.precipitation_.empty() );
 }
 
 bool

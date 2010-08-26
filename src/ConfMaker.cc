@@ -30,6 +30,7 @@
 */
 
 //#include <kvalobs/kvDbBase.h>
+#include <float.h>
 #include <iostream>
 #include <miconfparser/miconfparser.h>
 #include <miutil/trimstr.h>
@@ -201,7 +202,79 @@ decodeCouplingDelay( const std::string &val_, StationInfoPtr station)
 
    values= miutil::splitstr( val, ',' );
 
+   o << "(";
 
+   for( vector<string>::size_type i = 0; i < values.size(); ++i ) {
+      val = values[i];
+      miutil::trimstr( val );
+
+      if( val.empty() )
+         continue;
+
+      if( val[0] != '"' )
+         val.insert( 0, "\"" );
+
+      if( val[val.length()-1] != '"' )
+         val += "\"";
+
+      if( nValues>0 )
+         o << ",";
+
+      o << val;
+      nValues++;
+   }
+
+   if( nValues == 0 )
+      return true;
+
+   o << ")" << endl;
+
+   toParse << "delay=" << o.str();
+
+   miutil::conf::ConfParser parser;
+   miutil::conf::ConfSection *result;
+   miutil::conf::ValElementList valElement;
+   StationInfoParse stationInfoParser;
+   bool ok=true;
+   result = parser.parse( toParse );
+
+   if( ! result ) {
+      cerr << "decodeCouplingDelay: Result (NULL): <" << parser.getError() << ">" << endl;
+      return false;
+   }
+
+   valElement = result->getValue( "delay" );
+
+   if( valElement.size() > 0 ) {
+      if( ! stationInfoParser.doDelay( "delay", valElement, *station, false ) ) {
+         LOGWARN( "Coupling delay: Failed to parse: <" << o.str() << ">" << endl );
+         ok = false;
+      }
+   }
+
+   delete result;
+   return ok;
+}
+
+bool
+ConfMaker::
+decodePrecipPriority( const std::string &val_, StationInfoPtr station)
+{
+   string val( val_ );
+   stringstream toParse;
+   ostringstream o;
+   vector<string> values;
+   int nValues=0;
+   miutil::trimstr( val );
+
+   //Remove ( and ) from start and end of the string, if any.
+   if( !val.empty() && val[0]=='(' )
+      val.erase( 0, 1);
+
+   if( !val.empty() && val[val.length()-1]==')' )
+      val.erase( val.length()-1, 1);
+
+   values= miutil::splitstr( val, ',' );
 
    o << "(";
 
@@ -230,29 +303,35 @@ decodeCouplingDelay( const std::string &val_, StationInfoPtr station)
 
    o << ")" << endl;
 
-   toParse << "delay=" << o.str() << endl;
+   toParse << "precipitation=" << o.str();
 
    miutil::conf::ConfParser parser;
    miutil::conf::ConfSection *result;
    miutil::conf::ValElementList valElement;
    StationInfoParse stationInfoParser;
-   bool error=false;
+   bool ok=true;
    result = parser.parse( toParse );
 
    if( ! result ) {
-      cerr << "decodeCouplingDelay: Result (NULL): <" << parser.getError() << ">" << endl;
-      return false;
-   }
+       cerr << "precipitationPriority: Result (NULL): <" << parser.getError() << ">" << endl;
+       return false;
+    }
 
-   valElement = result->getValue( "delay" );
+    valElement = result->getValue( "precipitation" );
 
-   if( valElement.size() > 0 )
-      station->delayConf = o.str();
+    if( valElement.size() > 0 ) {
+       if( ! stationInfoParser.doPrecip( "precipitation", valElement, *station ) ) {
+          LOGWARN( "precipitationPriority: Failed to parse: <" << o.str() << ">" << endl );
+          ok = false;
+       }
+    }
 
-   delete result;
 
-   return true;
+    delete result;
+    return ok;
+
 }
+
 
 std::string
 ConfMaker::
@@ -306,6 +385,33 @@ typepriorityToConfString( StationInfoPtr station )const
    return o.str();
 }
 
+std::string
+ConfMaker::
+precipPriorityToConfString( StationInfoPtr station )const
+{
+   ostringstream o;
+   StationInfo::TStringList precip = station->precipitation();
+
+   if( precip.empty() )
+      return "";
+
+   o << "precipitation=";
+   o << "(";
+
+   for(StationInfo::TStringList::iterator it=precip.begin();
+         it!=precip.end(); it++)
+   {
+      if( it != precip.begin() )
+         o << ",";
+
+      o << "\"" << *it << "\"";
+   }
+
+   o << ")";
+
+   return o.str();
+}
+
 
 std::string
 ConfMaker::
@@ -313,6 +419,7 @@ doStationConf( StationInfoPtr station )const
 {
    ostringstream o;
    miutil::Indent indent;
+   string precip = precipPriorityToConfString( station );
 
    o << "wmo_"<< station->wmono() << " {" << endl;
    indent.incrementLevel();
@@ -321,6 +428,14 @@ doStationConf( StationInfoPtr station )const
 
    if( ! station->delayConf.empty() )
       o << indent.spaces() << "delay="  << station->delayConf << endl;
+
+   if( !precip.empty() )
+      o << indent.spaces() << precip << endl;
+
+   if( station->latitude() != FLT_MAX ) {
+      o << indent.spaces() << "latitude=" << station->latitude() << endl;
+      o << indent.spaces() << "longitude=" << station->longitude() << endl;
+   }
 
    indent.decrementLevel();
    o << indent.spaces() << "}" << endl;
@@ -331,7 +446,6 @@ bool
 ConfMaker::
 doConf()
 {
-
    bool newStation;
    StationInfoPtr pStation;
    StInfoSysStationOutmessageList tblWmoList;
@@ -361,10 +475,18 @@ doConf()
       }
 
       decodeProductCoupling( it->productcoupling(), pStation  );
-      decodeCouplingDelay( it->couplingDelay(), pStation );
+
 
       if( pStation->stationID().empty() )
          pStation->stationid_.push_back( it->stationid() );
+
+      decodeCouplingDelay( it->couplingDelay(), pStation );
+      decodePrecipPriority( it->priorityPrecip(), pStation );
+
+      if( tblStation.lat() != FLT_MAX && tblStation.lon() != FLT_MAX ) {
+         pStation->latitude_ = tblStation.lat();
+         pStation->longitude_ = tblStation.lon();
+      }
 
       continue;
       cerr << it->stationid() << ", " << tblStation.wmono() << ", " << tblStation.name() << ", " << it->couplingDelay() << ", " << it->productcoupling() << ", " << it->priorityPrecip() << endl;

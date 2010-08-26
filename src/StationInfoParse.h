@@ -58,6 +58,7 @@ public:
       milog::LogLevel loglevel;
 
       StationInfo::TDelayList delay;
+      std::string delayConf;
 
       DefaultVal(): copy(false), loglevel(milog::INFO) {
       }
@@ -65,7 +66,7 @@ public:
       DefaultVal(const DefaultVal &dv)
       :copyto(dv.copyto), copy(dv.copy),owner(dv.owner),
        precipitation(dv.precipitation), list(dv.list),
-       loglevel(dv.loglevel)
+       loglevel(dv.loglevel), delayConf( dv.delayConf )
       {
       }
 
@@ -77,6 +78,7 @@ public:
             precipitation=dv.precipitation;
             list=dv.list;
             delay=dv.delay;
+            delayConf = dv.delayConf;
             loglevel=dv.loglevel;
          }
          return *this;
@@ -105,8 +107,8 @@ public:
    std::string doDefCopyto(miutil::conf::ValElementList &vl,
                            int wmono);
 
-   StationInfo::TDelayList doDefDelay(miutil::conf::ValElementList &vl, 
-                                      int wmono);
+   StationInfo::TDelayList doDefDelay(const miutil::conf::ValElementList &vl,
+                                      int wmono, std::string &confDelay );
 
    bool doStationid(const std::string &key,
                     miutil::conf::ValElementList &vl,

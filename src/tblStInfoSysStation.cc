@@ -65,9 +65,9 @@ set(const dnmi::db::DRow &r_)
          if(*it=="stationid"){
             stationid_ = atoi( buf.c_str() );
          }else if(*it=="lat"){
-            lat_ = atoi( buf.c_str() );
+            lat_ = static_cast<float>( atof( buf.c_str() ) );
          }else if(*it=="lon"){
-            lon_ = atoi( buf.c_str() );
+            lon_ = static_cast<float>( atof( buf.c_str() ) );
          }else if(*it=="hs"){
             hs_ = atoi( buf.c_str() );
          }else if(*it=="hv"){

@@ -32,6 +32,7 @@
 #ifndef __CONFMAKER_H__
 #define __CONFMAKER_H__
 
+#include "Indent.h"
 #include "StationInfoParse.h"
 #include "ConfApp.h"
 
@@ -46,8 +47,10 @@ class ConfMaker
 
    bool decodeProductCoupling( const std::string &val, StationInfoPtr station);
    bool decodeCouplingDelay( const std::string &val, StationInfoPtr station);
+   bool decodePrecipPriority( const std::string &val, StationInfoPtr station);
    std::string stationIdToConfString( StationInfoPtr station )const;
    std::string typepriorityToConfString( StationInfoPtr station )const;
+   std::string precipPriorityToConfString( StationInfoPtr station )const;
 
    std::string doStationConf( StationInfoPtr station )const;
 
