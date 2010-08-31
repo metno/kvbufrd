@@ -44,10 +44,15 @@ class ConfMaker
 
 
    StationInfoPtr findStation( int wmono )const;
+   bool findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const;
 
    bool decodeProductCoupling( const std::string &val, StationInfoPtr station);
    bool decodeCouplingDelay( const std::string &val, StationInfoPtr station);
    bool decodePrecipPriority( const std::string &val, StationInfoPtr station);
+   bool decodeWindheight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
+   bool decodePrecipHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
+   bool decodeTemperatureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
+   bool decodePressureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
    std::string stationIdToConfString( StationInfoPtr station )const;
    std::string typepriorityToConfString( StationInfoPtr station )const;
    std::string precipPriorityToConfString( StationInfoPtr station )const;

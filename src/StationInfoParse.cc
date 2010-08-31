@@ -68,7 +68,7 @@ valid()const{
 
 bool 
 StationInfoParse::parse(miutil::conf::ConfSection *conf,
-      std::list<StationInfoPtr> &stationList)
+      std::list<StationInfoPtr> &stationList,  bool useDefaultValues )
 {
    ConfSection *wmoDefault;
    ConfSection *wmoSec;
@@ -117,7 +117,7 @@ StationInfoParse::parse(miutil::conf::ConfSection *conf,
 
       iWmono=atoi(wmono.c_str());
 
-      info=parseSection(wmoSec, iWmono);
+      info=parseSection(wmoSec, iWmono, useDefaultValues );
 
       if(!info){
          LOGERROR("Cant parse section <" << *it << ">!");
@@ -132,7 +132,7 @@ StationInfoParse::parse(miutil::conf::ConfSection *conf,
 
 StationInfo* 
 StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf, 
-      int wmono)
+      int wmono,  bool useDefaultValues )
 {
    const char *keywords[]={"stationid", "delay", "precipitation",
                            "typepriority", "list",
@@ -177,7 +177,7 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
    for(i=0; keywords[i]; i++){
       value=stationConf->getValue(keywords[i]);
 
-      if(value.empty()){
+      if(value.empty() && useDefaultValues ){
          if( strcmp( keywords[i], "precipitation") == 0 ){
             LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in WMO section <"
                   << wmono << ">! Using default value!" << endl);
@@ -241,7 +241,7 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
             st->list_=doDefList(value, st->wmono());
             ok=!st->list_.empty();
          }else if( strcmp( keywords[i], "copy" ) == 0 ){
-            st->copy_=doDefCopy(value, st->wmono());
+            st->copy_=doDefCopy(value, st->wmono(), &st->copyIsSet_ );
          }else if( strcmp( keywords[i], "copyto" ) == 0 ){
             st->copyto_=doDefCopyto(value, st->wmono());
          }else if( strcmp( keywords[i], "loglevel" ) == 0 ){
@@ -277,14 +277,14 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
       }
    }
 
-   if(st->stationid_.empty()){
+   if(st->stationid_.empty() && ! useDefaultValues ){
       LOGERROR("MISSING KEY <stationid> in WMO section <" << wmono
             << ">!" << endl);
       delete st;
       return 0;
    }
 
-   if(st->typepriority_.empty()){
+   if(st->typepriority_.empty() && ! useDefaultValues ){
       LOGERROR("MISSING KEY <typepriority> in WMO section <" << wmono
             << ">!" << endl);
       delete st;
@@ -477,7 +477,7 @@ doDefPrecip(miutil::conf::ValElementList &vl, int wmono)
 
 bool
 StationInfoParse::
-doDefCopy(miutil::conf::ValElementList &vl, int wmono)
+doDefCopy(miutil::conf::ValElementList &vl, int wmono, bool *copyIsSet )
 {
    IValElementList it=vl.begin();
 
@@ -499,11 +499,17 @@ doDefCopy(miutil::conf::ValElementList &vl, int wmono)
 
    string val=it->valAsString();
 
+   if( copyIsSet )
+      *copyIsSet = true;
+
    if(val=="true")
       return true;
    else if(val=="false")
       return false;
    else{
+      if( copyIsSet )
+           *copyIsSet = false;
+
       LOGERROR("WRONG VALUE: key <copy> valid values \"true\" or \"false\"!" <<
             " In WMO section <" << ost.str() << ">!");
       return false;

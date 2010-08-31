@@ -82,6 +82,7 @@ kvbufrdparse_LDADD =  $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
 kvbufrconf_SOURCES = StationInfo.cc StationInfo.h \
                      StationInfoParse.cc StationInfoParse.h \
                      tblStInfoSysParam.h tblStInfoSysParam.cc \
+                     tblStInfoSysNetworkStation.h tblStInfoSysNetworkStation.cc \
 					 tblStInfoSysSensorInfo.h tblStInfoSysSensorInfo.cc \
 					 tblStInfoSysStation.h tblStInfoSysStation.cc \
 					 tblStInfoSysStationOutmessage.h tblStInfoSysStationOutmessage.cc \

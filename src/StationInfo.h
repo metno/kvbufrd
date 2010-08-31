@@ -45,6 +45,7 @@
 //#include "StationInfoParse.h"
 
 
+
 class StationInfoParse; 
 
 /**
@@ -365,6 +366,7 @@ class StationInfo
   TStringList    precipitation_;
   TDelayList     delayList_;
   std::string    list_;
+  bool           copyIsSet_;
   bool           copy_;
   std::string    copyto_;
   std::string    owner_;
@@ -387,6 +389,7 @@ class StationInfo
 
   std::string    list()const   { return list_; }
   void           list(const std::string &l){ list_=l;}
+  bool           isCopySetInConfSection() const { return copyIsSet_; }
   bool           copy()const   { return copy_; }
   void           copy(bool c)  { copy_=c;}
   std::string    copyto()const { return copyto_; }

@@ -212,12 +212,16 @@ loadParams( StInfoSysParamList &params )
 
 bool
 ConfApp::
-loadStationData( int stationid, TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors )
+loadStationData( int stationid,
+                 TblStInfoSysStation &station,
+                 StInfoSysSensorInfoList &sensors,
+                 TblStInfoSysNetworkStation &networkStation )
 {
    dnmi::db::Connection *con = getDbConnection();
    kvDbGate gate( con );
    ostringstream q;
    StInfoSysStationList stations;
+   std::list<TblStInfoSysNetworkStation> networkStationList;
 
    q << " WHERE stationid=" << stationid << " AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)";
 
@@ -237,6 +241,23 @@ loadStationData( int stationid, TblStInfoSysStation &station, StInfoSysSensorInf
    q << " WHERE stationid=" << stationid << " AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL) AND operational=true";
 
    gate.select( sensors, q.str() );
+
+
+   //Lookup in the network_station to find the wmo name. Synopdata has networkid=4
+   //Search the table obs_network to find the correct networkid. it can not change over time so it is hardcoded to 4 here.
+   q.str("");
+   q << " WHERE stationid=" << stationid << " AND networkid=4 AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)";
+   gate.select( networkStationList, q.str() );
+
+   if( networkStationList.empty() )
+      return false;
+
+   if( networkStationList.size() > 1 ) {
+         LOGWARN( "More than one record for the station <" << stationid << "> was selected from the 'network_station' table in stinfosys."
+                  << endl << " Using the first selected.");
+   }
+
+   networkStation = *networkStationList.begin();
 
    return true;
 }

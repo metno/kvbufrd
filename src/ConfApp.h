@@ -37,6 +37,7 @@
 #include <kvdb/dbdrivermgr.h>
 #include <kvalobs/kvDbGate.h>
 #include "tblStInfoSysParam.h"
+#include "tblStInfoSysNetworkStation.h"
 #include "tblStInfoSysStationOutmessage.h"
 #include "tblStInfoSysStation.h"
 #include "tblStInfoSysSensorInfo.h"
@@ -86,7 +87,7 @@ public:
 
    bool loadStationOutmessage( StInfoSysStationOutmessageList &stationOutmessages );
    bool loadParams( StInfoSysParamList &params );
-   bool loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors );
+   bool loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors, TblStInfoSysNetworkStation &networkStation );
 
 
 };

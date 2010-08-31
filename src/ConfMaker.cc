@@ -84,6 +84,19 @@ add( int stationid, TblStInfoSysStation &station, StInfoSysSensorInfoList &senso
       newStation = true;
    }
 }
+
+bool
+ConfMaker::
+findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const
+{
+   for( StInfoSysSensorInfoList::const_iterator it=sensors.begin(); it != sensors.end(); ++it ) {
+      if( it->paramid() == paramid && it->hlevel() == 0 && it->operational() ) {
+         sensor = *it;
+         return true;
+      }
+   }
+   return false;
+}
 bool
 ConfMaker::
 decodeProductCoupling( const std::string &val_, StationInfoPtr station )
@@ -93,6 +106,7 @@ decodeProductCoupling( const std::string &val_, StationInfoPtr station )
    string val;
    stringstream toParse;
    vector<string> line = miutil::splitstr(val_, '\n' );
+
 
 
    for( vector<string>::size_type i = 0; i < line.size(); ++i ) {
@@ -135,10 +149,10 @@ decodeProductCoupling( const std::string &val_, StationInfoPtr station )
             start = end;
          }
 
-         if( end != string::npos ) {
+         if( end != string::npos && station->typepriority_.empty() ) {
             toParse << key << "=" << val << endl;
          }
-      } else if( key == "stationid") {
+      } else if( key == "stationid" && station->stationid_.empty()) {
          toParse << key << "=" << val << endl;
       }
    }
@@ -192,6 +206,8 @@ decodeCouplingDelay( const std::string &val_, StationInfoPtr station)
    int nValues=0;
    miutil::trimstr( val );
 
+   if( !station->delayList_.empty() )
+      return true;
 
    //Remove ( and ) from start and end of the string, if any.
    if( !val.empty() && val[0]=='(' )
@@ -267,6 +283,9 @@ decodePrecipPriority( const std::string &val_, StationInfoPtr station)
    int nValues=0;
    miutil::trimstr( val );
 
+   if( ! station->precipitation_.empty() )
+      return false;
+
    //Remove ( and ) from start and end of the string, if any.
    if( !val.empty() && val[0]=='(' )
       val.erase( 0, 1);
@@ -326,12 +345,107 @@ decodePrecipPriority( const std::string &val_, StationInfoPtr station)
        }
     }
 
-
     delete result;
     return ok;
 
 }
 
+bool
+ConfMaker::
+decodeWindheight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station )
+{
+   const int FF( 81 );
+   TblStInfoSysSensorInfo sensor;
+
+   if( station->heightWind_ != INT_MAX )
+      return false;
+
+   if( ! findSensor( sensors, sensor,  FF ) ) {
+      LOGDEBUG( "Station '" << station->name() << "' stationid: " << *station->stationID().begin()
+                << " has no wind sensor.");
+      return false;
+   }
+
+   if( sensor.physicalHeight() != INT_MAX )
+      station->heightWind_ = sensor.physicalHeight();
+
+   return true;
+}
+
+bool
+ConfMaker::
+decodePrecipHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station )
+{
+   int RR[]={ 104, 106, 119, 107, 108, 120, 109, 125, 126, 110, 0};
+   TblStInfoSysSensorInfo sensor;
+
+   if( station->heightPrecip_ != INT_MAX )
+       return false;
+
+   for( int i=0; RR[i]; ++i ) {
+      if(  findSensor( sensors, sensor,  RR[i] ) ) {
+         if( sensor.physicalHeight() != INT_MAX ) {
+            station->heightPrecip_ = sensor.physicalHeight();
+            return true;
+         }
+      }
+   }
+
+   LOGDEBUG( "Station '" << station->name() << "' stationid: " << *station->stationID().begin()
+             << " has no precipitation sensors.");
+
+
+   return false;
+}
+
+bool
+ConfMaker::
+decodePressureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station )
+{
+   int PP[]={ 173 , 171, 0};
+   TblStInfoSysSensorInfo sensor;
+
+   if( station->heightPressure_ != INT_MAX )
+       return false;
+
+   for( int i=0; PP[i]; ++i ) {
+      if(  findSensor( sensors, sensor,  PP[i] ) ) {
+         if( sensor.physicalHeight() != INT_MAX && station->height_ != INT_MAX) {
+            station->heightPressure_ = sensor.physicalHeight() + station->height_;
+            return true;
+         }
+      }
+   }
+
+   LOGDEBUG( "Station '" << station->name() << "' stationid: " << *station->stationID().begin()
+             << " has no pressure sensors.");
+
+
+   return false;
+}
+
+bool
+ConfMaker::
+decodeTemperatureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station )
+{
+   const int TA( 211 );
+   TblStInfoSysSensorInfo sensor;
+
+   if( station->heightTemperature_ != INT_MAX )
+       return false;
+
+   if( ! findSensor( sensors, sensor,  TA ) ) {
+      LOGDEBUG( "Station '" << station->name() << "' stationid: " << *station->stationID().begin()
+                << " has no temperature sensor.");
+      return false;
+   }
+
+   if( sensor.physicalHeight() != INT_MAX )
+      station->heightTemperature_ = sensor.physicalHeight();
+
+   return true;
+
+}
 
 std::string
 ConfMaker::
@@ -339,6 +453,9 @@ stationIdToConfString( StationInfoPtr station )const
 {
    ostringstream o;
    StationInfo::TLongList stations = station->stationID();
+
+   if( stations.empty() )
+      return "";
 
    o << "stationid=";
 
@@ -370,6 +487,9 @@ typepriorityToConfString( StationInfoPtr station )const
 
    o << "typepriority=(";
    StationInfo::TLongList types = station->typepriority();
+
+   if( types.empty() )
+      return "";
 
    for( StationInfo::TLongList::const_iterator it = types.begin(); it != types.end(); ++it ) {
       if( it != types.begin() )
@@ -419,18 +539,56 @@ doStationConf( StationInfoPtr station )const
 {
    ostringstream o;
    miutil::Indent indent;
+   string tmp;
    string precip = precipPriorityToConfString( station );
 
    o << "wmo_"<< station->wmono() << " {" << endl;
    indent.incrementLevel();
-   o << indent.spaces() << stationIdToConfString( station ) << endl;
-   o << indent.spaces() << typepriorityToConfString( station ) << endl;
+
+   tmp = station->name();
+   if( ! tmp.empty() )
+      o << indent.spaces() << "name=\"" << station->name() << "\"" << endl;
+
+   if( station->height() != INT_MAX )
+      o << indent.spaces() << "height=" << station->height() << endl;
+
+   if( station->heightWind_ != INT_MAX )
+      o << indent.spaces() << "height-wind=" << station->heightWind_ << endl;
+
+   if( station->heightPrecip_ != INT_MAX )
+      o << indent.spaces() << "height-precip=" << station->heightPrecip_ << endl;
+
+   if( station->heightTemperature_ != INT_MAX )
+         o << indent.spaces() << "height-temperature=" << station->heightTemperature_ << endl;
+
+   if( station->heightPressure_ != INT_MAX )
+      o << indent.spaces() << "height-pressure=" << station->heightPressure_ << endl;
+
+   tmp = stationIdToConfString( station );
+   if( !tmp.empty() )
+      o << indent.spaces() << tmp << endl;
+
+   tmp = typepriorityToConfString( station );
+   if( ! tmp.empty() )
+      o << indent.spaces() << tmp << endl;
 
    if( ! station->delayConf.empty() )
       o << indent.spaces() << "delay="  << station->delayConf << endl;
 
    if( !precip.empty() )
       o << indent.spaces() << precip << endl;
+
+   if( station->isCopySetInConfSection() )
+      o << indent.spaces() << "copy=" << (station->copy()?"true":"false") << endl;
+
+   if( ! station->copyto_.empty() )
+      o << indent.spaces() << "copyto=\"" << station->copyto() << "\"" << endl;
+
+   if( ! station->owner_.empty() )
+      o << indent.spaces() << "owner=\"" << station->owner() << "\"" << endl;
+
+   if( ! station->list_.empty() )
+      o << indent.spaces() << "list=\"" << station->list() << "\"" << endl;
 
    if( station->latitude() != FLT_MAX ) {
       o << indent.spaces() << "latitude=" << station->latitude() << endl;
@@ -450,12 +608,13 @@ doConf()
    StationInfoPtr pStation;
    StInfoSysStationOutmessageList tblWmoList;
    TblStInfoSysStation tblStation;
+   TblStInfoSysNetworkStation networkStation;
    StInfoSysSensorInfoList tblSensors;
 
    app.loadStationOutmessage( tblWmoList );
 
    for( StInfoSysStationOutmessageList::const_iterator it=tblWmoList.begin(); it != tblWmoList.end(); ++it ) {
-      if( ! app.loadStationData( it->stationid(), tblStation, tblSensors ) ) {
+      if( ! app.loadStationData( it->stationid(), tblStation, tblSensors, networkStation ) ) {
          LOGINFO( "No metadata for station <" << it->stationid() << ">.");
          continue;
       }
@@ -474,12 +633,20 @@ doConf()
          stationList.push_back( pStation );
       }
 
-      decodeProductCoupling( it->productcoupling(), pStation  );
+      pStation->name( networkStation.name() );
 
+      if( tblStation.hs() != INT_MAX )
+         pStation->height( tblStation.hs() );
+
+      decodeProductCoupling( it->productcoupling(), pStation  );
 
       if( pStation->stationID().empty() )
          pStation->stationid_.push_back( it->stationid() );
 
+      decodeWindheight( tblSensors, pStation );
+      decodePrecipHeight( tblSensors, pStation );
+      decodeTemperatureHeight( tblSensors, pStation );
+      decodePressureHeight( tblSensors, pStation );
       decodeCouplingDelay( it->couplingDelay(), pStation );
       decodePrecipPriority( it->priorityPrecip(), pStation );
 
@@ -487,15 +654,6 @@ doConf()
          pStation->latitude_ = tblStation.lat();
          pStation->longitude_ = tblStation.lon();
       }
-
-      continue;
-      cerr << it->stationid() << ", " << tblStation.wmono() << ", " << tblStation.name() << ", " << it->couplingDelay() << ", " << it->productcoupling() << ", " << it->priorityPrecip() << endl;
-      cerr << "SENSORS:";
-
-      for( StInfoSysSensorInfoList::const_iterator sit=tblSensors.begin(); sit != tblSensors.end(); ++sit )
-         cerr << " " << sit->paramid()<< "(" << sit->physicalHeight() << ")";
-
-      cerr << endl;
    }
 
    for( std::list<StationInfoPtr>::iterator it=stationList.begin(); it != stationList.end(); ++it )

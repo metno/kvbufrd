@@ -68,6 +68,7 @@ StationInfo():
    latitude_( FLT_MAX ),
    longitude_( FLT_MAX ),
   	wmono_(-1),
+  	copyIsSet_( false ),
   	cacheReloaded48_(true)
 {
 }
@@ -82,6 +83,7 @@ StationInfo( int wmono ):
    latitude_( FLT_MAX ),
    longitude_( FLT_MAX ),
    wmono_( wmono ),
+   copyIsSet_( false ),
    cacheReloaded48_(true)
 {
 }
@@ -103,6 +105,7 @@ StationInfo(const StationInfo &i)
   	precipitation_=i.precipitation_;
   	delayList_=i.delayList_;
   	list_=i.list_;
+  	copyIsSet_ = i.copyIsSet_;
   	copy_=i.copy_;
   	copyto_=i.copyto_;
   	owner_=i.owner_;
