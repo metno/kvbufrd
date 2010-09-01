@@ -41,10 +41,11 @@ class ConfMaker
    ConfApp &app;
    StInfoSysParamList params;
    std::list<StationInfoPtr> stationList;
+   std::list<StationInfoPtr> templateStationList;
 
-
-   StationInfoPtr findStation( int wmono )const;
+   StationInfoPtr findStation( int wmono );
    bool findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const;
+   bool parseTemplate( miutil::conf::ConfSection *templateConf );
 
    bool decodeProductCoupling( const std::string &val, StationInfoPtr station);
    bool decodeCouplingDelay( const std::string &val, StationInfoPtr station);
@@ -53,6 +54,7 @@ class ConfMaker
    bool decodePrecipHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
    bool decodeTemperatureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
    bool decodePressureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
+
    std::string stationIdToConfString( StationInfoPtr station )const;
    std::string typepriorityToConfString( StationInfoPtr station )const;
    std::string precipPriorityToConfString( StationInfoPtr station )const;
@@ -64,7 +66,7 @@ public:
 
    bool setParams( const StInfoSysParamList &params );
    bool add( int stationid, TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors );
-   bool doConf();
+   bool doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
 };
 
 

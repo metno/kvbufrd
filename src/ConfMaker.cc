@@ -29,11 +29,13 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-//#include <kvalobs/kvDbBase.h>
+#include <algorithm>
 #include <float.h>
 #include <iostream>
+#include <fstream>
 #include <miconfparser/miconfparser.h>
 #include <miutil/trimstr.h>
+#include <kvalobs/kvPath.h>
 #include "Indent.h"
 #include "ConfMaker.h"
 #include "StationInfo.h"
@@ -43,17 +45,45 @@
 using namespace std;
 using namespace kvalobs;
 
+namespace {
+   bool
+   stationLessThan( StationInfoPtr s1, StationInfoPtr s2)
+   {
+      return s1->wmono() < s2->wmono();
+   }
+
+}
+
+
 StationInfoPtr
 ConfMaker::
-findStation( int wmono )const
+findStation( int wmono )
 {
    for( std::list<StationInfoPtr>::const_iterator it=stationList.begin(); it!=stationList.end(); ++it ) {
       if( (*it)->wmono() == wmono )
          return *it;
    }
+
+   for( std::list<StationInfoPtr>::const_iterator it=templateStationList.begin(); it!=templateStationList.end(); ++it ) {
+      if( (*it)->wmono() == wmono ) {
+         stationList.push_back( *it );
+         return *it;
+      }
+   }
+
    return StationInfoPtr();
 }
 
+bool
+ConfMaker::
+parseTemplate( miutil::conf::ConfSection *templateConf )
+{
+   StationInfoParse stationInfoParser;
+
+   stationList.clear();
+
+   return stationInfoParser.parse( templateConf, templateStationList, false );
+}
    
 ConfMaker::
 ConfMaker( ConfApp &app_ )
@@ -269,7 +299,7 @@ decodeCouplingDelay( const std::string &val_, StationInfoPtr station)
    }
 
    delete result;
-   return ok;
+   return !station->delayList_.empty() && ok;
 }
 
 bool
@@ -346,7 +376,7 @@ decodePrecipPriority( const std::string &val_, StationInfoPtr station)
     }
 
     delete result;
-    return ok;
+    return !station->precipitation_.empty() && ok;
 
 }
 
@@ -366,9 +396,10 @@ decodeWindheight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station
       return false;
    }
 
-   if( sensor.physicalHeight() != INT_MAX )
-      station->heightWind_ = sensor.physicalHeight();
+   if( sensor.physicalHeight() == INT_MAX )
+      return false;
 
+   station->heightWind_ = sensor.physicalHeight();
    return true;
 }
 
@@ -440,8 +471,11 @@ decodeTemperatureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr 
       return false;
    }
 
-   if( sensor.physicalHeight() != INT_MAX )
-      station->heightTemperature_ = sensor.physicalHeight();
+   if( sensor.physicalHeight() == INT_MAX )
+      return false;
+
+
+   station->heightTemperature_ = sensor.physicalHeight();
 
    return true;
 
@@ -602,18 +636,27 @@ doStationConf( StationInfoPtr station )const
 
 bool
 ConfMaker::
-doConf()
+doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
 {
-   bool newStation;
    StationInfoPtr pStation;
    StInfoSysStationOutmessageList tblWmoList;
    TblStInfoSysStation tblStation;
    TblStInfoSysNetworkStation networkStation;
    StInfoSysSensorInfoList tblSensors;
+   int nValues;
+   bool newStation;;
+
+   if( templateConf ) {
+      if( ! parseTemplate( templateConf ) ) {
+         LOGFATAL("Failed to parse the template file.");
+         return false;
+      }
+   }
 
    app.loadStationOutmessage( tblWmoList );
 
    for( StInfoSysStationOutmessageList::const_iterator it=tblWmoList.begin(); it != tblWmoList.end(); ++it ) {
+      nValues = 0;
       if( ! app.loadStationData( it->stationid(), tblStation, tblSensors, networkStation ) ) {
          LOGINFO( "No metadata for station <" << it->stationid() << ">.");
          continue;
@@ -624,40 +667,96 @@ doConf()
          continue;
       }
 
-      newStation = false;
       pStation = findStation( tblStation.wmono() );
 
       if( ! pStation ) {
          newStation = true;
          pStation.reset( new StationInfo( tblStation.wmono()) );
          stationList.push_back( pStation );
+      } else {
+         newStation = false;
       }
 
-      pStation->name( networkStation.name() );
+      if( !networkStation.name().empty() ) {
+         pStation->name( networkStation.name() );
+         nValues++;
+      }
 
-      if( tblStation.hs() != INT_MAX )
+      if( tblStation.hs() != INT_MAX ) {
          pStation->height( tblStation.hs() );
+         nValues++;
+      }
 
-      decodeProductCoupling( it->productcoupling(), pStation  );
+      if( decodeProductCoupling( it->productcoupling(), pStation  ) )
+         nValues++;
 
-      if( pStation->stationID().empty() )
+      if( pStation->stationID().empty() ) {
          pStation->stationid_.push_back( it->stationid() );
+         nValues++;
+      }
 
-      decodeWindheight( tblSensors, pStation );
-      decodePrecipHeight( tblSensors, pStation );
-      decodeTemperatureHeight( tblSensors, pStation );
-      decodePressureHeight( tblSensors, pStation );
-      decodeCouplingDelay( it->couplingDelay(), pStation );
-      decodePrecipPriority( it->priorityPrecip(), pStation );
+      if( decodeWindheight( tblSensors, pStation ) )
+         nValues++;
+
+      if( decodePrecipHeight( tblSensors, pStation ) )
+         nValues++;
+
+      if( decodeTemperatureHeight( tblSensors, pStation ) )
+         nValues++;
+
+      if( decodePressureHeight( tblSensors, pStation ) )
+         nValues++;
+
+      if( decodeCouplingDelay( it->couplingDelay(), pStation ) )
+         nValues++;
+
+      if( decodePrecipPriority( it->priorityPrecip(), pStation ) )
+         nValues++;
 
       if( tblStation.lat() != FLT_MAX && tblStation.lon() != FLT_MAX ) {
          pStation->latitude_ = tblStation.lat();
          pStation->longitude_ = tblStation.lon();
+         nValues++;
+      }
+
+      if( nValues == 0  && !newStation ) {
+         //There is no metadat for the station in stinfosys.
+         LOGWARN("No useful metadat values for wmono: " << tblStation.wmono() << " was found in stinfosys."<< endl );
       }
    }
 
-   for( std::list<StationInfoPtr>::iterator it=stationList.begin(); it != stationList.end(); ++it )
-      cerr << doStationConf( *it ) << endl;
+   stationList.sort( stationLessThan );
 
+
+
+   if( outfile.empty() ) {
+      for( std::list<StationInfoPtr>::iterator it=stationList.begin(); it != stationList.end(); ++it )
+         cout << doStationConf( *it ) << endl;
+
+      return true;
+   }
+
+   string filename( outfile );
+   ofstream out;
+
+   if( outfile[0]!='/' && outfile[0]!='.' )
+      filename = kvPath( "sysconfdir" ) + "/" + outfile ;
+
+   out.open( filename.c_str(), ios_base::out | ios_base::trunc );
+
+   if( ! out.is_open() ) {
+      LOGFATAL("Cant create file <" << filename << ">.");
+      return false;
+   }
+
+   for( std::list<StationInfoPtr>::iterator it=stationList.begin(); it != stationList.end(); ++it )
+      out << doStationConf( *it ) << endl;
+
+   if( ! out.good() ) {
+      LOGFATAL("ERROR while writing configuration to file <" << filename << ">.");
+      return false;
+   }
+
+   out.close();
    return true;
 }

@@ -91,6 +91,7 @@ kvbufrconf_SOURCES = StationInfo.cc StationInfo.h \
 					 ConfApp.h ConfApp.cc \
 					 splitstr.h splitstr.cc \
 					 InitLogger.cc InitLogger.h \
+					 kvbufrconfOptions.cc kvbufrconfOptions.h \
 					 kvbufrconf.cc
 kvbufrconf_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 kvbufrconf_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \

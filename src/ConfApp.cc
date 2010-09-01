@@ -40,7 +40,7 @@ using namespace kvalobs;
 using namespace miutil::conf;
 
 ConfApp::
-ConfApp( int argn, char **argv, miutil::conf::ConfSection *conf)
+ConfApp( Options &options, miutil::conf::ConfSection *conf)
    : connection( 0 )
 {
    ValElementList valElem;

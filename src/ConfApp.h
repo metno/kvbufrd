@@ -42,6 +42,7 @@
 #include "tblStInfoSysStation.h"
 #include "tblStInfoSysSensorInfo.h"
 #include "StationInfo.h"
+#include "kvbufrconfOptions.h"
 
 typedef std::list<TblStInfoSysParam> StInfoSysParamList;
 typedef std::list<TblStInfoSysStationOutmessage> StInfoSysStationOutmessageList;
@@ -61,7 +62,7 @@ class ConfApp
    dnmi::db::Connection* getDbConnection();
 
 public:
-   ConfApp( int argn, char **argv, miutil::conf::ConfSection *conf);
+   ConfApp( Options &options, miutil::conf::ConfSection *conf);
    ~ConfApp();
 
    void createGlobalLogger(const std::string &id);

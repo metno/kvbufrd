@@ -134,9 +134,10 @@ class StationInfoParse
                                 int wmono,  bool useDefaultValues );
 
       DefaultVal defVal;
+      bool ignoreMissingValues;
 
 public:
-   StationInfoParse(){}
+   StationInfoParse(): ignoreMissingValues( false ){}
    ~StationInfoParse(){}
 
    bool parse(miutil::conf::ConfSection *stationConf,

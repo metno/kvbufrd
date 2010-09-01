@@ -70,7 +70,7 @@ bool
 StationInfoParse::parse(miutil::conf::ConfSection *conf,
       std::list<StationInfoPtr> &stationList,  bool useDefaultValues )
 {
-   ConfSection *wmoDefault;
+   ConfSection *wmoDefault=0;
    ConfSection *wmoSec;
    string      wmono;
    int         iWmono;
@@ -78,14 +78,19 @@ StationInfoParse::parse(miutil::conf::ConfSection *conf,
 
    stationList.clear();
 
+   if( useDefaultValues )
+      ignoreMissingValues = false;
+   else
+      ignoreMissingValues = true;
+
    wmoDefault=conf->getSection("wmo_default");
 
-   if(!wmoDefault){
+   if( !wmoDefault && useDefaultValues ){
       LOGFATAL("Missing section <wmo_default> in the configuration file!");
       return false;
    }
 
-   if(!doWmoDefault(wmoDefault)){
+   if( useDefaultValues && !doWmoDefault( wmoDefault ) ){
       LOGFATAL("Fatal errors in  <wmo_default> in the configuration file!");
       return false;
    }
@@ -93,8 +98,13 @@ StationInfoParse::parse(miutil::conf::ConfSection *conf,
    list<string> sect=conf->getSubSections();
    string::size_type i;
 
-   LOGDEBUG("Sections: (" << sect.size() << ")" << endl <<
-         "wmo_default: " << endl << *wmoDefault << endl);
+   if( wmoDefault ) {
+      LOGDEBUG("Sections: (" << sect.size() << ")" << endl <<
+               "wmo_default: " << endl << *wmoDefault << endl);
+   } else {
+      LOGDEBUG("Sections: (" << sect.size() << ")" << endl <<
+            "wmo_default: Not using default values. " << endl);
+   }
 
    for(list<string>::iterator it=sect.begin();
          it!=sect.end(); it++){
@@ -229,17 +239,17 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
          if( strcmp( keywords[i], "stationid" ) == 0 ){
             ok=doStationid(keywords[i], value, *st);
          }else if( strcmp( keywords[i], "delay" ) == 0 ){
-            ok=doDelay(keywords[i], value, *st);
+            ok=doDelay(keywords[i], value, *st, !ignoreMissingValues );
          }else if( strcmp( keywords[i], "precipitation" ) == 0 ){
             ok=doPrecip(keywords[i], value, *st);
          }else if( strcmp( keywords[i], "typepriority" ) == 0 ){
             ok=doTypePri(keywords[i], value, *st);
          }else if( strcmp( keywords[i], "owner" ) == 0 ){
             st->owner_=doDefOwner(value, st->wmono());
-            ok=!st->owner_.empty();
+            ok=ignoreMissingValues || !st->owner_.empty();
          }else if( strcmp( keywords[i], "list" ) == 0 ){
             st->list_=doDefList(value, st->wmono());
-            ok=!st->list_.empty();
+            ok=ignoreMissingValues || !st->list_.empty();
          }else if( strcmp( keywords[i], "copy" ) == 0 ){
             st->copy_=doDefCopy(value, st->wmono(), &st->copyIsSet_ );
          }else if( strcmp( keywords[i], "copyto" ) == 0 ){
@@ -277,14 +287,14 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
       }
    }
 
-   if(st->stationid_.empty() && ! useDefaultValues ){
+   if( !ignoreMissingValues  && st->stationid_.empty() ){
       LOGERROR("MISSING KEY <stationid> in WMO section <" << wmono
             << ">!" << endl);
       delete st;
       return 0;
    }
 
-   if(st->typepriority_.empty() && ! useDefaultValues ){
+   if( !ignoreMissingValues && st->typepriority_.empty() ){
       LOGERROR("MISSING KEY <typepriority> in WMO section <" << wmono
             << ">!" << endl);
       delete st;
@@ -781,7 +791,7 @@ doStationid(const std::string &key,
       }
    }
 
-   if(st.stationid_.empty()){
+   if( !ignoreMissingValues && st.stationid_.empty()){
       LOGERROR("NOVALUE: key <" << key << "> has now valid values!" << endl);
       return false;
    }
@@ -916,7 +926,7 @@ doTypePri(const std::string &key,
    if(error)
       return false;
 
-   return !st.typepriority_.empty();
+   return ignoreMissingValues || !st.typepriority_.empty();
 }
 
 void
