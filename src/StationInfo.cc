@@ -690,3 +690,85 @@ operator<<(std::ostream& ost, const StationInfo::Type& t)
 	return  ost;
 }
 
+
+StationInfoCompare::
+StationInfoCompare( const StationList &removedStations,
+                    const StationList &newStations,
+                    const StationList &changedStations )
+   : removedStations_( removedStations ),
+     newStations_( newStations ),
+     changedStations_( changedStations )
+{
+}
+
+StationInfoCompare::
+StationInfoCompare()
+{
+}
+
+StationInfoCompare::
+StationInfoCompare( const StationInfoCompare &s )
+   : removedStations_( s.removedStations_ ),
+     newStations_( s.newStations_ ),
+     changedStations_( s.changedStations_ )
+{
+}
+
+
+StationInfoPtr
+StationInfoCompare::
+findStation( const StationList &stationList, StationInfoPtr station )
+{
+   for( StationList::const_iterator it=stationList.begin(); it != stationList.end(); ++it ) {
+      if( (*it)->wmono() == station->wmono() ) {
+         return *it;
+      }
+   }
+
+   return StationInfoPtr();
+}
+
+StationInfoCompare&
+StationInfoCompare::
+operator=( const StationInfoCompare &rhs )
+{
+   if( &rhs != this ) {
+      removedStations_ = rhs.removedStations_;
+      newStations_ = rhs.newStations_;
+      changedStations_ = rhs.changedStations_;
+   }
+
+   return *this;
+}
+
+StationInfoCompare
+StationInfoCompare::
+compare( const StationList &oldConf, const StationList &newConf  )
+{
+   StationList removedStations;
+   StationList newStations;
+   StationList changedStations;
+   StationInfoPtr station;
+
+   //Find all the removed stations.
+   for( StationList::const_iterator it=oldConf.begin(); it != oldConf.end(); ++it ) {
+      station = findStation( newConf, *it );
+
+      if( !station )
+         removedStations.push_back( *it );
+   }
+
+   //Find all the new and changed stations.
+   for( StationList::const_iterator it=newConf.begin(); it != newConf.end(); ++it ) {
+      station = findStation( oldConf, *it );
+
+      if( !station )
+         newStations.push_back( *it );
+      else if( ! station->equalTo( *(*it) ) )
+         changedStations.push_back( *it );
+   }
+
+   return StationInfoCompare( removedStations, newStations, changedStations );
+}
+
+

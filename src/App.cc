@@ -370,9 +370,8 @@ readStationInfo(miutil::conf::ConfSection *conf)
     return false;
   }    
 
+  mutex::scoped_lock lock(mutex);
   stationList=tmpList;
-  
-  getStations( stationList );
 
   return true;
 }
@@ -399,8 +398,6 @@ readStationInfo(std::list<StationInfoPtr> &stList)const
     LOGWARN("Cant parse the BUFFER configuration!" << endl
 	    << "File: <" << confFile << ">" << endl );
     ret = false;
-  } else {
-     getStations( stList );
   }
 
   delete conf;
@@ -408,13 +405,22 @@ readStationInfo(std::list<StationInfoPtr> &stList)const
   return ret;
 }
 
+StationList
+App::
+getStationList()const
+{
+   mutex::scoped_lock lock(mutex);
 
+   return stationList;
+}
 
 bool
 App::
 listStations(kvbufrd::StationInfoList &list)
 {
   ostringstream ost;
+
+  mutex::scoped_lock lock(mutex);
 
   list.length(stationList.size());
 
@@ -439,7 +445,6 @@ listStations(kvbufrd::StationInfoList &list)
   
   return true;
 }
-
 
 dnmi::db::Connection*
 App::
@@ -472,18 +477,19 @@ StationInfoPtr
 App::
 findStationInfo(long stationid)
 {
-  IStationList it=stationList.begin();
+   mutex::scoped_lock lock(mutex);
+   IStationList it=stationList.begin();
 
-  for(;it!=stationList.end(); it++){
-    if((*it)->hasStationId(stationid)){
-      break;
-    }
-  }
+   for(;it!=stationList.end(); it++){
+      if((*it)->hasStationId(stationid)){
+         break;
+      }
+   }
 
-  if(it!=stationList.end())
-    return *it;
+   if(it!=stationList.end())
+      return *it;
 
-  return StationInfoPtr();
+   return StationInfoPtr();
 }
 
 
@@ -491,18 +497,19 @@ StationInfoPtr
 App::
 findStationInfoWmono(int wmono)
 {
-  IStationList it=stationList.begin();
+   mutex::scoped_lock lock(mutex);
+   IStationList it=stationList.begin();
 
-  for(;it!=stationList.end(); it++){
-    if((*it)->wmono()==wmono){
-      break;
-    }
-  }
-  
-  if(it!=stationList.end())
-    return *it;
+   for(;it!=stationList.end(); it++){
+      if((*it)->wmono()==wmono){
+         break;
+      }
+   }
 
-  return StationInfoPtr();
+   if(it!=stationList.end())
+      return *it;
+
+   return StationInfoPtr();
 }
 
 
@@ -815,18 +822,32 @@ bool
 App:: 
 addStationInfo(StationInfoPtr newInfoPtr)
 {
-  
-  IStationList it=stationList.begin();
-  
-  for(;it!=stationList.end(); it++){
-    if((*it)->wmono()==newInfoPtr->wmono()){
-      return false;
-    }
-  }
-  
-  stationList.push_back(newInfoPtr);
-  
-  return true;
+
+   mutex::scoped_lock lock(mutex);
+   IStationList it=stationList.begin();
+
+   for(;it!=stationList.end(); it++){
+      if((*it)->wmono()==newInfoPtr->wmono()){
+         return false;
+      }
+   }
+
+   stationList.push_back(newInfoPtr);
+
+   return true;
+}
+
+/**
+ * Replace the current configuration with the new one.
+ * @param newConf The new configuration to replace the old.
+ */
+void
+App::
+replaceStationConf(const StationList &newConf )
+{
+   mutex::scoped_lock lock(mutex);
+
+   stationList = newConf;
 }
 
 
@@ -1170,60 +1191,3 @@ checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
   }
 }
 
-void
-App::
-getStations( StationList &stationList_ )const
-{
-   std::list<kvalobs::kvStation> kvStationList;
-   std::list<kvalobs::kvStation>::iterator sit;
-   string name;
-   string newName;
-
-   try {
-      if( ! const_cast<App*>(this)->getKvStations( kvStationList ) )
-         return;
-
-      for( IStationList it=stationList_.begin();
-           it != stationList_.end();
-           it++ )
-      {
-         for( sit=kvStationList.begin(); sit!=kvStationList.end(); ++sit )
-            if( sit->wmonr() == (*it)->wmono() )
-               break;
-
-         if( sit == kvStationList.end() )
-            continue;
-
-         (*it)->height( sit->height() );
-         (*it)->latitude( sit->lat() );
-         (*it)->longitude( sit->lon() );
-
-         //TODO: The conversion here is NOT UTF8 compatible. It must be changed.
-         name = sit->name();
-         newName.erase();
-
-         for( string::iterator nit = name.begin(); nit != name.end(); ++nit ) {
-            if( *nit == 'Å' || *nit == 'å' )
-               newName += "A";
-            else if( *nit == 'Æ' || *nit == 'æ' )
-               newName += "E";
-            else if( *nit == 'Ø' || *nit == 'ø' )
-               newName += "O";
-            else if ( islower( *nit ) )
-               newName += toupper( *nit );
-            else
-               newName += *nit;
-         }
-
-         if( newName.length() > 20 ) //Truncate the name if it is longer than 20 chars long.
-            newName = newName.substr( 0, 20 );
-
-         LOGDEBUG( "Set station name:    '" << name << "'" << endl <<
-                   "Set station newName: '" << newName << "'");
-
-         (*it)->name( newName );
-      }
-   }
-   catch( ... ) {
-   }
-}

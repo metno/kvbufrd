@@ -78,7 +78,7 @@ private:
    kvbufrd::bufr_var bufrRef;
   
    void readWaitingElementsFromDb();
-   boost::mutex mutex;
+   mutable boost::mutex mutex;
 
 public:
    App( int argn, char **argv, 
@@ -124,6 +124,8 @@ public:
    * \return true on success false otherwise.
    */
   bool readStationInfo(std::list<StationInfoPtr> &stList)const;
+
+  StationList getStationList()const;
 
 
   /**
@@ -289,6 +291,13 @@ public:
   
 
   /**
+   * Replace the current configuration with the new one.
+   * @param newConf The new configuration to replace the old.
+   */
+  void replaceStationConf(const StationList &newConf );
+
+
+  /**
    * \brief getDelayList, fill a \a DelayList with data from 
    * the \c waitingList.
    *
@@ -433,11 +442,7 @@ public:
   void checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
 					 const std::string &logid="");
 
-  /**
-   * Update thes stationList with station information from kvalobs.
-   * @param stationList The list to be updated.
-   */
-  void getStations( StationList &stationList )const;
+
 
 };
 

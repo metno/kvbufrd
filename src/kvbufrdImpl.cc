@@ -152,67 +152,73 @@ CORBA::Boolean
 kvBufrdImpl::
 reloadConf(CORBA::String_out message)
 {
-  std::list<StationInfoPtr>                 stList;
-  std::list<StationInfoPtr>::const_iterator it;
-  std::ostringstream                        ost;
-  int                                       newStations=0;
-  int                                       updatedStations=0;
+   StationInfoCompare      conf;
+   StationList             oldConf;
+   StationList             newConf;
+   std::ostringstream      ost;
 
-  milog::LogContext context("BufrdImpl");
+   milog::LogContext context("BufrdImpl");
 
-  LOGDEBUG1("reloadConf called! " << endl);
+   LOGDEBUG1("reloadConf called! " << endl);
 
-  if(!app.readStationInfo(stList)){
-    message=CORBA::string_dup("ERROR: Cant read the configuration file!");
-    return false;
-  }
+   if(!app.readStationInfo( newConf )){
+      message=CORBA::string_dup("ERROR: Cant read the configuration file!");
+      return false;
+   }
 
-  for(it=stList.begin(); it!=stList.end(); it++){
-    StationInfoPtr st=app.findStationInfoWmono((*it)->wmono());
-    
-    if(!st){
-      if(app.addStationInfo(*it)){
-	newStations++;
+   oldConf = app.getStationList();
 
-	LOGINFO("Adding station <"<<(*it)->wmono() << ">!" << endl);
-	ost << "Adding station <" << (*it)->wmono() << ">!" << endl;
-      }else{
-	LOGINFO("FAILED: Adding station <"<<(*it)->wmono() << ">!" << endl);
-	ost << "FAILED: Adding station <" << (*it)->wmono() << ">!" << endl;
+   conf = StationInfoCompare::compare( oldConf, newConf );
+
+   if( ! conf.isConfChanged() ) {
+      ost << endl << "No changes!" << endl << endl;
+      message=CORBA::string_dup(ost.str().c_str());
+      return true;
+   }
+
+   app.replaceStationConf( newConf );
+
+   ost << "New configuration loaded." << endl
+       <<  "-------------------------" << endl;
+   ost << "Removed station(s): " << conf.removedStations().size();
+
+   if( conf.removedStations().size() > 0 ) {
+      ost << " (";
+      for( StationList::iterator it=conf.removedStations().begin(); it != conf.removedStations().end(); ++it ) {
+         ost << "," << (*it)->wmono();
       }
+      ost << ")";
+   }
 
-    }else{
-      if(!st->equalTo(*(*it))){
-	(*it)->delayUntil(st->delayUntil());
-	StationInfoPtr oldInfo=app.replaceStationInfo(*it);
+   ost << endl;
 
-	if(!oldInfo){
-	  LOGINFO("FAILED: Updatting station <" << (*it)->wmono() << ">!" 
-		  << endl);
-	  ost <<"FAILED: Updatting station <" << (*it)->wmono() << ">!" 
-	      << endl;
-	}else{
-	  updatedStations++;
-	  
-	  LOGINFO("Updatting station <" << (*it)->wmono() << ">!" << endl);
-	  ost <<"Updatting station <" << (*it)->wmono() << ">!" << endl;
-	  ost << "Old stationinfo: " << endl << *oldInfo << endl;
-	  ost << "New stationinfo: " << endl << **it << endl;
-	}
+   ost << "New station(s): " << conf.newStations().size();
+
+   if( conf.newStations().size() > 0 ) {
+      ost << " (";
+      for( StationList::iterator it=conf.newStations().begin(); it != conf.newStations().end(); ++it ) {
+         ost << "," << (*it)->wmono();
       }
-    }
-  }
-  
-  if(updatedStations>0 || newStations>0){
-    ost << "-----------------------------------------" << endl;
-    ost << "newStations: " << newStations << endl;
-    ost << "updatedStations: " << updatedStations << endl;
-  }else{
-    ost << endl << "No changes!" << endl << endl;
-  }
+      ost << ")";
+   }
 
-  message=CORBA::string_dup(ost.str().c_str());
-  return true;
+   ost << endl;
+
+   ost << "Changed station(s): " << conf.changedStations().size();
+
+   if( conf.changedStations().size() > 0 ) {
+      ost << " (";
+      for( StationList::iterator it=conf.changedStations().begin(); it != conf.changedStations().end(); ++it ) {
+         ost << "," << (*it)->wmono();
+      }
+      ost << ")";
+   }
+
+   ost << endl;
+
+   LOGINFO( ost.str() << endl );
+   message=CORBA::string_dup( ost.str().c_str() );
+   return true;
 }
 
 

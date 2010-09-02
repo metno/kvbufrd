@@ -536,4 +536,33 @@ std::ostream& operator<<(std::ostream& ost,
 
 std::ostream& operator<<(std::ostream& ost,
 								  const StationInfo::Type& sd);
+
+
+class StationInfoCompare
+{
+
+   StationList removedStations_;
+   StationList newStations_;
+   StationList changedStations_;
+
+   StationInfoCompare( const StationList &removedStations,
+                       const StationList &newStations,
+                       const StationList &changedStations );
+public:
+
+   StationInfoCompare();
+   StationInfoCompare( const StationInfoCompare &s );
+   StationInfoCompare& operator=( const StationInfoCompare &rhs );
+
+   static StationInfoPtr findStation( const StationList &stationList, StationInfoPtr station );
+   static StationInfoCompare compare( const StationList &oldConf, const StationList &newConf );
+
+   StationList removedStations()const { return removedStations_; }
+   StationList newStations()const { return newStations_; }
+   StationList changedStations()const { return changedStations_; }
+
+   bool isConfChanged()const { return ! removedStations_.empty() || ! newStations_.empty() || ! changedStations_.empty(); }
+
+};
+
 #endif
