@@ -17,7 +17,7 @@ CLEANFILES = $(nodist_idl_sources:.idl=SK.cc) $(nodist_idl_sources:.idl=.hh)
 
 noinst_PROGRAMS = kvBufrEncodeTest
 
-bin_PROGRAMS = kvbufrd kvbufrclt kvbufrdbclt kvbufrdparse kvbufrconf
+bin_PROGRAMS = kvbufrd kvbufrclt kvbufrdbclt kvbufrdparse kvbufrconf kvbufrconfcmp
 
 kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
 		          kvbufrd.cc \
@@ -96,7 +96,17 @@ kvbufrconf_SOURCES = StationInfo.cc StationInfo.h \
 kvbufrconf_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 kvbufrconf_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
                    -lm
-             
+                   
+kvbufrconfcmp_SOURCES = StationInfo.cc StationInfo.h \
+	                    StationInfoParse.cc StationInfoParse.h \
+     	         		checkfile.h checkfile.cc \
+					    splitstr.h splitstr.cc \
+					    InitLogger.cc InitLogger.h \
+					 	kvbufrconfcmpOptions.cc kvbufrconfcmpOptions.h \
+					 	kvbufrconfcmp.cc
+kvbufrconfcmp_LDFLAGS = -pthread $(BOOST_LDFLAGS)
+kvbufrconfcmp_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
+             		  -lm
 
 sqldir=$(datadir)/kvbufrd
 sql_DATA=kvbufrd_schema.sql
