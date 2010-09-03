@@ -587,16 +587,16 @@ doStationConf( StationInfoPtr station )const
       o << indent.spaces() << "height=" << station->height() << endl;
 
    if( station->heightWind_ != INT_MAX )
-      o << indent.spaces() << "height-wind=" << station->heightWind_ << endl;
+      o << indent.spaces() << "height_wind=" << station->heightWind_ << endl;
 
    if( station->heightPrecip_ != INT_MAX )
-      o << indent.spaces() << "height-precip=" << station->heightPrecip_ << endl;
+      o << indent.spaces() << "height_precip=" << station->heightPrecip_ << endl;
 
    if( station->heightTemperature_ != INT_MAX )
-         o << indent.spaces() << "height-temperature=" << station->heightTemperature_ << endl;
+         o << indent.spaces() << "height_temperature=" << station->heightTemperature_ << endl;
 
    if( station->heightPressure_ != INT_MAX )
-      o << indent.spaces() << "height-pressure=" << station->heightPressure_ << endl;
+      o << indent.spaces() << "height_pressure=" << station->heightPressure_ << endl;
 
    tmp = stationIdToConfString( station );
    if( !tmp.empty() )

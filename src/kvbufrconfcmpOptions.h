@@ -40,7 +40,7 @@ struct Options {
    int         maxChanged;
    int         verboseLevel;
 
-   Options(): maxRemoved( 5 ), maxChanged( 5 ), verboseLevel(0) {}
+   Options(): maxRemoved( 5 ), maxChanged( 5 ), verboseLevel(1) {}
 };
 
 void

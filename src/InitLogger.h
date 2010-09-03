@@ -39,6 +39,9 @@
  */
 
 void
-InitLogger(int &argn, char **argv, const std::string &logname);
+InitLogger(int &argn, char **argv, const std::string &logname, bool doTraceToScreen = true );
+
+void
+InitLogger(int &argn, char **argv, const std::string &logname, std::string &logfile, bool doTraceToScreen=true );
 
 #endif

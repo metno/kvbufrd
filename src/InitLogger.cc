@@ -45,7 +45,15 @@ namespace{
 }
 
 void
-InitLogger(int &argn, char **argv, const std::string &logname)
+InitLogger(int &argn, char **argv, const std::string &logname, bool doTraceToScreen )
+{
+   std::string dummy;
+   InitLogger( argn, argv, logname, dummy, doTraceToScreen );
+}
+
+
+void
+InitLogger(int &argn, char **argv, const std::string &logname, std::string &logfile, bool doTraceToScreen )
 {
    string       filename;
    LogLevel     traceLevel=milog::DEBUG;
@@ -91,31 +99,34 @@ InitLogger(int &argn, char **argv, const std::string &logname)
    try{
       fs=new FLogStream(4);
 
-      if(!fs->open(filename)){
+      if( !fs->open( filename ) ) {
          std::cerr << "FATAL: Can't initialize the Logging system.\n";
          std::cerr << "------ Cant open the Logfile <" << filename << ">\n";
          delete fs;
          exit(1);
       }
 
-      trace=new StdErrStream();
-
-      if(!LogManager::createLogger(logname, trace)){
+      if( !LogManager::createLogger( logname, fs) ) {
          std::cerr << "FATAL: Can't initialize the Logging system.\n";
          std::cerr << "------ Cant create logger\n";
          exit(1);
       }
 
-      if(!LogManager::addStream(logname, fs)){
-         std::cerr << "FATAL: Can't initialize the Logging system.\n";
-         std::cerr << "------ Cant add filelogging to the Logging system\n";
-         exit(1);
-      }
-
-      trace->loglevel(traceLevel);
       fs->loglevel(logLevel);
 
-      LogManager::setDefaultLogger(logname);
+      if( doTraceToScreen ) {
+         trace=new StdErrStream();
+
+         if(!LogManager::addStream( logname, trace ) ) {
+            std::cerr << "FATAL: Can't initialize the Logging system.\n";
+            std::cerr << "------ Cant add filelogging to the Logging system\n";
+            exit(1);
+         }
+
+         trace->loglevel(traceLevel);
+      }
+
+      LogManager::setDefaultLogger( logname );
    }
    catch(...){
       std::cerr << "FATAL: Can't initialize the Logging system.\n";
@@ -123,8 +134,8 @@ InitLogger(int &argn, char **argv, const std::string &logname)
       exit(1);
    }
 
-   std::cerr << "Logging to file <" << filename << ">!\n";
-    
+   logfile = filename;
+   LOGINFO( "Logging to file <" << filename << ">!" );
 }
 
 namespace{

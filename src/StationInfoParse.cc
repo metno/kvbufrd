@@ -148,9 +148,9 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
                            "typepriority", "list",
                            "copy", "copyto", "owner", "loglevel",
                            "latitude", "longitude", "height",
-                           "height-visibility", "height-precip",
-                           "height-pressure", "height-temperature",
-                           "height-wind", "name",
+                           "height_visibility", "height_precip",
+                           "height_pressure", "height_temperature",
+                           "height_wind", "name",
                            0 };
 
    list<std::string>           keys;
@@ -217,11 +217,11 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
                   << wmono << ">! Using default value!");
             st->loglevel_=defVal.loglevel;
          } else if( strcmp( keywords[i], "height" ) == 0 ||
-                    strcmp( keywords[i], "height-precip" ) == 0 ||
-                    strcmp( keywords[i], "height-pressure" ) == 0 ||
-                    strcmp( keywords[i], "height-temperature" ) == 0 ||
-                    strcmp( keywords[i], "height-visibility" ) == 0 ||
-                    strcmp( keywords[i], "height-wind" ) == 0 ||
+                    strcmp( keywords[i], "height_precip" ) == 0 ||
+                    strcmp( keywords[i], "height_pressure" ) == 0 ||
+                    strcmp( keywords[i], "height_temperature" ) == 0 ||
+                    strcmp( keywords[i], "height_visibility" ) == 0 ||
+                    strcmp( keywords[i], "height_wind" ) == 0 ||
                     strcmp( keywords[i], "latitude" ) == 0 ||
                     strcmp( keywords[i], "longitude" ) == 0  ||
                     strcmp( keywords[i], "name" ) == 0 ) {
@@ -258,15 +258,15 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
             st->loglevel_=doDefLogLevel(value, st->wmono());
          } else if( strcmp( keywords[i], "height" ) == 0 ) {
             doInt( st->height_, value );
-         } else if( strcmp( keywords[i], "height-precip" ) == 0 ) {
+         } else if( strcmp( keywords[i], "height_precip" ) == 0 ) {
             doInt( st->heightPrecip_, value );
-         }else if( strcmp( keywords[i], "height-pressure" ) == 0 ) {
+         }else if( strcmp( keywords[i], "height_pressure" ) == 0 ) {
             doInt( st->heightPressure_, value );
-         }else if( strcmp( keywords[i], "height-temperature" ) == 0 ) {
+         }else if( strcmp( keywords[i], "height_temperature" ) == 0 ) {
             doInt( st->heightTemperature_, value );
-         }else if( strcmp( keywords[i], "height-visibility" ) == 0 ) {
+         }else if( strcmp( keywords[i], "height_visibility" ) == 0 ) {
             doInt( st->heightVisability_, value );
-         }else if( strcmp( keywords[i], "height-wind" ) == 0 ) {
+         }else if( strcmp( keywords[i], "height_wind" ) == 0 ) {
             doInt( st->heightWind_, value );
          }else if( strcmp( keywords[i], "latitude" ) == 0 ) {
             doFloat( st->latitude_, value );

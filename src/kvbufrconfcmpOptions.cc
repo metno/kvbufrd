@@ -46,7 +46,7 @@ getOptions(int argn, char **argv, Options &opt)
     struct option long_options[]={{"help", 0, 0, 'h'},
                                   {"newconf", 1, 0, 'n'},
                                   {"oldconf", 1, 0, 'o'},
-                                  {"verbose", 1, 0, 'v'},
+                                  {"verbose", 2, 0, 'v'},
                                   {"maxchanged", 1, 0, 'c'},
                                   {"maxremoved", 1, 0, 'r'},
                                   {0,0,0,0}};
@@ -58,7 +58,7 @@ getOptions(int argn, char **argv, Options &opt)
     int prevOption;
 
     while(true){
-        c=getopt_long(argn, argv, "hn:o:v:c:r:", long_options, &index);
+        c=getopt_long(argn, argv, "hn:o:v::c:r:", long_options, &index);
 
         if(c==-1)
             break;
@@ -81,20 +81,19 @@ getOptions(int argn, char **argv, Options &opt)
            opt.oldconfile=optarg;
            break;
         case 'v':
-           opt.verboseLevel=atoi( optarg );
+           if( optarg )
+              opt.verboseLevel=atoi( optarg );
            break;
         case '?':
-           if( optopt != 'v') { //Accept missing value for the verbose option.
-              cerr << "Unknown option : <" << (char)optopt << "> unknown!" << endl;
-              use(1);
-           }
-            break;
+           cerr << "Unknown option : <" << (char)optopt << "> unknown!" << endl;
+           use(1);
+           break;
         case ':':
             cerr << optopt << " missing argument!" << endl;
             use(1);
             break;
         default:
-            cerr << "?? option caharcter: <" << (char)optopt << "> unknown!" << endl;
+            cerr << "?? option charcter: <" << (char)optopt << "> unknown!" << endl;
             use(1);
         }
     }
@@ -102,39 +101,6 @@ getOptions(int argn, char **argv, Options &opt)
     if( opt.newconfile.empty() ) {
        cerr << "Missing the newconfiguration file!" << endl;
        use(1);
-    }
-
-    if( opt.newconfile[0] != '/' && opt.newconfile[0] != '.' ) {
-       opt.newconfile = kvPath("sysconfdir") + "/" + opt.newconfile;
-    }
-
-    ostringstream logmsg;
-
-    if( opt.oldconfile.empty() ) {
-       opt.oldconfile = kvPath("sysconfdir")+"/kvbufrconf.conf";
-
-       logmsg.str("");
-       logmsg << "Using default configuration file '" << opt.oldconfile << "' as old configuration.";
-
-       LOGINFO( logmsg.str() );
-
-       if( opt.verboseLevel > 0 ) {
-          cerr << logmsg.str() << endl;
-       }
-    }
-
-    logmsg.str("");
-
-    logmsg << "New configuration file: " << opt.newconfile << endl
-           << "Old configuration file: " << opt.oldconfile << endl
-           << "Accept max removed stations: " << opt.maxRemoved << endl
-           << "Accept max changed stations: " << opt.maxChanged << endl
-           << endl;
-
-    LOGINFO( logmsg.str() );
-
-    if( opt.verboseLevel > 0 ) {
-       cerr << logmsg.str() << endl;
     }
 }
 
