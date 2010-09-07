@@ -45,7 +45,8 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   GetDataThread.cc GetDataThread.h \
                   kvbufrdImpl.h obsevent.h \
                   LoadBufrData.h LoadBufrData.cc \
-                  encodebufr.h encodebufr.cc
+                  encodebufr.h encodebufr.cc \
+                  base64.cc base64.h
 
 kvbufrd_CPPFLAGS = $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" 
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
