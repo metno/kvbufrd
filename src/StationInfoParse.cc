@@ -611,7 +611,7 @@ doDefDelay(const miutil::conf::ValElementList &vl, int wmono,  std::string &dela
             StationInfo::ITDelayList itd=dl.begin();
 
             if(itd!=dl.end())
-               if(!itd->skipBufrSpec())
+               if(!itd->skipMsgSpec())
                   itd=dl.end();
 
             if(itd==dl.end()){
@@ -621,9 +621,9 @@ doDefDelay(const miutil::conf::ValElementList &vl, int wmono,  std::string &dela
 
             if(h==-1){
                for(int i=0; i<24; i+=3)
-                  itd->bufrForThisHour(i, false);
+                  itd->msgForThisHour(i, false);
             }else{
-               itd->bufrForThisHour(h, false);
+               itd->msgForThisHour(h, false);
             }
 
             continue;

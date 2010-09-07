@@ -328,7 +328,7 @@ mustHaveType( int typeid_, int hour )const
 
 bool
 StationInfo::
-bufrForTime(int hh)const
+msgForTime(int hh)const
 {
 	TLongList tp=typepriority(hh);
 	
@@ -339,8 +339,8 @@ bufrForTime(int hh)const
 	for(CITDelayList it=delayList_.begin();
 		 it!=delayList_.end(); 
 		 ++it)
-  		if(it->skipBufrSpec())
-  			return it->bufrForThisHour(hh);
+  		if(it->skipMsgSpec())
+  			return it->msgForThisHour(hh);
 	
     return true;
 }
@@ -623,10 +623,10 @@ operator<<(std::ostream& ost,
       return ost;
    }
 
-   if(sd.skipBufrSpec()){
+   if(sd.skipMsgSpec()){
       bool first=true;
       for(int i=0; i<23; i++){
-         if(!sd.bufrtimes_[i]){
+         if(!sd.msgtimes_[i]){
             if(first){
                ost << "\"-" << i;
                first=false;

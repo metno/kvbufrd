@@ -115,7 +115,7 @@ DataReceiver::doCheckReceivedData(ObsEvent *obsevent)
 
   	setDefaultLogger(obsevent->stationInfo());
 
-	if(!obsevent->stationInfo()->bufrForTime(obsevent->obstime().hour())){
+	if(!obsevent->stationInfo()->msgForTime(obsevent->obstime().hour())){
    		LOGINFO("Skip BUFFER for this hour: " << obsevent->obstime() << endl <<
 				" wmono: " << obsevent->stationInfo()->wmono() );
 		delete obsevent;
@@ -276,7 +276,7 @@ DataReceiver::newData(kvservice::KvObsDataListPtr data)
       		continue;
     	}
 
-		if(!station->bufrForTime(dit->obstime().hour())){
+		if(!station->msgForTime(dit->obstime().hour())){
 			LOGINFO("Skip BUFR for this hour: " << dit->obstime() << endl
 				<<  " stationid: " << dit->stationID() << endl
 				<<  " typeid: " << dit->typeID());

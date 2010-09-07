@@ -114,14 +114,14 @@ class DelayInfo
   	char hour_;  
   	char delay_; //minutes
   	bool force_;
-  	bool *bufrtimes_;  //Create bufr for this times.
+  	bool *msgtimes_;  //Create bufr for this times.
 
-	void initBufrTimes(){
+	void initMsgTimes(){
 		
 			//std::cerr << "initBufrTimes: " << int(hour_) << std::endl;
-			if(!bufrtimes_){
+			if(!msgtimes_){
 				try{
-					bufrtimes_=new bool[24];
+					msgtimes_=new bool[24];
 				}
 				catch(...){
 					return;
@@ -129,35 +129,35 @@ class DelayInfo
 			}
 		
 			for(int i=0; i<24; i++)
-				bufrtimes_[i]=true;
+				msgtimes_[i]=true;
 	}
 
 public:
   	enum {STIME=-1, HTIME=-2, FSTIME=-3, FHTIME=-3,SKIP_SYNOP=127, UNDEF=-128};
 
   	DelayInfo(int hour=UNDEF)
-    	:hour_(hour), delay_(0), force_(false), bufrtimes_(0){
+    	:hour_(hour), delay_(0), force_(false), msgtimes_(0){
     		if(hour==SKIP_SYNOP){
     			//std::cerr << "DelayInfo::CTOR: SKIP_SYNOP!" << std::endl;
-    			initBufrTimes();
+    			initMsgTimes();
     		}
     	}
   	DelayInfo(char hour, char delay, bool force)
-    	: hour_(hour), delay_(delay), force_(force), bufrtimes_(0){}
+    	: hour_(hour), delay_(delay), force_(force), msgtimes_(0){}
   	DelayInfo(const DelayInfo &d)
-    	:hour_(d.hour_),delay_(d.delay_),force_(d.force_), bufrtimes_(0){
-    		if(d.bufrtimes_){
-   				initBufrTimes();
+    	:hour_(d.hour_),delay_(d.delay_),force_(d.force_), msgtimes_(0){
+    		if(d.msgtimes_){
+   				initMsgTimes();
     				    		
-    			if(bufrtimes_){
+    			if(msgtimes_){
     				for(int i=0; i<24; i++)
-    					bufrtimes_[i]=d.bufrtimes_[i];
+    					msgtimes_[i]=d.msgtimes_[i];
     			}
     		}
     	}
     ~DelayInfo(){
-    	if(bufrtimes_)
-    		delete bufrtimes_;
+    	if(msgtimes_)
+    		delete msgtimes_;
     }
 
   	DelayInfo& operator=(const DelayInfo &rhs){
@@ -166,17 +166,17 @@ public:
       		delay_=rhs.delay_;
       		force_=rhs.force_;
       
-      		if(rhs.bufrtimes_){
-    			if(!bufrtimes_)
-    				initBufrTimes();
+      		if(rhs.msgtimes_){
+    			if(!msgtimes_)
+    				initMsgTimes();
     				    		
-    			if(bufrtimes_){
+    			if(msgtimes_){
     				for(int i=0; i<24; i++)
-    					bufrtimes_[i]=rhs.bufrtimes_[i];
+    					msgtimes_[i]=rhs.msgtimes_[i];
     			}
-    		}else if(bufrtimes_){
-    			delete bufrtimes_;
-    			bufrtimes_=0;
+    		}else if(msgtimes_){
+    			delete msgtimes_;
+    			msgtimes_=0;
       		}
     			
     	}
@@ -201,10 +201,10 @@ public:
 	     	   delay_==di.delay_ &&
 	     	   force_==di.force_){
 	   
-	   			if(bufrtimes_ || di.bufrtimes_){
-	   				if(bufrtimes_ && di.bufrtimes_){
+	   			if(msgtimes_ || di.msgtimes_){
+	   				if(msgtimes_ && di.msgtimes_){
 	     	   			for(int i=0; i<24; i++){
-    						if(bufrtimes_[i]!=di.bufrtimes_[i])
+    						if(msgtimes_[i]!=di.msgtimes_[i])
     							return false;
 	     	   			}
 	   				}else{
@@ -218,30 +218,30 @@ public:
 	    	}
   	}
 
-	bool skipBufrSpec()const{ return bufrtimes_!=0;}
+	bool skipMsgSpec()const{ return msgtimes_!=0;}
   	bool undef()const { return hour_==UNDEF;}
   	int  hour()const{ return static_cast<int>(hour_); }
   	int  delay()const{ return static_cast<int>(delay_);}
   	bool force()const{ return force_;}
   
   	//Shall we generate bufr for this hour
-  	bool bufrForThisHour(int hour)const{
-			if(!bufrtimes_)
+  	bool msgForThisHour(int hour)const{
+			if(!msgtimes_)
 				return true;
 
   			if(hour<0 || hour>23)
   				return false;
   		
-  			return bufrtimes_[hour];
+  			return msgtimes_[hour];
   	}
   
-  	void bufrForThisHour(int hour, bool flag){
+  	void msgForThisHour(int hour, bool flag){
   		//Must be a SKIP_SYNOP spec.
-  		if(bufrtimes_){
+  		if(msgtimes_){
   			if(hour<0 || hour>23)
   				return;
   				  			
-  			bufrtimes_[hour]=flag;
+  			msgtimes_[hour]=flag;
   		}
   	}
   	
@@ -502,7 +502,7 @@ class StationInfo
    */
   bool delay(int hour, int &minute, bool &force, bool &relativToFirst)const;
   
-  bool bufrForTime(int hh)const;
+  bool msgForTime(int hh)const;
 
   friend std::ostream& operator<<(std::ostream& ost,
 				  const StationInfo& sd);

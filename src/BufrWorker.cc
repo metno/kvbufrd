@@ -327,7 +327,7 @@ BufrWorker::newObs(ObsEvent &event)
 
   	info=event.stationInfo();
   
-  	if(!info->bufrForTime(event.obstime().hour())){
+  	if(!info->msgForTime(event.obstime().hour())){
   		LOGINFO("Skip SYNOP for time: " << event.obstime() << "  wmono: " << 
   				  info->wmono());
   		swmsg << "Skip SYNOP for time: " << event.obstime() << "  wmono: " << 
