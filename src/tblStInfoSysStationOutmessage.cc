@@ -95,6 +95,7 @@ set(const TblStInfoSysStationOutmessage &station )
    coupling_delay_ = station.coupling_delay_;
    priority_precip_ = station.priority_precip_;
    fromTime_ = station.fromTime_;
+   return true;
 }
 
 

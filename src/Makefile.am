@@ -41,6 +41,7 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   delaycontrol.cc delaycontrol.h \
                   tblKeyVal.cc tblKeyVal.h \
                   InitLogger.cc InitLogger.h \
+                  Indent.h \
                   getDataReceiver.cc getDataReceiver.h \
                   GetDataThread.cc GetDataThread.h \
                   kvbufrdImpl.h obsevent.h \
