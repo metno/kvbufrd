@@ -15,7 +15,7 @@ CLEANFILES = $(nodist_idl_sources:.idl=SK.cc) $(nodist_idl_sources:.idl=.hh)
 	$(IDL) -bcxx -I$(KVIDLDIR) $<
 
 
-noinst_PROGRAMS = kvBufrEncodeTest
+noinst_PROGRAMS = kvBufrEncodeTest base64Test
 
 bin_PROGRAMS = kvbufrd kvbufrclt kvbufrdbclt kvbufrdparse kvbufrconf kvbufrconfcmp
 
@@ -113,6 +113,12 @@ sqldir=$(datadir)/kvbufrd
 sql_DATA=kvbufrd_schema.sql
 bin_SCRIPTS = kvbufrd_initdb
 
+
+base64Test_SOURCES = base64Test.cc \
+                     base64.cc base64.h
+base64Test_CPPFLAGS = $(AM_CPPFLAGS) 
+base64Test_LDADD = -lm
+
 TESTS=kvBufrEncodeTest
 #noinst_PROGRAMS=kvBufrEncodeTest
 
@@ -135,11 +141,13 @@ kvBufrEncodeTest_SOURCES = test/kvBufrEncodeTest.cc \
 		                    KvParam.cc KvParam.h \
 		                    LoadBufrData.h LoadBufrData.cc
 
- 
+
+
+
 kvBufrEncodeTest_CPPFLAGS = $(AM_CPPFLAGS) -DTESTDATADIR="\""$(top_srcdir)/src/test"\""
 
 kvBufrEncodeTest_LDADD =  -lgtest \
 						  $(kvcpp_LIBS) \
 						  -L$(HOME)/lib -lbufr -lgfortran \
 						  -lm
-						  
+						

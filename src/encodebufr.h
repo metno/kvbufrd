@@ -76,6 +76,9 @@ public:
    void encodeBufr( const BufrData &data, int ccx );
    const char* getBufr( int &nSize )const;
 
+   std::string wmoHeader()const;
+
+   bool writeToStream( std::ostream &out )const;
    /**
     * @see saveToFile( const std::string &path, bool overwrite=false )const
     * @param path

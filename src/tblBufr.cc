@@ -18,16 +18,16 @@
   modify it under the terms of the GNU General Public License as 
   published by the Free Software Foundation; either version 2 
   of the License, or (at your option) any later version.
-  
+
   KVALOBS is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License along 
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+ */
 #include <list>
 #include <stdlib.h>
 #include <stdio.h>
@@ -42,22 +42,23 @@ void
 TblBufr::
 createSortIndex() 
 {
-  sortBy_=miString(wmono_)+obstime_.isoTime()+createtime_.isoTime()+
-    miString(ccx_);
+   sortBy_=miString(wmono_)+obstime_.isoTime()+createtime_.isoTime()+
+         miString(ccx_);
 }
-  
+
 void 
 TblBufr::
 clean()
 {
-  wmono_      = 0;  
-  obstime_    = miTime::nowTime();  
-  createtime_ = miTime::nowTime();
-  crc_        = 0;
-  ccx_        = 0;
-  data_.erase();
+   wmono_      = 0;
+   obstime_    = miTime::nowTime();
+   createtime_ = miTime::nowTime();
+   crc_        = 0;
+   ccx_        = 0;
+   data_.erase();
+   bufrBase64_.erase();
 
-  createSortIndex();
+   createSortIndex();
 }
 
 
@@ -65,54 +66,56 @@ bool
 TblBufr::
 set(const dnmi::db::DRow &r_)
 {
-  db::DRow               &r=const_cast<db::DRow&>(r_);
-  string                 buf;
-  list<string>           names=r.getFieldNames();
-  list<string>::iterator it=names.begin();
- 
-  for(;it!=names.end(); it++){
-    try{
-      buf=r[*it];
-      
-      if(*it=="wmono"){
-	wmono_=atoi(buf.c_str());
-      }else if(*it=="obstime"){
-	obstime_=miTime(buf);
-      }else if(*it=="createtime"){
-	createtime_=miTime(buf);
-      }else if(*it=="crc"){
-	crc_=atoi(buf.c_str());
-      }else if(*it=="ccx"){
-	ccx_=atoi(buf.c_str());
-      }else if(*it=="data"){
-	data_=buf;
-      }else{
-	LOGWARN("TblBufr::set .. unknown entry:" << *it << std::endl);
+   db::DRow               &r=const_cast<db::DRow&>(r_);
+   string                 buf;
+   list<string>           names=r.getFieldNames();
+   list<string>::iterator it=names.begin();
+
+   for(;it!=names.end(); it++){
+      try{
+         buf=r[*it];
+
+         if(*it=="wmono"){
+            wmono_=atoi(buf.c_str());
+         }else if(*it=="obstime"){
+            obstime_=miTime(buf);
+         }else if(*it=="createtime"){
+            createtime_=miTime(buf);
+         }else if(*it=="crc"){
+            crc_=atoi(buf.c_str());
+         }else if(*it=="ccx"){
+            ccx_=atoi(buf.c_str());
+         }else if(*it=="data"){
+            data_=buf;
+         }else if(*it=="bufrBase64"){
+            bufrBase64_=buf;
+         }else{
+            LOGWARN("TblBufr::set .. unknown entry:" << *it << std::endl);
+         }
       }
-    }
-    catch(...){
-      LOGWARN("TblBufr: unexpected exception ..... \n");
-    }  
-  }
- 
-  createSortIndex();
-  return true;
+      catch(...){
+         LOGWARN("TblBufr: unexpected exception ..... \n");
+      }
+   }
+
+   createSortIndex();
+   return true;
 }
 
 bool 
 TblBufr::
 set(const TblBufr &s)
 {
-  wmono_      = s.wmono_;  
-  obstime_    = s.obstime_;  
-  createtime_ = s.createtime_;
-  crc_        = s.crc_;
-  ccx_        = s.ccx_;
-  data_     = s.data_;
+   wmono_      = s.wmono_;
+   obstime_    = s.obstime_;
+   createtime_ = s.createtime_;
+   crc_        = s.crc_;
+   ccx_        = s.ccx_;
+   data_       = s.data_;
+   bufrBase64_ = s.bufrBase64_;
+   createSortIndex();
 
-  createSortIndex();
-
-  return true;
+   return true;
 }
 
 
@@ -124,36 +127,39 @@ set(int                  wmono,
     const miutil::miTime &createtime,    
     int                  crc,
     int                  ccx,
-    const std::string    &data)
+    const std::string    &data,
+    const std::string    &bufrBase64)
 {
-  wmono_      = wmono;  
-  obstime_    = obtime;  
-  createtime_ = createtime;
-  crc_        = crc;
-  ccx_        = ccx;
-  data_     = data;
+   wmono_      = wmono;
+   obstime_    = obtime;
+   createtime_ = createtime;
+   crc_        = crc;
+   ccx_        = ccx;
+   data_       = data;
+   bufrBase64_ = bufrBase64;
 
-  createSortIndex();
+   createSortIndex();
 
-  return true;
+   return true;
 }
 
 miutil::miString 
 TblBufr::
 toSend() const
 {
-  ostringstream ost;
- 
-  ost << "(" 
-      << wmono_             << ","
-      << quoted(obstime_)   << ","         
-      << quoted(createtime_)<< ","        
-      << crc_               << ","         
-      << ccx_               << ","          
-      << quoted(data_)
-      << ")";      
+   ostringstream ost;
 
-  return ost.str();
+   ost << "("
+         << wmono_             << ","
+         << quoted(obstime_)   << ","
+         << quoted(createtime_)<< ","
+         << crc_               << ","
+         << ccx_               << ","
+         << quoted(data_)      << ","
+         << quoted( bufrBase64_ )
+         << ")";
+
+   return ost.str();
 }
 
 
@@ -161,12 +167,12 @@ miutil::miString
 TblBufr::
 uniqueKey()const
 {
-  ostringstream ost;
-  
-  ost << " WHERE wmono="   << wmono_ << " AND "
-      << "       obstime=" << quoted(obstime_.isoTime());
+   ostringstream ost;
 
-  return ost.str();
+   ost << " WHERE wmono="   << wmono_ << " AND "
+       << "       obstime=" << quoted(obstime_.isoTime());
+
+   return ost.str();
 }
 
 
@@ -175,14 +181,15 @@ miutil::miString
 TblBufr::
 toUpdate()const
 {
-  ostringstream ost;
-  
-  ost << "SET createtime=" << quoted(createtime_) << "," 
-      <<            "crc=" << crc_                << ","
-      <<            "ccx=" << ccx_                << ","
-      <<         "data=" << quoted(data_)
-      << " WHERE   wmono=" << wmono_ << " AND "
-      << "       obstime=" << quoted(obstime_.isoTime());
+   ostringstream ost;
 
-  return ost.str();
+   ost << "SET createtime=" << quoted(createtime_) << ","
+       <<            "crc=" << crc_                << ","
+       <<            "ccx=" << ccx_                << ","
+       <<           "data=" << quoted(data_)       << ","
+       <<     "bufrBase64=" << quoted( bufrBase64_ )
+       << " WHERE   wmono=" << wmono_ << " AND "
+       << "       obstime=" << quoted(obstime_.isoTime());
+
+   return ost.str();
 }

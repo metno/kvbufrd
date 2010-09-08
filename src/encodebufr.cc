@@ -34,10 +34,11 @@
 #include <string.h>
 #include <errno.h>
 #include <milog/milog.h>
-#include "bufrencodehelper.h"
 #include <stdlib.h>
 #include <sstream>
 #include <fstream>
+#include "bufrencodehelper.h"
+#include "base64.h"
 
 using namespace std;
 
@@ -150,14 +151,10 @@ saveToFile( bool overwrite)const
    }
 }
 
-
-void
+std::string
 BufrEncoder::
-saveToFile( const std::string &path, bool overwrite )const
+wmoHeader()const
 {
-   ostringstream ost;
-   ofstream      f;
-   struct stat   sbuf;
    string header;
    string tmpOwner=station->owner();
    char tmp[16];
@@ -173,16 +170,16 @@ saveToFile( const std::string &path, bool overwrite )const
       case 12:
       case 18:
          header+="ISMD";
-            break;
+         break;
       case 3:
       case 9:
       case 15:
       case 21:
          header+="ISID";
-            break;
+         break;
       default:
          header+="ISND";
-            break;
+         break;
       }
 
       header+="NO";
@@ -205,8 +202,25 @@ saveToFile( const std::string &path, bool overwrite )const
       }
       header+="\r\r\n";
    }
+   return header;
+}
 
 
+
+void
+BufrEncoder::
+saveToFile( const std::string &path, bool overwrite )const
+{
+   ostringstream ost;
+   ofstream      f;
+   struct stat   sbuf;
+   string header;
+   string tmpOwner=station->owner();
+   char tmp[16];
+   char dateTime[16];
+   int  ccx_=ccx;
+
+   header = wmoHeader();
 
    if(stat( path.c_str(), &sbuf)<0){
       ostringstream o;
@@ -262,13 +276,8 @@ saveToFile( const std::string &path, bool overwrite )const
       f.open( ost.str().c_str(), ios_base::trunc | ios_base::binary | ios_base::out );
 
       if( f.is_open() ){
-         LOGINFO("Writing BUFR to file: " << ost.str());
-         f << header;
-         f.write( reinterpret_cast< ofstream::char_type* >( kbuff ), kbuflen*4 );
 
-         if( ! test )
-            f << "\r\n\r\r\n\n\n\n\n\n\n\nNNNN\r\n";
-
+         writeToStream( f );
          f.close();
          return;
       } else {
@@ -285,6 +294,20 @@ saveToFile( const std::string &path, bool overwrite )const
    ost << "Failed to write BUFR file for station '" << station->wmono() << "' obstime: " << obstime;
    throw BufrEncodeException( ost.str() );
 }
+
+bool
+BufrEncoder::
+writeToStream( std::ostream &out )const
+{
+   out << wmoHeader();
+   out.write( reinterpret_cast< ofstream::char_type* >( kbuff ), kbuflen*4 );
+
+   if( ! test )
+      out << "\r\n\r\r\n\n\n\n\n\n\n\nNNNN\r\n";
+
+   return out.good();
+}
+
 
 namespace {
 

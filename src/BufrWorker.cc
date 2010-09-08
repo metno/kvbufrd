@@ -311,246 +311,244 @@ readyForBufr(const DataEntryList &data,
   message that can be returned to the celler.
  */
 void 
-BufrWorker::newObs(ObsEvent &event)
+BufrWorker::
+newObs(ObsEvent &event)
 {
-	EReadData      dataRes;
-  	DataEntryList  data;   
-  	DataElementList  bufrData;
-  	Bufr          bufrEncoder;
-  	BufrData      bufr;
-  	string         sBufr;
-  	StationInfoPtr info;
-  	ostringstream  ost;
-   boost::uint16_t  oldcrc=0;
-   int              ccx=0;
+   EReadData       dataRes;
+   DataEntryList   data;
+   DataElementList bufrData;
+   Bufr            bufrEncoder;
+   BufrData        bufr;
+   StationInfoPtr  info;
+   ostringstream   ost;
+   boost::uint16_t oldcrc=0;
+   int             ccx=0;
    list<TblBufr>   tblBufrList;
 
-  	info=event.stationInfo();
-  
-  	if(!info->msgForTime(event.obstime().hour())){
-  		LOGINFO("Skip SYNOP for time: " << event.obstime() << "  wmono: " << 
-  				  info->wmono());
-  		swmsg << "Skip SYNOP for time: " << event.obstime() << "  wmono: " << 
-  				   info->wmono();
-  				 
-  		if(event.hasCallback()){
-  			event.msg() << "Skip SYNOP for time: " << event.obstime() << 
-  						   "  wmono: " << info->wmono();
-  			event.bufr("");
-      	event.isOk(false);
-  		}
-  		
-  		return;
-  	}
+   info=event.stationInfo();
 
-  	//We check if this is a event for regeneraiting a SYNOP
-  	//due to changed data. If it is, the bufr for this time
-  	//must allready exist. If it don't exist we could generate 
-  	//a SYNOP that is incomplete because of incomplete data.
+   if(!info->msgForTime(event.obstime().hour())){
+      LOGINFO("Skip BUFR for time: " << event.obstime() << "  wmono: " <<
+              info->wmono());
+      swmsg << "Skip BUFR for time: " << event.obstime() << "  wmono: " <<
+            info->wmono();
 
-  	if(event.regenerate()){
-    	list<TblBufr> tblBufrList;
+      if(event.hasCallback()){
+         event.msg() << "Skip BUFR for time: " << event.obstime() <<
+               "  wmono: " << info->wmono();
+         event.bufr("");
+         event.isOk(false);
+      }
 
-    	LOGINFO("Regenerate event: wmono " << info->wmono() << ", obstime " <<
-	    		  event.obstime());
-    
-    	if(app.getSavedBufrData(info->wmono(),
-							          event.obstime(), 
-			     				       tblBufrList, *con)){
-			if(tblBufrList.size()>0){
-				LOGINFO("Regenerate event: Regenerate SYNOP.");
-      	}else{
-				LOGINFO("Regenerate event: No SYNOP exist, don't regenerate!");
-				swmsg << "Regenerate: No bufr exist.";
+      return;
+   }
 
-				return;
-     		}
-		}else{
-      	LOGERROR("DBERROR: Regenerate event: Cant look up the bufr!");
-      	swmsg << "Regenerate: DB error!";
+   //We check if this is a event for regeneraiting a BUFR
+   //due to changed data. If it is, the bufr for this time
+   //must allready exist. If it don't exist we could generate
+   //a BUFR that is incomplete because of incomplete data.
 
-      	return;
-    	}
-  	}
+   if(event.regenerate()){
+      list<TblBufr> tblBufrList;
+
+      LOGINFO("Regenerate event: wmono " << info->wmono() << ", obstime " <<
+              event.obstime());
+
+      if(app.getSavedBufrData(info->wmono(),
+                              event.obstime(),
+                              tblBufrList, *con)){
+         if(tblBufrList.size()>0){
+            LOGINFO("Regenerate event: Regenerate BUFR.");
+         }else{
+            LOGINFO("Regenerate event: No BUFR exist, don't regenerate!");
+            swmsg << "Regenerate: No bufr exist.";
+
+            return;
+         }
+      }else{
+         LOGERROR("DBERROR: Regenerate event: Cant look up the bufr!");
+         swmsg << "Regenerate: DB error!";
+
+         return;
+      }
+   }
 
 
-  	dataRes=readData(*con, event, data);
+   dataRes=readData(*con, event, data);
 
-  	if(dataRes!=RdOK){
-    	if(event.hasCallback()){
-      	event.isOk(false);
-      	
-      	switch(dataRes){
-      	case RdNoStation:
-				event.msg() << "NOSTATION: No station congigured!";
-				break;
-      	case RdNoData:
-				event.msg() << "NODATA: No data!";
-				break;
-      	case RdMissingObstime:
-				event.msg() << "MISSING OBSTIME: No data for the obstime!";
-				break;
-      	default:
-				event.msg() << "READERROR: cant read data!";
-      	}
-    	}
+   if(dataRes!=RdOK){
+      if(event.hasCallback()){
+         event.isOk(false);
 
-    	swmsg << event.msg().str();
+         switch(dataRes){
+         case RdNoStation:
+            event.msg() << "NOSTATION: No station congigured!";
+            break;
+         case RdNoData:
+            event.msg() << "NODATA: No data!";
+            break;
+         case RdMissingObstime:
+            event.msg() << "MISSING OBSTIME: No data for the obstime!";
+            break;
+         default:
+            event.msg() << "READERROR: cant read data!";
+         }
+      }
 
-    	return;
-  	}
-  
+      swmsg << event.msg().str();
 
-  	//If this event comes frrom the DelayControll and
-  	//is for data waiting on continues types don't run
-  	//it through the readyForBufr test. We know that
-  	//the readyForBufr has previously returned true for
-  	//this event.
- 
-  	if(!event.waitingOnContinuesData()){
-    	//Don't delay a observation that is explicit asked for.
-    	//A SYNOP that is explicit asked for has a callback.
+      return;
+   }
 
-    	if(!event.hasCallback() && !readyForBufr(data, event)){
-      	return;
-    	}
-  	}
 
-  	//Check if shall test for continuesTypes. We do that
-  	//if we have now Waiting pointer or we have a Waiting pointer
-  	//but it has not been tested for waiting on continues data.
-  	if(!checkContinuesTypes(event, data)){
-    	return;
-  	}
-    
-  	app.removeWaiting(info->wmono(), event.obstime(), con);
-  
-  	LOGINFO("ReadData: wmono: " <<info->wmono() << " obstime: " <<
-			  event.obstime() << " # " << data.size());
-  
-  	try{
-    	loadBufrData(data, bufrData, event.stationInfo());
-  	}
-  	catch(...){
-    	LOGDEBUG("EXCEPTION(Unknown): Unexpected exception from "<< endl <<
-	     		   "BufrWorker::loadBufrData" << endl);
-  	}
-  
-  	CIDataElementList it=bufrData.begin();
-  	ost.str("");
+   //If this event comes frrom the DelayControll and
+   //is for data waiting on continues types don't run
+   //it through the readyForBufr test. We know that
+   //the readyForBufr has previously returned true for
+   //this event.
 
-  	for(int i=0;it!=bufrData.end(); i++, it++)
-    	ost << it->time() << "  [" << i << "] " << bufrData[i].time() <<endl;
-  
-  	LOGINFO("# number of bufrdata: " << bufrData.size() << endl<<
-   		  "Continues: " << bufrData.nContinuesTimes() << endl <<
-	   	  "Time(s): " << endl << ost.str());
-  
-  	if( app.getSavedBufrData(info->wmono(), event.obstime(), tblBufrList, *con)){
-  	   if(tblBufrList.size()>0){
-  	      ccx=tblBufrList.front().ccx();
-  	      oldcrc=tblBufrList.front().crc();
-  	      ++ccx;
-  	      LOGDEBUG("An BUFR messages for wmono: " << info->wmono() << " obstime: " << event.obstime()
-  	               << " allready exist. ccx=" << ccx-1 << " crc: " << oldcrc );
-  	   }
-  	}
+   if(!event.waitingOnContinuesData()){
+      //Don't delay a observation that is explicit asked for.
+      //A BUFR that is explicit asked for has a callback.
 
-  	LOGDEBUG6(bufrData);
+      if(!event.hasCallback() && !readyForBufr(data, event)){
+         return;
+      }
+   }
 
-  	bool bufrOk;
+   //Check if shall test for continuesTypes. We do that
+   //if we have now Waiting pointer or we have a Waiting pointer
+   //but it has not been tested for waiting on continues data.
+   if(!checkContinuesTypes(event, data)){
+      return;
+   }
 
-  	try{
+   app.removeWaiting(info->wmono(), event.obstime(), con);
 
-    	bufrOk=bufrEncoder.doBufr( info,
-    	                           bufrData,
-    	                           bufr,
-    	                           true);
-  	}
-  	catch(std::out_of_range &e){
-    	LOGWARN("EXCEPTION: out_of_range: wmono: " << info->wmono() <<
-	    		  " obstime: "  <<
-	    		  ((bufrData.begin()!=bufrData.end())?
-					bufrData.begin()->time():"(NULL)") << endl <<
-	    		  "what: " << e.what() << endl);
-    	bufrOk=false;
-    	swmsg << "Cant create a bufr!" << endl;
-  	}
-  	catch(DataListEntry::TimeError &e){
-     	LOGWARN("Exception: TimeError: wmono: " << info->wmono() << " obstime: "  <<
-    			  ((bufrData.begin()!=bufrData.end())?
-				  bufrData.begin()->time():"(NULL)") << endl<<
-				  "what: " << e.what() << endl);
-    	bufrOk=false;
-    	swmsg << "Cant create a bufr!" << endl;
-  	}
-  	catch(...){
-    	LOGWARN("EXCEPTION(Unknown): Unexpected exception in Bufr::doBufr:" <<
-	    		  endl << "wmono: " << info->wmono() << " obstime: "  <<
-	   		  ((bufrData.begin()!=bufrData.end())?
-				  bufrData.begin()->time():"(NULL)") << endl);
-    	bufrOk=false;
-    	swmsg << "Cant create a bufr!" << endl;
-  	}
-  
-  	if(!bufrOk){
-    	if(event.hasCallback()){
-      	event.isOk(false);
-      
-      	if(bufrData.size()==0)
-				event.msg() << "NODATA:(" << event.obstime() <<") cant create bufr!";
-      	else
-				event.msg() << "BUFR ERROR:(" << event.obstime() <<") cant create bufr!";
-    	}
+   LOGINFO("ReadData: wmono: " <<info->wmono() << " obstime: " <<
+           event.obstime() << " # " << data.size());
 
-    	LOGERROR("Cant create SYNOP for <"<< info->wmono()<<"> obstime: " <<
-	     		   event.obstime());
-    	swmsg << "Cant create a bufr!" << endl;
-  	}else{
-    	boost::uint16_t       crc=bufr.crc();
-    	bool newBufr( crc != oldcrc );
-    
+   try{
+      loadBufrData(data, bufrData, event.stationInfo());
+   }
+   catch(...){
+      LOGDEBUG("EXCEPTION(Unknown): Unexpected exception from "<< endl <<
+               "BufrWorker::loadBufrData" << endl);
+   }
 
-    	//Bufr::replaceCCCXXX(sBufr, ccx);
+   CIDataElementList it=bufrData.begin();
+   ost.str("");
 
-    	if(newBufr){
-      	miTime createTime(miTime::nowTime());
-      	ostringstream dataOst;
+   for(int i=0;it!=bufrData.end(); i++, it++)
+      ost << it->time() << "  [" << i << "] " << bufrData[i].time() <<endl;
 
-      	bufrData.writeTo( dataOst );
-      
-      	if(app.saveBufrData( TblBufr( info->wmono(), event.obstime(),
-				 				 		         createTime, crc, ccx, dataOst.str() ),
-			   					 	*con)) {
-				LOGINFO("BUFR information saved to database! ccx: " << ccx << " crc: " << crc );
-      	} else {
-      	   LOGERROR("FAILED to svae BUFR information to the database! ccx: " << ccx << " crc: " << crc );
-      	}
+   LOGINFO("# number of bufrdata: " << bufrData.size() << endl<<
+           "Continues: " << bufrData.nContinuesTimes() << endl <<
+           "Time(s): " << endl << ost.str());
 
-      	saveTo(info, bufr, ccx);
-      
-      	swmsg << "New bufr created!" << endl;
+   if( app.getSavedBufrData(info->wmono(), event.obstime(), tblBufrList, *con)){
+      if(tblBufrList.size()>0){
+         ccx=tblBufrList.front().ccx();
+         oldcrc=tblBufrList.front().crc();
+         ++ccx;
+         LOGDEBUG("An BUFR messages for wmono: " << info->wmono() << " obstime: " << event.obstime()
+                  << " allready exist. ccx=" << ccx-1 << " crc: " << oldcrc );
+      }
+   }
 
-    	}else{
-     		LOGINFO("DUPLICATE: wmono=" << info->wmono() << " obstime: " 
-       			 << event.obstime());
-      
-     		swmsg << "Duplicate bufr created!" << endl;
-      
-     		if(event.hasCallback())
-				event.msg() << "DUPLICATE: wmono=" << info->wmono() << " obstime: " 
-		    					<< event.obstime();
-      		
-    	}
+   LOGDEBUG6(bufrData);
 
-    	ost.str("");
-    	
-    	if(event.hasCallback()){
-      	//If we have a callback registred. Return the bufr
-      	event.bufr(sBufr);
-      	event.isOk(true);
-    	}
-  	}
+   bool bufrOk;
+
+   try{
+
+      bufrOk=bufrEncoder.doBufr( info,
+                                 bufrData,
+                                 bufr,
+                                 true);
+   }
+   catch(std::out_of_range &e){
+      LOGWARN("EXCEPTION: out_of_range: wmono: " << info->wmono() <<
+              " obstime: "  <<
+              ((bufrData.begin()!=bufrData.end())?
+                    bufrData.begin()->time():"(NULL)") << endl <<
+                    "what: " << e.what() << endl);
+      bufrOk=false;
+      swmsg << "Cant create a bufr!" << endl;
+   }
+   catch(DataListEntry::TimeError &e){
+      LOGWARN("Exception: TimeError: wmono: " << info->wmono() << " obstime: "  <<
+              ((bufrData.begin()!=bufrData.end())?
+                    bufrData.begin()->time():"(NULL)") << endl<<
+                    "what: " << e.what() << endl);
+      bufrOk=false;
+      swmsg << "Cant create a bufr!" << endl;
+   }
+   catch(...){
+      LOGWARN("EXCEPTION(Unknown): Unexpected exception in Bufr::doBufr:" <<
+              endl << "wmono: " << info->wmono() << " obstime: "  <<
+              ((bufrData.begin()!=bufrData.end())?
+                    bufrData.begin()->time():"(NULL)") << endl);
+      bufrOk=false;
+      swmsg << "Cant create a bufr!" << endl;
+   }
+
+   if(!bufrOk){
+      if(event.hasCallback()){
+         event.isOk(false);
+
+         if(bufrData.size()==0)
+            event.msg() << "NODATA:(" << event.obstime() <<") cant create bufr!";
+         else
+            event.msg() << "BUFR ERROR:(" << event.obstime() <<") cant create bufr!";
+      }
+
+      LOGERROR("Cant create BUFR for <"<< info->wmono()<<"> obstime: " <<
+               event.obstime());
+      swmsg << "Cant create a BUFR!" << endl;
+   }else{
+      boost::uint16_t crc=bufr.crc();
+      string          base64;
+
+      bool newBufr( crc != oldcrc );
+
+      if(newBufr){
+         miTime createTime(miTime::nowTime());
+         ostringstream dataOst;
+
+         bufrData.writeTo( dataOst );
+         saveTo( info, bufr, ccx, &base64 );
+
+         if(app.saveBufrData( TblBufr( info->wmono(), event.obstime(),
+                                       createTime, crc, ccx, dataOst.str(), base64 ),
+                                       *con)) {
+            LOGINFO("BUFR information saved to database! ccx: " << ccx << " crc: " << crc );
+         } else {
+            LOGERROR("FAILED to svae BUFR information to the database! ccx: " << ccx << " crc: " << crc );
+         }
+
+         swmsg << "New bufr created!" << endl;
+
+      }else{
+         LOGINFO("DUPLICATE: wmono=" << info->wmono() << " obstime: "
+                 << event.obstime());
+
+         swmsg << "Duplicate bufr created!" << endl;
+
+         if(event.hasCallback())
+            event.msg() << "DUPLICATE: wmono=" << info->wmono() << " obstime: "
+            << event.obstime();
+
+      }
+
+      ost.str("");
+
+      if(event.hasCallback()){
+         //If we have a callback registred. Return the bufr
+         event.bufr( base64 );
+         event.isOk(true);
+      }
+   }
 }
 
 BufrWorker::EReadData
@@ -725,13 +723,20 @@ void
 BufrWorker::
 saveTo( StationInfoPtr info,
         BufrData  &bufr,
-        int ccx) const
+        int ccx,
+        std::string *base64 ) const
 {
    BufrEncoder encodeBufr( info );
 
    try {
       encodeBufr.encodeBufr( bufr, ccx );
       encodeBufr.saveToFile();
+
+      if( base64 ) {
+         ostringstream ost;
+         encodeBufr.writeToStream( ost );
+         *base64 = ost.str();
+      }
    }
    catch( const exception &ex ) {
       LOGERROR("Failed to encode to BUFR: wmono: " << info->wmono() << " obstime: " << bufr.time() << ". Reason: " << ex.what());

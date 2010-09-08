@@ -116,10 +116,12 @@ class BufrWorker {
    * \param obstime The observation time to the \a wmomsg.
    * \param wmomsg The wmo message to save to disk.
    * \param ccx The CC? indicator.
+   * \param base64 If not NULL, return the base64 encoding for the bufr msg.
    */
   void saveTo(StationInfoPtr info,
               BufrData  &bufr,
-              int ccx ) const;
+              int ccx,
+              std::string *base64=0 ) const;
 
   bool checkContinuesTypes(ObsEvent            &event, 
 			   const DataEntryList &data)const;
