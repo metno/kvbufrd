@@ -1,4 +1,4 @@
-kvbufrd (2.1.1-1) unstable; urgency=low
+kvbufrd (2.1.2-1) unstable; urgency=low
 
   * Fix file permission for the cache database.
 
