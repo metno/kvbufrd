@@ -95,9 +95,10 @@ case "$1" in
 
     if [ ! -f $SQLLITE_DB ]; then
 		/usr/bin/kvbufrd_initdb
-		dpkg-statoverride --update $SQLLITE_DB 
+		if [ -f $SQLLITE_DB ]; then
+			dpkg-statoverride --update --force --add root $KV_USER 664 $SQLLITE_DB >/dev/null 2>&1
+		fi
     fi
-
     
     #Only the kvalobs user and group can write to the cache databases.
     for i in $SQLLITE_DB; do
