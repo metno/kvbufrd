@@ -90,11 +90,12 @@ case "$1" in
 
 	if ! dpkg-statoverride --list $SQLLITE_DB >/dev/null 2>&1
     then
-       dpkg-statoverride --update --add root $KV_USER 774 $SQLLITE_DB
+       dpkg-statoverride --update --add root $KV_USER 664 $SQLLITE_DB
     fi
 
     if [ ! -f $SQLLITE_DB ]; then
 		/usr/bin/kvbufrd_initdb
+		dpkg-statoverride --update $SQLLITE_DB 
     fi
 
     
