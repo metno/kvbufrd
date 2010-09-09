@@ -88,6 +88,11 @@ case "$1" in
     #Setup the agregator and kvsynop cache databases if they 
     #do not exist.
 
+	if ! dpkg-statoverride --list $SQLLITE_DB >/dev/null 2>&1
+    then
+       dpkg-statoverride --update --add root $KV_USER 774 $SQLLITE_DB
+    fi
+
     if [ ! -f $SQLLITE_DB ]; then
 		/usr/bin/kvbufrd_initdb
     fi

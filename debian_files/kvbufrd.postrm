@@ -63,17 +63,20 @@ case "$1" in
         dpkg-statoverride --remove $i
         rm -f $i 
      done
+     
      for i in $ETC_FILES; do
-	 dpkg-statoverride --remove /etc/kvalobs/$i
+	 	dpkg-statoverride --remove /etc/kvalobs/$i
      done
+     
+     dpkg-statoverride --remove $SQLLITE_DB
      
      #Delete my debconf entries in the database.
      db_purge || true
      ;;
    
     *)
-        echo "postrm called with unknown argument \`$1'" >&2
-        exit 1
+     echo "postrm called with unknown argument \`$1'" >&2
+     exit 1
     ;;
 esac
 
