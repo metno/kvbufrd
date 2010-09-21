@@ -59,6 +59,10 @@ App::
 createGlobalLogger(const std::string &id)
 {
   	try{
+
+  	   if( LogManager::hasLogger(id) )
+  	      return true;
+
     	FLogStream *logs=new FLogStream(2, 204800); //200k
     	std::ostringstream ost;
     

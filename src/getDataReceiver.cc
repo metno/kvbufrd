@@ -44,121 +44,121 @@ bool
 GetKvDataReceiver::
 next(kvservice::KvObsDataList &dl)
 {
-  	int  nObs=0;
-  	LogContext lContext("GetKvDataReceiver");
- 
+   int  nObs=0;
+   LogContext lContext("GetKvDataReceiver");
 
-  	for(kvservice::IKvObsDataList it=dl.begin(); 
-      	it!=dl.end(); 
-      	it++){
 
-		KvObsData::kvDataList::iterator dit=it->dataList().begin();    
+   for(kvservice::IKvObsDataList it=dl.begin();
+         it!=dl.end();
+         it++){
 
-    	if(dit==it->dataList().end())
-      		continue;
+      KvObsData::kvDataList::iterator dit=it->dataList().begin();
 
-    	nObs++;
-   
-    	int            sid=dit->stationID();
-    	miutil::miTime obstime=dit->obstime();
-    
-    	if(logid.empty()){
-      		LOGINFO("Data received: stationID: " << sid 
-	      		 << " obstime: " << obstime 
-	      		 << " parameters: " << it->dataList().size() << endl);
-    	}else{
-      		IDLOGINFO(logid,"Data received: stationID: " << sid 
-				  << " obstime: " << obstime 
-				  << " parameters: " << it->dataList().size() << endl);
-    	}
+      if(dit==it->dataList().end())
+         continue;
 
-    	StationInfoPtr station=app.findStationInfo(sid);
-    
-    	if(!station){
-      		LOGDEBUG("Unexpected station: " <<  it->stationid());
+      nObs++;
 
-      		if(!logid.empty())
-				IDLOGDEBUG(logid, "Unexpected station: " <<  it->stationid());
+      int            sid=dit->stationID();
+      miutil::miTime obstime=dit->obstime();
 
-      		continue;
-    	}
+      if(logid.empty()){
+         IDLOGINFO("GetData", "Data received: stationID: " << sid
+                   << " obstime: " << obstime
+                   << " parameters: " << it->dataList().size() << endl);
+      }else{
+         IDLOGINFO(logid,"Data received: stationID: " << sid
+                   << " obstime: " << obstime
+                   << " parameters: " << it->dataList().size() << endl);
+      }
 
-    	ObsEvent        *event=0;
-      
-    	if(obstime>=fromTime){
-      		try{
-				event=new ObsEvent(obstime, station);
-      		} 
-      		catch(...){
-				LOGERROR("No mem!");
-	
-				if(!logid.empty())
-	  				IDLOGERROR(logid, "No mem!");
-	
-				return false;
-      		}
-    	}
+      StationInfoPtr station=app.findStationInfo(sid);
 
-    	int             invalidData=0;
-    	std::list<Data> myDataList;
-     
-    	for(;dit!=it->dataList().end(); dit++){
-      		if(!station->hasTypeId(dit->typeID())){
-				continue;
-      		}
-      
-      		if(event)
-      			event->addTypeidReceived(dit->stationID(), dit->typeID());
+      if(!station){
+         IDLOGDEBUG("GetData", "Unexpected station: " <<  it->stationid());
 
-      		myDataList.push_back(Data(*dit));
-    	}
-    
-    	int nData=0;
-    
-    	if(myDataList.size()>0){
-      		if(!gate.insert(myDataList, true)){
-				LOGERROR("Cant insert data: \n  stationid: " << sid 
-		   			  << " obstime: " << obstime
-		   			  << "  reason: " << gate.getErrorStr() << endl);
+         if(!logid.empty())
+            IDLOGDEBUG(logid, "Unexpected station: " <<  it->stationid());
 
-				IDLOGERROR(logid,"Cant insert data: \n  stationid: " << 
-		   				   sid<< " obstime: " << obstime <<
-		   				   "  reason: " << gate.getErrorStr() << endl);
-      		}else{
-				IDLOGDEBUG(logid,"stationid: " << sid << " obstime: " <<
-		    			   obstime << "  inserted: #" << myDataList.size() <<
-		     			   " params!" <<endl);
+         continue;
+      }
 
-				nData=myDataList.size();
-      		}
-    	}
-    
-    	if(nData>0 && event){
-      		if(logid.empty()){
-				LOGDEBUG("Postevent: stationid=" << sid << " obstime=" << 
-		 				 obstime);
-      		}else{
-				IDLOGDEBUG(logid,"Postevent: stationid=" << sid << " obstime=" << 
-		   				   obstime);
-      		}
-      
-      		app.addObsEvent(event, que);
-    	}else{
-      		if(invalidData==it->dataList().size()){
-				LOGDEBUG("Rejected data only!");
-				IDLOGDEBUG(logid,"Rejected data only!");
-      		}
-      		delete event;
-    	}
-  	}
+      ObsEvent        *event=0;
 
-  	if(nObs==0){
-    	LOGDEBUG("No data received!");
-    	IDLOGDEBUG(logid,"No data received!");
-  	}else{
-    	LOGINFO("#" << nObs << " observation proccessed!");
-    	IDLOGINFO(logid, "#" << nObs << " observation proccessed!");
-  	}
+      if(obstime>=fromTime){
+         try{
+            event=new ObsEvent(obstime, station);
+         }
+         catch(...){
+            LOGERROR("No mem!");
 
-  	return true;
+            if(!logid.empty())
+               IDLOGERROR(logid, "No mem!");
+
+            return false;
+         }
+      }
+
+      int             invalidData=0;
+      std::list<Data> myDataList;
+
+      for(;dit!=it->dataList().end(); dit++){
+         if(!station->hasTypeId(dit->typeID())){
+            continue;
+         }
+
+         if(event)
+            event->addTypeidReceived(dit->stationID(), dit->typeID());
+
+         myDataList.push_back(Data(*dit));
+      }
+
+      int nData=0;
+
+      if(myDataList.size()>0){
+         if(!gate.insert(myDataList, true)){
+            LOGERROR("Cant insert data: \n  stationid: " << sid
+                     << " obstime: " << obstime
+                     << "  reason: " << gate.getErrorStr() << endl);
+
+            IDLOGERROR(logid,"Cant insert data: \n  stationid: " <<
+                       sid<< " obstime: " << obstime <<
+                       "  reason: " << gate.getErrorStr() << endl);
+         }else{
+            IDLOGDEBUG(logid,"stationid: " << sid << " obstime: " <<
+                       obstime << "  inserted: #" << myDataList.size() <<
+                       " params!" <<endl);
+
+            nData=myDataList.size();
+         }
+      }
+
+      if(nData>0 && event){
+         if(logid.empty()){
+            LOGDEBUG("Postevent: stationid=" << sid << " obstime=" <<
+                     obstime);
+         }else{
+            IDLOGDEBUG(logid,"Postevent: stationid=" << sid << " obstime=" <<
+                       obstime);
+         }
+
+         app.addObsEvent(event, que);
+      }else{
+         if(invalidData==it->dataList().size()){
+            LOGDEBUG("Rejected data only!");
+            IDLOGDEBUG(logid,"Rejected data only!");
+         }
+         delete event;
+      }
+   }
+
+   if(nObs==0){
+      LOGDEBUG("No data received!");
+      IDLOGDEBUG(logid,"No data received!");
+   }else{
+      LOGINFO("#" << nObs << " observation proccessed!");
+      IDLOGINFO(logid, "#" << nObs << " observation proccessed!");
+   }
+
+   return true;
 }
