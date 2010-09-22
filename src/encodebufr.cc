@@ -106,14 +106,19 @@ encodeBufr( const BufrData &data, int ccx_ )
 
   LOGDEBUG("Bufr values: " << values.log() );
 
-  ktdlen = 1;
+  ktdlen = 3;
   ktdlst[0] = 307079;
+
+  //The following descriptors is used only internally by met.no
+  ktdlst[1] = 4025;  // 0 04 025 Time displacement (Before the obstime)
+  ktdlst[2] = 11042; // 0 11 042 Maximum wind speed (10 min mean wind).
 
   /* Encode BUFR message */
   bufren_( ksec0, ksec1, ksec2, ksec3, ksec4, &ktdlen, ktdlst,
            &kdlen, kdata, &kelem, &kvals, values.values(), (char **) cvals,
            &kbuflen, kbuff, &error );
 
+  cerr << "ktdlen: " << ktdlen << endl;
   if( error != 0 ) {
      ostringstream o;
      o << "Failed to encode bufr for station '" << station->wmono() << "' obstime: " << data.time()
@@ -563,11 +568,11 @@ void set_values(const StationInfoPtr station,
    values[idx++] = miss;  /* 008021 Time significance */
 
 
-   values[idx++].toBufrIf( "t_910ff[0]", -10, data.FG_010 != FLT_MAX );/* 004025 Time period or displacement (minutes) */
+   values[idx++].toBufrIf( "t_910ff[0]", -10, data.FgMax.ff != FLT_MAX );/* 004025 Time period or displacement (minutes) */
    values[idx++] = miss;  /* 011043 Maximum wind gust direction */
-   values[idx++].toBufr( "ff910[0]", data.FG_010 );/* 011041 Maximum wind gust speed */
+   values[idx++].toBufr( "ff910[0]", data.FgMax.ff );/* 011041 Maximum wind gust speed */
 
-   values[idx++].toBufr( "t_911ff[1]", data.tFG );/* 004025 Time period or displacement (minutes) */
+   values[idx++].toBufr( "t_911ff[1]", data.FgMax.t );/* 004025 Time period or displacement (minutes) */
    values[idx++] = miss;  /* 011043 Maximum wind gust direction */
    values[idx++].toBufr( "ff911[1]", data.FG ) ;/* 011041 Maximum wind gust speed */
    values[idx++].toBufr( "h_W", station->heightWind() ); /* 007032 Height of sensor above local ground (set to missing to cancel the previous value) */
@@ -608,6 +613,10 @@ void set_values(const StationInfoPtr station,
    values[idx++] = miss;  /* 004024 Time period or displacement */
    values[idx++] = miss;  /* 012049 Temperature change over period specified */
 #endif
+
+   //Data elements only used by met.no.
+   values[idx++].toBufr("FxMax when", data.FxMax.t );  //004025 Time period or displacement.
+   values[idx++].toBufr("FxMax", data.FxMax.ff );      //011042 Maximum wind speed (10 min mean).
 
    LOGDEBUG( "Encodebufr name: " << station->name() );
    memset( cvals[0], '\0', 20 );

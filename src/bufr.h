@@ -106,7 +106,8 @@ class Bufr
     void dewPoint( const DataElement &data, BufrData &res );
     void minMaxTemperature(const DataElementList &sd, BufrData &res );
     void maxWindGust( const DataElementList &sd, BufrData &res  );
-    void maxWindMax( BufrData::Wind &wind, DataElementList &sd );
+    void maxWindMax( const DataElementList &sd, BufrData &res );
+    //void maxWindMax( BufrData::Wind &wind, DataElementList &sd );
     void cloudData( const DataElementList &data, BufrData &res );
     float pressure( float presure );
     void doPressureTrend( const DataElementList &data, DataElement &res );

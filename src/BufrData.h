@@ -45,16 +45,16 @@ public:
    struct Wind {
       float ff;
       float dd;
-      float i;
+      float t;
 
       Wind():
-         ff( FLT_MAX ), dd( FLT_MAX ), i( FLT_MAX ) {}
+         ff( FLT_MAX ), dd( FLT_MAX ), t( FLT_MAX ) {}
       Wind& operator=( const Wind &rhs )
       {
          if( this != &rhs ) {
             ff = rhs.ff;
             dd = rhs.dd;
-            i  = rhs.i;
+            t  = rhs.t;
          }
          return *this;
       }
@@ -129,9 +129,9 @@ public:
       CloudDataExtra& operator[]( int index )const;
    };
 
-   Wind  FxMax;
    float tWeatherPeriod; //Time since last weather observation (clouds etc.).
-   float tFG;
+   Wind  FgMax;
+   Wind  FxMax;
    Precip precip24;
    Precip precipRegional;
    Precip precipNational;

@@ -159,6 +159,7 @@ doBufr( StationInfoPtr  info,
    doEsss( bufrData, bufr );
    doGeneralWeather( bufrData, bufr );
    maxWindGust( bufrData, bufr );
+   maxWindMax( bufrData, bufr );
    cloudData( bufrData, bufr );
    minMaxTemperature( bufrData, bufr );
    doPrecip( info, bufrData, bufr );
@@ -496,12 +497,12 @@ maxWindGust( const DataElementList &data, BufrData &res )
     if( nTimeStr == 0 )
        return;
 
-    res.FG_010 = data[0].FG_010;
+    res.FgMax.ff = data[0].FG_010;
     
     if( ( data[0].time().hour() ) % 6 != 0 ) {
        if( data[0].FG_1 != FLT_MAX ) {
-          res.FG = data[0].FG;
-          res.tFG = -60;
+          res.FgMax.ff = data[0].FG;
+          res.FgMax.t = -60;
        }
        return;
     }
@@ -522,11 +523,11 @@ maxWindGust( const DataElementList &data, BufrData &res )
       }
 
       if( it == data.end() ) {
-         res.tFG = -360; //  6 hours, in minutes.
+         res.FgMax.t = -360; //  6 hours, in minutes.
       } else {
          int d = miutil::miTime::hourDiff( it->time(), data[0].time()  );
          cerr << "maxWindGust: prev: "<< it->time() << " time: " << data[0].time() << " d: " << d << endl;
-         res.tFG = d*60;
+         res.FgMax.t = d*60;
       }
 
       return;
@@ -543,9 +544,130 @@ maxWindGust( const DataElementList &data, BufrData &res )
     if(fMax<0)
       return;
 
-    res.FG = fMax;
-    res.tFG = -360;
+    res.FgMax.ff = fMax;
+    res.FgMax.t = -360;
 }
+
+
+void
+Bufr::
+maxWindMax(  const DataElementList &data, BufrData &res /*BufrData::Wind &wind, DataElementList &sd*/)
+{
+   int   nTimeStr=data.nContinuesTimes();
+   int   nNeedTimes;
+   float fMax;
+   int   iMax;
+   int   iNaaMax;
+   int   iMaxIndex;
+   int   iTidsAngiv;
+   int   i;
+   char  cTid;
+
+   nNeedTimes=3;
+   fMax=-1.0;
+
+   if(( data[0].time().hour())%3 != 0)
+      return;
+
+   if((data[0].time().hour())%6 == 0)
+      nNeedTimes=6;
+
+   if(nTimeStr < nNeedTimes){
+      fMax=FLT_MAX;
+
+      if(data[0].FX!=FLT_MAX && data[0].FX>=0){
+         fMax=data[0].FX;
+      }else if(data[0].FX_3!=FLT_MAX && data[0].FX_3>=0){
+         fMax=data[0].FX_3;
+
+         if((data[0].time().hour()%6)==0){ //Hovedtermin!
+            miutil::miTime prevTime=data[0].time();
+            prevTime.addHour(-3);
+            CIDataElementList it=data.find(prevTime);
+
+            if(it!=data.end() && it->time()==prevTime &&
+               it->FX_3!=FLT_MAX && it->FX_3>=0){
+
+               if(it->FX_3>fMax)
+                  fMax=it->FX_3;
+            }else{
+               fMax=FLT_MAX;
+            }
+         }
+      }
+
+      if(fMax==FLT_MAX){
+         return;
+      }
+
+      fMax*=KNOPFAKTOR;
+
+      if( data[0].ITZ != FLT_MAX )
+         res.FxMax.t = data[0].ITZ;
+
+      //Guard against rounding error.
+      //fMax = floor( (double) fMax+0.5);
+
+      if(fMax>=0 && fMax<176){
+         res.FxMax.ff = fMax;
+      }
+
+      if( res.FxMax.ff == FLT_MAX || res.FxMax.t == FLT_MAX )
+         res.FxMax = BufrData::Wind();   //Reset to undefind.
+
+      return;
+   }
+
+   i=nNeedTimes-1;
+
+   if(data[i].FX_1==FLT_MAX )
+      return;
+
+   fMax=data[i].FX_1;
+   iMaxIndex=i;
+   i--;
+
+   while(i>=0){
+      if(data[i].FX_1==FLT_MAX){
+         return;
+      }
+
+      if(data[i].FX_1>=fMax){
+         fMax=data[i].FX_1;
+         iMaxIndex=i;
+      }
+
+      i--;
+   }
+
+   if(fMax<0)
+      return;
+
+   if(iMaxIndex<3)
+      iTidsAngiv=iMaxIndex+1;
+   else if(iMaxIndex<6)
+      iTidsAngiv=4;
+   else if(iMaxIndex<9)
+      iTidsAngiv=5;
+   else if(iMaxIndex<12)
+      iTidsAngiv=6;
+   else{
+      return;
+   }
+
+   if( fMax <= data[0].FF ) {
+      iMaxIndex = 0;
+      iTidsAngiv = 0;
+      fMax = data[0].FF;
+   }
+
+//   iMax = (int)floor((double) fMax + 0.5);
+//   iNaaMax = (int) floor((double) data[0].FF + 0.5 );
+
+   res.FxMax.ff = fMax;
+   res.FxMax.t  = -60*iMaxIndex;
+}
+
 
 
 /* 16.01.98
@@ -573,6 +695,7 @@ maxWindGust( const DataElementList &data, BufrData &res )
  * Bxrge Moe
  * Lagt inn støtte for FX_3.
  */
+#if 0
 void 
 Bufr::maxWindMax( BufrData::Wind &wind, DataElementList &sd)
 {
@@ -689,6 +812,7 @@ Bufr::maxWindMax( BufrData::Wind &wind, DataElementList &sd)
    wind.ff = iMax;
    wind.i  = iTidsAngiv;
 }
+#endif
 
 void
 Bufr::

@@ -85,15 +85,16 @@ operator[]( int index )const
 
 BufrData::
 BufrData():
-   tWeatherPeriod( FLT_MAX ), tFG( FLT_MAX )
+   tWeatherPeriod( FLT_MAX )
 {
 }
 
 BufrData::
 BufrData( const BufrData &bd ):
    DataElement( static_cast<DataElement>( bd ) ),
-   FxMax( bd.FxMax ), tWeatherPeriod( bd.tWeatherPeriod ),
-   tFG( bd.tFG ),
+   tWeatherPeriod( bd.tWeatherPeriod ),
+   FgMax( bd.FgMax ),
+   FxMax( bd.FxMax ),
    precip24( bd.precip24 ),
    precipRegional( bd.precipRegional ),
    precipNational( bd.precipNational ),
@@ -108,9 +109,9 @@ operator=( const BufrData &rhs )
 
    if( this != &rhs ) {
       *static_cast<DataElement*>(this) = static_cast<DataElement&>( const_cast<BufrData&>(rhs) );
-      FxMax = rhs.FxMax;
       tWeatherPeriod = rhs.tWeatherPeriod;
-      tFG = rhs.tFG;
+      FgMax = rhs.FgMax;
+      FxMax = rhs.FxMax;
       precip24 = rhs.precip24;
       precipRegional = rhs.precipRegional;
       precipNational = rhs.precipNational;
@@ -170,11 +171,11 @@ operator<<(std::ostream &o, const BufrData::Wind &wind )
    else
       o << wind.dd;
 
-   o << " i: ";
-   if( wind.i == FLT_MAX )
+   o << " t: ";
+   if( wind.t == FLT_MAX )
       o << "NA";
    else
-      o << wind.i;
+      o << wind.t;
 
    return o;
 }
