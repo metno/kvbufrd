@@ -107,7 +107,6 @@ class Bufr
     void minMaxTemperature(const DataElementList &sd, BufrData &res );
     void maxWindGust( const DataElementList &sd, BufrData &res  );
     void maxWindMax( const DataElementList &sd, BufrData &res );
-    //void maxWindMax( BufrData::Wind &wind, DataElementList &sd );
     void cloudData( const DataElementList &data, BufrData &res );
     float pressure( float presure );
     void doPressureTrend( const DataElementList &data, DataElement &res );
@@ -133,7 +132,8 @@ class Bufr
     std::string getErrorMsg()const { return errorMsg;}
     void        setDebug(){ debug=true;}
     void        setTest( bool flag ) { test = flag; }
-    
+
+#if 0
     /**
      * doBufr,
      *
@@ -148,11 +148,11 @@ class Bufr
                     StationInfoPtr       info,
                     DataElementList         &bufrData,
                     bool                 create_CCA_template=false);
+#endif
 
     bool doBufr( StationInfoPtr       info,
                  DataElementList         &bufrData,
-                 BufrData             &bufr,
-                 bool                 create_CCA_template=false
+                 BufrData             &bufr
                );
 
 };

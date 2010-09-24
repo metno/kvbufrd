@@ -93,9 +93,11 @@ encodeBufr( const BufrData &data, int ccx_ )
 
   if( ! kbuff ) {
      try {
-        kbuff = new int[MAX_BUFLEN /4];
+        kbuflen = MAX_BUFLEN /4;
+        kbuff = new int[kbuflen];
      }
      catch( ... ){
+        kbuflen = 0;
         throw BufrEncodeException( "NOMEM to allocate a buffer to hold the bufr message.");
      }
   }
@@ -118,7 +120,9 @@ encodeBufr( const BufrData &data, int ccx_ )
            &kdlen, kdata, &kelem, &kvals, values.values(), (char **) cvals,
            &kbuflen, kbuff, &error );
 
-  cerr << "ktdlen: " << ktdlen << endl;
+  cerr << "kbuflen: " << kbuflen << endl;
+  cerr << "ktdlen:  " << ktdlen << endl;
+
   if( error != 0 ) {
      ostringstream o;
      o << "Failed to encode bufr for station '" << station->wmono() << "' obstime: " << data.time()
@@ -369,7 +373,6 @@ void set_values(const StationInfoPtr station,
 
    float t_ww;          /* Present and past weather */
    miutil::miTime obstime = data.time();
-
 
    if( (obstime.hour()%6) == 0 )
       t_ww = -6;

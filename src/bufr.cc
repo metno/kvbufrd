@@ -126,8 +126,7 @@ bool
 Bufr::
 doBufr( StationInfoPtr  info,
         DataElementList    &bufrData,
-        BufrData        &bufr,
-        bool            create_CCA_template )
+        BufrData        &bufr )
 {
    if( bufrData.firstTime().undef() && bufrData.size() == 0 )
       return false;
@@ -279,7 +278,8 @@ Bufr::windAtObstime( const DataElement &data, DataElement &res )
  *  
  */
 void 
-Bufr::dewPoint(  const DataElement &data, BufrData &res  )
+Bufr::
+dewPoint(  const DataElement &data, BufrData &res  )
 {
    int index;
    float CK[9] = {
@@ -370,51 +370,61 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
    float min = FLT_MAX;
    float max = FLT_MIN;
 
+   res.TAN_12 = FLT_MAX;
+   res.TAX_12 = FLT_MAX;
+
    if( ! (sd[0].time().hour() == 6 || sd[0].time().hour() == 18) )
       return;
 
-   if(nTimeStr<12){
-      if(sd[0].TAN_12 != FLT_MAX)
-         res.TAN_12 = sd[0].TAN_12;
+   if(sd[0].TAN_12 != FLT_MAX)
+      res.TAN_12 = sd[0].TAN_12;
 
-      if(sd[0].TAX_12 != FLT_MAX)
-         res.TAX_12 = sd[0].TAX_12;
+   if(sd[0].TAX_12 != FLT_MAX)
+      res.TAX_12 = sd[0].TAX_12;
 
-      return;
-   }
+   if( res.TAN_12 == FLT_MAX && nTimeStr>=11 ) {
+      for(int i=0; i<12; i++){
+         if(sd[i].TAN==FLT_MAX) {
+            min = FLT_MAX;
+            break;
+         }
 
-
-   for(int i=0; i<12; i++){
-      if(sd[i].TAN==FLT_MAX) {
-         min = FLT_MAX;
-         break;
+         if(sd[i].TAN<min)
+            min=sd[i].TAN;
       }
 
-      if(sd[i].TAN<min)
-         min=sd[i].TAN;
+      if( min != FLT_MAX )
+         res.TAN_12 = min;
    }
 
-   if( sd[0].TA < min)
-      min = sd[0].TA;
+   if( res.TAX_12 == FLT_MAX && nTimeStr>=11) {
+      for(int i=0; i<12; i++){
+         if( sd[i].TAX == FLT_MAX ) {
+            max = FLT_MIN;
+            break;
+         }
 
-   if( min != FLT_MAX )
-      res.TAN_12 = c2kelvin( min );
-
-   for(int i=0; i<12; i++){
-      if( sd[i].TAX == FLT_MAX ) {
-         max = FLT_MIN;
-         break;
+         if( sd[i].TAX > max)
+            max = sd[i].TAX;
       }
 
-      if( sd[i].TAX > max)
-         max = sd[i].TAX;
+      if( max != FLT_MIN )
+         res.TAX_12 = max;
    }
 
-   if( max!=FLT_MIN && sd[0].TA != FLT_MAX && sd[0].TA > max )
-      max = sd[0].TA;
+   if( res.TAN_12 != FLT_MAX ) {
+      if( sd[0].TA < res.TAN_12)
+         res.TAN_12 = sd[0].TA;
 
-   if( max != FLT_MIN )
-      res.TAX_12 = c2kelvin( max );
+      res.TAN_12 = c2kelvin( res.TAN_12 );
+   }
+
+   if( res.TAX_12 != FLT_MAX ) {
+      if( sd[0].TA > res.TAX_12)
+         res.TAX_12 = sd[0].TA;
+
+      res.TAX_12 = c2kelvin( res.TAX_12 );
+   }
 }
 
 
@@ -496,42 +506,47 @@ maxWindGust( const DataElementList &data, BufrData &res )
 
     if( nTimeStr == 0 )
        return;
-
-    res.FgMax.ff = data[0].FG_010;
     
     if( ( data[0].time().hour() ) % 6 != 0 ) {
-       if( data[0].FG_1 != FLT_MAX ) {
+       if( data[0].FG_1 != FLT_MAX && data[0].FG_1 >=0 ) {
           res.FgMax.ff = data[0].FG;
           res.FgMax.t = -60;
        }
        return;
     }
 
+    if( data[0].FG_6 != FLT_MAX  && data[0].FG_6 >= 0 ) {
+          res.FgMax.ff = data[0].FG_6;
+          res.FgMax.t = -360;
+          return;
+    }
+
     if(nTimeStr<6){
-     	if( data[0].FG == FLT_MAX || data[0].FG<0)
+       CIDataElementList it = data.begin();
+       miutil::miTime prevTime=it->time();
+       prevTime.addHour( -6 );
+
+       if( it->FG == FLT_MAX || it->FG<0)
      		return;
 
-      fMax=data[0].FG;
-      
-      CIDataElementList it = data.begin();
-      ++it;
+       CIDataElementList lastIt=data.find(prevTime);
 
-      for( ; it != data.end(); ++it ) {
-         if( it->FG != FLT_MAX ) {
-            break;
-         }
-      }
+       if( lastIt == data.end() || lastIt->FG == FLT_MAX || lastIt->FG < 0 )
+          return;
 
-      if( it == data.end() ) {
-         res.FgMax.t = -360; //  6 hours, in minutes.
-      } else {
-         int d = miutil::miTime::hourDiff( it->time(), data[0].time()  );
-         cerr << "maxWindGust: prev: "<< it->time() << " time: " << data[0].time() << " d: " << d << endl;
-         res.FgMax.t = d*60;
-      }
+       for( ; it != lastIt; ++it ) {
+          if( it->FG != FLT_MAX ) {
+             return;
+          }
+       }
 
-      return;
+       res.FgMax.ff = data[0].FG;
+       res.FgMax.t = -360;
+       return;
     }
+
+    if( nTimeStr < 6 )
+       return;
 
     for(int i=0; i<6; i++){
        if( data[i].FG_1 == FLT_MAX)
@@ -551,17 +566,12 @@ maxWindGust( const DataElementList &data, BufrData &res )
 
 void
 Bufr::
-maxWindMax(  const DataElementList &data, BufrData &res /*BufrData::Wind &wind, DataElementList &sd*/)
+maxWindMax(  const DataElementList &data, BufrData &res )
 {
    int   nTimeStr=data.nContinuesTimes();
    int   nNeedTimes;
    float fMax;
-   int   iMax;
-   int   iNaaMax;
-   int   iMaxIndex;
-   int   iTidsAngiv;
    int   i;
-   char  cTid;
 
    nNeedTimes=3;
    fMax=-1.0;
@@ -572,51 +582,35 @@ maxWindMax(  const DataElementList &data, BufrData &res /*BufrData::Wind &wind, 
    if((data[0].time().hour())%6 == 0)
       nNeedTimes=6;
 
-   if(nTimeStr < nNeedTimes){
-      fMax=FLT_MAX;
-
-      if(data[0].FX!=FLT_MAX && data[0].FX>=0){
-         fMax=data[0].FX;
-      }else if(data[0].FX_3!=FLT_MAX && data[0].FX_3>=0){
-         fMax=data[0].FX_3;
-
-         if((data[0].time().hour()%6)==0){ //Hovedtermin!
-            miutil::miTime prevTime=data[0].time();
-            prevTime.addHour(-3);
-            CIDataElementList it=data.find(prevTime);
-
-            if(it!=data.end() && it->time()==prevTime &&
-               it->FX_3!=FLT_MAX && it->FX_3>=0){
-
-               if(it->FX_3>fMax)
-                  fMax=it->FX_3;
-            }else{
-               fMax=FLT_MAX;
-            }
-         }
-      }
-
-      if(fMax==FLT_MAX){
-         return;
-      }
-
-      fMax*=KNOPFAKTOR;
-
-      if( data[0].ITZ != FLT_MAX )
-         res.FxMax.t = data[0].ITZ;
-
-      //Guard against rounding error.
-      //fMax = floor( (double) fMax+0.5);
-
-      if(fMax>=0 && fMax<176){
-         res.FxMax.ff = fMax;
-      }
-
-      if( res.FxMax.ff == FLT_MAX || res.FxMax.t == FLT_MAX )
-         res.FxMax = BufrData::Wind();   //Reset to undefind.
-
+   if( nNeedTimes == 3 && data[0].FX_3 != FLT_MAX && data[0].FX_3 >= 0 ) {
+      res.FxMax.ff = data[0].FX_3;
+      res.FxMax.t  = -60*nNeedTimes;
       return;
    }
+
+   if( nNeedTimes == 6 && data[0].FX_6 != FLT_MAX && data[0].FX_6 >= 0 ) {
+      res.FxMax.ff = data[0].FX_6;
+      res.FxMax.t  = -60*nNeedTimes;
+      return;
+   }
+
+   if(nTimeStr < nNeedTimes && data[0].FX != FLT_MAX && data[0].FX >= 0 ){
+      miutil::miTime prevTime=data[0].time();
+      prevTime.addHour( -1*nNeedTimes );
+      CIDataElementList it=data.find(prevTime);
+
+      if( it!=data.end() &&
+          it->time()==prevTime &&
+          it->FX != FLT_MAX &&
+          it->FX >=0 ) {
+         res.FxMax.ff = data[0].FX;
+         res.FxMax.t  = -60*nNeedTimes;
+         return;
+      }
+   }
+
+   if( nTimeStr < nNeedTimes )
+      return;
 
    i=nNeedTimes-1;
 
@@ -624,18 +618,14 @@ maxWindMax(  const DataElementList &data, BufrData &res /*BufrData::Wind &wind, 
       return;
 
    fMax=data[i].FX_1;
-   iMaxIndex=i;
    i--;
 
    while(i>=0){
-      if(data[i].FX_1==FLT_MAX){
+      if(data[i].FX_1==FLT_MAX)
          return;
-      }
 
-      if(data[i].FX_1>=fMax){
+      if(data[i].FX_1>=fMax)
          fMax=data[i].FX_1;
-         iMaxIndex=i;
-      }
 
       i--;
    }
@@ -643,176 +633,13 @@ maxWindMax(  const DataElementList &data, BufrData &res /*BufrData::Wind &wind, 
    if(fMax<0)
       return;
 
-   if(iMaxIndex<3)
-      iTidsAngiv=iMaxIndex+1;
-   else if(iMaxIndex<6)
-      iTidsAngiv=4;
-   else if(iMaxIndex<9)
-      iTidsAngiv=5;
-   else if(iMaxIndex<12)
-      iTidsAngiv=6;
-   else{
-      return;
-   }
-
-   if( fMax <= data[0].FF ) {
-      iMaxIndex = 0;
-      iTidsAngiv = 0;
+   if( fMax <= data[0].FF )
       fMax = data[0].FF;
-   }
-
-//   iMax = (int)floor((double) fMax + 0.5);
-//   iNaaMax = (int) floor((double) data[0].FF + 0.5 );
 
    res.FxMax.ff = fMax;
-   res.FxMax.t  = -60*iMaxIndex;
+   res.FxMax.t  = -60*nNeedTimes;
 }
 
-
-
-/* 16.01.98
- * Bxrge Moe
- *
- * Bufrgruppe 555 0STzFxFx
- *
- * Regner ut maksimal middelvind siden forrige hovedtermin,
- * dvs. kl. 0, 6, 12  eller 18, og hvor mange timer siden det inntraff. 
- *
- * nTimeStr angir antall timer med kontinuerlig data vi har.
- *
- *
- * 13.03.98 
- * Bxrge Moe
- *
- * Lagt til stoette for observert TzFXFX. De intastede verdien
- * ligger i variabelene ITZ og FX. FX er gitt i 
- * m/s.  
- *
- * Hvis det er nok time verdier til aa beregne tzFXFX, har disse
- * prioritet forran den observerte hvis den finnes.
- *
- * 2005.11.24
- * Bxrge Moe
- * Lagt inn støtte for FX_3.
- */
-#if 0
-void 
-Bufr::maxWindMax( BufrData::Wind &wind, DataElementList &sd)
-{
-   int   nTimeStr=sd.nContinuesTimes();
-   int   nNeedTimes;
-   float fMax;
-   int   iMax;
-   int   iNaaMax;
-   int   iMaxIndex;
-   int   iTidsAngiv;
-   int   i;
-   char  cTid;
-
-   nNeedTimes=3;
-   fMax=-1.0;
-
-   if((sd[0].time().hour())%3 != 0)
-      return;
-       
-   if((sd[0].time().hour())%6 == 0)
-      nNeedTimes=6;
-    
-   if(nTimeStr < nNeedTimes){
-      fMax=FLT_MAX;
-    	
-      if(sd[0].FX!=FLT_MAX && sd[0].FX>=0){
-         fMax=sd[0].FX;
-      }else if(sd[0].FX_3!=FLT_MAX && sd[0].FX_3>=0){
-         fMax=sd[0].FX_3;
-    		
-         if((sd[0].time().hour()%6)==0){ //Hovedtermin!
-            miutil::miTime prevTime=sd[0].time();
-            prevTime.addHour(-3);
-            CIDataElementList it=sd.find(prevTime);
-    			
-            if(it!=sd.end() && it->time()==prevTime &&
-               it->FX_3!=FLT_MAX && it->FX_3>=0){
-    			 
-               if(it->FX_3>fMax)
-                  fMax=it->FX_3;
-            }else{
-               fMax=FLT_MAX;
-            }
-         }
-      }
-    			   
-      if(fMax==FLT_MAX){
-         return;
-      }
-
-      fMax*=KNOPFAKTOR;
-      
-      if( sd[0].ITZ != FLT_MAX )
-         wind.i = sd[0].ITZ;
-
-      //Guard against rounding error.
-      fMax = floor( (double) fMax+0.5);
-      
-      if(fMax>=0 && fMax<176){
-         wind.ff = fMax;
-      }
-
-      if( wind.ff == FLT_MAX || wind.i == FLT_MAX )
-         wind = BufrData::Wind();   //Reset to undefind.
-
-      return;
-   }
-    
-   i=nNeedTimes-1;
-    
-   if(sd[i].FX_1==FLT_MAX )
-      return;
-    
-   fMax=sd[i].FX_1;
-   iMaxIndex=i;
-   i--;
-    
-   while(i>=0){
-      if(sd[i].FX_1==FLT_MAX){
-         return;
-      }
-      
-      if(sd[i].FX_1>=fMax){
-         fMax=sd[i].FX_1;
-         iMaxIndex=i;
-      }
-
-      i--;
-   }
-   
-   if(fMax<0)
-      return;
-
-   if(iMaxIndex<3)
-      iTidsAngiv=iMaxIndex+1;
-   else if(iMaxIndex<6)
-      iTidsAngiv=4;
-   else if(iMaxIndex<9)
-      iTidsAngiv=5;
-   else if(iMaxIndex<12)
-      iTidsAngiv=6;
-   else{
-      return;
-   }
-
-   if( fMax <= sd[0].FF ) {
-      iTidsAngiv = 0;
-      fMax = sd[0].FF;
-   }
-
-   iMax = (int)floor((double) fMax + 0.5);
-   iNaaMax = (int) floor((double) sd[0].FF + 0.5 );
-    
-   wind.ff = iMax;
-   wind.i  = iTidsAngiv;
-}
-#endif
 
 void
 Bufr::
@@ -840,7 +667,8 @@ cloudData( const DataElementList &data, BufrData &res )
  * trykk maa vaere element i [800,1100]. (jfr. klimaavdelingen)
  */
 float
-Bufr::pressure( float pressure )
+Bufr::
+pressure( float pressure )
 {
    double dTrykk;
 
@@ -855,7 +683,8 @@ Bufr::pressure( float pressure )
 
 
 void
-Bufr::doPressureTrend( const DataElementList &data, DataElement &res )
+Bufr::
+doPressureTrend( const DataElementList &data, DataElement &res )
 {
    bool ok = pressureTrend( data[0], res );
 
@@ -873,8 +702,9 @@ Bufr::doPressureTrend( const DataElementList &data, DataElement &res )
  *
  */
 void 
-Bufr::computePressureTrend( const DataElementList &data,
-                     DataElement &res )
+Bufr::
+computePressureTrend( const DataElementList &data,
+                      DataElement &res )
 {
    int a;
    float dP1;
@@ -957,7 +787,8 @@ Bufr::computePressureTrend( const DataElementList &data,
  * trykkarakteristikk er gitt med DATASTRUCTTYPE1._aa
  */
 bool
-Bufr::pressureTrend( const DataElement &data, DataElement &res)
+Bufr::
+pressureTrend( const DataElement &data, DataElement &res)
 {
    float trend = FLT_MAX;
 
@@ -986,7 +817,8 @@ Bufr::pressureTrend( const DataElement &data, DataElement &res)
 **
 */
 void 
-Bufr::cloudCower( const DataElement &data, DataElement &res )
+Bufr::
+cloudCower( const DataElement &data, DataElement &res )
 {
    int N;
    if( data.N == FLT_MAX )
@@ -1007,7 +839,8 @@ Bufr::cloudCower( const DataElement &data, DataElement &res )
 **
 */
 void 
-Bufr::Hoyde_Sikt_Kode(std::string &kode, const DataElement &data)
+Bufr::
+Hoyde_Sikt_Kode(std::string &kode, const DataElement &data)
 {
    float Vmor=data.Vmor;
    float VV=data.VV;
@@ -1194,38 +1027,38 @@ void
 Bufr::
 soilTemp( const DataElementList &data, BufrData &res )
 {
-  	int nTimeStr=data.nContinuesTimes();
-  	float min;
-  	int i;
-  
-  	if( nTimeStr == 0 )
-  	   return;
+   int nTimeStr=data.nContinuesTimes();
 
-  	min=FLT_MAX;
-  
-  	if(data[0].time().hour() != 6)
-    	return;
-  
-  	if( nTimeStr < 13 || data[0].TGN_12 != FLT_MAX ){
-    	if( data[0].TGN_12 == FLT_MAX )
-    	   return;
-    
-    	res.TGN_12 = c2kelvin( data[0].TGN_12 );
-    	return;
-  	}
-  
-  	i=0;
-  
-  	while( i < 12 ){
-  	   if( data[i].TGN == FLT_MAX )
-  	      return;
+   if( nTimeStr == 0 )
+      return;
 
-    	if( data[i].TGN < min )
-    	   min = data[i].TGN;
-    	i++;
-  	}
-  
-  	res.TGN_12 = c2kelvin( min );
+   if(data[0].time().hour() != 6)
+      return;
+
+   if( data[0].TGN_12 != FLT_MAX )
+      res.TGN_12 = data[0].TGN_12;
+
+   if( res.TGN_12 == FLT_MAX && nTimeStr >= 12 ) {
+      float min = FLT_MAX;
+      int i = 0;
+
+      while( i < 12 ){
+         if( data[i].TGN == FLT_MAX ) {
+            min=FLT_MAX;
+            break;
+         }
+
+         if( data[i].TGN < min )
+            min = data[i].TGN;
+         i++;
+      }
+
+      if( min != FLT_MAX )
+         res.TGN_12 = min;
+   }
+
+   if( res.TGN_12 != FLT_MAX )
+      res.TGN_12 = c2kelvin( res.TGN_12 );
 }
 
 
@@ -1300,7 +1133,7 @@ Bufr::doPrecip( StationInfoPtr     info,
   	   }else if(rr=="RR_1" || rr=="RR"){
   	      precipitationParam=PrecipitationRR;
   	   }else if(rr=="RR_3" || rr=="RR_6"
-  	         || rr=="RR_12" || rr=="RR_24"){
+  	         || rr=="RR_12" || rr=="RR_24" || rr=="RR_N" ){
   	      precipitationParam=PrecipitationRR_N;
   	   }else if( rr=="RRRtr"){
   	      precipitationParam=PrecipitationRRR;
@@ -1478,9 +1311,10 @@ precipFromRA( float &nedbor,
  * S�ker nedb�ren fra den f�rste som er gitt, s�ker fra 24, 12, .. ,1
  */
 float
-Bufr::precipFromRrN( float &nedbor,
-		      	      float &fRR24,
-		      		   const DataElementList &sd)
+Bufr::
+precipFromRrN( float &nedbor,
+               float &fRR24,
+               const DataElementList &sd)
 {
    float h_tr = FLT_MAX;
    int t=sd.begin()->time().hour();
@@ -1846,17 +1680,20 @@ precipFromRR(float &nedbor, float &fRR24, const DataElementList &sd)
 
 
 
-Bufr::Bufr(EPrecipitation pre)
+Bufr::
+Bufr(EPrecipitation pre)
   :debug(false), test( false), precipitationParam(pre)
     
 {
 }
 
-Bufr::Bufr():debug(false), test( false ), precipitationParam(PrecipitationRA)
+Bufr::
+Bufr():debug(false), test( false ), precipitationParam(PrecipitationRA)
 {
 }
 
-Bufr::~Bufr()
+Bufr::
+~Bufr()
 {
 }
 

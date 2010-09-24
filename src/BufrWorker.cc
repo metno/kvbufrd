@@ -464,8 +464,7 @@ newObs(ObsEvent &event)
 
       bufrOk=bufrEncoder.doBufr( info,
                                  bufrData,
-                                 bufr,
-                                 true);
+                                 bufr );
    }
    catch(std::out_of_range &e){
       LOGWARN("EXCEPTION: out_of_range: wmono: " << info->wmono() <<

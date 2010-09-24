@@ -84,10 +84,15 @@ DataElement():
     UM( params, "UM", 263),
     FF( params, "FF", 81 ),
     FM( params, "FM", 85 ),
+    FG(params, "FG", 83 ),
     FG_1( params, "FG_1", 90),
+    FG_6( params, "FG_6", 91),
+    FG_12( params, "FG_12", 92),
     FG_010(params, "FG_010", 84 ),
+    FX(params, "FX", 86 ),
     FX_1(params, "FX_1", 87 ),
     FX_3(params, "FX_3", 93 ),
+    FX_6(params, "FX_6", 88 ),
     DD( params, "DD", 61),
     DM(params, "DM",  64 ),
     DG(params, "DG", 63 ),
@@ -120,8 +125,6 @@ DataElement():
     TWX(params, "TWX", 245 ),
     TGN(params, "TGN", 223),
     TGN_12(params, "TGN_12", 224 ),
-    FG(params, "FG", 83 ),
-    FX(params, "FX", 86 ),
     WAWA(params, "WAWA", 49),
     HLN(params, "HLN", INT_MAX ),
     EM(params, "EM", 7),
@@ -597,61 +600,64 @@ operator<<(std::ostream& ost, const DataElement& sd)
   else
     ost << "obsTime                    : " << sd.time_ <<  endl;
   
-  ost << "tempNaa                (TA): " << sd.TA           << endl 
-      << "tempMid               (TAM): " << sd.TAM           << endl
-      << "tempMin               (TAN): " << sd.TAN           << endl
-      << "tempMax               (TAX): " << sd.TAX           << endl
-      << "tempMin       (12t)(TAN_12): " << sd.TAN_12            << endl
-      << "tempMax       (12t)(TAX_12): " << sd.TAX_12            << endl
-      << "TD (devpoint temperature)  : " << sd.TD << endl
-      << "fuktNaa                (UU): " << sd.UU           << endl
-      << "fuktMid                (UM): " << sd.UM           << endl
+  ost << "tempNaa                (TA): " << sd.TA       << endl
+      << "tempMid               (TAM): " << sd.TAM      << endl
+      << "tempMin               (TAN): " << sd.TAN      << endl
+      << "tempMax               (TAX): " << sd.TAX      << endl
+      << "tempMin       (12t)(TAN_12): " << sd.TAN_12   << endl
+      << "tempMax       (12t)(TAX_12): " << sd.TAX_12   << endl
+      << "TD (devpoint temperature)  : " << sd.TD       << endl
+      << "fuktNaa                (UU): " << sd.UU       << endl
+      << "fuktMid                (UM): " << sd.UM       << endl
       << "vindHastNaa            (FF): " << sd.FF       << endl
       << "vindHastMid            (FM): " << sd.FM       << endl
-      << "vindHastGust         (FG_1): " << sd.FG_1      << endl
-      << "FG_010                     : " << sd.FG_010 << endl
-      << "FG (Since last obs.)       : " << sd.FG                << endl
-      << "vindHastMax          (FX_1): " << sd.FX_1       << endl
-      << "FX_3                       : " << sd.FX_3              << endl
-      << "FX  (Siden forige obs.)    : " << sd.FX                << endl
+      << "vindHastGust         (FG_1): " << sd.FG_1     << endl
+      << "vindHastGust         (FG_6): " << sd.FG_6     << endl
+      << "vindHastGust        (FG_12): " << sd.FG_12    << endl
+      << "FG_010                     : " << sd.FG_010   << endl
+      << "FG (Since last obs.)       : " << sd.FG       << endl
+      << "vindHastMax          (FX_1): " << sd.FX_1     << endl
+      << "FX_3                       : " << sd.FX_3     << endl
+      << "FX_6                       : " << sd.FX_6     << endl
+      << "FX  (Siden forige obs.)    : " << sd.FX       << endl
       << "vindRetnNaa            (DD): " << sd.DD       << endl
       << "vindRetnMid            (DM): " << sd.DM       << endl
-      << "vindRetnGust           (DG): " << sd.DG      << endl
+      << "vindRetnGust           (DG): " << sd.DG       << endl
       << "vindRetnMax            (DX): " << sd.DX       << endl
-      << "DX_3                       : " << sd.DX_3              << endl
-      << "nedboerTot             (RA): " << sd.RA        << endl
-      << "nedboer1Time           (RR): " << sd.RR_1      << endl
-      << "nedboer2Time         (RR_2): " << sd.RR_2      << endl
-      << "nedboer3Time         (RR_3): " << sd.RR_3      << endl
-      << "nedboer6Time         (RR_6): " << sd.RR_6      << endl
-      << "bedboer9Time         (RR_9): " << sd.RR_9      << endl
-      << "nedboer12Time       (RR_12): " << sd.RR_12     << endl
-      << "nedboer15Time       (RR_15): " << sd.RR_15     << endl
-      << "nedboer18Time       (RR_18): " << sd.RR_18     << endl
-      << "nedboer24Time       (RR_24): " << sd.RR_24     << endl
-      << "Nedbør periode         (Ir): " << sd.IR                << endl
-      << "Verindikator           (Ix): " << sd.IX                << endl
-      << "sjøtemperatur          (TW): " << sd.TW                << endl
-      << "TWN                   (TWN): " << sd.TWN               << endl
-      << "TWM                   (TWM): " << sd.TWM               << endl 
-      << "TWX                   (TWX): " << sd.TWX               << endl
-      << "nedboerJa (min)      (RT_1): " << sd.RT_1         << endl
+      << "DX_3                       : " << sd.DX_3     << endl
+      << "nedboerTot             (RA): " << sd.RA       << endl
+      << "nedboer1Time           (RR): " << sd.RR_1     << endl
+      << "nedboer2Time         (RR_2): " << sd.RR_2     << endl
+      << "nedboer3Time         (RR_3): " << sd.RR_3     << endl
+      << "nedboer6Time         (RR_6): " << sd.RR_6     << endl
+      << "bedboer9Time         (RR_9): " << sd.RR_9     << endl
+      << "nedboer12Time       (RR_12): " << sd.RR_12    << endl
+      << "nedboer15Time       (RR_15): " << sd.RR_15    << endl
+      << "nedboer18Time       (RR_18): " << sd.RR_18    << endl
+      << "nedboer24Time       (RR_24): " << sd.RR_24    << endl
+      << "Nedbør periode         (Ir): " << sd.IR       << endl
+      << "Verindikator           (Ix): " << sd.IX       << endl
+      << "sjøtemperatur          (TW): " << sd.TW       << endl
+      << "TWN                   (TWN): " << sd.TWN      << endl
+      << "TWM                   (TWM): " << sd.TWM      << endl
+      << "TWX                   (TWX): " << sd.TWX      << endl
+      << "nedboerJa (min)      (RT_1): " << sd.RT_1     << endl
       << "trykkQFENaa            (PO): " << sd.PO       << endl
-      << "trykkQFEMid           (POM): " << sd.POM       << endl
-      << "trykkQFEMin           (PON): " << sd.PON       << endl
-      << "trykkQFEMax           (POX): " << sd.POX       << endl
+      << "trykkQFEMid           (POM): " << sd.POM      << endl
+      << "trykkQFEMin           (PON): " << sd.PON      << endl
+      << "trykkQFEMax           (POX): " << sd.POX      << endl
       << "trykkQNHNaa            (PH): " << sd.PH       << endl
       << "trykkQFFNaa            (PR): " << sd.PR       << endl
-      << "trykkTendens           (PP): " << sd.PP      << endl
-      << "trykkKarakter          (AA): " << sd.AA                << endl
-      << "Vmor (automatic VV)  (_hVV): " << sd.Vmor              << endl
-      << "VV (estimated VV)    (_hVV): " << sd.VV                << endl
-      << "HLN                        : " << sd.HLN               << endl
-      << "skydekke               (_N): " << sd.N                 << endl
+      << "trykkTendens           (PP): " << sd.PP       << endl
+      << "trykkKarakter          (AA): " << sd.AA       << endl
+      << "Vmor (automatic VV)  (_hVV): " << sd.Vmor     << endl
+      << "VV (estimated VV)    (_hVV): " << sd.VV       << endl
+      << "HLN                        : " << sd.HLN      << endl
+      << "skydekke               (_N): " << sd.N        << endl
       << "verGenerelt       (_wwW1W2): " << printOut( "ww", sd.ww )
       <<                                    printOut( "W1", sd.W1 )
       <<                                    printOut( "W2", sd.W2 ) << endl
-      << "WAWA    (ww automatisk måt): " << sd.WAWA             << endl
+      << "WAWA    (ww automatisk måt): " << sd.WAWA                 << endl
       << "skyer           (_NhClCmCh): " << printOut( "Nh", sd.NH )
       <<                                    printOut( "Cl", sd.CL )
       <<                                    printOut( "Cm", sd.CM )
@@ -665,7 +671,7 @@ operator<<(std::ostream& ost, const DataElement& sd)
 //      << "skyerEkstra4    (_4NsChshs): " << (sd.cloudExtra.size()>3?sd.cloudExtra[3]:DataElement::CloudDataExtra()) << endl
       << "gressTemp             (TGN): " << sd.TGN               << endl
       << "gressTemp_12       (TGN_12): " << sd.TGN_12            << endl
-      << "sjoegang               (_S): " << sd.SG                 << endl
+      << "sjoegang               (_S): " << sd.SG                << endl
       << "Naar intraff FX       (ITZ): " << sd.ITZ               << endl;
   
   return ost;

@@ -438,7 +438,7 @@ StationInfoParse::
 doDefPrecip(miutil::conf::ValElementList &vl, int wmono)
 {
    const char *validval[]={"RA", "RR", "RRRtr", "RR_01", "RR_1",
-         "RR_3", "RR_6","RR_12","RR_24",0};
+         "RR_3", "RR_6","RR_12","RR_24", "RR_N", 0};
    int i;
    ostringstream ost;
    std::list<std::string> RR;

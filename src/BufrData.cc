@@ -35,11 +35,12 @@ using namespace std;
 
 
 BufrData::CloudExtra::
-CloudExtra(): cloudData( 4 ), nElements_( 0 )
+CloudExtra(): cloudData( 4,CloudDataExtra()  ), nElements_( 0 )
 {}
 
 BufrData::CloudExtra::
 CloudExtra( const CloudExtra &ce )
+   : cloudData( ce.cloudData ),nElements_( ce.nElements_ )
 {
 }
 
@@ -59,6 +60,7 @@ void
 BufrData::CloudExtra::
 add( const CloudDataExtra &cd, int index )
 {
+   cerr << "CloadExtra size: " << cloudData.size() << endl;
    if( index < 0 && nElements_ < cloudData.size() ) {
       cloudData[ nElements_ ] = cd;
       nElements_++;

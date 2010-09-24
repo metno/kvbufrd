@@ -84,10 +84,15 @@ private:
   	KvParam  UM;       
   	KvParam  FF;   
   	KvParam  FM;   
+  	KvParam  FG;    //Gust since last observation
   	KvParam  FG_1;
+  	KvParam  FG_6;
+  	KvParam  FG_12;
   	KvParam  FG_010; //Gust 10 last minutes before observation.
+  	KvParam  FX;    //Max wind since last observation
   	KvParam  FX_1;   
   	KvParam  FX_3;
+  	KvParam  FX_6;
   	KvParam  DD;   
   	KvParam  DM;   
   	KvParam  DG;  
@@ -120,8 +125,6 @@ private:
   	KvParam TWX;
   	KvParam  TGN;
   	KvParam TGN_12;
-  	KvParam  FG;    //Gust since last observation
-  	KvParam  FX;    //Max wind since last observation
   	KvParam WAWA;
   	KvParam  HLN;
   	KvParam  EM;    //Snow state to the gound (Markas tilstand).
