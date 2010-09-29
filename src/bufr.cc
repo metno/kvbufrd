@@ -125,7 +125,7 @@ namespace {
 bool
 Bufr::
 doBufr( StationInfoPtr  info,
-        DataElementList    &bufrData,
+        DataElementList &bufrData,
         BufrData        &bufr )
 {
    if( bufrData.firstTime().undef() && bufrData.size() == 0 )
@@ -173,63 +173,9 @@ doBufr( StationInfoPtr  info,
 
 
 
-
-
-
-
-
-
-/*****
- * Bxrge Moe, 20.12.96
- * Bugfix:
- *   Avrundingsfeil. 'vindretningen' ble feil avrundet.
- *   Dette kan tyde paa en bug i matterutinen (math.h) 'rint'. 
- *   0.5 ble avrundet til 0, og ikke 1 som forventet. Denne feilen gjelder 
- *   bare for argument minde enn 1. For argument > 1, ble resultatet korrekt.
- * 
- * Jeg har ogsaa lagt inn en test om vindhastigheten er stoerre enn 98 m/s.
- * Hvis det er tilfellet antas det feil i maalingen. Det samme gjoer vi 
- * dersom vindretningen er stoerre enn 360 grader. Dette kan virke 
- * unoedvendig siden dette ogsaa blir testet og skal vaere korrigert paa 
- * stasjonen (Grensefeil). Men det kan forekomme grensefeil i dataene 
- * fra stasjonene. 
- *
- * Bxrge Moe, 26.06.97
- * Lagt inn korrigering for maaleunoeyaktighet i minimumsverdiene for
- * FF og DD.
- *     FF < FF(min) -> FF=0.0
- *     DD < DD(min) -> DD=360
- *
- * FF(min) og DD(min) er satt til
- *    FF(min)=0.1 m/s    og    DD(min)=1 gr
- *
- * Dette i hennhold til anbefalinger fra instrument avdelingen. 
- * Ved Ragnar Breakkan.
- *
- * Foelgende grenser er definert for automatstasjoner:
- *  vindhastighet: [0,98]  (m/s)
- *  vindretning:   [0,360] (grader)
- *
- * Bufrkode gruppe 3 har foelgende form:
- *   Nddff 
- *   Hvor:
- *     N - Samlet skydekke. Angis ikke for automatstasjoner.
- *         (angis som / ). For hybridstasjoner kan denne verdien
- *         tastes inn av opperatoer ("skytitter").
- *    dd - Vindretningen. Angis i nermeste 10'de grad. 
- *         Gyldige verdier [00,36]. Verdien 00 gis for vindstille.
- *    ff - Vindhastighet i knop. Gyldige verdier [0,99]. Hvis vindhastigheten
- *         er mindre enn 1 knop settes dd=00. slik at bufren blir /0000.
- *         Hvis vindhastigheten er stoerre enn 99 knop. Faar vi en ekstra
- *         gruppe umiddelbart etter. Bufren blir da /dd99 00fff, fff er
- *         vinden i knop.
- *
- * Parameterene 'retn' og 'hast' til funksjonen er gitt i grader og m/s.
- * 'hast' maa omregnes til knop foer den settes i bufr koden.
- *  
- ******/
 void 
-Bufr::windAtObstime( const DataElement &data, DataElement &res )
+Bufr::
+windAtObstime( const DataElement &data, DataElement &res )
 {  
    if( data.FF != FLT_MAX ) {
       if( data.FF >= 0 && data.FF <= 98 ) {
@@ -443,11 +389,11 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
  *    Tilsvarende verdier for bufrtidspunktene er FF, FX og FG.
  *
  *    hvor
- *       ff - 10 minutters middel. Beregnet 10 minutter foer hver hele time.
- *       fx - er hoeyeste glidende 10 minutters middelverdi i en 69 minutters
+ *       FF - 10 minutters middel. Beregnet 10 minutter foer hver hele time.
+ *       FX - er hoeyeste glidende 10 minutters middelverdi i en 69 minutters
  *            periode. ( (tt-2):51-tt:00, tt angir timen for beregningen.)
- *       fg - er hoeyeste glidende 3 sekunders middelverdi i loepet av en
- *            60 minutters periode. ((tt-1):00-tt:00, tt - timen for beregn.)
+ *       FG - er hoeyeste glidende 3 sekunders middelverdi i loepet av en
+ *            60 minutters periode. ((tt-1):00-tt:00, tt - timen for beregningen.)
  *
  *    Bufrtidene er 0, 3, 6, 9, 12, 15, 18, og 21. Hvor hovedtidene er
  *    0, 6, 12 og 18. Mellomtidene er 3, 9, 15 og 21.
@@ -464,8 +410,8 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
  * 4) FG(XX) er hoeyeste fg av timeverdiene XX, XX-1, XX-2, XX-3, XX-4 og XX-5.
  * 5) Dersom FG<FX, settes FG=FX.
  *
- * Koden for FG er gitt i rutinen 'Max_Vind_Gust_Kode' og koden for
- * FX er gitt i rutinen 'Max_Vind_Max_Kode'.
+ * Koden for FG er gitt i rutinen 'maxWindGust' og koden for
+ * FX er gitt i rutinen 'maxWindMax'.
  */
 
 /* 16.01.98
@@ -474,27 +420,6 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
  * Bufrgruppe: 333 911ff  (FG)
  *
  * Beregner maksimalt vindkast siden forrige hovedbufrtid.
- *
- * nTimeStr er en global variabel som holder antall timer med data vi har.
- * nTimeStr settes  i rutinen LagTabell.
- *
- * 'tab' er en array paa 24 element. nTimeStr elementer er gyldig. For aa
- * kunne beregne FG trenger vi 6 timestrenger.
- *
- * 13.03.98 
- * Bxrge Moe
- * Lagt til stoette for manuell intasting av av FG. Den intastede verdien
- * ligger i variabelen _fg (DATASTRUCTTYPE1._fg) og er gitt i knop. Hvis
- * _fg ikke er gitt er lengden av _fg lik 0. (_fg er deklarert som en char _fg[20]).
- *
- * Hvis det er nok time verdier til aa beregne FG, har disse
- * prioritet forran den manuelle hvis den finnes.
- */
-
-/* 18.11.98
- * Bxrge Moe
- *
- * Rettet bugg for generering av Gust for 'pio'.
  */ 
 void 
 Bufr::

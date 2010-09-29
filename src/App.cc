@@ -60,25 +60,28 @@ createGlobalLogger(const std::string &id)
 {
   	try{
 
-  	   if( LogManager::hasLogger(id) )
-  	      return true;
-
+  	   /*FIXME: Remove the comments when the needed functionality is
+  	    * in effect on an operational machin.
+  	    *
+  	    *if( LogManager::hasLogger(id) )
+  	    *  return true;
+       */
     	FLogStream *logs=new FLogStream(2, 204800); //200k
     	std::ostringstream ost;
     
     	ost << kvPath("logdir") << "/kvbufr/" << id << ".log";
     
     	if(logs->open(ost.str())){
-      		if(!LogManager::createLogger(id, logs)){
-				delete logs;
+    	   if(!LogManager::createLogger(id, logs)){
+    	      delete logs;
 				return false;
-      		}
+    	   }
 
-      		return true;
+    	   return true;
     	}else{
-      		LOGERROR("Cant open the logfile <" << ost.str() << ">!");
-      		delete logs;
-      		return false;
+    	   LOGERROR("Cant open the logfile <" << ost.str() << ">!");
+    	   delete logs;
+    	   return false;
     	}
   	}
   	catch(...){

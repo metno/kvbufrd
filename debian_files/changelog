@@ -1,3 +1,12 @@
+kvbufrd (2.1.4-1) unstable; urgency=low
+
+  * Add coding of maxwind, only used by met.no.
+  * Fix some some reference time bugs.
+  * More logging.
+  
+ -- Kvalobs <kvalobs@met.no>  Wed, 29 Sep 2010 13:00:00 +0200
+
+
 kvbufrd (2.1.3-2) unstable; urgency=low
 
   * Force setting of file permission to the cache database.
