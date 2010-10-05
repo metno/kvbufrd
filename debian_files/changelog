@@ -1,3 +1,10 @@
+kvbufrd (2.1.6-1) unstable; urgency=low
+
+  * Fix wrong GTS header.
+  
+ -- Kvalobs <kvalobs@met.no>  Tue, 05 Oct 2010 12:15:00 +0200
+
+
 kvbufrd (2.1.4-1) unstable; urgency=low
 
   * Add coding of maxwind, only used by met.no.

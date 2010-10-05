@@ -191,7 +191,6 @@ wmoHeader()const
          break;
       }
 
-      header+="NO";
       sprintf(tmp,"%02.2s ", station->list().c_str() );
       header+=tmp;
 
