@@ -621,8 +621,8 @@ void set_values(const StationInfoPtr station,
    values[idx++].toBufr("FxMax", data.FxMax.ff );      //011042 Maximum wind speed (10 min mean).
 
    LOGDEBUG( "Encodebufr name: " << station->name() );
-   memset( cvals[0], '\0', 20 );
-   strcpy(cvals[0], station->name().c_str() );/* Station or site name */
+   memset( cvals[0], ' ', 20 ); //Make sure
+   strncpy(cvals[0], station->name().c_str(), 20 );/* Station or site name */
 
    /* Delayed replication factors */
 
