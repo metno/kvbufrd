@@ -139,20 +139,10 @@ doBufr( StationInfoPtr  info,
    bufr.PO     = pressure( bufrData[0].PO );
    bufr.PR     = pressure( bufrData[0].PR );
    bufr.UU     = bufrData[0].UU;
-   bufr.VV     = bufrData[0].VV;
-   bufr.HL     = bufrData[0].HL;
    bufr.TW     = c2kelvin( bufrData[0].TW );
    bufr.SG     = bufrData[0].SG;
 
-   if( bufrData[0].typeidList.size() == 1 ) {
-      if( *bufrData[0].typeidList.begin() == 312 )
-         bufr.IX = 1;
-      else
-         bufr.IX = 0;
-   } else {
-      bufr.IX = 2;
-   }
-
+   doIx( info, bufrData, bufr );
    doSeaOrWaterTemperature( bufrData, bufr );
    soilTemp( bufrData, bufr );
    doEsss( bufrData, bufr );
@@ -163,7 +153,6 @@ doBufr( StationInfoPtr  info,
    minMaxTemperature( bufrData, bufr );
    doPrecip( info, bufrData, bufr );
    doPressureTrend( bufrData, bufr );
-   cloudCower( bufrData[0], bufr );
    windAtObstime( bufrData[0], bufr );
    dewPoint( bufrData[0], bufr );
 
@@ -199,7 +188,36 @@ windAtObstime( const DataElement &data, DataElement &res )
       }
    }
 }
+void
+Bufr::
+doIx( StationInfoPtr     info,
+      const DataElementList &bufrData,
+      BufrData           &bufr )
+{
+   static int mannedTypeid[]={ 312, 308, 302, 0 };
 
+   if( bufrData[0].onlyTypeid1 ) {
+      bufr.IX = bufrData[0].IX;
+
+      if( bufr.IX == FLT_MAX || (bufr.IX != 0 && bufr.IX != 1) )
+         bufr.IX = 1;
+
+      return;
+   }
+
+   bufr.IX = 0;
+
+   for( std::list<int>::const_iterator it=bufrData[0].typeidList.begin();
+         it != bufrData[0].typeidList.end(); ++it )
+   {
+      for( int i=0; mannedTypeid[i]!=0; ++i )
+         if( *it == mannedTypeid[i] ) {
+            bufr.IX = 1;
+            return;
+         }
+   }
+
+}
 
 /*
  * Regner ut duggtemperaturen vha. formel
@@ -316,61 +334,87 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
    float min = FLT_MAX;
    float max = FLT_MIN;
 
-   res.TAN_12 = FLT_MAX;
-   res.TAX_12 = FLT_MAX;
+   res.TAN_N = FLT_MAX;
+   res.TAX_N = FLT_MAX;
+   res.tTAN_N = INT_MAX;
+   res.tTAX_N = INT_MAX;
 
-   if( ! (sd[0].time().hour() == 6 || sd[0].time().hour() == 18) )
+   if( sd[0].time().hour() == 6 || sd[0].time().hour() == 18 ) {
+      if(sd[0].TAN_12 != FLT_MAX)
+         res.TAN_N = sd[0].TAN_12;
+
+      if(sd[0].TAX_12 != FLT_MAX)
+         res.TAX_N = sd[0].TAX_12;
+
+      if( res.TAN_N == FLT_MAX && nTimeStr>=11 ) {
+         for(int i=0; i<12; i++){
+            if(sd[i].TAN==FLT_MAX) {
+               min = FLT_MAX;
+               break;
+            }
+
+            if(sd[i].TAN<min)
+               min=sd[i].TAN;
+         }
+
+         if( min != FLT_MAX )
+            res.TAN_N = min;
+      }
+
+      if( res.TAX_N == FLT_MAX && nTimeStr>=11) {
+         for(int i=0; i<12; i++){
+            if( sd[i].TAX == FLT_MAX ) {
+               max = FLT_MIN;
+               break;
+            }
+
+            if( sd[i].TAX > max)
+               max = sd[i].TAX;
+         }
+
+         if( max != FLT_MIN )
+            res.TAX_N = max;
+      }
+
+      if( res.TAN_N != FLT_MAX ) {
+         if( sd[0].TA != FLT_MAX && sd[0].TA < res.TAN_N )
+            res.TAN_N = sd[0].TA;
+
+         res.tTAN_N = -12;
+         res.TAN_N = c2kelvin( res.TAN_N );
+      }
+
+      if( res.TAX_N != FLT_MAX ) {
+         if( sd[0].TA != FLT_MAX && sd[0].TA > res.TAX_N)
+            res.TAX_N = sd[0].TA;
+
+         res.tTAX_N = -12;
+         res.TAX_N = c2kelvin( res.TAX_N );
+      }
+
       return;
-
-   if(sd[0].TAN_12 != FLT_MAX)
-      res.TAN_12 = sd[0].TAN_12;
-
-   if(sd[0].TAX_12 != FLT_MAX)
-      res.TAX_12 = sd[0].TAX_12;
-
-   if( res.TAN_12 == FLT_MAX && nTimeStr>=11 ) {
-      for(int i=0; i<12; i++){
-         if(sd[i].TAN==FLT_MAX) {
-            min = FLT_MAX;
-            break;
-         }
-
-         if(sd[i].TAN<min)
-            min=sd[i].TAN;
-      }
-
-      if( min != FLT_MAX )
-         res.TAN_12 = min;
    }
 
-   if( res.TAX_12 == FLT_MAX && nTimeStr>=11) {
-      for(int i=0; i<12; i++){
-         if( sd[i].TAX == FLT_MAX ) {
-            max = FLT_MIN;
-            break;
-         }
+//Enable the following code if it is decided to report hourly min/max values for temperatures.
+#if 0
+   if( sd[0].TAX != FLT_MAX ) {
+      if( sd[0].TA != FLT_MAX && sd[0].TA > sd[0].TAX)
+         res.TAX_N = sd[0].TA;
+      else
+         res.TAX_N = sd[0].TAX;
 
-         if( sd[i].TAX > max)
-            max = sd[i].TAX;
-      }
-
-      if( max != FLT_MIN )
-         res.TAX_12 = max;
+      res.tTAX_N = -1;
    }
 
-   if( res.TAN_12 != FLT_MAX ) {
-      if( sd[0].TA < res.TAN_12)
-         res.TAN_12 = sd[0].TA;
+   if( sd[0].TAX != FLT_MAX ) {
+      if( sd[0].TA != FLT_MAX && sd[0].TA < sd[0].TAN)
+         res.TAN_N = sd[0].TA;
+      else
+         res.TAN_N = sd[0].TAN;
 
-      res.TAN_12 = c2kelvin( res.TAN_12 );
+      res.tTAN_N = -1;
    }
-
-   if( res.TAX_12 != FLT_MAX ) {
-      if( sd[0].TA > res.TAX_12)
-         res.TAX_12 = sd[0].TA;
-
-      res.TAX_12 = c2kelvin( res.TAX_12 );
-   }
+#endif
 }
 
 
@@ -434,7 +478,7 @@ maxWindGust( const DataElementList &data, BufrData &res )
     
     if( ( data[0].time().hour() ) % 6 != 0 ) {
        if( data[0].FG_1 != FLT_MAX && data[0].FG_1 >=0 ) {
-          res.FgMax.ff = data[0].FG;
+          res.FgMax.ff = data[0].FG_1;
           res.FgMax.t = -60;
        }
        return;
@@ -573,14 +617,73 @@ cloudData( const DataElementList &data, BufrData &res )
    if( data.size() == 0 )
       return;
 
+   int CL = (data[0].CL==FLT_MAX?INT_MAX:static_cast<int>( data[0].CL ));
+   int CM = (data[0].CM==FLT_MAX?INT_MAX:static_cast<int>( data[0].CM ));
+   int CH = (data[0].CH==FLT_MAX?INT_MAX:static_cast<int>( data[0].CH ));
+   int N=(data[0].N==FLT_MAX?INT_MAX:static_cast<int>( data[0].N ));
+
+
+   if( CL == INT_MAX && CM == INT_MAX && CH == INT_MAX && N == INT_MAX )
+      return;
+
+   if( N == 0  ) { //No clouds
+      res.N = 0;
+      res.vsci = 62;
+      res.NH = 0;
+      res.HL= FLT_MAX;
+      res.CL = 30;
+      res.CM = 20;
+      res.CH = 10;
+      return;
+   }
+
+   if( N == 9 ) {
+      res.N = 113;
+      res.vsci = 5;
+      res.NH = 9;
+      res.HL= FLT_MAX;
+      res.CL = 62;
+      res.CM = 61;
+      res.CH = 60;
+      return;
+   }
+
+   if( N != INT_MAX )
+      res.N = (N/8.0) * 100;
+
+
+   if( CL != INT_MAX )
+      res.CL = 30 + CL;
+
+   if( CM != INT_MAX )
+      res.CM = 20 + CM;
+   else if( CL != INT_MAX )
+      res.CM = 61; //Cant be decided because of obscured by lower clouds or fog.
+
+   if( CH != INT_MAX )
+      res.CH = 10 + CH;
+   else if( (CL != INT_MAX && CL != 0 ) || (CM != INT_MAX && CM != 0 ) )
+      res.CH = 60; //Cant be decided because of obscured by lower clouds or fog.
+
+   if( res.CL >= 30 && res.CL <= 39 && res.CL != 30 ) //We have low clouds.
+      res.vsci = 7;
+   else if( res.CM >= 20 && res.CM <= 29 && res.CM != 20 ) //We have midle clouds.
+      res.vsci = 8;
+   else if( res.CH >= 10 && res.CH <= 19 && res.CH != 10 ) //We have high clouds.
+      res.vsci = 0;
+   else
+      res.vsci = 63;
+
    res.NH = data[0].NH;
    res.HL = data[0].HL;
-   res.CL = data[0].CL;
-   res.CM = data[0].CM;
-   res.CH = data[0].CH;
 
-  // res.cloudExtra = data[0].cloudExtra;
+   if( res.HL == FLT_MAX && data[0].HLN != FLT_MAX )
+      res.HL = data[0].HLN;
 
+   res.VV = data[0].VV;
+
+   if( res.VV == FLT_MAX && data[0].Vmor != FLT_MAX )
+      res.VV = data[0].Vmor;
 }
 
 /*
@@ -716,82 +819,35 @@ Bufr::
 pressureTrend( const DataElement &data, DataElement &res)
 {
    float trend = FLT_MAX;
+   int iAA;
+   float PP;
 
-  	if( data.AA != FLT_MAX )
+   if( data.AA != FLT_MAX ) {
     	trend = data.AA;
+    	iAA = static_cast<int>( trend );
+  	}
   
-  
-  	if(data.PP == FLT_MAX){
+  	PP = data.PP;
+
+  	if( PP == FLT_MAX){
     	if( trend == FLT_MAX )
-      		return false;
-    
+    	   return false;
+
     	res.AA = trend;
     	return true;
   	}
 
+   if( ( iAA <= 3 && PP < 0 ) || ( iAA >= 5 && PP > 0 ) )
+      PP *= -1;
+
   	res.AA = trend;
-  	res.PP = data.PP * 100;
+  	res.PP = PP * 100;
   	return true;
 }
 
 
 
 
-
-/*
-**
-*/
-void 
-Bufr::
-cloudCower( const DataElement &data, DataElement &res )
-{
-   int N;
-   if( data.N == FLT_MAX )
-      return;
-   N = static_cast<int>( data.N );
-
-   if( N == 9  )
-      res.N = 113;
-   else if( N == 0 )
-      res.N = 0;
-   else
-      res.N = (N/8.0) * 100;
-
-   cerr << "cloudCower: NN in: " << data.N << " out: " << res.N << " %" << endl;
-} /* Skydekke_Kode */
-
-/*
-**
-*/
-void 
-Bufr::
-Hoyde_Sikt_Kode(std::string &kode, const DataElement &data)
-{
-   float Vmor=data.Vmor;
-   float VV=data.VV;
-   float HLN=data.HLN;
-   float HL=data.HL;
-
-   kode="///";
-   
-	if( VV == FLT_MAX && Vmor!=FLT_MAX )
-	   VV = Vmor;
-	
-	if( HL == FLT_MAX && HLN != FLT_MAX )
-	   HL = HLN;
-	   
-	if( HL != FLT_MAX ) {
-	   char ch=decodeutility::HLKode( HL );
-	   kode[0]=ch;
-	}
-	
-	if( VV != FLT_MAX ) {
-	   string s=decodeutility::VVKode( VV );
-	   
-	   if( ! s.empty() )
-	      kode.replace(1, 2, s);
-	}
-}
 
 
 

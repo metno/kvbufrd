@@ -69,7 +69,9 @@ class Bufr
 
     void windAtObstime( const DataElement &data, DataElement &res );
     
-
+    void doIx( StationInfoPtr     info,
+               const DataElementList &bufrData,
+               BufrData           &bufr );
     /**
      * Nedboer_Kode, create the precipitation code
      * for 6RRRtr and 555 .... 4RtWdWdWd. It assumes that we shall create
@@ -113,8 +115,6 @@ class Bufr
     void computePressureTrend( const DataElementList &data,
                                DataElement &res);
     bool pressureTrend( const DataElement &data, DataElement &res );
-    void cloudCower( const DataElement &data, DataElement &res );
-    void Hoyde_Sikt_Kode(std::string &kode, const DataElement &data);
     void doGeneralWeather( const DataElementList &data, BufrData &res );
     void doEsss( const DataElementList &data, BufrData &res );
     void soilTemp( const DataElementList &data, BufrData &res );

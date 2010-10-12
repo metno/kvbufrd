@@ -87,7 +87,8 @@ operator[]( int index )const
 
 BufrData::
 BufrData():
-   tWeatherPeriod( FLT_MAX )
+   tWeatherPeriod( FLT_MAX ), vsci( INT_MAX ),
+   tTAX_N( INT_MAX ), tTAN_N( INT_MAX ), TAX_N( FLT_MAX ), TAN_N( FLT_MAX )
 {
 }
 
@@ -95,6 +96,9 @@ BufrData::
 BufrData( const BufrData &bd ):
    DataElement( static_cast<DataElement>( bd ) ),
    tWeatherPeriod( bd.tWeatherPeriod ),
+   vsci( bd.vsci ),
+   tTAX_N( bd.tTAX_N ), tTAN_N( bd.tTAN_N ),
+   TAX_N( bd.TAX_N ), TAN_N( bd.TAN_N ),
    FgMax( bd.FgMax ),
    FxMax( bd.FxMax ),
    precip24( bd.precip24 ),
@@ -112,6 +116,11 @@ operator=( const BufrData &rhs )
    if( this != &rhs ) {
       *static_cast<DataElement*>(this) = static_cast<DataElement&>( const_cast<BufrData&>(rhs) );
       tWeatherPeriod = rhs.tWeatherPeriod;
+      vsci = rhs.vsci;
+      tTAX_N = rhs.tTAX_N;
+      tTAN_N = rhs.tTAN_N;
+      TAX_N = rhs.TAX_N;
+      TAN_N = rhs.TAN_N;
       FgMax = rhs.FgMax;
       FxMax = rhs.FxMax;
       precip24 = rhs.precip24;

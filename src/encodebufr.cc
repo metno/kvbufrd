@@ -424,7 +424,7 @@ void set_values(const StationInfoPtr station,
 
    /* Cloud data */
    values[29].toBufr( "N", data.N );        /* 020010 Cloud cover (total) */
-   values[30].toBufr( "vsc", 7 );      /* 008002 Vertical significance (surface observations) */
+   values[30].toBufr( "vsc", data.vsci );      /* 008002 Vertical significance (surface observations) */
    values[31].toBufr( "Nh", data.NH );       /* 020011 Cloud amount (of low or middle clouds) */
    values[32].toBufr( "h", data.HL );        /* 020013 Height of base of cloud */
    values[33].toBufr( "CL", data.CL );       /* 020012 Cloud type (low clouds CL) */
@@ -553,12 +553,12 @@ void set_values(const StationInfoPtr station,
 
    /* Extreme temperature data */
    values[idx++].toBufr( "h_T",  station->heightTemperature() );   /* 007032 Height of sensor above local ground (for temperature measurement) */
-   values[idx++].toBufrIf("t_TxTxTx", -12, data.TAX_12 != FLT_MAX );   /* 004024 Time period or displacement */
-   values[idx++] = 0;     /* 004024 Time period or displacement */
-   values[idx++].toBufr( "snTxTxTx", data.TAX_12 ); /* 012111 Maximum temperature, at height and over period specified */
-   values[idx++].toBufrIf("t_TnTnTn", -12, data.TAN_12 != FLT_MAX );   /* 004024 Time period or displacement */
-   values[idx++] = 0;     /* 004024 Time period or displacement */
-   values[idx++].toBufr( "snTnTnTn", data.TAN_12 ); /* 012112 Minimum temperature, at height and over period specified */
+   values[idx++].toBufrIf("tTAX_N_1", data.tTAX_N, data.tTAX_N != INT_MAX );   /* 004024 Time period or displacement */
+   values[idx++].toBufrIf("tTAX_N_2", 0, data.tTAX_N != INT_MAX );     /* 004024 Time period or displacement */
+   values[idx++].toBufr( "TAX_N", data.TAX_N ); /* 012111 Maximum temperature, at height and over period specified */
+   values[idx++].toBufrIf("tTAN_N_1", data.tTAN_N, data.tTAN_N != INT_MAX );   /* 004024 Time period or displacement */
+   values[idx++].toBufrIf("tTAN_N_2", 0, data.tTAN_N != INT_MAX );     /* 004024 Time period or displacement */
+   values[idx++].toBufr( "TAN_N", data.TAN_N ); /* 012112 Minimum temperature, at height and over period specified */
 
    /* Wind data */
    values[idx++].toBufr( "h_W", station->heightWind() );   /* 007032 Height of sensor above local ground (for wind measurement) */
@@ -567,9 +567,7 @@ void set_values(const StationInfoPtr station,
    values[idx++].toBufr( "Wind - Time periode", -10 );   /* 004025 Time period or displacement (minutes)*/
    values[idx++].toBufr( "dd", data.DD );    /* 011001 Wind direction */
    values[idx++].toBufr( "ff", data.FF );    /* 011002 Wind speed */
-   values[idx++] = miss;  /* 008021 Time significance */
-
-
+   values[idx++].toBufr( "Wind gust(time significance)", 2 );  /* 008021 Time significance */
    values[idx++].toBufrIf( "t_910ff[0]", -10, data.FgMax.ff != FLT_MAX );/* 004025 Time period or displacement (minutes) */
    values[idx++] = miss;  /* 011043 Maximum wind gust direction */
    values[idx++].toBufr( "ff910[0]", data.FgMax.ff );/* 011041 Maximum wind gust speed */

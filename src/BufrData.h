@@ -130,6 +130,11 @@ public:
    };
 
    float tWeatherPeriod; //Time since last weather observation (clouds etc.).
+   int vsci; //Vertical significance of clouds for CL, CM and CH.
+   int tTAX_N; //Periode for max temperature.
+   int tTAN_N; //Periode for max temperature.
+   float TAX_N;
+   float TAN_N;
    Wind  FgMax;
    Wind  FxMax;
    Precip precip24;
