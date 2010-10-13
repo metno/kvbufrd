@@ -1,0 +1,11 @@
+ 
+Release 2.1.7 
+  * Fix station type.
+  * Fix pressure difference.
+  * Fix horizontal visibility.
+  * Fix clouds.
+  * Fix height of base clouds.
+  * Fix min/max temperature.
+  * Fix wind gust.
+  * Fix snow depth.
+  * Fix precipitation. 
