@@ -95,7 +95,10 @@ private:
   	KvParam  FX_6;
   	KvParam  DD;   
   	KvParam  DM;   
-  	KvParam  DG;  
+  	KvParam  DG;
+  	KvParam  DG_010;
+  	KvParam  DG_1;
+  	KvParam  DG_6;
   	KvParam  DX;
   	KvParam  DX_3;   
   	KvParam  RA;    

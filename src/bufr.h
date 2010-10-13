@@ -96,9 +96,11 @@ class Bufr
     void doPrecip( StationInfoPtr     info,
                    const DataElementList &bufrData,
                    BufrData           &bufr );
-    float precipFromRA( float &nedbor, float &fRR24, const DataElementList &sd );
-    float precipFromRR( float &nedbor, float &fRR24, const DataElementList &sd );
-    float precipFromRrN( float &nedbor,
+    float precipFromRA( int hours, const DataElementList &sd ); //Helper method
+    float precipFromRA( float &RR1, float &nedbor, float &fRR24, const DataElementList &sd );
+    float precipFromRR( float &RR1, float &nedbor, float &fRR24, const DataElementList &sd );
+    float precipFromRrN( float &RR1,
+                         float &nedbor,
                          float &fRR24,
                          const DataElementList &sd );
     float  precipFromRRRtr( float &nedbor,

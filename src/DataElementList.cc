@@ -96,6 +96,9 @@ DataElement():
     DD( params, "DD", 61),
     DM(params, "DM",  64 ),
     DG(params, "DG", 63 ),
+    DG_010( params, "DG_010", 77 ),
+    DG_1( params, "DG_1", 78 ),
+    DG_6( params, "DG_1", 79 ),
     DX(params, "DX", 67 ),
     DX_3(params, "DX_3", INT_MAX),
     RA(params, "RA", 104), 
@@ -184,7 +187,6 @@ operator=(const DataElement &p)
    if(this != &p) {
       if( params.size() != p.params.size() ) {
          cerr << "FATAL BUG: Something nasty have happend.  DataElement Operator= params size differ!" << params.size() << " " << p.params.size() << endl;
-         cerr << "FATAL BUG: Check that the default CTOR and the copy CTOR have the same KvParams in the same order." << endl;
          abort();
       }
 

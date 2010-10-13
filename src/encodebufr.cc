@@ -568,13 +568,13 @@ void set_values(const StationInfoPtr station,
    values[idx++].toBufr( "dd", data.DD );    /* 011001 Wind direction */
    values[idx++].toBufr( "ff", data.FF );    /* 011002 Wind speed */
    values[idx++].toBufr( "Wind gust(time significance)", 2 );  /* 008021 Time significance */
-   values[idx++].toBufrIf( "t_910ff[0]", -10, data.FgMax.ff != FLT_MAX );/* 004025 Time period or displacement (minutes) */
-   values[idx++] = miss;  /* 011043 Maximum wind gust direction */
-   values[idx++].toBufr( "ff910[0]", data.FgMax.ff );/* 011041 Maximum wind gust speed */
+   values[idx++].toBufrIf( "t_910ff[0]", -10, data.FG_010 != FLT_MAX );/* 004025 Time period or displacement (minutes) */
+   values[idx++].toBufr( "ff910 Direction", data.DG_010 );  /* 011043 Maximum wind gust direction */
+   values[idx++].toBufr( "ff910 Speed", data.FG_010 );/* 011041 Maximum wind gust speed */
 
-   values[idx++].toBufr( "t_911ff[1]", data.FgMax.t );/* 004025 Time period or displacement (minutes) */
-   values[idx++] = miss;  /* 011043 Maximum wind gust direction */
-   values[idx++].toBufr( "ff911[1]", data.FG ) ;/* 011041 Maximum wind gust speed */
+   values[idx++].toBufr( "t_911ff", data.FgMax.t );/* 004025 Time period or displacement (minutes) */
+   values[idx++].toBufr( "ff911 Direction", data.FgMax.dd );  /* 011043 Maximum wind gust direction */
+   values[idx++].toBufr( "ff911 Speed", data.FgMax.ff ) ;/* 011041 Maximum wind gust speed */
    values[idx++].toBufr( "h_W", station->heightWind() ); /* 007032 Height of sensor above local ground (set to missing to cancel the previous value) */
 
    /* 3 02 044
