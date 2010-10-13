@@ -1,3 +1,18 @@
+kvbufrd (2.1.7-1) unstable; urgency=low
+
+  * Fix station type.
+  * Fix pressure difference.
+  * Fix horizontal visibility.
+  * Fix clouds.
+  * Fix height of base clouds.
+  * Fix min/max temperature.
+  * Fix wind gust.
+  * Fix snow depth.
+  * Fix precipitation. 
+  
+ -- Kvalobs <kvalobs@met.no>  Wed, 13 Oct 2010 11:00:00 +0200
+
+
 kvbufrd (2.1.6-1) unstable; urgency=low
 
   * Fix wrong GTS header.
