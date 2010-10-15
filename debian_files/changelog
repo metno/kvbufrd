@@ -1,3 +1,8 @@
+kvbufrd (2.1.9-1) unstable; urgency=low 
+  * Convert snowdepth (SA) from cm to meter.
+  
+ -- Kvalobs <kvalobs@met.no>  Fri, 15 Oct 2010 13:30:00 +0200
+
 kvbufrd (2.1.8-1) unstable; urgency=low 
   * Pad station name with space.
   * Fix a bug in setting of SA and EM.

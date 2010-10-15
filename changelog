@@ -1,4 +1,7 @@
 Release 2.1.8
+  * Convert snowdepth (SA) from cm to meter.
+
+Release 2.1.8
   * Pad station name with space.
   * Fix a bug in setting of SA and EM.
   * Only report SA and EM at 6 in the morning.
