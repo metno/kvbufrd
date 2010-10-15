@@ -1,3 +1,10 @@
+kvbufrd (2.1.8-1) unstable; urgency=low 
+  * Pad station name with space.
+  * Fix a bug in setting of SA and EM.
+  * Only report SA and EM at 6 in the morning.
+  
+ -- Kvalobs <kvalobs@met.no>  Fri, 15 Oct 2010 13:00:00 +0200
+
 kvbufrd (2.1.7-1) unstable; urgency=low
 
   * Fix station type.

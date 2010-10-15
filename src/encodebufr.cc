@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <algorithm>
 #include <milog/milog.h>
 #include <stdlib.h>
 #include <sstream>
@@ -620,7 +621,7 @@ void set_values(const StationInfoPtr station,
 
    LOGDEBUG( "Encodebufr name: " << station->name() );
    memset( cvals[0], ' ', 20 ); //Make sure the value is space padded.
-   strncpy(cvals[0], station->name().c_str(), 20 );/* Station or site name */
+   strncpy(cvals[0], station->name().c_str(), min( static_cast<int>(station->name().length()), 20 ) );
 
    /* Delayed replication factors */
 
