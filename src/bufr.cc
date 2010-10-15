@@ -990,7 +990,7 @@ doEsss( const DataElementList &data, BufrData &res  )
       else if( iSA == -3 )
          res.SA = 0;
       else if( data[0].SA > 0 )
-         res.SA = data[0].SA;
+         res.SA = data[0].SA/100;
    }
 }
 
