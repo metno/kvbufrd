@@ -478,6 +478,9 @@ maxWindGust( const DataElementList &data, BufrData &res )
     if( nTimeStr == 0 )
        return;
     
+    res.FG_010 = data[0].FG_010;
+    res.DG_010 = data[0].DG_010;
+
     if( ( data[0].time().hour() ) % 6 != 0 ) {
        if( data[0].FG_1 != FLT_MAX && data[0].FG_1 >=0 ) {
           res.FgMax.ff = data[0].FG_1;
@@ -1168,6 +1171,12 @@ Bufr::doPrecip( StationInfoPtr     info,
   	}else if(precipitationParam==PrecipitationRRR){
     	ost << "doPrecip: PrecipitationParam: RRR  (Manuell)" << endl;
     	h_tr=precipFromRRRtr(nedboerTotal, fRR24, bufrData);
+
+    	if( bufrData[0].RR_1 != FLT_MAX )
+    	   RR1 = bufrData[0].RR_1;
+    	else
+    	   RR1 = precipFromRA( 1, bufrData );
+
     	ost << "                   RR_24: " << fRR24          << endl
           << "                  nedbør: " << nedboerTotal   << endl;
   	}else{

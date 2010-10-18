@@ -1,3 +1,10 @@
+Release 2.1.12
+  * Fix timeperiod for sunshine observations.
+  * Use RR_1 or RA to compute a one hour precipitation for station that has it when
+    the precip is specified to come from RRRTr.
+  * Use FG_010 for all termins if we have it.
+  * Cancel height for data after the wind observations. 
+
 Release 2.1.10
   * New relese to make etch repo happy.
 

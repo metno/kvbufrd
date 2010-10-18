@@ -352,7 +352,26 @@ set_sec0134( const StationInfoPtr station,
   ksec1[13] = 0;       /* BUFR master table */
   ksec1[14] = 14;      /* Version number of master table used */
   ksec1[15] = 0;       /* Originating sub-centre */
-  ksec1[16] = 0;       /* International sub-category (see common table C-13) */
+
+  /* International sub-category (see common table C-13) */
+  switch( obsTime.hour() ){
+  case 0:
+  case 6:
+  case 12:
+  case 18:
+     ksec1[16] = 2; //ISM
+     break;
+  case 3:
+  case 9:
+  case 15:
+  case 21:
+     ksec1[16] = 1; //ISI
+     break;
+  default:
+     ksec1[16] = 0; //ISN
+     break;
+  }
+
   ksec1[17] = obsTime.sec();
 
   ksec3[0] = 0;        /* Length of section 3 (bytes), will be set by bufren */ 
@@ -540,9 +559,9 @@ void set_values(const StationInfoPtr station,
    values[idx++].toBufr( "W2", data.W2 );    /* 020005  Past weather (2) (see note 2) */
 
    /* Sunshine data (1 hour and 24 hour period) */
-   values[idx++] = 1;     /* 004024 Time period or displacement */
+   values[idx++] = -1;     /* 004024 Time period or displacement */
    values[idx++].toBufr( "SS", FLT_MAX );    /* 014031 Total sunshine OT_1 */
-   values[idx++] = 24;    /* 004024 Time period or displacement */
+   values[idx++] = -24;    /* 004024 Time period or displacement */
    values[idx++].toBufr( "SSS", FLT_MAX );   /* 014031 Total sunshine OT_24*/
 
    /* Precipitation measurement */
@@ -563,7 +582,7 @@ void set_values(const StationInfoPtr station,
 
    /* Wind data */
    values[idx++].toBufr( "h_W", station->heightWind() );   /* 007032 Height of sensor above local ground (for wind measurement) */
-   values[idx++].toBufr( "iw", 8+4 );    /* 002002 Type of instrumentation for wind measurement */
+   values[idx++].toBufr( "iw", 8 );    /* 002002 Type of instrumentation for wind measurement.( 8 = certified instrument m/s */
    values[idx++].toBufr( "Wind (time significance)", 2 );     /* 008021 Time significance (=2: time averaged) */
    values[idx++].toBufr( "Wind - Time periode", -10 );   /* 004025 Time period or displacement (minutes)*/
    values[idx++].toBufr( "dd", data.DD );    /* 011001 Wind direction */
@@ -576,7 +595,7 @@ void set_values(const StationInfoPtr station,
    values[idx++].toBufr( "t_911ff", data.FgMax.t );/* 004025 Time period or displacement (minutes) */
    values[idx++].toBufr( "ff911 Direction", data.FgMax.dd );  /* 011043 Maximum wind gust direction */
    values[idx++].toBufr( "ff911 Speed", data.FgMax.ff ) ;/* 011041 Maximum wind gust speed */
-   values[idx++].toBufr( "h_W", station->heightWind() ); /* 007032 Height of sensor above local ground (set to missing to cancel the previous value) */
+   values[idx++].toBufr( "h_W", FLT_MAX ); /* 007032 Height of sensor above local ground (set to missing to cancel the previous value) */
 
    /* 3 02 044
     * Evaporation data */
