@@ -1,3 +1,8 @@
+kvbufrd (2.1.10-1) unstable; urgency=low 
+  * New Release.
+  
+ -- Kvalobs <kvalobs@met.no>  Mon, 18 Oct 2010 08:14:00 +0200
+
 kvbufrd (2.1.9-1) unstable; urgency=low 
   * Convert snowdepth (SA) from cm to meter.
   
