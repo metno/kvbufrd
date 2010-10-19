@@ -332,10 +332,12 @@ set_sec0134( const StationInfoPtr station,
   if( obsTime.undef() )
      return false;
 
+  /* Section 0 */
   ksec0[0] = 0;        /* Length of section 0, will be set by bufren */
   ksec0[1] = 0;        /* Total length of BUFR message, will be set by bufren */
   ksec0[2] = 4;        /* BUFR edition number */
 
+  /*Section 1 */
   ksec1[ 0] = 22;      /* Length of section 1 (bytes). Must be set by user */ 
   ksec1[ 1] = 4;       /* BUFR edition number */
   ksec1[ 2] = 88;      /* Originating centre */
@@ -374,10 +376,12 @@ set_sec0134( const StationInfoPtr station,
 
   ksec1[17] = obsTime.sec();
 
+  /*Section 3*/
   ksec3[0] = 0;        /* Length of section 3 (bytes), will be set by bufren */ 
   ksec3[2] = 1;        /* Number of subsets */ 
   ksec3[3] = 128;      /* Flag (128 = observation data && no data compression) */ 
 
+  /*Section 4*/
   ksec4[0] = 0;        /* Length of section 4 (bytes), will be set by bufren */ 
 }
 
