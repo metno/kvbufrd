@@ -96,7 +96,15 @@ class Bufr
     void doPrecip( StationInfoPtr     info,
                    const DataElementList &bufrData,
                    BufrData           &bufr );
-    float precipFromRA( int hours, const DataElementList &sd ); //Helper method
+    float precipFromRA( int hours, const DataElementList &sd, const miutil::miTime &from=miutil::miTime() ); //Helper method
+
+    /**
+     * Get the precipitation as 6 hours intervals.
+     * @param hours
+     * @param sd
+     * @return
+     */
+    float precipFromRA_6( int hours, const DataElementList &sd ); //Helper method
     float precipFromRA( float &RR1, float &nedbor, float &fRR24, const DataElementList &sd );
     float precipFromRR( float &RR1, float &nedbor, float &fRR24, const DataElementList &sd );
     float precipFromRrN( float &RR1,

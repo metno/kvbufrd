@@ -102,6 +102,33 @@ protected:
 };
 
 
+TEST_F( BufrEncodeTest, RR_from_RA )
+{
+   using namespace miutil;
+   int wmono=1493;
+   DataElementList allData;
+   DataElementList data;
+   miTime dt;
+   StationInfoPtr stInfo;
+   BufrData bufr;
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   stInfo = findWmoNo( wmono );
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data-18700-RA.dat", stInfo, allData, validData );
+   dt=miTime("2010-06-22 06:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( data.firstTime() == dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< wmono;
+   EXPECT_FLOAT_EQ( -12, bufr.precipRegional.hTr );
+   EXPECT_FLOAT_EQ( 2.0, bufr.precipRegional.RR );
+
+   EXPECT_FLOAT_EQ( 5.0, bufr.precip24.RR );
+}
+
+
 
 TEST_F( BufrEncodeTest, RR24_for_RRRtr )
 {

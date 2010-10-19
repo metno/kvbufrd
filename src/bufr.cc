@@ -1218,6 +1218,8 @@ Bufr::doPrecip( StationInfoPtr     info,
  * \param times  Time vi skal beregne nedb�ren for.
  * \return ir
  */
+
+
 float
 Bufr::
 precipFromRA( float &RR1,
@@ -1240,10 +1242,14 @@ precipFromRA( float &RR1,
    else
       nTimes=1;
 
-   if( time == 6 )
-      fRR24 = precipFromRA( 24, sd );
+   if( time == 6 ) {
+      fRR24 = precipFromRA_6( 24, sd );
+   }
 
-   precip = precipFromRA( nTimes, sd );
+   if( nTimes == 1 )
+      precip = RR1;
+   else
+      precip = precipFromRA_6( nTimes, sd );
 
    LOGDEBUG("Time:          " << t << endl
          << "  precipitation = " <<  precip << endl
@@ -1254,118 +1260,35 @@ precipFromRA( float &RR1,
    return ( precip != FLT_MAX ? -1*nTimes : FLT_MAX ) ;
 }
 
-#if 0
-float
-Bufr::
-precipFromRA( float &RR1,
-              float &precip,
-              float &fRR24,
-              const DataElementList &sd )
-{
-  	const float limit = 0.2;
-  	const float bucketFlush = -10.0;
-  	int   nTimes;
-  	miutil::miTime t = sd.begin()->time();
-  	miutil::miTime t2;
-  	DataElement d1;
-  	DataElement d2;
-  	CIDataElementList it;
-
-  	int   time = t.hour();
-
-  	precip = FLT_MAX;
-  	fRR24 = FLT_MAX;
-
-  	if(time==6 || time==18)
-    	nTimes=12;
-  	else if(time==0 || time==12)
-    	nTimes=6;
-  	else
-    	nTimes=1;
-
-  	d1=*sd.begin();
-
-  	if(time==6){
-  	   //Create an RR_24 value to be reported at 24 o'clock
-  	   t2=t;
-  	   t2.addHour(-24);
-
-  	   it=sd.find(t2);
-
-  	   if(it!=sd.end() && it->time()==t2){
-  	      d2=*it;
-
-  	      if(d1.RA!=FLT_MAX && d2.RA!=FLT_MAX){
-  	         fRR24=d1.RA-d2.RA;
-
-  	         if(fRR24>bucketFlush){
-  	            if(fRR24<=limit)
-  	               fRR24=0.0;  //No precipitation
-  	         }else{
-  	            //The bucket is flushed.
-  	            fRR24=FLT_MAX;
-  	         }
-  	      }
-  	   }
-  	}
-
-  	t2=t;
-  	t2.addHour(-1*nTimes);  
-
-  	it=sd.find(t2);
-
-  	if(it==sd.end())
-    	return FLT_MAX;
-
-  	d2=*it;
-
-  	if(d2.time()!=t2)
-    	return FLT_MAX;
-
-  	if(d1.RA==FLT_MAX || d2.RA==FLT_MAX)
-    	return FLT_MAX;
-
-  	precip = d1.RA - d2.RA;
-
-  	LOGDEBUG("Time:          " << d1.time() << endl
-			<< "  precipitation = " <<  precip << endl
-	      << "          RR_24 = " <<  fRR24 << endl
-	   	<< "             RA = " <<  d1.RA << endl
-  	   	<< " bufrTidspunkt-" << nTimes << " timer : " << d2.time() << endl
-	   	<< "       RA = " <<  d2.RA << endl);
-
-  
-  	if(precip > bucketFlush ){
-    	if(precip <= limit)
-    	   precip = 0.0;  //No precipitation
-  	}else{ //The bucket is flushed
-    	precip = FLT_MAX;
-    	return FLT_MAX;
-  	}
-
-  	return -1*nTimes;
-}
-#endif
 
 float
 Bufr::
-precipFromRA( int hours, const DataElementList &sd )
+precipFromRA( int hours, const DataElementList &sd, const miutil::miTime &from )
 {
 
    const float limit = 0.2;
    const float bucketFlush = -10.0;
-   miutil::miTime t = sd.begin()->time();
+   miutil::miTime t;
    miutil::miTime t2;
    DataElement d1;
    DataElement d2;
    CIDataElementList it;
    float precip = FLT_MAX;
 
-   d1=*sd.begin();
-   t2=t;
-   t2.addHour(-1*hours );
+   if( from.undef() ) {
+      d1=*sd.begin();
+   } else {
+      it = sd.find( from );
+      if( it == sd.end() )
+         return FLT_MAX;
 
-   it=sd.find(t2);
+      d1 = *it;
+   }
+   t = d1.time();
+   t2 =t;
+   t2.addHour( -1*hours );
+
+   it=sd.find( t2 );
 
    if( it != sd.end() && it->time() == t2 ) {
       d2 = *it;
@@ -1375,7 +1298,7 @@ precipFromRA( int hours, const DataElementList &sd )
 
          if( precip > bucketFlush){
             if( precip <= limit)
-               precip =0.0;  //No precipitation
+               precip = 0.0;  //No precipitation
          }else{
             //The bucket is flushed.
             precip = FLT_MAX;
@@ -1386,6 +1309,27 @@ precipFromRA( int hours, const DataElementList &sd )
    return precip;
 }
 
+float
+Bufr::
+precipFromRA_6( int hours, const DataElementList &sd )
+{
+   float sum = 0.0;
+   float rr;
+   int hoursComputed=0;
+   miutil::miTime from = sd.begin()->time();
+
+   while( hoursComputed < hours ){
+      rr = precipFromRA( 6, sd, from );
+      if( rr == FLT_MAX )
+         return FLT_MAX;
+
+      sum += rr;
+      hoursComputed += 6;
+      from.addHour( -6 );
+   }
+
+   return sum;
+}
 /*
  * bufrtidspunkt kl 00 og 12,  6 timers nedb�r: RR_6
  * bufrtidspunkt kl 6 og 18,  12 timers nedb�r: RR_12
