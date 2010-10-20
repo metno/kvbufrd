@@ -48,6 +48,7 @@
 #include <kvalobs/kvPath.h>
 #include "LoadBufrData.h"
 #include "encodebufr.h"
+#include "base64.h"
 
 using namespace std;
 using namespace kvalobs;
@@ -523,7 +524,7 @@ newObs(ObsEvent &event)
                                        *con)) {
             LOGINFO("BUFR information saved to database! ccx: " << ccx << " crc: " << crc );
          } else {
-            LOGERROR("FAILED to svae BUFR information to the database! ccx: " << ccx << " crc: " << crc );
+            LOGERROR("FAILED to save BUFR information to the database! ccx: " << ccx << " crc: " << crc );
          }
 
          swmsg << "New bufr created!" << endl;
@@ -734,7 +735,8 @@ saveTo( StationInfoPtr info,
       if( base64 ) {
          ostringstream ost;
          encodeBufr.writeToStream( ost );
-         *base64 = ost.str();
+         string buf = ost.str();
+         encode64( buf.data(), buf.size(), *base64 );
       }
    }
    catch( const exception &ex ) {
