@@ -43,7 +43,7 @@ class ConfMaker
    std::list<StationInfoPtr> stationList;
    std::list<StationInfoPtr> templateStationList;
 
-   StationInfoPtr findStation( int wmono );
+   StationInfoPtr findStation( int wmono, bool &newStation );
    bool findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const;
    bool parseTemplate( miutil::conf::ConfSection *templateConf );
 
@@ -65,7 +65,6 @@ public:
    ConfMaker( ConfApp &app );
 
    bool setParams( const StInfoSysParamList &params );
-   bool add( int stationid, TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors );
    bool doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
 };
 
