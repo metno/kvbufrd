@@ -556,8 +556,14 @@ maxWindMax(  const DataElementList &data, BufrData &res )
    nNeedTimes=3;
    fMax=-1.0;
 
-   if(( data[0].time().hour())%3 != 0)
+   if(( data[0].time().hour())%3 != 0) {
+      if( data[0].FX_1 != FLT_MAX ) {
+         res.FxMax.ff = data[0].FX_1;
+         res.FxMax.t  = -60;
+      }
+
       return;
+   }
 
    if((data[0].time().hour())%6 == 0)
       nNeedTimes=6;
@@ -870,8 +876,6 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
    if( data.size() == 0 )
       return;
 
-   cerr << "doGeneralWeather: " << data[0].time() << " size: " << data.size() << endl;
-
 	if( data[0].ww != FLT_MAX ) {
 	   res.ww = data[0].ww;
 	} else if( data[0].WAWA!=FLT_MAX ){
@@ -917,7 +921,6 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
 	      }
 	   } else {
 	      int d = miutil::miTime::hourDiff( prevWeather, data[0].time()  );
-	      cerr << "Weather: prev: "<< prevWeather << " time: " << data[0].time() << " d: " << d << endl;
 	      res.tWeatherPeriod = d;
 	   }
 	}
