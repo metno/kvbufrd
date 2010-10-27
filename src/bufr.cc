@@ -111,7 +111,7 @@ using namespace std;
 namespace {
 
    float c2kelvin( float t ) {
-      if( t == FLT_MAX || t == FLT_MIN )
+      if( t == FLT_MAX || t == FLT_MIN || t == -FLT_MAX )
          return t;
 
       t += 273.15;
@@ -333,7 +333,7 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
 {
    int   nTimeStr=sd.nContinuesTimes();
    float min = FLT_MAX;
-   float max = FLT_MIN;
+   float max = -FLT_MAX;
 
    res.TAN_N = FLT_MAX;
    res.TAX_N = FLT_MAX;
@@ -347,7 +347,7 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
       if(sd[0].TAX_12 != FLT_MAX)
          res.TAX_N = sd[0].TAX_12;
 
-      if( res.TAN_N == FLT_MAX && nTimeStr>=11 ) {
+      if( res.TAN_N == FLT_MAX && nTimeStr>=12 ) {
          for(int i=0; i<12; i++){
             if(sd[i].TAN==FLT_MAX) {
                min = FLT_MAX;
@@ -362,10 +362,10 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
             res.TAN_N = min;
       }
 
-      if( res.TAX_N == FLT_MAX && nTimeStr>=11) {
+      if( res.TAX_N == FLT_MAX && nTimeStr>=12) {
          for(int i=0; i<12; i++){
             if( sd[i].TAX == FLT_MAX ) {
-               max = FLT_MIN;
+               max = FLT_MAX;
                break;
             }
 
@@ -373,7 +373,7 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
                max = sd[i].TAX;
          }
 
-         if( max != FLT_MIN )
+         if( max != FLT_MAX )
             res.TAX_N = max;
       }
 
@@ -471,7 +471,7 @@ Bufr::
 maxWindGust( const DataElementList &data, BufrData &res )
 {
     int   nTimeStr=data.nContinuesTimes();
-    float fMax = FLT_MIN;
+    float fMax = -1.0;
     float dMax;
     std::string::iterator it;
 

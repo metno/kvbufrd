@@ -130,6 +130,55 @@ TEST_F( BufrEncodeTest, RR_from_RRRtr_AND_RR1 )
 }
 
 
+TEST_F( BufrEncodeTest, MaxAndMinTemperature )
+{
+   using namespace miutil;
+   int wmono=1002;
+   DataElementList allData;
+   DataElementList data;
+   miTime dt;
+   StationInfoPtr stInfo;
+   BufrData bufr;
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   stInfo = findWmoNo( wmono );
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data_99927_temp.dat", stInfo, allData, validData );
+   dt=miTime("2010-10-27 06:00:00");
+   data=allData.subData( dt );
+
+   //Minimum and maximum temeratire at 6 o'clock
+
+   EXPECT_TRUE( data.firstTime() == dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+
+   //Maximum temperature.
+   EXPECT_FLOAT_EQ( 269.05, bufr.TAX_N );
+   EXPECT_FLOAT_EQ( -12, bufr.tTAX_N  );
+
+   //Minimum temperature.
+   EXPECT_FLOAT_EQ( 266.75, bufr.TAN_N );
+   EXPECT_FLOAT_EQ( -12, bufr.tTAX_N  );
+
+
+   //Minimum and maximum temeratire at 18 o'clock
+   dt=miTime("2010-10-26 18:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( data.firstTime() == dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+
+   //Maximum temperature.
+   EXPECT_FLOAT_EQ( 267.25, bufr.TAX_N );
+   EXPECT_FLOAT_EQ( -12, bufr.tTAX_N  );
+
+   //Minimum temperature.
+   EXPECT_FLOAT_EQ( 265.85, bufr.TAN_N );
+   EXPECT_FLOAT_EQ( -12, bufr.tTAX_N  );
+}
+
+
 
 TEST_F( BufrEncodeTest, RR_from_RA )
 {
