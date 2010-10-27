@@ -45,6 +45,14 @@ readFile( const std::string &name, std::string &buf )
    return inf.eof();
 }
 
+
+const char *mybufr=
+"DQ0KWkNaQw0NCklTTkQ5OSBIWUJSIDIxMTEwMA0NCkJVRlIAALkEAAAWAABYAAAAAAAAAA4A"
+"B9oKFQsAAAAADQAAAYDHTwQZCyoAAIoAAgGkJ6knKaqnIhAQEBAQEBAQEBAQEA+1SqwH9pMC"
+"VJ5gEAQIDE8ZPMPc///////4BkNTa0RcMAZP/4Bkf///////////+AAD9//////H////9///"
+"79H/wDI////////8AyP////////////8D6IE/sMQcxf////98T/hWf//////gD///8A3Nzc3"
+"AAAADQoNDQoKCgoKCgoKTk5OTg0K";
+
 int
 main( int argn, char **argv )
 {
@@ -76,4 +84,10 @@ main( int argn, char **argv )
 
    cerr << "Filesize: " << buf.size() << endl;
    cerr << "crc: " << crc( buf ) << endl;
+
+   decode64( mybufr, db64 );
+
+   of.open("1003-2206.bufr");
+   of.write( db64.data(), db64.size() );
+   of.close();
 }
