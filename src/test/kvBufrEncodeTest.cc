@@ -129,6 +129,32 @@ TEST_F( BufrEncodeTest, RR_from_RRRtr_AND_RR1 )
    EXPECT_FLOAT_EQ(  0, bufr.precipRegional.RR );
 }
 
+TEST_F( BufrEncodeTest, TGN )
+{
+   using namespace miutil;
+   int wmono=1027;
+   DataElementList allData;
+   DataElementList data;
+   miTime dt;
+   StationInfoPtr stInfo;
+   BufrData bufr;
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   stInfo = findWmoNo( wmono );
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data_90400_tgn.dat", stInfo, allData, validData );
+   dt=miTime("2010-10-27 06:00:00");
+   data=allData.subData( dt );
+
+   //Minimum and maximum temeratire at 6 o'clock
+
+   EXPECT_TRUE( data.firstTime() == dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+
+   EXPECT_FLOAT_EQ( 272.35, bufr.TGN_12 );
+}
+
 
 TEST_F( BufrEncodeTest, MaxAndMinTemperature )
 {
@@ -294,21 +320,28 @@ TEST_F( BufrEncodeTest, encode_TzFxFx )
 
 TEST_F( BufrEncodeTest, encode_FgFx )
 {
-   DataElementList data;
+   DataElementList allData;
    StationInfoPtr stInfo;
    BufrData bufr;
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
    int wmono=1006;
    stInfo = findWmoNo( wmono );
 
-
    ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
 
-   loadBufrDataFromFile( "data_99735.dat", stInfo, data, validData );
-   cerr << "FgFx: " << bufr.time() << endl;
-   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1006;
+   loadBufrDataFromFile( "data_99735.dat", stInfo, allData, validData );
+
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, allData, bufr ) ) << "FAILED: Cant generate bufr for "<< 1006;
    EXPECT_FLOAT_EQ( 11.6, bufr.FgMax.ff );
    EXPECT_FLOAT_EQ( 9.9, bufr.FxMax.ff );
+
+   miutil::miTime dt=miutil::miTime("2010-10-21 07:00:00");
+   DataElementList data=allData.subData( dt );
+   EXPECT_TRUE( data.firstTime() == dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+   EXPECT_FLOAT_EQ( 8.3, bufr.FxMax.ff );
+   EXPECT_FLOAT_EQ( -60, bufr.FxMax.t );
+
 
 }
 
