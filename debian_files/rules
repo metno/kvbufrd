@@ -116,7 +116,7 @@ binary-common:
 #	dh_installmime
 #	dh_python
 	dh_installinit --noscripts
-#	dh_installcron
+	dh_installcron
 #	dh_installinfo
 #	dh_installman
 	dh_link

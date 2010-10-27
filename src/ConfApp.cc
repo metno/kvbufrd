@@ -246,18 +246,20 @@ loadStationData( int stationid,
    //Lookup in the network_station to find the wmo name. Synopdata has networkid=4
    //Search the table obs_network to find the correct networkid. it can not change over time so it is hardcoded to 4 here.
    q.str("");
-   q << " WHERE stationid=" << stationid << " AND networkid=4 AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)";
+   q << " WHERE stationid=" << stationid << " AND networkid IN ( 4, 44 ) AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL) ORDER BY networkid";
    gate.select( networkStationList, q.str() );
 
-   if( networkStationList.empty() )
-      return false;
-
-   if( networkStationList.size() > 1 ) {
+   if( ! networkStationList.empty() ) {
+      if( networkStationList.size() > 1 ) {
          LOGWARN( "More than one record for the station <" << stationid << "> was selected from the 'network_station' table in stinfosys."
                   << endl << " Using the first selected.");
-   }
+      }
 
-   networkStation = *networkStationList.begin();
+      networkStation = *networkStationList.begin();
+   } else {
+      LOGWARN("No data in the table 'network_station' for stationid " << stationid << ". ie we are missing any name for the station.");
+      networkStation.clean();
+   }
 
    return true;
 }

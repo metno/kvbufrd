@@ -42,6 +42,8 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   tblKeyVal.cc tblKeyVal.h \
                   InitLogger.cc InitLogger.h \
                   Indent.h \
+                  kvDbGateProxyThread.cc kvDbGateProxyThread.h \
+                  kvDbGateProxy.cc kvDbGateProxy.h \
                   getDataReceiver.cc getDataReceiver.h \
                   GetDataThread.cc GetDataThread.h \
                   kvbufrdImpl.h obsevent.h \

@@ -50,7 +50,6 @@ class BufrWorker {
   App                      &app;
   dnmi::thread::CommandQue &que;  
   dnmi::thread::CommandQue &replayQue;  
-  dnmi::db::Connection     *con;
   std::ostringstream       &swmsg;
 
   /**
@@ -68,12 +67,11 @@ class BufrWorker {
    *         RdError, on all others failures.
    *
    */
-  EReadData readData(dnmi::db::Connection &con,
-		     ObsEvent             &event,
-		     DataEntryList        &data)const;
+  EReadData readData( ObsEvent             &event,
+                      DataEntryList        &data )const;
   
-  void loadBufrData(const DataEntryList &dl, DataElementList &sd,
-		     StationInfoPtr info)const;
+  void loadBufrData( const DataEntryList &dl, DataElementList &sd,
+                     StationInfoPtr info)const;
 
   /**
    * checkTypes, check if all data types that is needed to
@@ -88,10 +86,10 @@ class BufrWorker {
    * \return true if all data type ids are pressent for obstime. False
    *           otherwise.
    */
-  bool checkTypes(const DataEntryList &data, 
-		  StationInfoPtr      stInfo,
-		  const miutil::miTime obstime,
-		  bool  &mustHaveTypes)const;
+  bool checkTypes( const DataEntryList &data,
+                   StationInfoPtr      stInfo,
+                   const miutil::miTime obstime,
+                   bool  &mustHaveTypes )const;
 
 
   /**
@@ -99,8 +97,8 @@ class BufrWorker {
    * for the pressent data. If we don't have enogh data delay
    * if necesarry. 
    */
-  bool readyForBufr(const DataEntryList  &data,
-		     ObsEvent             &event)const;
+  bool readyForBufr( const DataEntryList  &data,
+                     ObsEvent             &event)const;
 
   /**
    * saveTo, use the \e copy and \e copyto from the configuration file 
@@ -123,13 +121,13 @@ class BufrWorker {
               int ccx,
               std::string *base64=0 ) const;
 
-  bool checkContinuesTypes(ObsEvent            &event, 
-			   const DataEntryList &data)const;
+  bool checkContinuesTypes( ObsEvent            &event,
+                            const DataEntryList &data)const;
 
  public:
-  BufrWorker(App &app,
-	      dnmi::thread::CommandQue &que,
-	      dnmi::thread::CommandQue &replayQue);
+  BufrWorker( App &app,
+              dnmi::thread::CommandQue &que,
+              dnmi::thread::CommandQue &replayQue);
 
 
   void newObs(ObsEvent &event);

@@ -46,10 +46,10 @@ class GetData {
   	int                      wmono;
   	int                      hours;
 
-  	void reloadAll(kvalobs::kvDbGate &gate,
+  	void reloadAll(kvalobs::kvDbGateProxy &gate,
 		 		   const miutil::miTime &bufferFromTime);
 
-  	void reloadOne(kvalobs::kvDbGate &gate,
+  	void reloadOne(kvalobs::kvDbGateProxy &gate,
 		           const miutil::miTime &bufferFromTime);
 
  	public:

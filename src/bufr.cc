@@ -604,8 +604,8 @@ maxWindMax(  const DataElementList &data, BufrData &res )
       if(data[i].FX_1==FLT_MAX)
          return;
 
-      if(data[i].FX_1>=fMax)
-         fMax=data[i].FX_1;
+      if(data[i].FX_1 > fMax)
+         fMax = data[i].FX_1;
 
       i--;
    }
@@ -613,7 +613,7 @@ maxWindMax(  const DataElementList &data, BufrData &res )
    if(fMax<0)
       return;
 
-   if( fMax <= data[0].FF )
+   if( data[0].FF != FLT_MAX && fMax < data[0].FF )
       fMax = data[0].FF;
 
    res.FxMax.ff = fMax;
@@ -634,8 +634,8 @@ cloudData( const DataElementList &data, BufrData &res )
    int N=(data[0].N==FLT_MAX?INT_MAX:static_cast<int>( data[0].N ));
 
 
-   if( CL == INT_MAX && CM == INT_MAX && CH == INT_MAX && N == INT_MAX )
-      return;
+   /*if( CL == INT_MAX && CM == INT_MAX && CH == INT_MAX && N == INT_MAX )
+      return; */
 
    if( N == 0  ) { //No clouds
       res.N = 0;
@@ -676,11 +676,11 @@ cloudData( const DataElementList &data, BufrData &res )
    else if( (CL != INT_MAX && CL != 0 ) || (CM != INT_MAX && CM != 0 ) )
       res.CH = 60; //Cant be decided because of obscured by lower clouds or fog.
 
-   if( res.CL >= 30 && res.CL <= 39 && res.CL != 30 ) //We have low clouds.
+   if( res.CL != FLT_MAX && res.CL >= 30 && res.CL <= 39 && res.CL != 30 ) //We have low clouds.
       res.vsci = 7;
-   else if( res.CM >= 20 && res.CM <= 29 && res.CM != 20 ) //We have midle clouds.
+   else if( res.CM != FLT_MAX && res.CM >= 20 && res.CM <= 29 && res.CM != 20 ) //We have midle clouds.
       res.vsci = 8;
-   else if( res.CH >= 10 && res.CH <= 19 && res.CH != 10 ) //We have high clouds.
+   else if( res.CH != FLT_MAX && res.CH >= 10 && res.CH <= 19 && res.CH != 10 ) //We have high clouds.
       res.vsci = 0;
    else
       res.vsci = 63;
@@ -829,30 +829,21 @@ bool
 Bufr::
 pressureTrend( const DataElement &data, DataElement &res)
 {
-   float trend = FLT_MAX;
-   int iAA;
-   float PP;
+   float PP = data.PP;
+
+   if( PP == FLT_MAX )
+      return false;
 
    if( data.AA != FLT_MAX ) {
-    	trend = data.AA;
-    	iAA = static_cast<int>( trend );
-  	}
-  
-  	PP = data.PP;
+      int iAA = static_cast<int>( data.AA );
+      res.AA = data.AA;
 
-  	if( PP == FLT_MAX){
-    	if( trend == FLT_MAX )
-    	   return false;
+      //Adjust the sign of PP according to AA.
+      if( ( iAA <= 3 && PP < 0 ) || ( iAA >= 5 && PP > 0 ) )
+         PP *= -1;
+   }
 
-    	res.AA = trend;
-    	return true;
-  	}
-
-   if( ( iAA <= 3 && PP < 0 ) || ( iAA >= 5 && PP > 0 ) )
-      PP *= -1;
-
-  	res.AA = trend;
-  	res.PP = PP * 100;
+   res.PP = PP * 100;
   	return true;
 }
 
@@ -887,7 +878,7 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
       int i=static_cast<int>(round( data[0].WAWA) );
 
       if(i>=0 && i<100)
-         res.ww = i;
+         res.ww = 100 + i;
    }
 
 	
@@ -1231,7 +1222,11 @@ precipFromRA( float &RR1,
    miutil::miTime t = sd.begin()->time();
    int   time = t.hour();
 
-   RR1 = precipFromRA( 1, sd );
+   if( sd[0].RR_1 != FLT_MAX )
+      RR1 = sd[0].RR_1;
+
+   //RR1 = precipFromRA( 1, sd );
+
    precip = FLT_MAX;
    fRR24 = FLT_MAX;
 

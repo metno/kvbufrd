@@ -57,8 +57,10 @@ namespace {
 
 StationInfoPtr
 ConfMaker::
-findStation( int wmono )
+findStation( int wmono, bool &newStation )
 {
+   newStation = false;
+
    for( std::list<StationInfoPtr>::const_iterator it=stationList.begin(); it!=stationList.end(); ++it ) {
       if( (*it)->wmono() == wmono )
          return *it;
@@ -71,7 +73,11 @@ findStation( int wmono )
       }
    }
 
-   return StationInfoPtr();
+   newStation = true;
+   StationInfoPtr ptr( new StationInfo( wmono ) );
+   stationList.push_back( ptr );
+
+   return ptr;
 }
 
 bool
@@ -100,23 +106,6 @@ setParams( const StInfoSysParamList &params_ )
 
 bool
 ConfMaker::
-add( int stationid, TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors )
-{
-   bool newStation=false;
-
-   if( station.wmono() == kvDbBase::INT_NULL )
-      return true;
-
-   StationInfoPtr stationInfo = findStation( station.wmono() );
-
-   if( ! stationInfo ) {
-      stationInfo.reset( new StationInfo( station.wmono()) );
-      newStation = true;
-   }
-}
-
-bool
-ConfMaker::
 findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const
 {
    for( StInfoSysSensorInfoList::const_iterator it=sensors.begin(); it != sensors.end(); ++it ) {
@@ -127,6 +116,7 @@ findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sens
    }
    return false;
 }
+
 bool
 ConfMaker::
 decodeProductCoupling( const std::string &val_, StationInfoPtr station )
@@ -135,9 +125,7 @@ decodeProductCoupling( const std::string &val_, StationInfoPtr station )
    string key;
    string val;
    stringstream toParse;
-   vector<string> line = miutil::splitstr(val_, '\n' );
-
-
+   vector<string> line = miutil::splitstr(val_, ';' );
 
    for( vector<string>::size_type i = 0; i < line.size(); ++i ) {
       keyval = miutil::splitstr( line[i], '=' );
@@ -667,15 +655,7 @@ doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
          continue;
       }
 
-      pStation = findStation( tblStation.wmono() );
-
-      if( ! pStation ) {
-         newStation = true;
-         pStation.reset( new StationInfo( tblStation.wmono()) );
-         stationList.push_back( pStation );
-      } else {
-         newStation = false;
-      }
+      pStation = findStation( tblStation.wmono(), newStation );
 
       if( !networkStation.name().empty() ) {
          pStation->name( networkStation.name() );

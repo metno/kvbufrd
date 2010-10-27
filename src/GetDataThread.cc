@@ -60,7 +60,6 @@ void
 GetData::
 operator()()
 {
-  dnmi::db::Connection     *con;
   miTime                   now(miTime::nowTime());
   miTime                   bufferFromTime(now);
 
@@ -83,18 +82,7 @@ operator()()
 	    " wmono: " << wmono << endl <<
 	    " bufferFromTime: " << bufferFromTime);
 
-  
-
-  con=app.getNewDbConnection();
-
-  if(!con){
-    LOGERROR("Cant open a Db connection!");
-    IDLOGERROR("GetData", "Cant open a Db connection!");
-    *joinable_=true;
-    return;
-  }
-
-  kvalobs::kvDbGate gate(con);
+  kvalobs::kvDbGateProxy gate( app.dbThread->dbQue );
   gate.busytimeout(120);
 
   if(wmono<=0){
@@ -103,7 +91,6 @@ operator()()
     reloadOne(gate, bufferFromTime);
   }
 
-  app.releaseDbConnection(con);
 
   LOGINFO("Exit GetData thread!");
   IDLOGINFO("GetData", "Exit GetData thread!");
@@ -113,7 +100,7 @@ operator()()
 
 void 
 GetData::
-reloadAll(kvalobs::kvDbGate    &gate,
+reloadAll(kvalobs::kvDbGateProxy    &gate,
           const miutil::miTime &bufferFromTime)
 {
    kvservice::KvObsDataList dl;
@@ -176,7 +163,7 @@ reloadAll(kvalobs::kvDbGate    &gate,
 
 void 
 GetData::
-reloadOne(kvalobs::kvDbGate    &gate,
+reloadOne(kvalobs::kvDbGateProxy    &gate,
           const miutil::miTime &bufferFromTime)
 {
    string logid;

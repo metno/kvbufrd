@@ -1,3 +1,6 @@
+Release 2.1.16exp
+   	* An experimentel release. This implement all db access in one thread.
+
 Release 2.1.14
    	* encode the bufr message to base64 before saving it to the cache database. This
    	  should fix the CCN problem.

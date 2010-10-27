@@ -66,9 +66,9 @@ class Waiting
   miutil::miTime obstime()const{ return obstime_;}
   StationInfoPtr info()const{ return info_;}
 
-  bool addToDb(dnmi::db::Connection *con);
-  bool removeFrom(dnmi::db::Connection *con);
-  bool inDb(dnmi::db::Connection *con);
+  bool addToDb();
+  bool removeFrom();
+  bool inDb();
   
   bool waitingOnContinuesData()const{  return waitingOnContiniusData_;}
   void waitingOnContinuesData(bool f){ waitingOnContiniusData_=f;}

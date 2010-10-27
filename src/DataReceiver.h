@@ -40,7 +40,6 @@ class DataReceiver {
   App                      &app;
   dnmi::thread::CommandQue &inputQue;  
   dnmi::thread::CommandQue &outputQue;  
-  dnmi::db::Connection     *con;
 
  public:
   DataReceiver(App &app, 

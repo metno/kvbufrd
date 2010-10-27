@@ -11,14 +11,14 @@ kvbufrdbadmin: kvbufrdbadmin.sh
 	
 EXTRA_DIST = cleanbufrdb.sql kvbufrdbadmin.sh changelog
 
-CLEANFILES = kvbufferdbadmin
+CLEANFILES = kvbufrdbadmin
 
 install-data-hook:
 	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/lib/@PACKAGE_NAME@
 	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/lib/@PACKAGE_NAME@/debug
 	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/run/kvalobs
 	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/log/kvalobs
-	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/log/kvalobs/kvbuffer
+	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/log/kvalobs/kvbufr
 	$(install_sh) -m 755 -d $(DESTDIR)/$(datadir)/@PACKAGE_NAME@
 
 #pkgconfig_DATA = @PACKAGE_TARNAME@.pc

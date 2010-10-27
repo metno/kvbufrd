@@ -25,6 +25,6 @@ delete from data where obstime<date('now', '-7  day');
 --
 -- Deletes from synop all records that is more than 1 month old.
 --
-select date('now', '-31 day') AS "Deleting synop before!";
-delete from synop where obstime<date('now', '-31  day');
+select date('now', '-7 day') AS "Deleting BUFR before!";
+delete from bufr where obstime<date('now', '-31  day');
 

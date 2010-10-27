@@ -41,6 +41,7 @@
 #include "delaycontrol.h"
 #include "InitLogger.h"
 #include <kvalobs/kvPath.h>
+#include "kvDbGateProxyThread.h"
 
 //using namespace kvservice;
 using namespace std;
@@ -73,7 +74,8 @@ main(int argn, char **argv)
   App  app(argn, argv, confFile, conf );
   dnmi::thread::CommandQue newDataQue;  
   dnmi::thread::CommandQue newObsQue;  
-  dnmi::thread::CommandQue replayQue;  
+  dnmi::thread::CommandQue replayQue;
+
   DataReceiver        dataReceiver(app, newDataQue, newObsQue);
   BufrWorker         bufrWorker(app, newObsQue, replayQue);
   Replay              replay(app, replayQue);
@@ -125,6 +127,7 @@ main(int argn, char **argv)
   }
       
   
+
   if( ! app.initKvBufrInterface(  newObsQue ) ){
     LOGFATAL("Cant initialize the interface to <kvbufrd>.");
     return 1;
@@ -182,6 +185,9 @@ main(int argn, char **argv)
   IDLOGDEBUG("main","Started <delayControlThread>!");
 
   app.run();
+
+  app.dbThread->dbQue->suspend();
+  app.dbThread->join();
 
   dataReceiverThread.join();
   IDLOGDEBUG("main","Joined <dataReceiverThread>!");

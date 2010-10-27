@@ -30,22 +30,20 @@
 */
 #include <time.h>
 #include <sstream>
-#include <kvalobs/kvDbGate.h>
+#include "kvDbGateProxy.h"
 #include <milog/milog.h>
 #include "Waiting.h"
 #include "tblWaiting.h"
+#include "App.h"
 
 using namespace std;
 using namespace kvalobs;
 
 bool 
 Waiting::
-addToDb(dnmi::db::Connection *con)
+addToDb()
 {
-  if(!con)
-    return false;
-
-  kvDbGate gate(con);
+  kvDbGateProxy gate( static_cast<App*>( App::kvApp )->dbThread->dbQue );
   TblWaiting data(info_->wmono(), obstime_, delay_);
  
   gate.busytimeout(120);
@@ -60,12 +58,9 @@ addToDb(dnmi::db::Connection *con)
 
 bool 
 Waiting::
-removeFrom(dnmi::db::Connection *con)
+removeFrom()
 {
-  if(!con)
-    return false;
-  
-  kvDbGate gate(con);
+  kvDbGateProxy gate(  static_cast<App*>( App::kvApp )->dbThread->dbQue );
   TblWaiting data(info_->wmono(), obstime_, delay_);
   
   gate.busytimeout(120);
@@ -80,12 +75,9 @@ removeFrom(dnmi::db::Connection *con)
 
 bool 
 Waiting::
-inDb(dnmi::db::Connection *con)
+inDb()
 {
-  if(!con)
-    return false;
-
-  kvDbGate gate(con);
+  kvDbGateProxy gate(  static_cast<App*>( App::kvApp )->dbThread->dbQue );
   list<TblWaiting> data;
   ostringstream o;
 

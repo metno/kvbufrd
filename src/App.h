@@ -46,6 +46,7 @@
 #include "Waiting.h"
 #include "tblBufr.h"
 #include "obsevent.h"
+#include "kvDbGateProxyThread.h"
 
 namespace kvbufrd{
   class StationInfoList;
@@ -77,15 +78,19 @@ private:
    bool                    acceptAllTimes_;
    kvbufrd::bufr_var bufrRef;
   
-   void readWaitingElementsFromDb();
+
    mutable boost::mutex mutex;
 
 public:
+   boost::shared_ptr<kvalobs::KvDbGateProxyThread> dbThread;
+   //dnmi::thread::CommandQue dbQue;
+
    App( int argn, char **argv, 
         const std::string &confFile_, miutil::conf::ConfSection *conf);
    ~App();
 
- 
+   void readWaitingElementsFromDb();
+
    bool acceptAllTimes()const { return acceptAllTimes_;}
 
    /**
@@ -135,7 +140,7 @@ public:
    *
    * \return A database connection.
    */
-  dnmi::db::Connection *getNewDbConnection();
+  dnmi::db::Connection *createDbConnection();
 
   /**
    * \brief release a connection to the database.
@@ -184,8 +189,6 @@ public:
    */
   miutil::miTime startTime()const { return startTime_;}
   miutil::miTime checkpoint();
-  void           createCheckpoint(dnmi::db::Connection *con, 
-				  const miutil::miTime &checkpoint);
   void           createCheckpoint(const miutil::miTime &checkpoint);
 
 
@@ -244,13 +247,11 @@ public:
    * \return A WatingPtr if there allready is an Waiting element for
    *         this obstime and wmono. 0 otherwise.
    */
-  WaitingPtr     addWaiting(WaitingPtr w, bool replace, 
-			    dnmi::db::Connection *con);
+  WaitingPtr addWaiting(WaitingPtr w, bool replace );
 
 
-  WaitingPtr     getWaiting(const miutil::miTime &obstime,
-			    int                  wmono,
-			    dnmi::db::Connection *con);
+  WaitingPtr getWaiting( const miutil::miTime &obstime,
+                         int                  wmono );
 
   /**
    * \brief getExpired return a list of \c Waiting elements that has expired.
@@ -314,7 +315,7 @@ public:
    * \param w The Waiting element to remove from the \c waitingList.
    * \param con A open connection to the database.
    */
-  void           removeWaiting(WaitingPtr w, dnmi::db::Connection *con);
+  void           removeWaiting(WaitingPtr w );
 
   /**
    * \brief removeWaiting, remove a waiting element from the database
@@ -328,9 +329,8 @@ public:
    *               to remove.
    * \param con A open connection to the database.
    */
-  void           removeWaiting(int wmono, 
-			       const miutil::miTime &obstime, 
-			       dnmi::db::Connection *con);
+  void           removeWaiting( int wmono,
+                                const miutil::miTime &obstime );
 
 
   /**
@@ -339,7 +339,7 @@ public:
    * \param tblBufr The data to be saved.
    * \return true if the data was saved and false on error.
    */
-  bool saveBufrData(const TblBufr &tblBufr, dnmi::db::Connection &con);
+  bool saveBufrData(const TblBufr &tblBufr );
 
 
   /**
@@ -353,8 +353,7 @@ public:
    */
   bool getSavedBufrData(int wmono,
                          const miutil::miTime &obstime,
-                         std::list<TblBufr> &tblBufr,
-                         dnmi::db::Connection &con);
+                         std::list<TblBufr> &tblBufr );
   
 
   /**
@@ -373,10 +372,10 @@ public:
    *              \a t. If hours>=0 get data from \a t until current time.
    * \param que   post Synop event on this que.
    */
-  bool           getDataFrom(const miutil::miTime &t,
-			     int                  wmono,
-			     int                  hours,
-			     dnmi::thread::CommandQue &que);
+  bool           getDataFrom( const miutil::miTime &t,
+                              int                  wmono,
+			                     int                  hours,
+			                     dnmi::thread::CommandQue &que);
 
 
   /**

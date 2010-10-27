@@ -33,13 +33,13 @@
 
 #include <boost/shared_ptr.hpp>
 #include <kvcpp/KvGetDataReceiver.h>
-#include <kvalobs/kvDbGate.h>
+#include "kvDbGateProxy.h"
 #include "App.h"
 
 class GetKvDataReceiver : public kvservice::KvGetDataReceiver{
 
   App                      &app;
-  kvalobs::kvDbGate        &gate;
+  kvalobs::kvDbGateProxy   &gate;
   dnmi::thread::CommandQue &que;
   miutil::miTime           fromTime; //generate buffer from this time
   const std::string        logid; 
@@ -48,7 +48,7 @@ class GetKvDataReceiver : public kvservice::KvGetDataReceiver{
   GetKvDataReceiver(App                      &app_, 
 		    const miutil::miTime     &fromTime_,
 		    dnmi::thread::CommandQue &que_,
-		    kvalobs::kvDbGate        &gate_,
+		    kvalobs::kvDbGateProxy    &gate_,
 		    const std::string        &logid_=""):
     app(app_),
     gate(gate_),

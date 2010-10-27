@@ -101,6 +101,35 @@ protected:
 
 };
 
+TEST_F( BufrEncodeTest, RR_from_RRRtr_AND_RR1 )
+{
+   using namespace miutil;
+   int wmono=1492;
+   DataElementList allData;
+   DataElementList data;
+   miTime dt;
+   StationInfoPtr stInfo;
+   BufrData bufr;
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   stInfo = findWmoNo( wmono );
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data_18700_precip.dat", stInfo, allData, validData );
+   dt=miTime("2010-10-21 06:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( data.firstTime() == dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+   EXPECT_FLOAT_EQ( -24, bufr.precip24.hTr );
+   EXPECT_FLOAT_EQ( 0, bufr.precip24.RR );
+   EXPECT_FLOAT_EQ( -12, bufr.precipRegional.hTr );
+   EXPECT_FLOAT_EQ( 0, bufr.precipRegional.RR );
+   EXPECT_FLOAT_EQ( -1, bufr.precipNational.hTr );
+   EXPECT_FLOAT_EQ(  0, bufr.precipRegional.RR );
+}
+
+
 
 TEST_F( BufrEncodeTest, RR_from_RA )
 {
@@ -213,6 +242,27 @@ TEST_F( BufrEncodeTest, encode_TzFxFx )
     EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
     //EXPECT_EQ( bufr, "AAXX 22121 01001 16/// ///// 1//// 2//// 6//// 555 0/005 4////=") << "Generated bufr 9: " << bufr;
 }
+
+TEST_F( BufrEncodeTest, encode_FgFx )
+{
+   DataElementList data;
+   StationInfoPtr stInfo;
+   BufrData bufr;
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   int wmono=1006;
+   stInfo = findWmoNo( wmono );
+
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data_99735.dat", stInfo, data, validData );
+   cerr << "FgFx: " << bufr.time() << endl;
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1006;
+   EXPECT_FLOAT_EQ( 11.6, bufr.FgMax.ff );
+   EXPECT_FLOAT_EQ( 9.9, bufr.FxMax.ff );
+
+}
+
 
 TEST_F( BufrEncodeTest, encode_nddff )
 {
