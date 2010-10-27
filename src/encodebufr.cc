@@ -645,10 +645,6 @@ void set_values(const StationInfoPtr station,
    LOGDEBUG( "Encodebufr name: " << station->name() );
    memset( cvals[0], ' ', 20 ); //Make sure the value is space padded.
    strncpy(cvals[0], station->name().c_str(), min( static_cast<int>(station->name().length()), 20 ) );
-
-   /* Delayed replication factors */
-
-   //kdata[1] = 1;          /* Number of cloud layers with bases below station level */
 }
 
 
