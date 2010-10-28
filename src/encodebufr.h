@@ -47,7 +47,7 @@ public:
       : message( msg ) {}
    ~BufrEncodeException() throw (){}
 
-   const char* what() throw() { return message.c_str(); }
+   const char* what()const throw() { return message.c_str(); }
 };
 
 
