@@ -399,18 +399,18 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
 
    if( sd[0].TAX != FLT_MAX ) {
       if( sd[0].TA != FLT_MAX && sd[0].TA > sd[0].TAX)
-         res.TAX_N = sd[0].TA;
+         res.TAX_N = c2kelvin( sd[0].TA );
       else
-         res.TAX_N = sd[0].TAX;
+         res.TAX_N = c2kelvin( sd[0].TAX );
 
       res.tTAX_N = -1;
    }
 
    if( sd[0].TAX != FLT_MAX ) {
       if( sd[0].TA != FLT_MAX && sd[0].TA < sd[0].TAN)
-         res.TAN_N = sd[0].TA;
+         res.TAN_N = c2kelvin( sd[0].TA );
       else
-         res.TAN_N = sd[0].TAN;
+         res.TAN_N = c2kelvin( sd[0].TAN );
 
       res.tTAN_N = -1;
    }
