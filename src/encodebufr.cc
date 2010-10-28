@@ -449,8 +449,8 @@ void set_values(const StationInfoPtr station,
    /* Cloud data */
    values[29].toBufr( "N", data.N );        /* 020010 Cloud cover (total) */
    values[30].toBufr( "vsc", data.vsci );      /* 008002 Vertical significance (surface observations) */
-   values[31].toBufr( "Nh", data.NH );       /* 020011 Cloud amount (of low or middle clouds) */
-   values[32].toBufr( "h", data.HL );        /* 020013 Height of base of cloud */
+   values[31].toBufr( "NH", data.NH );       /* 020011 Cloud amount (of low or middle clouds) */
+   values[32].toBufr( "HL", data.HL );        /* 020013 Height of base of cloud */
    values[33].toBufr( "CL", data.CL );       /* 020012 Cloud type (low clouds CL) */
    values[34].toBufr( "CM", data.CM );       /* 020012 Cloud type (middle clouds CM) */
    values[35].toBufr( "CH", data.CH );       /* 020012 Cloud type (high clouds CH) */
