@@ -479,6 +479,43 @@ TEST_F( BufrEncodeTest, encode_bufr )
 
 }
 
+TEST_F( BufrEncodeTest, encode_bufr2 )
+{
+   DataElementList allData;
+   DataElementList data;
+   StationInfoPtr  stInfo;
+   BufrData bufr;
+   kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
+   int wmono=1003;
+   miutil::miTime dt;
+   stInfo = findWmoNo( wmono );
+
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data_99950.dat", stInfo, allData, validData );
+   dt=miutil::miTime("2010-10-28 15:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( data.size() != 0 );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+
+   BufrEncoder encoder( stInfo, true );
+
+   try {
+      encoder.encodeBufr( bufr, 0 );
+   }
+   catch ( BufrEncodeException &ex ) {
+      cerr << "EXCEPTION: " << ex.what() << endl;
+   }
+   catch( ... ) {
+      cerr << "EXCEPTION: Unknown."<< endl;
+   }
+   //ASSERT_NO_THROW( encoder.encodeBufr( bufr ) );
+   ASSERT_NO_THROW( encoder.saveToFile( ".", true ) );
+}
+
+
 TEST_F( BufrEncodeTest, writeTo )
 {
    DataElementList data;
