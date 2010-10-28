@@ -341,9 +341,9 @@ TEST_F( BufrEncodeTest, encode_FgFx )
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
    EXPECT_FLOAT_EQ( 8.3, bufr.FxMax.ff );
    EXPECT_FLOAT_EQ( -60, bufr.FxMax.t );
-
-
 }
+
+
 
 
 TEST_F( BufrEncodeTest, encode_nddff )
@@ -501,6 +501,46 @@ TEST_F( BufrEncodeTest, writeTo )
    cerr << " *****" << endl <<"[" << ost.str() << "]" << endl << "*****" << endl;
 }
 
+TEST_F( BufrEncodeTest, CloudsAndVV )
+{
+   DataElementList allData;
+   StationInfoPtr stInfo;
+   BufrData bufr;
+   DataElementList data;
+   miutil::miTime dt;
+   //kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   int wmono=1385;
+   stInfo = findWmoNo( wmono );
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data_4780_cloud.dat", stInfo, allData, validData );
+
+   dt=miutil::miTime("2010-10-28 06:00:00");
+   data=allData.subData( dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1006;
+   EXPECT_FLOAT_EQ( 75, bufr.N );
+   EXPECT_FLOAT_EQ( 300, bufr.HL );
+
+
+   dt=miutil::miTime("2010-10-28 08:00:00");
+   data=allData.subData( dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1006;
+   EXPECT_FLOAT_EQ( FLT_MAX, bufr.N );
+   EXPECT_FLOAT_EQ( 3610, bufr.HL );
+
+   /*
+   miutil::miTime dt=miutil::miTime("2010-10-28 06:00:00");
+   DataElementList data=allData.subData( dt );
+   EXPECT_TRUE( data.firstTime() == dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+   EXPECT_FLOAT_EQ( 8.3, bufr.FxMax.ff );
+   EXPECT_FLOAT_EQ( -60, bufr.FxMax.t );
+   */
+
+
+}
 
 int
 main(int argc, char **argv) {
