@@ -396,8 +396,6 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
       return;
    }
 
-//Enable the following code if it is decided to report hourly min/max values for temperatures.
-#if 0
    if( sd[0].TAX != FLT_MAX ) {
       if( sd[0].TA != FLT_MAX && sd[0].TA > sd[0].TAX)
          res.TAX_N = sd[0].TA;
@@ -415,7 +413,6 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
 
       res.tTAN_N = -1;
    }
-#endif
 }
 
 
@@ -631,6 +628,8 @@ void
 Bufr::
 cloudData( const DataElementList &data, BufrData &res )
 {
+
+
    if( data.size() == 0 )
       return;
 
@@ -639,6 +638,10 @@ cloudData( const DataElementList &data, BufrData &res )
    int CH = (data[0].CH==FLT_MAX?INT_MAX:static_cast<int>( data[0].CH ));
    int N=(data[0].N==FLT_MAX?INT_MAX:static_cast<int>( data[0].N ));
 
+   res.VV = data[0].VV;
+
+   if( res.VV == FLT_MAX && data[0].Vmor != FLT_MAX )
+      res.VV = data[0].Vmor;
 
    /*if( CL == INT_MAX && CM == INT_MAX && CH == INT_MAX && N == INT_MAX )
       return; */
@@ -668,7 +671,6 @@ cloudData( const DataElementList &data, BufrData &res )
    if( N != INT_MAX )
       res.N = (N/8.0) * 100;
 
-
    if( CL != INT_MAX )
       res.CL = 30 + CL;
 
@@ -697,10 +699,6 @@ cloudData( const DataElementList &data, BufrData &res )
    if( res.HL == FLT_MAX && data[0].HLN != FLT_MAX )
       res.HL = data[0].HLN;
 
-   res.VV = data[0].VV;
-
-   if( res.VV == FLT_MAX && data[0].Vmor != FLT_MAX )
-      res.VV = data[0].Vmor;
 }
 
 /*
