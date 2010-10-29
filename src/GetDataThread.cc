@@ -117,7 +117,7 @@ reloadAll(kvalobs::kvDbGateProxy    &gate,
       ost << "GetData-" << (*it)->wmono();
       logid = ost.str();
 
-      app.createGlobalLogger( logid );
+      app.createGlobalLogger( logid, (*it)->loglevel() );
 
       StationInfo::TLongList idList=(*it)->stationID();
       kvservice::WhichDataHelper  which;

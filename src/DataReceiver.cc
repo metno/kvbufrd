@@ -478,7 +478,11 @@ DataReceiver::setDefaultLogger(StationInfoPtr station)
 
       if(logs->open(ost.str())){
          Logger::setDefaultLogger(logs);
-         Logger::logger().logLevel(station->loglevel());
+         milog::LogLevel ll = station->loglevel();
+         if( ll == milog::NOTSET )
+            ll = milog::DEBUG;
+
+         Logger::logger().logLevel( ll );
       }else{
          LOGERROR("Cant open the logfile <" << ost.str() << ">!");
          delete logs;

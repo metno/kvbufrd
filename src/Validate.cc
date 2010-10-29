@@ -183,12 +183,12 @@ validDataUseOnlyUseInfo( const Data &data )
    int uinfo_3=uinfo.flag( 3 ); //Treatment of original data value.
    int cinfo_mis = cinfo.flag( f_fmis );
 
-   LOGDEBUG("Validate: stationid: " << data.stationID() << " typeid: " << data.typeID()
-            << " obstime: " << data.obstime()
-            << " paramid: " << data.paramID()
-            << " original: " << data.original()
-            << " cflags: " << data.controlinfo()
-            << " uflags: " << data.useinfo() << " u2: " << uinfo_2 << " u3: " << uinfo_3 << " cmis: "<< cinfo_mis );
+   LOGDEBUG2("Validate: stationid: " << data.stationID() << " typeid: " << data.typeID()
+             << " obstime: " << data.obstime()
+             << " paramid: " << data.paramID()
+             << " original: " << data.original()
+             << " cflags: " << data.controlinfo()
+             << " uflags: " << data.useinfo() << " u2: " << uinfo_2 << " u3: " << uinfo_3 << " cmis: "<< cinfo_mis );
 
    if( atoi( data.original().c_str() ) == -32767 ) {
       LOGINFO("REJECTED -32767: stationid: " << data.stationID() << " typeid: " << data.typeID()
@@ -232,12 +232,6 @@ validDataUseOnlyUseInfo( const Data &data )
       return false;
    }
 
-   LOGDEBUG1("Validate: stationid: " << data.stationID() << " typeid: " << data.typeID()
-               << " obstime: " << data.obstime()
-               << " paramid: " << data.paramID()
-               << " original: " << data.original()
-               << " cflags: " << data.controlinfo()
-               << " uflags: " << data.useinfo() << " u2: " << uinfo_2 << " u3: " << uinfo_3 << " cmis: "<< cinfo_mis );
    return true;
 }
 

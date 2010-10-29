@@ -40,6 +40,7 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   Waiting.cc Waiting.h \
                   delaycontrol.cc delaycontrol.h \
                   tblKeyVal.cc tblKeyVal.h \
+                  parseMilogLogLevel.cc parseMilogLogLevel.h \
                   InitLogger.cc InitLogger.h \
                   Indent.h \
                   kvDbGateProxyThread.cc kvDbGateProxyThread.h \
@@ -78,6 +79,7 @@ kvbufrdbclt_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
                      -lm 
 kvbufrdparse_SOURCES = kvbufrdparse.cc \
                         StationInfo.cc StationInfo.h \
+                        parseMilogLogLevel.cc parseMilogLogLevel.h \
                         StationInfoParse.cc StationInfoParse.h
 kvbufrdparse_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 kvbufrdparse_LDADD =  $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
@@ -95,6 +97,7 @@ kvbufrconf_SOURCES = StationInfo.cc StationInfo.h \
 					 ConfApp.h ConfApp.cc \
 					 splitstr.h splitstr.cc \
 					 InitLogger.cc InitLogger.h \
+					 parseMilogLogLevel.cc parseMilogLogLevel.h \
 					 kvbufrconfOptions.cc kvbufrconfOptions.h \
 					 kvbufrconf.cc
 kvbufrconf_LDFLAGS = -pthread $(BOOST_LDFLAGS)
@@ -106,6 +109,7 @@ kvbufrconfcmp_SOURCES = StationInfo.cc StationInfo.h \
      	         		checkfile.h checkfile.cc \
 					    splitstr.h splitstr.cc \
 					    InitLogger.cc InitLogger.h \
+					    parseMilogLogLevel.cc parseMilogLogLevel.h \
 					 	kvbufrconfcmpOptions.cc kvbufrconfcmpOptions.h \
 					 	kvbufrconfcmp.cc
 kvbufrconfcmp_LDFLAGS = -pthread $(BOOST_LDFLAGS)
@@ -139,6 +143,7 @@ kvBufrEncodeTest_SOURCES = test/kvBufrEncodeTest.cc \
 		                    bufr.cc bufr.h \
 		                    Validate.cc Validate.h \
 		                    InitLogger.cc InitLogger.h \
+		                    parseMilogLogLevel.cc parseMilogLogLevel.h \
 		                    bufrencodehelper.h \
 		                    encodebufr.cc encodebufr.h \
 		                    KvParam.cc KvParam.h \

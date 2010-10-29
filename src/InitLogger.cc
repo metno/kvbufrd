@@ -35,12 +35,12 @@
 #include "InitLogger.h"
 #include <iostream>
 #include <kvalobs/kvPath.h>
+#include "parseMilogLogLevel.h"
 
 using namespace milog;
 using namespace std;
 
 namespace{
-    LogLevel getLogLevel(const char *c);
     void compactArgv( int &argn, char **argv, int dest, int src );
 }
 
@@ -72,7 +72,7 @@ InitLogger(int &argn, char **argv, const std::string &logname, std::string &logf
          srcI++;
 
          if( srcI < argn ){
-            traceLevel=getLogLevel( argv[srcI] );
+            traceLevel=parseMilogLogLevel( argv[srcI] );
             srcI++;
 
             if(traceLevel==milog::NOTSET){
@@ -83,7 +83,7 @@ InitLogger(int &argn, char **argv, const std::string &logname, std::string &logf
          srcI++;
 
          if( srcI<argn ){
-            logLevel=getLogLevel(argv[srcI]);
+            logLevel=parseMilogLogLevel( argv[srcI] );
             srcI++;
 
             if(logLevel==milog::NOTSET){
@@ -151,57 +151,6 @@ namespace{
          argv[i] = argv[ii];
 
       argn -= n;
-   }
-
-   LogLevel getLogLevel(const char *str)
-   {
-      if(strcmp("FATAL", str)==0){
-         return milog::FATAL;
-      }else if(strcmp("ERROR", str)==0){
-         return milog::ERROR;
-      }else if(strcmp("WARN", str)==0){
-         return milog::WARN;
-      }else if(strcmp("DEBUG", str)==0){
-         return milog::DEBUG;
-      }else if(strcmp("DEBUG1", str)==0){
-         return milog::DEBUG1;
-      }else if(strcmp("DEBUG2", str)==0){
-         return milog::DEBUG2;
-      }else if(strcmp("DEBUG3", str)==0){
-         return milog::DEBUG3;
-      }else if(strcmp("DEBUG4", str)==0){
-         return milog::DEBUG4;
-      }else if(strcmp("DEBUG5", str)==0){
-         return milog::DEBUG5;
-      }else if(strcmp("DEBUG6", str)==0){
-         return milog::DEBUG6;
-      }else if(strcmp("INFO", str)==0){
-         return milog::INFO;
-      }else if(strcmp("0", str)==0){
-         return milog::FATAL;
-      }else if(strcmp("1", str)==0){
-         return milog::ERROR;
-      }else if(strcmp("2", str)==0){
-         return milog::WARN;
-      }else if(strcmp("3", str)==0){
-         return milog::INFO;
-      }else if(strcmp("4", str)==0){
-         return milog::DEBUG;
-      }else if(strcmp("5", str)==0){
-         return milog::DEBUG1;
-      }else if(strcmp("6", str)==0){
-         return milog::DEBUG2;
-      }else if(strcmp("7", str)==0){
-         return milog::DEBUG3;
-      }else if(strcmp("8", str)==0){
-         return milog::DEBUG4;
-      }else if(strcmp("9", str)==0){
-         return milog::DEBUG5;
-      }else if(strcmp("10", str)==0){
-         return milog::DEBUG6;
-      }else{
-         return milog::NOTSET;
-      }
    }
 }
     

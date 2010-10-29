@@ -37,6 +37,7 @@
 
 #include <kvcpp/corba/CorbaKvApp.h>
 #include <kvdb/dbdrivermgr.h>
+#include <milog/milog.h>
 #include <list>
 #include <puTools/miTime.h>
 #include <boost/thread/mutex.hpp>
@@ -76,8 +77,8 @@ private:
    std::list<GetData*>     getDataThreads;
    bool                    hasStationWaitingOnCacheReload;
    bool                    acceptAllTimes_;
-   kvbufrd::bufr_var bufrRef;
-  
+   kvbufrd::bufr_var       bufrRef;
+   milog::LogLevel         defaultLogLevel;
 
    mutable boost::mutex mutex;
 
@@ -106,7 +107,7 @@ public:
     * \param is An id to identify the logger.
     * \return true on success and false otherwise.
     */
-   bool createGlobalLogger(const std::string &id);
+   bool createGlobalLogger(const std::string &id, milog::LogLevel ll=milog::NOTSET );
 
 
   

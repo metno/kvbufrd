@@ -37,6 +37,7 @@
 #include <miutil/trimstr.h>
 #include "StationInfo.h"
 #include "StationInfoParse.h"
+#include "parseMilogLogLevel.h"
 
 using namespace std;
 using namespace miutil::conf;
@@ -356,23 +357,28 @@ StationInfoParse::
 doDefLogLevel(miutil::conf::ValElementList &vl,
       int wmono)
 {
-   int val;
+   string val;
+   milog::LogLevel ll;
    IValElementList it=vl.begin();
 
    if(it==vl.end())
-      return milog::INFO;
+      return milog::NOTSET;
 
-   if(it->type()!=INT){
-      LOGERROR("INVALID TYPE: key <loglevel>, expecting INT.");
-      return milog::INFO;
+   val=it->valAsString();
+
+   ll = parseMilogLogLevel( val );
+
+   if( ll == milog::NOTSET ) {
+      ll = milog::INFO;
+
+      if( wmono == 0 ) {
+         LOGERROR("Invalid loglevel value <" << val << "> in section <wmo_default>. Setting default loglevel to INFO.");
+      } else {
+         LOGERROR("Invalid loglevel value <" << val << "> in section wmo <" << wmono << ">. Setting default loglevel to INFO.");
+      }
    }
 
-   val=it->valAsInt();
-
-   if(val>=milog::NOTSET)
-      val=milog::INFO;
-
-   return static_cast<milog::LogLevel>(val);
+   return ll;
 }
 
 

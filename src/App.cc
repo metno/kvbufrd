@@ -44,6 +44,7 @@
 #include "getDataReceiver.h"
 #include "GetDataThread.h"
 #include <kvalobs/kvPath.h>
+#include "parseMilogLogLevel.h"
 
 using namespace std;
 using namespace miutil;
@@ -79,9 +80,12 @@ public:
 
 bool
 App::
-createGlobalLogger(const std::string &id)
+createGlobalLogger(const std::string &id, milog::LogLevel ll)
 {
    try{
+
+      if( ll == milog::NOTSET )
+         ll = defaultLogLevel;
 
       /*FIXME: Remove the comments when the needed functionality is
        * in effect on an operational machin.
@@ -95,6 +99,7 @@ createGlobalLogger(const std::string &id)
       ost << kvPath("logdir") << "/kvbufr/" << id << ".log";
 
       if(logs->open(ost.str())){
+         logs->loglevel( ll );
          if(!LogManager::createLogger(id, logs)){
             delete logs;
             return false;
@@ -120,7 +125,8 @@ App(int argn, char **argv,
     startTime_(miutil::miTime::nowTime()),
     confFile(confFile_),
     hasStationWaitingOnCacheReload(false),
-    acceptAllTimes_(false)
+    acceptAllTimes_(false),
+    defaultLogLevel( milog::INFO )
 {
    ValElementList valElem;
    string         val;
@@ -128,6 +134,24 @@ App(int argn, char **argv,
    bool           bufr_tables_names( false );
 
    LogContext context("ApplicationInit");
+
+   valElem=conf->getValue("loglevel");
+
+   if( !valElem.empty() ) {
+      std::string slevel=valElem[0].valAsString();
+      milog::LogLevel ll = parseMilogLogLevel( slevel );
+
+      if( ll != milog::NOTSET )
+         defaultLogLevel = ll;
+   }
+
+   milog::LogManager *manager = milog::LogManager::instance();
+
+   if( manager ) {
+      manager->loglevel( defaultLogLevel );
+      milog::Logger &logger=milog::Logger::logger();
+      logger.logLevel( defaultLogLevel );
+   }
 
    createGlobalLogger("GetData");
    createGlobalLogger("DelayCtl");

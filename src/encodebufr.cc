@@ -121,8 +121,8 @@ encodeBufr( const BufrData &data, int ccx_ )
            &kdlen, kdata, &kelem, &kvals, values.values(), (char **) cvals,
            &kbuflen, kbuff, &error );
 
-  cerr << "kbuflen: " << kbuflen << endl;
-  cerr << "ktdlen:  " << ktdlen << endl;
+  LOGDEBUG( "kbuflen: " << kbuflen);
+  LOGDEBUG( "ktdlen:  " << ktdlen );
 
   if( error != 0 ) {
      ostringstream o;
@@ -228,6 +228,12 @@ saveToFile( const std::string &path, bool overwrite )const
    char tmp[16];
    char dateTime[16];
    int  ccx_=ccx;
+
+   if( ! kbuff ) {
+       ostringstream o;
+       o << "Missing bufr encoding for station '" << station->wmono() << "' obstime: " << obstime;
+       throw BufrEncodeException( o.str() );
+    }
 
    header = wmoHeader();
 
