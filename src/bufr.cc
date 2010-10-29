@@ -111,8 +111,9 @@ using namespace std;
 namespace {
 
    float c2kelvin( float t ) {
-      if( t == FLT_MAX || t == FLT_MIN || t == -FLT_MAX )
-         return t;
+      if( t == FLT_MAX || t == FLT_MIN || t == -FLT_MAX ) {
+         return FLT_MAX;
+      }
 
       t += 273.15;
 
@@ -169,7 +170,7 @@ windAtObstime( const DataElement &data, DataElement &res )
    if( data.FF != FLT_MAX ) {
       if( data.FF >= 0 && data.FF <= 98 ) {
          res.FF = static_cast<float>( static_cast<int>( ( data.FF + 0.05 )*10 ) )/10;
-         if( res.FF < 1.0 ) { //No wind.
+         if( res.FF < 0.1 ) { //No wind.
             res.FF = 0;
             res.DD = 0;
             return;
@@ -373,7 +374,7 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
                max = sd[i].TAX;
          }
 
-         if( max != FLT_MAX )
+         if( max != -FLT_MAX && max != FLT_MAX )
             res.TAX_N = max;
       }
 
@@ -414,6 +415,7 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
 
       res.tTAN_N = -1;
    }
+
 }
 
 
@@ -975,7 +977,6 @@ doEsss( const DataElementList &data, BufrData &res  )
 
    if( data[0].EM != FLT_MAX && data[0].EM>= 0 && data[0].EM <= 10 )
       res.EM = 10 + static_cast<int>( floor( static_cast<double>( data[0].EM ) + 0.5 ));
-
    
    if( data[0].SA != FLT_MAX ) {
       if( iSA == -1 ) {
@@ -984,7 +985,7 @@ doEsss( const DataElementList &data, BufrData &res  )
       } else if( iSA == 0 )
          res.SA = -0.01;
       else if( iSA == -3 )
-         res.SA = 0;
+         res.SA = FLT_MAX;
       else if( data[0].SA > 0 )
          res.SA = data[0].SA/100;
    }
