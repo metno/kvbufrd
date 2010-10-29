@@ -171,10 +171,12 @@ TEST_F( BufrEncodeTest, MaxAndMinTemperature )
    ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_99927_temp.dat", stInfo, allData, validData );
+
+   /******
+    * Minimum and maximum temperature at 6 o'clock
+    ******/
    dt=miTime("2010-10-27 06:00:00");
    data=allData.subData( dt );
-
-   //Minimum and maximum temeratire at 6 o'clock
 
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
@@ -187,8 +189,9 @@ TEST_F( BufrEncodeTest, MaxAndMinTemperature )
    EXPECT_FLOAT_EQ( 266.75, bufr.TAN_N );
    EXPECT_FLOAT_EQ( -12, bufr.tTAX_N  );
 
-
-   //Minimum and maximum temeratire at 18 o'clock
+   /*******
+    * Minimum and maximum temperature at 18 o'clock
+    *******/
    dt=miTime("2010-10-26 18:00:00");
    data=allData.subData( dt );
 
@@ -201,6 +204,45 @@ TEST_F( BufrEncodeTest, MaxAndMinTemperature )
 
    //Minimum temperature.
    EXPECT_FLOAT_EQ( 265.85, bufr.TAN_N );
+   EXPECT_FLOAT_EQ( -12, bufr.tTAX_N  );
+
+   /*******
+    * Hourly min/max except 06 and 18 o'clock.
+    *******/
+   dt=miTime("2010-10-27 05:00:00");
+   data=allData.subData( dt );
+
+   //Minimum and maximum temperature at 6 o'clock
+
+   EXPECT_TRUE( data.firstTime() == dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+
+   //Maximum temperature.
+   EXPECT_FLOAT_EQ( 267.55, bufr.TAX_N );
+   EXPECT_FLOAT_EQ( -1, bufr.tTAX_N  );
+
+   //Minimum temperature.
+   EXPECT_FLOAT_EQ( 267.15, bufr.TAN_N );
+   EXPECT_FLOAT_EQ( -1, bufr.tTAX_N  );
+
+
+   /*******
+    * Min/max temperature at 06 and 18 o'clock, but
+    * the values cant be computed.
+    *******/
+   dt=miTime("2010-10-28 06:00:00");
+   data=allData.subData( dt );
+
+   //Minimum and maximum temperature at 6 o'clock
+   EXPECT_TRUE( data.firstTime() == dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+
+   //Maximum temperature.
+   EXPECT_FLOAT_EQ( FLT_MAX, bufr.TAX_N );
+   EXPECT_FLOAT_EQ( -12, bufr.tTAX_N  );
+
+   //Minimum temperature.
+   EXPECT_FLOAT_EQ( FLT_MAX, bufr.TAN_N );
    EXPECT_FLOAT_EQ( -12, bufr.tTAX_N  );
 }
 
@@ -271,51 +313,41 @@ TEST_F( BufrEncodeTest, RR24_for_RRRtr )
 
 TEST_F( BufrEncodeTest, encode_TzFxFx )
 {
-	DataElementList data;
-	StationInfoPtr stInfo;
-	BufrData bufr;
-	kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
-	int wmono=1001;
-	stInfo = findWmoNo( wmono );
+   DataElementList data;
+   StationInfoPtr stInfo;
+   BufrData bufr;
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   int wmono=1001;
+   stInfo = findWmoNo( wmono );
 
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
 
-	ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   loadBufrDataFromFile( "data_TzFxFx-1.dat", stInfo, data, validData );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
 
-	loadBufrDataFromFile( "data_TzFxFx-1.dat", stInfo, data, validData );
-	EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
-	//EXPECT_EQ( bufr, "AAXX 22151 01001 46/// ///// 1//// 2//// 555 0/003 4////=") << "Generated bufr 1: " << bufr;
+   loadBufrDataFromFile( "data_TzFxFx-2.dat", stInfo, data, validData );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
 
-    loadBufrDataFromFile( "data_TzFxFx-2.dat", stInfo, data, validData );
-    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
-    //EXPECT_EQ( bufr, "AAXX 22151 01001 46/// ///// 1//// 2//// 555 0/003 4////=") << "Generated bufr 2: " << bufr;
+   loadBufrDataFromFile( "data_TzFxFx-3.dat", stInfo, data, validData );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr  ) ) << "FAILED: Cant generate bufr for "<< 1389;
 
-    loadBufrDataFromFile( "data_TzFxFx-3.dat", stInfo, data, validData );
-    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr  ) ) << "FAILED: Cant generate bufr for "<< 1389;
-    //EXPECT_EQ( bufr, "AAXX 22151 01001 46/// ///// 1//// 2//// 555 0/103 4////=") << "Generated bufr 3: " << bufr;
+   loadBufrDataFromFile( "data_TzFxFx-4.dat", stInfo, data, validData );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
 
-    loadBufrDataFromFile( "data_TzFxFx-4.dat", stInfo, data, validData );
-    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
-    //EXPECT_EQ( bufr, "AAXX 22151 01001 46/// ///// 1//// 2//// 555 0/304 4////=") << "Generated bufr 4: " << bufr;
+   loadBufrDataFromFile( "data_TzFxFx-5.dat", stInfo, data, validData );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
 
-    loadBufrDataFromFile( "data_TzFxFx-5.dat", stInfo, data, validData );
-    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
-    //EXPECT_EQ( bufr, "AAXX 22121 01001 16/// ///// 1//// 2//// 6//// 555 0/405 4////=") << "Generated bufr 5: " << bufr;
+   loadBufrDataFromFile( "data_TzFxFx-6.dat", stInfo, data, validData );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
 
-    loadBufrDataFromFile( "data_TzFxFx-6.dat", stInfo, data, validData );
-    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
-    //EXPECT_EQ( bufr, "AAXX 22121 01001 16/// ///// 1//// 2//// 6//// 555 0/404 4////=") << "Generated bufr 6: " << bufr;
+   loadBufrDataFromFile( "data_TzFxFx-7.dat", stInfo, data, validData );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
 
-    loadBufrDataFromFile( "data_TzFxFx-7.dat", stInfo, data, validData );
-    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
-    //EXPECT_EQ( bufr, "AAXX 22121 01001 16/// ///// 1//// 2//// 6//// 555 0/405 4////=") << "Generated bufr 7: " << bufr;
+   loadBufrDataFromFile( "data_TzFxFx-8.dat", stInfo, data, validData );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
 
-    loadBufrDataFromFile( "data_TzFxFx-8.dat", stInfo, data, validData );
-    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
-    //EXPECT_EQ( bufr, "AAXX 22121 01001 16/// ///// 1//// 2//// 6//// 555 0/008 4////=") << "Generated bufr 8: " << bufr;
-
-    loadBufrDataFromFile( "data_TzFxFx-9.dat", stInfo, data, validData );
-    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
-    //EXPECT_EQ( bufr, "AAXX 22121 01001 16/// ///// 1//// 2//// 6//// 555 0/005 4////=") << "Generated bufr 9: " << bufr;
+   loadBufrDataFromFile( "data_TzFxFx-9.dat", stInfo, data, validData );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
 }
 
 TEST_F( BufrEncodeTest, encode_FgFx )
@@ -369,7 +401,6 @@ TEST_F( BufrEncodeTest, encode_nddff )
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 21.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( FLT_MAX, bufr.DD ) << "DD: Failed time: " << dt;
-   //EXPECT_EQ( bufr, "AAXX 21061 01001 16/// ///21 1//// 2//// 6//// 333 7//// 555 4////=") << "Generated bufr 1: " << bufr;
 
    dt=miTime("2010-02-22 06:00:00");
    data = allData.subData( dt );
@@ -377,7 +408,6 @@ TEST_F( BufrEncodeTest, encode_nddff )
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 1.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( 360.0, bufr.DD ) << "DD: Failed time: " << dt;
-   //EXPECT_EQ( bufr, "AAXX 22061 01001 16/// /3601 1//// 2//// 6//// 333 7//// 555 4////=") << "Generated bufr 1: " << bufr;
 
    dt=miTime("2010-02-23 06:00:00");
    data = allData.subData( dt );
@@ -385,7 +415,6 @@ TEST_F( BufrEncodeTest, encode_nddff )
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 1.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( 360.0, bufr.DD ) << "DD: Failed time: " << dt;
-   //EXPECT_EQ( bufr, "AAXX 23061 01001 16/// /3601 1//// 2//// 6//// 333 7//// 555 4////=") << "Generated bufr 1: " << bufr;
 
    dt=miTime("2010-02-24 06:00:00");
    data = allData.subData( dt );
@@ -393,7 +422,6 @@ TEST_F( BufrEncodeTest, encode_nddff )
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 1.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( 35.0, bufr.DD ) << "DD: Failed time: " << dt;
-   //EXPECT_EQ( bufr, "AAXX 24061 01001 16/// /0401 1//// 2//// 6//// 333 7//// 555 4////=") << "Generated bufr 1: " << bufr;
 
    dt=miTime("2010-02-25 06:00:00");
    data = allData.subData( dt );
@@ -401,7 +429,6 @@ TEST_F( BufrEncodeTest, encode_nddff )
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 1.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( FLT_MAX, bufr.DD ) << "DD: Failed time: " << dt;
-   //EXPECT_EQ( bufr, "AAXX 25061 01001 16/// ///01 1//// 2//// 6//// 333 7//// 555 4////=") << "Generated bufr 1: " << bufr;
 
    dt=miTime("2010-02-26 06:00:00");
    data = allData.subData( dt );
@@ -409,7 +436,6 @@ TEST_F( BufrEncodeTest, encode_nddff )
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 0.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( 0.0, bufr.DD ) << "DD: Failed time: " << dt;
-   //EXPECT_EQ( bufr, "AAXX 26061 01001 16/// /0000 1//// 2//// 6//// 333 7//// 555 4////=") << "Generated bufr 1: " << bufr;
 
    dt=miTime("2010-02-27 06:00:00");
    data = allData.subData( dt );
@@ -417,7 +443,6 @@ TEST_F( BufrEncodeTest, encode_nddff )
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 0.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( 0.0, bufr.DD ) << "DD: Failed time: " << dt;
-   //EXPECT_EQ( bufr, "AAXX 27061 01001 16/// /0000 1//// 2//// 6//// 333 7//// 555 4////=") << "Generated bufr 1: " << bufr;
 
    dt=miTime("2010-02-28 06:00:00");
    data = allData.subData( dt );
@@ -425,8 +450,6 @@ TEST_F( BufrEncodeTest, encode_nddff )
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( FLT_MAX, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( 348.0, bufr.DD ) << "DD: Failed time: " << dt;
-
-   //EXPECT_EQ( bufr, "AAXX 28061 01001 16/// /35// 1//// 2//// 6//// 333 7//// 555 4////=") << "Generated bufr 1: " << bufr;
 }
 
 
@@ -461,7 +484,7 @@ TEST_F( BufrEncodeTest, encode_bufr )
 
    loadBufrDataFromFile( "data-18700-1.dat", stInfo, data, validData );
 
-   EXPECT_TRUE( data.size() != 0 ) << "It is expected that the datalist is empty, but the size is: " << data.size();
+   EXPECT_TRUE( data.size() != 0 );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1492;
 
    BufrEncoder encoder( stInfo, true );
@@ -469,14 +492,13 @@ TEST_F( BufrEncodeTest, encode_bufr )
       encoder.encodeBufr( bufr, 0 );
    }
    catch ( BufrEncodeException &ex ) {
-      cerr << "EXCEPTION: " << ex.what() << endl;
+      FAIL() << "EXCEPTION (BufrEncodeException): " << ex.what();
    }
    catch( ... ) {
-      cerr << "EXCEPTION: Unknown."<< endl;
+      FAIL() << "EXCEPTION: Unknown.";
    }
-   //ASSERT_NO_THROW( encoder.encodeBufr( bufr ) );
-   ASSERT_NO_THROW( encoder.saveToFile( ".", true ) );
 
+   ASSERT_NO_THROW( encoder.saveToFile( ".", true ) );
 }
 
 TEST_F( BufrEncodeTest, encode_bufr2 )
@@ -494,7 +516,7 @@ TEST_F( BufrEncodeTest, encode_bufr2 )
    ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_99950.dat", stInfo, allData, validData );
-   dt=miutil::miTime("2010-10-28 15:00:00");
+   dt=miutil::miTime("2010-10-28 17:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( data.size() != 0 );
@@ -506,12 +528,12 @@ TEST_F( BufrEncodeTest, encode_bufr2 )
       encoder.encodeBufr( bufr, 0 );
    }
    catch ( BufrEncodeException &ex ) {
-      cerr << "EXCEPTION: " << ex.what() << endl;
+      FAIL()<< "EXCEPTION (BufrEncodeException): " << ex.what();
    }
    catch( ... ) {
-      cerr << "EXCEPTION: Unknown."<< endl;
+      FAIL() << "EXCEPTION: Unknown.";
    }
-   //ASSERT_NO_THROW( encoder.encodeBufr( bufr ) );
+
    ASSERT_NO_THROW( encoder.saveToFile( ".", true ) );
 }
 
@@ -535,7 +557,7 @@ TEST_F( BufrEncodeTest, writeTo )
 
    data.writeTo( ost );
 
-   cerr << " *****" << endl <<"[" << ost.str() << "]" << endl << "*****" << endl;
+   //cerr << " *****" << endl <<"[" << ost.str() << "]" << endl << "*****" << endl;
 }
 
 TEST_F( BufrEncodeTest, CloudsAndVV )
