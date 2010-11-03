@@ -1,3 +1,8 @@
+Release 2.1.24
+	* Fix wrong "vertical significance" value for high clouds (Ch).
+	* If SA=-3, set snow depth to missing.
+	* Alter the limit for "no wind" condition to 0.1 m/s.
+
 Release 2.1.16exp
    	* An experimentel release. This implement all db access in one thread.
 

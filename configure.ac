@@ -1,5 +1,5 @@
 AC_PREREQ([2.59])
-AC_INIT([kvbufrd], [2.1.23], [kvoss@met.no])
+AC_INIT([kvbufrd], [2.1.24], [kvoss@met.no])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_MACRO_DIR([m4])
 
