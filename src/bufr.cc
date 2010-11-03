@@ -692,7 +692,7 @@ cloudData( const DataElementList &data, BufrData &res )
    else if( res.CM != FLT_MAX && res.CM >= 20 && res.CM <= 29 && res.CM != 20 ) //We have midle clouds.
       res.vsci = 8;
    else if( res.CH != FLT_MAX && res.CH >= 10 && res.CH <= 19 && res.CH != 10 ) //We have high clouds.
-      res.vsci = 0;
+      res.vsci = 9;
    else
       res.vsci = 63;
 
