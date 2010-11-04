@@ -285,7 +285,7 @@ dewPoint(  const DataElement &data, BufrData &res  )
          LOGDEBUG("dewPoint: UU(" << fukt << ")>100");
 
          if(fukt<=104)
-            res.TD = temp;
+            res.TD = c2kelvin( temp );
          return;
       }
 
