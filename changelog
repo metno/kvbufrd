@@ -1,3 +1,6 @@
+Release 2.1.25
+	* Fix one missing convesion from celcius to kelvin in the dewPoint rotine.
+
 Release 2.1.24
 	* Fix wrong "vertical significance" value for high clouds (Ch).
 	* If SA=-3, set snow depth to missing.
