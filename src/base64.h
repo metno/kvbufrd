@@ -213,7 +213,7 @@ VERSION HISTORY:
 #define B64_MIN_LINE_SIZE    4
 
 
-
+namespace miutil {
 /*
 ** encode
 **
@@ -228,4 +228,5 @@ encode64( const char *source, int size,  std::string &dest_, int linesize=B64_DE
 ** decode a base64 encoded stream discarding padding, line breaks and noise
 */
 void decode64( const std::string &source,  std::string &dest );
+}
 #endif

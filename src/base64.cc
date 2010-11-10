@@ -7,6 +7,7 @@
 MODULE NAME:    b64.c
 
 AUTHOR:         Bob Trower 08/04/01
+                Børge Moe  2010-11-08
 
 PROJECT:        Crypt Data Packaging
 
@@ -16,7 +17,7 @@ COPYRIGHT:      Copyright (c) Trantor Standard Systems Inc., 2001
 NOTE:           This source code may be used as you wish, subject to
                 the MIT license.  See the LICENCE section below.
 
-                The original code is changed to decode to ann from memmory buffers.
+                The original code is changed to decode to and from memmory buffers by Børge Moe.
 
 DESCRIPTION:
                 This little utility implements the Base64
@@ -248,6 +249,8 @@ void decodeblock( unsigned char in[4], unsigned char out[3] )
 }
 }
 
+namespace miutil {
+
 /*
 ** encode
 **
@@ -333,5 +336,6 @@ decode64( const std::string &source /*infile*/,  std::string &dest /*outfile*/ )
     }
 
     dest = oDest.str();
+}
 }
 

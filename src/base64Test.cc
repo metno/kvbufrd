@@ -73,19 +73,19 @@ main( int argn, char **argv )
       return 1;
    }
 
-   encode64( buf.data(), buf.size(), b64 );
+   miutil::encode64( buf.data(), buf.size(), b64 );
 
    cerr << "Base64: ------" << endl
         << b64 << endl << " -------" << endl;;
 
-   decode64( b64, db64 );
+   miutil::decode64( b64, db64 );
    of.write( db64.data(), db64.size() );
    of.close();
 
    cerr << "Filesize: " << buf.size() << endl;
    cerr << "crc: " << crc( buf ) << endl;
 
-   decode64( mybufr, db64 );
+   miutil::decode64( mybufr, db64 );
 
    of.open("1003-2206.bufr");
    of.write( db64.data(), db64.size() );
