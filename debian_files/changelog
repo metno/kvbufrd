@@ -1,3 +1,9 @@
+kvbufrd (2.2.1-1) lucid; urgency=low 
+
+  * Changes to compile on lucid.
+  
+ -- Kvalobs <kvalobs@met.no>  Mon, 24 Jan 2011 07:30:00 +0100
+
 kvbufrd (2.2.0-1) unstable; urgency=low 
   * Change the version number to 2.2.0.
   

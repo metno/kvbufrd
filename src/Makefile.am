@@ -152,10 +152,14 @@ kvBufrEncodeTest_SOURCES = test/kvBufrEncodeTest.cc \
 
 
 
-kvBufrEncodeTest_CPPFLAGS = $(AM_CPPFLAGS) -DTESTDATADIR="\""$(top_srcdir)/src/test"\""
+kvBufrEncodeTest_CPPFLAGS = $(AM_CPPFLAGS) \
+	                        $(gtest_CFLAGS) \
+                            -DTESTDATADIR="\""$(top_srcdir)/src/test"\""
 
-kvBufrEncodeTest_LDADD =  -lgtest \
+kvBufrEncodeTest_LDADD =   \
 						  $(kvcpp_LIBS) \
-						  -L$(HOME)/lib -lbufr -lgfortran \
+						  -L$(HOME)/lib \
+						  $(gtest_LIBS) \
+						  -lbufr -lgfortran \
 						  -lm
 						

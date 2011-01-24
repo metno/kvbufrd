@@ -166,6 +166,7 @@ BufrEncoder::
 wmoHeader()const
 {
    string header;
+   string sTmp;
    string tmpOwner=station->owner();
    char tmp[16];
    char dateTime[16];
@@ -192,7 +193,13 @@ wmoHeader()const
          break;
       }
 
-      sprintf(tmp,"%02.2s ", station->list().c_str() );
+      //Prepend the string with 0
+      //until it is at least 2 byte long.
+      sTmp = station->list();
+      while( sTmp.length()<2 )
+         sTmp.insert(0, "0");
+
+      sprintf(tmp,"%2.2s ", sTmp.c_str() );
       header+=tmp;
 
       while( tmpOwner.length()<4)
