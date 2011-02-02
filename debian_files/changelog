@@ -1,3 +1,10 @@
+kvbufrd (2.4.0-1) lucid; urgency=low 
+
+  * Changes to compile with latest version of kvalobs libs.
+  
+ -- Kvalobs <kvalobs@met.no>  Wed, 02 Feb 2011 10:25:00 +0100
+
+
 kvbufrd (2.2.1-1) lucid; urgency=low 
 
   * Changes to compile on lucid.
