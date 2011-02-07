@@ -1,4 +1,4 @@
-kvbufrd (2.4.0-1) lucid; urgency=low 
+kvbufrd (2.4.1-1) lucid; urgency=low 
 
 * Do not use params where useinfo(0)==9.
   
