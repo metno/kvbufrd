@@ -156,6 +156,7 @@ App(int argn, char **argv,
    createGlobalLogger("GetData");
    createGlobalLogger("DelayCtl");
    createGlobalLogger("main");
+   createGlobalLogger("uinfo0");
 
 
    //If a station is set up whith this types delay them if
