@@ -191,6 +191,14 @@ validDataUseOnlyUseInfo( const Data &data )
              << " cflags: " << data.controlinfo()
              << " uflags: " << data.useinfo() << " u0: " << uinfo_0 << " u2: " << uinfo_2 << " u3: " << uinfo_3 << " cmis: "<< cinfo_mis );
 
+   if( uinfo_0 == 9 ){ //Parameter not defined in obs_pgm.
+      IDLOGINFO("uinfo0","REJECTED useinfo(0)=" << uinfo_0 << " :  stationid: " << data.stationID()  << " typeid: " << data.typeID()
+                 << " obstime: " << data.obstime()
+                 << " paramid: " << data.paramID()
+                 << " original: " << data.original());
+      return false;
+   }
+
    if( atoi( data.original().c_str() ) == -32767 ) {
       LOGINFO("REJECTED -32767: stationid: " << data.stationID() << " typeid: " << data.typeID()
               << " obstime: " << data.obstime()
@@ -200,13 +208,6 @@ validDataUseOnlyUseInfo( const Data &data )
       return false;
    }
 
-   if( uinfo_0 == 9 ){ //Parameter not defined in obs_pgm.
-      IDLOGINFO("uinfo0","REJECTED useinfo(0)=" << uinfo_0 << " :  stationid: " << data.stationID()  << " typeid: " << data.typeID()
-                 << " obstime: " << data.obstime()
-                 << " paramid: " << data.paramID()
-                 << " original: " << data.original());
-      return false;
-   }
 
    if( ! check_useinfo1( uinfo, data.paramID() ) ) {
       LOGINFO("REJECTED useinfo(1)=" << uinfo.flag( 1 ) << " :  stationid: " << data.stationID()  << " typeid: " << data.typeID()
