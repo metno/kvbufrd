@@ -129,6 +129,32 @@ TEST_F( BufrEncodeTest, RR_from_RRRtr_AND_RR1 )
    EXPECT_FLOAT_EQ(  0, bufr.precipRegional.RR );
 }
 
+TEST_F( BufrEncodeTest, RR_FROM_RR1_negativ_RR1 )
+{
+   using namespace miutil;
+   int wmono=1342;
+   DataElementList allData;
+   DataElementList data;
+   miTime dt;
+   StationInfoPtr stInfo;
+   BufrData bufr;
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   stInfo = findWmoNo( wmono );
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data_1342_342_20110314T09.dat", stInfo, allData, validData );
+   dt=miTime("2011-03-14 09:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( data.firstTime() == dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+   EXPECT_FLOAT_EQ( -1, bufr.precipNational.hTr );
+   EXPECT_TRUE( bufr.precipNational.RR >= 0 && bufr.precipNational.RR != FLT_MAX )
+      << "RR: " << bufr.precipNational.RR;
+}
+
+
 TEST_F( BufrEncodeTest, TGN )
 {
    using namespace miutil;
@@ -441,8 +467,8 @@ TEST_F( BufrEncodeTest, encode_nddff )
    data = allData.subData( dt );
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
-   EXPECT_FLOAT_EQ( 0.0, bufr.FF ) << "FF: Failed time: " << dt;
-   EXPECT_FLOAT_EQ( 0.0, bufr.DD ) << "DD: Failed time: " << dt;
+   EXPECT_FLOAT_EQ( 0.9, bufr.FF ) << "FF: Failed time: " << dt;
+   EXPECT_FLOAT_EQ( 348.0, bufr.DD ) << "DD: Failed time: " << dt;
 
    dt=miTime("2010-02-28 06:00:00");
    data = allData.subData( dt );
