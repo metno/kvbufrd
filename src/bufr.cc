@@ -89,15 +89,15 @@
  * - Endret kodingen av vind fra knop to m/s.
  * 
  * 2008-01-16 Bxrge
- * - Lagt til støtte for autmatisk målt VV (Vmor).
+ * - Lagt til stï¿½tte for autmatisk mï¿½lt VV (Vmor).
  * 
  * 2008-09-24 Bxrge
  * - Rettet avrundingsfeil i Gust, max vind og E'sss.
  * 2009-02-26 Bxrge
- * - #1241. Rettet feil i generereing av nedbør for en 1 time fra RR_1. 
+ * - #1241. Rettet feil i generereing av nedbï¿½r for en 1 time fra RR_1. 
  *
  * 2009-03-23 Bxrge
- * - #1241. Rettet tr for en 1 times nedbør fra RR_1. 
+ * - #1241. Rettet tr for en 1 times nedbï¿½r fra RR_1. 
  *
  * 2009-03-24 Bxrge
  * - Rettet avrundingsfeil i max vind.
@@ -118,6 +118,10 @@ namespace {
       t += 273.15;
 
       return t<0?FLT_MAX:t;
+   }
+
+   float max( const KvParam &a, float b) {
+      return (a<b) ? b : a;
    }
 }
 
@@ -938,25 +942,25 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
  * EM -> E
  * SA -> sss
  * 
- * Når en værstasjon sender 998 vil de enten også sende E'= 1. (Hvis de har
- * utelatt E' må vi dekode E' til 1 siden 998 er en såpass bevisst handling.)
+ * Nï¿½r en vï¿½rstasjon sender 998 vil de enten ogsï¿½ sende E'= 1. (Hvis de har
+ * utelatt E' mï¿½ vi dekode E' til 1 siden 998 er en sï¿½pass bevisst handling.)
  *
- * Altså, det er E' som bestemmer om SA=-1 er flekkvis snø. I koding av bufr
- * må en altså for alle typeid bruke kombinasjonen av SA og E' eller SA og SD 
- * for å kunne angi 998 i bufr.
- * SA=-1 når snødybde raporteres som "blank", utelatt (gruppe) eller "0" (Ingen
- * snø)
- * SA=-1 når snødybde raporteres som 998             (flekkvis snø)
- * SA=0  når snødybde raporteres som 997             (mindre enn 0.5 cm snø)
- * SA=-3 når snødybde raporteres som 999             (måling umulig)
- * EM=-1 når EM raporteres som "blank" eller utelatt (gruppe) 
+ * Altsï¿½, det er E' som bestemmer om SA=-1 er flekkvis snï¿½. I koding av bufr
+ * mï¿½ en altsï¿½ for alle typeid bruke kombinasjonen av SA og E' eller SA og SD 
+ * for ï¿½ kunne angi 998 i bufr.
+ * SA=-1 nï¿½r snï¿½dybde raporteres som "blank", utelatt (gruppe) eller "0" (Ingen
+ * snï¿½)
+ * SA=-1 nï¿½r snï¿½dybde raporteres som 998             (flekkvis snï¿½)
+ * SA=0  nï¿½r snï¿½dybde raporteres som 997             (mindre enn 0.5 cm snï¿½)
+ * SA=-3 nï¿½r snï¿½dybde raporteres som 999             (mï¿½ling umulig)
+ * EM=-1 nï¿½r EM raporteres som "blank" eller utelatt (gruppe) 
  * EM=0  er is-lag
- * EM= 1 - 9 er andel snødekke og type
+ * EM= 1 - 9 er andel snï¿½dekke og type
  *
  * Bufr enkoding fra Kvalobs
- * Når det skal lages bufr fra kvalobs så må det kanskje ut fra dette til en
+ * Nï¿½r det skal lages bufr fra kvalobs sï¿½ mï¿½ det kanskje ut fra dette til en
  * justering av dagens enkoder slik at koding av SA og EM blir riktig? (For 302
- * må kun SA benyttes i bufr - ikke SD.)
+ * mï¿½ kun SA benyttes i bufr - ikke SD.)
  * 
  */
 
@@ -1150,17 +1154,17 @@ Bufr::doPrecip( StationInfoPtr     info,
     	h_tr = precipFromRA( RR1, nedboerTotal, fRR24, bufrData );
     	ost << "doPrecip: EPrecipitationParam: RA    (Automatisk)" << endl
 			<< "                   RR_24: " << fRR24          << endl
-			<< "                  nedbør: " << nedboerTotal   << endl
+			<< "                  nedbï¿½r: " << nedboerTotal   << endl
 			<< "                    h_tr: " << h_tr             << endl;
   	}else if(precipitationParam==PrecipitationRR){
     	h_tr = precipFromRR( RR1, nedboerTotal, fRR24, bufrData );
     	ost << "doPrecip: EPrecipitationParam: RR    (Automatisk)" << endl
-    	    << "                nedbør: " << nedboerTotal << endl
+    	    << "                nedbï¿½r: " << nedboerTotal << endl
     	    << "                  h_tr: " << h_tr << endl;
   	}else if(precipitationParam==PrecipitationRR_N){
     	ost << "doPrecip: EPrecipitationParam: RR_N, hvor N=1,3,6,12,24" << endl;
     	h_tr = precipFromRrN( RR1, nedboerTotal, fRR24, bufrData );
-    	ost << "                 nedbør: " << nedboerTotal << endl
+    	ost << "                 nedbï¿½r: " << nedboerTotal << endl
     	    << "                   h_tr: " << h_tr << endl;
   	}else if(precipitationParam==PrecipitationRRR){
     	ost << "doPrecip: PrecipitationParam: RRR  (Manuell)" << endl;
@@ -1172,7 +1176,7 @@ Bufr::doPrecip( StationInfoPtr     info,
     	   RR1 = precipFromRA( 1, bufrData );
 
     	ost << "                   RR_24: " << fRR24          << endl
-          << "                  nedbør: " << nedboerTotal   << endl;
+          << "                  nedbï¿½r: " << nedboerTotal   << endl;
   	}else{
     	ost << "PrecipitationParam: UNKNOWN" << endl;
     	return;
@@ -1225,8 +1229,10 @@ precipFromRA( float &RR1,
    miutil::miTime t = sd.begin()->time();
    int   time = t.hour();
 
+   RR1 = FLT_MAX;
+
    if( sd[0].RR_1 != FLT_MAX )
-      RR1 = sd[0].RR_1;
+      RR1 = sd[0].RR_1 > 0 ? sd[0].RR_1 : 0;
 
    //RR1 = precipFromRA( 1, sd );
 
@@ -1345,48 +1351,52 @@ precipFromRrN( float &RR1,
    float h_tr = FLT_MAX;
    int t = sd.begin()->time().hour();
 
-   RR1 = sd[0].RR_1;
+   RR1 = FLT_MAX;
+
+   if( sd[0].RR_1 != FLT_MAX )
+      RR1 = max( sd[0].RR_1, 0 );
+
    precip = FLT_MAX;
    fRR24 = FLT_MAX;
 
    if( t==6 && sd[0].RR_24 != FLT_MAX)
-      fRR24 = sd[0].RR_24;
+      fRR24 = max( sd[0].RR_24, 0 );
 
    if((t==6 || t==18) && sd[0].RR_12 != FLT_MAX){
-      precip = sd[0].RR_12;
+      precip = max( sd[0].RR_12, 0 );
       h_tr = -12;
    }else if( ( t == 12 || t == 0 ) && sd[0].RR_6 != FLT_MAX){
-      precip = sd[0].RR_6;
+      precip = max( sd[0].RR_6, 0 );
       h_tr = -6;
    }
 
    if( precip == FLT_MAX){
       if( sd[0].RR_1 != FLT_MAX){
-         precip = sd[0].RR_1;
+         precip = max( sd[0].RR_1, 0 );
          h_tr = -1;
       }else if(sd[0].RR_2 != FLT_MAX){
-         precip = sd[0].RR_2;
+         precip = max( sd[0].RR_2, 0 );
          h_tr = -2;
       }else if( sd[0].RR_3 != FLT_MAX ){
-         precip = sd[0].RR_3;
+         precip = max( sd[0].RR_3, 0 );
          h_tr = -3;
       }else if( sd[0].RR_6 != FLT_MAX){
-         precip = sd[0].RR_6;
+         precip = max( sd[0].RR_6, 0 );
          h_tr = -6;
       }else if( sd[0].RR_9 != FLT_MAX ){
-         precip = sd[0].RR_9;
+         precip = max( sd[0].RR_9, 0 );
          h_tr = -9;
       }else  if( sd[0].RR_12 != FLT_MAX){
-         precip = sd[0].RR_12;
+         precip = max( sd[0].RR_12, 0 );
          h_tr = -12;
       }else if( sd[0].RR_15 != FLT_MAX){
-         precip = sd[0].RR_15;
+         precip = max( sd[0].RR_15, 0 );
          h_tr = -15;
       }else if( sd[0].RR_18 != FLT_MAX){
-         precip = sd[0].RR_18;
+         precip = max( sd[0].RR_18, 0 );
          h_tr = -18;
       } else if( sd[0].RR_24 != FLT_MAX){
-         precip = sd[0].RR_24;
+         precip = max( sd[0].RR_24, 0);
          h_tr = 24;
       }
    }
@@ -1555,55 +1565,55 @@ precipFromRRRtr( float &nedbor,
   	switch( static_cast<int>( sd[0].ITR ) ){
   	case 1: 
     	if(sd[0].RR_6!=FLT_MAX){
-      		nedbor=sd[0].RR_6;
+      		nedbor = max( sd[0].RR_6, 0 );
       		h_tr = -6;
      	}
     	break;
   	case 2:
     	if(sd[0].RR_12!=FLT_MAX){
-      		nedbor=sd[0].RR_12;
+      		nedbor = max( sd[0].RR_12, 0 );
       		h_tr=-12;
      	}
     	break;
   	case 3:
     	if(sd[0].RR_18!=FLT_MAX){
-      		nedbor=sd[0].RR_18;
+      		nedbor = max( sd[0].RR_18, 0 );
       		h_tr=-18;
    		}
     	break;
   	case 4:
     	if(sd[0].RR_24!=FLT_MAX){
-      		nedbor=sd[0].RR_24;
+      		nedbor = max( sd[0].RR_24, 0 );
       		h_tr=-24;
      	}
     	break;
   	case 5:
     	if(sd[0].RR_1!=FLT_MAX){
-      		nedbor=sd[0].RR_1;
+      		nedbor = max( sd[0].RR_1, 0 );
       		h_tr=-1;
      	}
     	break;
   	case 6:
     	if(sd[0].RR_2!=FLT_MAX){
-      		nedbor=sd[0].RR_2;
+      		nedbor = max( sd[0].RR_2, 0 );
       		h_tr=-2;
     	}
     	break;
   	case 7:
     	if(sd[0].RR_3!=FLT_MAX){
-      		nedbor=sd[0].RR_3;
+      		nedbor = max( sd[0].RR_3, 0 );
       		h_tr=3;
      	}
     	break;
   	case 8:
     	if(sd[0].RR_9!=FLT_MAX){
-      		nedbor=sd[0].RR_9;
+      		nedbor = max( sd[0].RR_9, 0 );
       		h_tr=-9;
     	}
     	break;
   	case 9:
     	if(sd[0].RR_15!=FLT_MAX){
-      		nedbor=sd[0].RR_15;
+      		nedbor = max( sd[0].RR_15, 0 );
       		h_tr=-15;
     	}
     	break;
@@ -1615,7 +1625,7 @@ precipFromRRRtr( float &nedbor,
     	return FLT_MAX;
 
   	//cerr << "RRRtr(+): nedbor=" << nedbor << " h_tr= " << h_tr << endl;
-  	if( static_cast<int>( round( nedbor ) ) == -1 ) //tørt
+  	if( static_cast<int>( round( nedbor ) ) == -1 ) //tï¿½rt
   	   nedbor = 0.0;
   	//cerr << "RRRtr(-): nedbor=" << nedbor << " h_tr= " << h_tr << endl;
  
@@ -1660,7 +1670,11 @@ precipFromRR(  float &RR1, float &nedbor, float &fRR24, const DataElementList &s
   	int   nTimes;
   	float sum=0;
 
-  	RR1 = sd[0].RR_1;
+  	RR1 = FLT_MAX;
+
+  	if( sd[0].RR_1 != FLT_MAX )
+  	   RR1 = max( sd[0].RR_1, 0 );
+
   	nedbor=FLT_MAX;
   	fRR24=FLT_MAX;
 
