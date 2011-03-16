@@ -651,7 +651,7 @@ doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
       }
 
       if( tblStation.wmono() == kvDbBase::INT_NULL ) {
-         LOGWARN( "Station: " << it->stationid() << " Missising wmono.")
+         LOGWARN( "Station: " << it->stationid() << " Missising wmono.");
          continue;
       }
 

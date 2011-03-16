@@ -141,11 +141,7 @@ int
 StationInfo::
 heightVisability() const
 {
-   if( heightVisability_ != INT_MAX )
-      return heightVisability_;
-
-   //Average height of male norwegians military recruits was 179.9 cm in 2006. ssb.no
-   return 1.8;
+   return heightVisability_;
 }
 
 int
@@ -163,31 +159,23 @@ int
 StationInfo::
 heightPressure() const
 {
-   if( heightPressure_ != INT_MAX )
-      return heightPressure_;
-
-   return heightAdd( 2 );
+   return heightPressure_;
 }
 
 int
 StationInfo::
 heightPrecip()const
 {
-   if( heightPrecip_ != INT_MAX )
-      return heightPrecip_;
-
-   return 2;
+   return heightPrecip_;
 }
 
 int
 StationInfo::
 heightWind()const
 {
-   if( heightWind_ != INT_MAX )
-      return heightWind_;
-
-   return 10;
+   return heightWind_;
 }
+
 void
 StationInfo::
 latitude( float lat, bool ifUnset )
