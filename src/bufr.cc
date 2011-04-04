@@ -645,6 +645,8 @@ cloudData( const DataElementList &data, BufrData &res )
    int CH = (data[0].CH==FLT_MAX?INT_MAX:static_cast<int>( data[0].CH ));
    int N=(data[0].N==FLT_MAX?INT_MAX:static_cast<int>( data[0].N ));
 
+   N = N < 0 ? INT_MAX:N;
+
    res.VV = data[0].VV;
 
    if( res.VV == FLT_MAX && data[0].Vmor != FLT_MAX )
