@@ -1,3 +1,10 @@
+kvbufrd (2.4.4-1) lucid; urgency=low 
+
+  * New release.
+ 
+ -- Kvalobs <kvalobs@met.no>  Tue, 05 Apr 2011 09:50:00 +0200
+	
+	
 kvbufrd (2.4.4~RC1-1) lucid; urgency=low 
 
   * #1313, test for NN<0.
