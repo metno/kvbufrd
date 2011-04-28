@@ -1,3 +1,10 @@
+kvbufrd (2.4.5~rc3-1) lucid; urgency=low 
+
+  * Set the user to run as in kvbufrd.cron.d.
+ 
+ -- Kvalobs <kvalobs@met.no>  Thu, 28 Apr 2011 08:15:00 +0200
+
+
 kvbufrd (2.4.5~rc2-1) lucid; urgency=low 
 
   * Some minor consistent changes in the db clean script..
