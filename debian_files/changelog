@@ -1,3 +1,9 @@
+kvbufrd (2.4.5-1) lucid; urgency=low 
+
+  * New release. No changes since last rc.
+ 
+ -- Kvalobs <kvalobs@met.no>  Fri, 29 Apr 2011 06:30:00 +0200
+
 kvbufrd (2.4.5~rc3-1) lucid; urgency=low 
 
   * Set the user to run as in kvbufrd.cron.d.
