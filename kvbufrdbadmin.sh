@@ -2,14 +2,14 @@
 
 SQL=sqlite3
 
-LOCAL_CONF_FILE=`KVCONFIG --sysconfdir`/kvalobs/bufrdbclean.sql
+LOCAL_CONF_FILE=`KVCONFIG --sysconfdir`/kvalobs/kvbufrd_dbclean.sql
 SQLDIR=`KVCONFIG --datadir`/kvbufrd
 LOGDIR=`KVCONFIG --logdir`
 DBFILE=`KVCONFIG --localstatedir`/lib/kvbufrd/kvbufr.sqlite
 SQLCLEAN=$SQLDIR/cleanbufrdb.sql
 
 if [ -f $LOCAL_CONF_FILE ]; then
-	DBFILE=$LOCAL_CONF_FILE
+	SQLCLEAN=$LOCAL_CONF_FILE
 fi
 
 DAY=`date '+%d'`
