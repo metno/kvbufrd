@@ -1,8 +1,13 @@
+kvbufrd (2.4.6~rc3-1) lucid; urgency=low 
+
+  * kvbufrconf. Use fromtime and totime properly in stationout_messages.
+  
+ -- Kvalobs <kvalobs@met.no>  Fri, 30 Sep 2011 07:30:00 +0100
+
 kvbufrd (2.4.6~rc2-1) lucid; urgency=low 
 
   * If the file /etc/kvalobs/kvbufrd_dbclean.sql exist, use it as the db clean skript.
     (Bugfix)
-  * (More to come)
   
  -- Kvalobs <kvalobs@met.no>  Mon, 22 Aug 2011 08:30:00 +0200
 

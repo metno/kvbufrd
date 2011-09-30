@@ -166,7 +166,7 @@ loadStationOutmessage( StInfoSysStationOutmessageList &stationOutmessages )
    dnmi::db::Connection *con = getDbConnection();
    kvDbGate gate( con );
 
-   gate.select( dbRes );
+   gate.select( dbRes , "WHERE fromtime<='now' AND (totime>='now' OR totime IS NULL)");
 
    if( gate.getError() != kvDbGate::NoError ) {
       LOGERROR( "DB: Failed to load StationOutmessage. '" << gate.getErrorStr() << "'.");
