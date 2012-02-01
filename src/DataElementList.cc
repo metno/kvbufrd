@@ -131,6 +131,7 @@ DataElement():
     WAWA(params, "WAWA", 49),
     HLN(params, "HLN", 56 ),
     EM(params, "EM", 7),
+    E(params, "E", 129),
     SA(params, "SA", 112 ),
     Vmor(params, "VMOR", 271 ),
     VV(params, "VV", 273),
@@ -637,9 +638,9 @@ operator<<(std::ostream& ost, const DataElement& sd)
       << "nedboer15Time       (RR_15): " << sd.RR_15    << endl
       << "nedboer18Time       (RR_18): " << sd.RR_18    << endl
       << "nedboer24Time       (RR_24): " << sd.RR_24    << endl
-      << "Nedbør periode         (Ir): " << sd.IR       << endl
+      << "Nedbï¿½r periode         (Ir): " << sd.IR       << endl
       << "Verindikator           (Ix): " << sd.IX       << endl
-      << "sjøtemperatur          (TW): " << sd.TW       << endl
+      << "sjï¿½temperatur          (TW): " << sd.TW       << endl
       << "TWN                   (TWN): " << sd.TWN      << endl
       << "TWM                   (TWM): " << sd.TWM      << endl
       << "TWX                   (TWX): " << sd.TWX      << endl
@@ -659,7 +660,7 @@ operator<<(std::ostream& ost, const DataElement& sd)
       << "verGenerelt       (_wwW1W2): " << printOut( "ww", sd.ww )
       <<                                    printOut( "W1", sd.W1 )
       <<                                    printOut( "W2", sd.W2 ) << endl
-      << "WAWA    (ww automatisk måt): " << sd.WAWA                 << endl
+      << "WAWA    (ww automatisk mï¿½t): " << sd.WAWA                 << endl
       << "skyer           (_NhClCmCh): " << printOut( "Nh", sd.NH )
       <<                                    printOut( "Cl", sd.CL )
       <<                                    printOut( "Cm", sd.CM )

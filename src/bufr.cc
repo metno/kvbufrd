@@ -972,21 +972,26 @@ doEsss( const DataElementList &data, BufrData &res  )
 {
    miutil::miTime time = data[0].time();
    res.EM = FLT_MAX;
+   res.E = FLT_MAX;
 
    if( time.hour() != 6 )
       return;
 
    int iSA = (data[0].SA == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SA) + 0.5 )));
 
-   if( data[0].EM == FLT_MAX && iSA == INT_MAX )
+   if( data[0].EM == FLT_MAX && data[0].E == FLT_MAX && iSA == INT_MAX )
       return;
 
-   if( data[0].EM != FLT_MAX && data[0].EM>= 0 && data[0].EM <= 10 )
+   if( data[0].E != FLT_MAX && data[0].E >= 0 && data[0].E < 34 ) {
+      res.E = floor( static_cast<double>( data[0].E ) + 0.5 );
+      res.EM = res.E;
+   } else if( data[0].EM != FLT_MAX && data[0].EM>= 0 && data[0].EM <= 10 ) {
       res.EM = 10 + static_cast<int>( floor( static_cast<double>( data[0].EM ) + 0.5 ));
+   }
    
    if( data[0].SA != FLT_MAX ) {
       if( iSA == -1 ) {
-         if( res.EM != FLT_MAX )
+         if( res.EM != FLT_MAX && res.EM != 33 )
             res.SA = -0.02;
       } else if( iSA == 0 )
          res.SA = -0.01;

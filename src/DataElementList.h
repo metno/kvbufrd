@@ -131,6 +131,7 @@ private:
   	KvParam WAWA;
   	KvParam  HLN;
   	KvParam  EM;    //Snow state to the gound (Markas tilstand).
+  	KvParam  E;   //BUFR parameter E or E' (0 20 062).
   	KvParam SA;    //Snow depth.
   	KvParam Vmor;  //Automatic measured horizontal visibility
   	KvParam VV;    //Human estimated horizontal visibility
@@ -139,8 +140,8 @@ private:
   	KvParam CL;     //NhClCmCh
   	KvParam CM;     //NhClCmCh
   	KvParam CH;     //NhClCmCh
-  	KvParam IR;   //Nedbørindikator.
-  	KvParam IX;   //Værindikator
+  	KvParam IR;   //Nedbï¿½rindikator.
+  	KvParam IX;   //Vï¿½rindikator
   	KvParam N;    //Skydekke
   	KvParam ww;    //ww,  wwW1W2
   	KvParam W1;    //W1,  wwW1W2
