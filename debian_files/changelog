@@ -1,3 +1,9 @@
+kvbufrd (2.4.7~rc2-1) lucid; urgency=low
+
+  * Check the ipalias/test status before the cleanup job is run.
+
+ -- Kvalobs <kvalobs@met.no>  Mon, 20 Feb 2012 16:45:00 +0100
+
 kvbufrd (2.4.7~rc1-1) lucid; urgency=low
 
   * Add support for parameter id 129 (E). Use code table for parameter 
