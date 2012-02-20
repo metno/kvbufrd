@@ -50,7 +50,8 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   kvbufrdImpl.h obsevent.h \
                   LoadBufrData.h LoadBufrData.cc \
                   encodebufr.h encodebufr.cc \
-                  base64.cc base64.h
+                  base64.cc base64.h \
+                  BUFRparam.h BUFRparam.cc
 
 kvbufrd_CPPFLAGS = $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" 
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
@@ -147,7 +148,8 @@ kvBufrEncodeTest_SOURCES = test/kvBufrEncodeTest.cc \
 		                    bufrencodehelper.h \
 		                    encodebufr.cc encodebufr.h \
 		                    KvParam.cc KvParam.h \
-		                    LoadBufrData.h LoadBufrData.cc
+		                    LoadBufrData.h LoadBufrData.cc \
+		                    BUFRparam.h BUFRparam.cc
 
 
 

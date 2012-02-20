@@ -46,6 +46,7 @@
 #include "ReadDataFile.h"
 #include <gtest/gtest.h>
 #include <encodebufr.h>
+#include "BUFRparam.h"
 
 using namespace std;
 
@@ -625,6 +626,13 @@ TEST_F( BufrEncodeTest, CloudsAndVV )
    */
 
 
+}
+
+TEST_F( BufrEncodeTest, BufrValidaterTest )
+{
+   string filename("share/bufrtables/B0000000000098014001.TXT");
+   BufrValidater validater;
+   validater.loadTable( filename );
 }
 
 int
