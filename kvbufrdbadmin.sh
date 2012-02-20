@@ -8,6 +8,17 @@ SQLDIR=`KVCONFIG --datadir`/kvbufrd
 LOGDIR=`KVCONFIG --logdir`
 DBFILE=`KVCONFIG --localstatedir`/lib/kvbufrd/kvbufr.sqlite
 SQLCLEAN=$SQLDIR/cleanbufrdb.sql
+LIBDIR=$(kvconfig --pkglibdir)
+
+if [ ! -f "$LIBDIR/tool_funcs.sh" ]; then
+	echo "Cant load: $LIBDIR/tool_funcs.sh"
+	exit 1
+fi
+
+. $LIBDIR/tool_funcs.sh
+
+#Exit if the machines do NOT hold the ipalias or is an test machine.
+ipalias_status > /dev/null || exit 0 
 
 if [ -f $LOCAL_CONF_FILE ]; then
 	SQLCLEAN=$LOCAL_CONF_FILE
@@ -16,25 +27,6 @@ fi
 DAY=`date '+%d'`
 LOG=$LOGDIR/kvbufr/kvbufrdbadmin-$DAY.log
 
-die()
-{
-   tstamp=`date`
-   echo "$tstamp - Do NOT clean db on this machine." > $LOG
-   exit 0
-}
-
-has_alias()
-{
-	aliasname=$1
-	if [ -f /usr/local/sbin/alias_list ]; then
-		/usr/local/sbin/alias_list | /bin/grep -q $aliasname
-		return $?
-	fi
-	return 1
-}
-
-#(test -f "$ETCDIR/KVALOBS_TEST") || ( /usr/local/sbin/alias_list | /bin/grep -q kvalobs ) || die
-(test -f "$ETCDIR/KVALOBS_TEST") || has_alias kvalobs || die
 
 
 echo -n "Start: " > $LOG
