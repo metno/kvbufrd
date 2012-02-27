@@ -1,11 +1,11 @@
 -- 
--- This sql script cleans up the sqlite database that kvsynopd use as
+-- This sql script cleans up the sqlite database that kvbufrd use as
 -- a data cache and backing store. 
 -- 
--- There is four tables in the database: data, synop, waiting and keyval.
--- It is only the data and synop tables that need routine cleen up. 
+-- There is four tables in the database: data, kvbufr, waiting and keyval.
+-- It is only the data and kvbufr tables that need routine clean up. 
 --
--- We only need one week of data and one month of synop. 
+-- We only need one week of data and one month of kvbufr. 
 --
 -- This clean up script is run once a day by cron.
 -- It is run at night in a low activity period, kl 3:30

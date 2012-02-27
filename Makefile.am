@@ -4,7 +4,7 @@ sqldir = $(datadir)/kvbufrd
 sql_DATA = cleanbufrdb.sql 
 bin_SCRIPTS = kvbufrdbadmin check_kvbufrd.sh
 
-SED_SUBST = sed s,KVCONFIG,$(bindir)/kvconfig,g $< > $@ 
+SED_SUBST = sed s,__KVCONFIG__,$(bindir)/kvconfig,g $< > $@ 
 
 kvbufrdbadmin: kvbufrdbadmin.sh 
 	$(SED_SUBST)
