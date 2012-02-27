@@ -1,3 +1,9 @@
+kvbufrd (2.4.7~rc3-2) lucid; urgency=low
+
+  * Fix bogus postins og postrm script.    
+
+ -- Kvalobs <kvalobs@met.no>  Mon, 27 Feb 2012 15:30:00 +0100
+
 kvbufrd (2.4.7~rc3-1) lucid; urgency=low
 
   * Allways clean the cache database. This is safe because

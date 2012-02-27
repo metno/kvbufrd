@@ -33,15 +33,13 @@ BIN="check_kvbufrd.sh kvbufrclt kvbufrd kvbufrdbadmin kvbufrdbclt
 KVBINDIR=""
 KVBIN=""
 
-ETC_FILES=" "
+ETC_FILES=""
 
 DIRS="/usr/share/kvbufrd 
       /var/lib/kvbufrd
       /var/log/kvalobs/kvbufr/debug
       /var/log/kvalobs/kvbufr
-      /var/lib/kvalobs/run
-      /var/lib/kvalobs/service
-      /var/lib/kvalobs/service/subscribers"     
+      /var/run/kvalobs"     
 
 SQLLITE_DB="/var/lib/kvbufrd/kvbufr.sqlite"
 
@@ -49,8 +47,8 @@ case "$1" in
   configure)
     #Create the kvalobs admin account.
     if ! getent passwd $KV_USER > /dev/null 2>&1 ; then
-	echo $$ adduser --gecos 0 --disabled-password $KV_USER --home $KV_HOME >> /dev/null
-	adduser --gecos 0 --disabled-password --home $KV_HOME $KV_USER
+	   echo $$ adduser --gecos 0 --disabled-password $KV_USER --home $KV_HOME >> /dev/null
+	   adduser --gecos 0 --disabled-password --home $KV_HOME $KV_USER
     fi
     
     #Fix owner, group and permission. 
@@ -59,7 +57,7 @@ case "$1" in
       if ! dpkg-statoverride --list $BINDIR/$i >/dev/null 2>&1
       then
          dpkg-statoverride --update --add root $KV_USER 774 $BINDIR/$i
-      fi
+      fi  
     done
 
     for i in $KVBIN; do
@@ -105,17 +103,9 @@ case "$1" in
       # only do something when no setting exists
       if ! dpkg-statoverride --list $i >/dev/null 2>&1
       then
-	  dpkg-statoverride --update --add root $KV_USER 664 $i
+    	  dpkg-statoverride --update --add root $KV_USER 664 $i
       fi 
     done
-
-#    update-rc.d kvalobs defaults    
-    
-#    if which invoke-rc.d >/dev/null 2>&1; then
-#         invoke-rc.d kvalobs start ignore-postgres
-#    else
-#	 /etc/init.d/kvalobs start ignore-postgres
-#    fi
     ;;
 
   abort-upgrade|abort-remove|abort-deconfigure)

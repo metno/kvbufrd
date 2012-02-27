@@ -41,7 +41,7 @@ if [ ! -f "$SQLCLEAN" ]; then
 fi 
 
 if ! which $SQL > /dev/null 2>&1; then
-    echo "Cant find the program <$SQL>."
+    echo "Cant find the program <$SQL>." >> $LOG
     exit 1
 fi
 

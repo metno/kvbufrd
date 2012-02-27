@@ -29,15 +29,12 @@ BIN="check_kvbufrd.sh kvbufrclt kvbufrd kvbufrdbadmin kvbufrdbclt
 KVBINDIR=""
 KVBIN=""
 
-ETC_FILES=" "
+ETC_FILES=""
 
 DIRS="/usr/share/kvbufrd 
       /var/lib/kvbufrd
       /var/log/kvalobs/kvbufr/debug
-      /var/log/kvalobs/kvbufr
-      /var/lib/kvalobs/run
-      /var/lib/kvalobs/service
-      /var/lib/kvalobs/service/subscribers"     
+      /var/log/kvalobs/kvbufr"     
 
 SQLLITE_DB="/var/lib/kvbufrd/kvbufrd.sqlite"
 
@@ -48,10 +45,6 @@ case "$1" in
   purge)
     for i in $BIN; do
         dpkg-statoverride --remove $BINDIR/$i
-     done
-
-    for i in $KVBIN; do
-        dpkg-statoverride --remove $KVBINDIR/$i
      done
 
      for i in $DIRS; do
