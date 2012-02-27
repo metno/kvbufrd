@@ -3,7 +3,7 @@
 KVCONFIG=__KVCONFIG__
 SQL=sqlite3
 
-LOCAL_CONF_FILE=`KVCONFIG --sysconfdir`/kvalobs/kvbufrd_dbclean.sql
+LOCAL_CONF_FILE=`$KVCONFIG --sysconfdir`/kvalobs/kvbufrd_dbclean.sql
 ETCDIR==`$KVCONFIG --sysconfdir`/kvalobs
 SQLDIR=`$KVCONFIG --datadir`/kvbufrd
 LOGDIR=`$KVCONFIG --logdir`
