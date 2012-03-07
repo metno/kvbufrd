@@ -1,3 +1,14 @@
+kvbufrd (2.4.7~rc4-2) lucid; urgency=low
+
+  * Write the bufr files to a temp directory and
+    move it (atomic) into the destination directory.
+    This prevent the script that transfer the BUFR
+    messages to NORCOM to transfer partially written
+    files.    
+
+ -- Kvalobs <kvalobs@met.no>  Wed, 7 Mar 2012 10:15:00 +0100
+
+
 kvbufrd (2.4.7~rc3-2) lucid; urgency=low
 
   * Fix bogus postins og postrm script.    
