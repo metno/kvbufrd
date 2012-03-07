@@ -73,8 +73,8 @@ uniqueName( const std::string &prefix, const char *endsWith )
 
    ostringstream o;
 
-   o << prefix << pt.date().year()
-     << setfill('0') << setw(2) << pt.date().month()
+   o << prefix << "-" << pt.date().year()
+     << setfill('0') << setw(2) << pt.date().month().as_number()
      << setfill('0') << setw(2) << pt.date().day()
      << setfill('0') << setw(2) << pt.time_of_day().hours()
      << setfill('0') << setw(2) << pt.time_of_day().minutes()
