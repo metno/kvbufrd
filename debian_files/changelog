@@ -1,3 +1,10 @@
+kvbufrd (2.4.7~rc5-1) lucid; urgency=low
+
+  * Fix missing return.    
+
+ -- Kvalobs <kvalobs@met.no>  Wed, 7 Mar 2012 13:30:00 +0100
+
+
 kvbufrd (2.4.7~rc4-2) lucid; urgency=low
 
   * Write the bufr files to a temp directory and
