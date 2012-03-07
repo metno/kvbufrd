@@ -260,6 +260,7 @@ filePrefix()const
     if( ccx > 0 )
        ost << "-ccx" << setfill('0') << setw(2) << ccx;
 
+    return ost.str();
 }
 
 
@@ -270,7 +271,7 @@ saveToFile( const std::string &path, bool overwrite )const
    fs::ofstream      f;
    string error;
    string tmppath( path +"/tmp" );
-   string filename(SemiUniqueName::uniqueName( filePrefix(), ".bufr" ));
+   string filename( SemiUniqueName::uniqueName( filePrefix(), ".bufr" ) );
    string tmpfile(tmppath + "/" + filename);
    string dstfile(path + "/" + filename);
 
