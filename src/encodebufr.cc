@@ -38,8 +38,13 @@
 #include <stdlib.h>
 #include <sstream>
 #include <fstream>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include "bufrencodehelper.h"
 #include "base64.h"
+#include "SemiUniqueName.h"
+
+namespace fs = boost::filesystem;
 
 using namespace std;
 
@@ -51,6 +56,13 @@ set_sec0134( const StationInfoPtr station, const DataElement &data, int ccx,
 void set_values( const StationInfoPtr station,
                  const BufrData &data,
                  Values &values, char cvals[][80], int kdata[]);
+
+bool
+isDirWithWritePermission( const std::string &path,
+                          std::string &error );
+std::string
+myStrerror(int errnum );
+
 }
 
 
@@ -222,99 +234,93 @@ wmoHeader()const
 }
 
 
+std::string
+BufrEncoder::
+filePrefix()const
+{
+   ostringstream ost;
+
+   if( station->wmono() > 0 ){
+       ost << "wmono_" << station->wmono();
+    } else {
+       ost << "sid_";
+       StationInfo::TLongList ids=station->stationID();
+       for( StationInfo::TLongList::const_iterator it= ids.begin();
+            it != ids.end(); ++it ) {
+          if( it != ids.begin() )
+                ost << "_";
+          ost << *it;
+       }
+    }
+
+    ost << "-"
+        << setfill('0') << setw(2) << obstime.day()
+        << setfill('0') << setw(2) << obstime.hour();
+
+    if( ccx > 0 )
+       ost << "-ccx" << setfill('0') << setw(2) << ccx;
+
+}
+
 
 void
 BufrEncoder::
 saveToFile( const std::string &path, bool overwrite )const
 {
-   ostringstream ost;
-   ofstream      f;
-   struct stat   sbuf;
-   string header;
-   string tmpOwner=station->owner();
-   char tmp[16];
-   char dateTime[16];
-   int  ccx_=ccx;
+   fs::ofstream      f;
+   string error;
+   string tmppath( path +"/tmp" );
+   string filename(SemiUniqueName::uniqueName( filePrefix(), ".bufr" ));
+   string tmpfile(tmppath + "/" + filename);
+   string dstfile(path + "/" + filename);
+
 
    if( ! kbuff ) {
        ostringstream o;
        o << "Missing bufr encoding for station '" << station->wmono() << "' obstime: " << obstime;
        throw BufrEncodeException( o.str() );
-    }
+   }
 
-   header = wmoHeader();
-
-   if(stat( path.c_str(), &sbuf)<0){
+   if( ! isDirWithWritePermission( path, error ) ) {
       ostringstream o;
-      o << "Save to: '" << path << "'. ";
-      if(errno==ENOENT || errno==ENOTDIR){
-         o << "Invalid path!";
-      }else if(errno==EACCES){
-         o << "Permission denied!";
-      }else{
-         o << "stat unknown error!";
-      }
+      o << "Save to path: '" << path << "'. "
+        << "Path not a directory or permission denied."
+        << "("<< error << ")";
 
       throw BufrEncodeException( o.str() );
    }
 
-   if(!S_ISDIR(sbuf.st_mode)){
-      ostringstream o;
-      o << "Saveto: <" << path << "> not a directory!";
-      throw BufrEncodeException( o.str() );
+   if( ! isDirWithWritePermission( tmppath, error ) )
+      tmpfile.erase();
+
+   if( ! tmpfile.empty() )
+      f.open( tmpfile, ios_base::trunc | ios_base::binary | ios_base::out );
+   else
+      f.open( dstfile, ios_base::trunc | ios_base::binary | ios_base::out );
+
+   if( ! f.is_open() ){
+      ostringstream ost;
+      ost << "Failed to write BUFR file for station '" << station->wmono() << "' obstime: " << obstime
+          << ". File <" << dstfile << ">.";
+      LOGDEBUG( ost.str() << " Overwrite: "<< (overwrite?"true":"false") );
+      throw BufrEncodeException( ost.str() );
    }
 
-   for( int i = 0; i<100; ++i ) {
-      ost.str("");
-      ost << path << "/" << station->wmono() << "-"
-                    << setfill('0') << setw(2) << obstime.day() << setw(2)
-                    << obstime.hour();
+   writeToStream( f );
+   f.close();
 
-      if( ccx_ > 0 )
-         ost << "-ccx" << setfill('0') << setw(2) << ccx_;
-
-      if( i !=0 )
-         ost << "-" << setfill('0') << setw(2) << i;
-
-      ost << ".bufr";
-
-      if( stat( ost.str().c_str(), &sbuf) < 0 ) {
-         if( !(errno == ENOENT || errno == ENOTDIR) ) {
-            ostringstream o;
-            o << "Unexpected error from stat: errno: " << errno ;
-            throw BufrEncodeException( o.str() );
-         }
-      } else if( ! overwrite ) {
-         //If the file is
-         miutil::miTime today(miutil::miTime::nowTime() );
-         miutil::miTime t( sbuf.st_mtime );
-
-         if( t.date() >= today.date() ) {
-            LOGDEBUG( "A bufr <"  << ost.str() << "> exist and is produced today and overwrite is false.");
-            continue;
-         }
-      }
-
-      f.open( ost.str().c_str(), ios_base::trunc | ios_base::binary | ios_base::out );
-
-      if( f.is_open() ){
-
-         writeToStream( f );
-         f.close();
-         return;
-      } else {
-         string filename=ost.str();
-         ost.str("");
-         ost << "Failed to write BUFR file for station '" << station->wmono() << "' obstime: " << obstime
-             << ". File <" << filename << ">.";
-         LOGDEBUG( ost.str() << " Overwrite: "<< (overwrite?"true":"false") );
+   if( ! tmpfile.empty() ) {
+      if( rename( tmpfile.c_str(), dstfile.c_str() ) == -1 ) {
+         ostringstream ost;
+         ost << "Failed to move: " << tmpfile << " -> " << dstfile
+               << ". Reason: " << myStrerror( errno );
          throw BufrEncodeException( ost.str() );
+      } else {
+         LOGDEBUG( "saveToFile: moved: " << tmpfile << " -> " << dstfile );
       }
+   } else {
+      LOGDEBUG( "saveToFile: write: " << dstfile );
    }
-
-   ost.str("");
-   ost << "Failed to write BUFR file for station '" << station->wmono() << "' obstime: " << obstime;
-   throw BufrEncodeException( ost.str() );
 }
 
 bool
@@ -660,6 +666,47 @@ void set_values(const StationInfoPtr station,
    strncpy(cvals[0], station->name().c_str(), min( static_cast<int>(station->name().length()), 20 ) );
 }
 
+bool
+isDirWithWritePermission( const std::string &path_, std::string &error )
+{
+   try {
+      fs::path path( path_ );
+
+      if( fs::exists( path ) &&
+          fs::is_directory( path ) &&
+          access( path_.c_str(), W_OK | X_OK ) > -1 )
+         return true;
+      else
+         error = myStrerror( errno );
+   }
+   catch( const fs::filesystem_error &ex ) {
+      error=ex.what();
+   }
+
+   return false;
+
+
+}
+std::string
+myStrerror(int errnum )
+{
+   char buf[1024];
+   char *p=0;
+   std::ostringstream ost;
+
+#ifdef _GNU_SOURCE
+   p = strerror_r( errnum, buf, 1024 );
+#else
+   if( strerror_r( errnum, buf, 1024) == 0 )
+      p = buf;
+#endif
+
+   if( p )
+      ost << p;
+   else
+      ost << "errno: " << errnum;
+   return ost.str();
+}
 
 
 }

@@ -51,12 +51,14 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   LoadBufrData.h LoadBufrData.cc \
                   encodebufr.h encodebufr.cc \
                   base64.cc base64.h \
-                  BUFRparam.h BUFRparam.cc
+                  BUFRparam.h BUFRparam.cc \
+                  SemiUniqueName.cc SemiUniqueName.h
 
 kvbufrd_CPPFLAGS = $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" 
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
 kvbufrd_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
+                $(BOOST_FILESYSTEM_LIB) \
                 -L$(HOME)/lib -lbufr -lgfortran \
                  -lm         
 EXTRA_DIST = kvbufrd_schema.sql 
@@ -71,6 +73,7 @@ kvbufrclt_SOURCES = kvbufrclt.cc \
 kvbufrclt_CPPFLAGS = $(AM_CPPFLAGS)
 kvbufrclt_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 kvbufrclt_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
+				  $(BOOST_FILESYSTEM_LIB) \
                    -lm  
                    
 kvbufrdbclt_SOURCES = kvbufrdbclt.cc \
@@ -149,7 +152,8 @@ kvBufrEncodeTest_SOURCES = test/kvBufrEncodeTest.cc \
 		                    encodebufr.cc encodebufr.h \
 		                    KvParam.cc KvParam.h \
 		                    LoadBufrData.h LoadBufrData.cc \
-		                    BUFRparam.h BUFRparam.cc
+		                    BUFRparam.h BUFRparam.cc \
+		                    SemiUniqueName.cc SemiUniqueName.h
 
 
 
@@ -157,11 +161,12 @@ kvBufrEncodeTest_SOURCES = test/kvBufrEncodeTest.cc \
 kvBufrEncodeTest_CPPFLAGS = $(AM_CPPFLAGS) \
 	                        $(gtest_CFLAGS) \
                             -DTESTDATADIR="\""$(top_srcdir)/src/test"\""
-
+kvBufrEncodeTest_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 kvBufrEncodeTest_LDADD =   \
 						  $(kvcpp_LIBS) \
 						  -L$(HOME)/lib \
 						  $(gtest_LIBS) \
+						  $(BOOST_FILESYSTEM_LIB) \
 						  -lbufr -lgfortran \
 						  -lm
 						

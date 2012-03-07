@@ -78,6 +78,8 @@ public:
 
    std::string wmoHeader()const;
 
+   std::string filePrefix()const;
+
    bool writeToStream( std::ostream &out )const;
    /**
     * @see saveToFile( const std::string &path, bool overwrite=false )const
