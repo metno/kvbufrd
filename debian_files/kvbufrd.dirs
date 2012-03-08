@@ -2,6 +2,8 @@ etc/kvalobs
 usr/bin
 usr/share/kvbufrd
 var/lib/kvbufrd
+var/lib/kvbufrd/bufr2norcom
+var/lib/kvbufrd/bufr2norcom/tmp
 var/log/kvalobs
 var/log/kvalobs/kvbufr
 var/log/kvalobs/kvbufr/debug
