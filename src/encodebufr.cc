@@ -257,8 +257,14 @@ filePrefix()const
         << setfill('0') << setw(2) << obstime.day()
         << setfill('0') << setw(2) << obstime.hour();
 
-    if( ccx > 0 )
-       ost << "-ccx" << setfill('0') << setw(2) << ccx;
+
+    if( ccx > 0 ){
+       char cc = static_cast<char>('A'+(ccx-1));
+       if( ccx > 26 )
+          cc = 'x';
+
+       ost << "-CC" << cc;
+    }
 
     return ost.str();
 }
