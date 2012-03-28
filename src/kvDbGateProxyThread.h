@@ -357,8 +357,10 @@ public:
 
    KvDbGateProxyThread( boost::shared_ptr<ConnectionFactory> conFactory );
    KvDbGateProxyThread( const KvDbGateProxyThread &cp )
-      : dbQue( cp.dbQue ), joinable_( cp.joinable_ ),
-        thread( cp.thread ), connectionFactory( cp.connectionFactory )
+      : joinable_( cp.joinable_ ),
+        thread( cp.thread ),
+        connectionFactory( cp.connectionFactory ),
+        dbQue( cp.dbQue )
    {}
 
    void operator()();

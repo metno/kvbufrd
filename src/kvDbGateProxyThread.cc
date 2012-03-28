@@ -424,8 +424,8 @@ executeImpl()
 
 KvDbGateProxyThread::
 KvDbGateProxyThread( boost::shared_ptr< ConnectionFactory> conFactory )
-   : dbQue( boost::shared_ptr<dnmi::thread::CommandQue>( new dnmi::thread::CommandQue() ) ),
-     joinable_( new bool(false) ), connectionFactory( conFactory )
+   : joinable_( new bool(false) ), connectionFactory( conFactory ),
+     dbQue( boost::shared_ptr<dnmi::thread::CommandQue>( new dnmi::thread::CommandQue() ) )
 {
 }
 
