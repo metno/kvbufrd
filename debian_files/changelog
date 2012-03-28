@@ -1,3 +1,10 @@
+kvbufrd (2.4.7~rc7-1) lucid; urgency=low
+  
+  * Change dependency from libkvcpp to libkvcpp2.
+
+ -- Kvalobs <kvalobs@met.no>  Wed, 28 Mar 2012 10:30:00 +0200
+
+
 kvbufrd (2.4.7~rc6-1) lucid; urgency=low
 
   * Changed the format of the unique filenames.
