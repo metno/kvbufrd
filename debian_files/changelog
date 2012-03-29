@@ -1,3 +1,11 @@
+kvbufrd (2.4.7-1) lucid; urgency=low
+  
+  * New release 2.4.7.
+  * Now chane since 2.4.7~rc7-1.
+
+ -- Kvalobs <kvalobs@met.no>  Thu, 29 Mar 2012 14:45:00 +0200
+
+
 kvbufrd (2.4.7~rc7-1) lucid; urgency=low
   
   * Change dependency from libkvcpp to libkvcpp2.
