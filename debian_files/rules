@@ -45,7 +45,11 @@ ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 endif
 	
 	# Add here commands to configure the package.
-	./configure --prefix=/usr  --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info  --localstatedir=/var --sysconfdir=/etc CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)"
+	(if test "$(KVBUILDDIR)x" = "x"; then \
+	   ./configure --prefix=/usr  --with-kvalobs=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info  --localstatedir=/var --sysconfdir=/etc CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" ; \
+	else \
+	   ./configure --prefix=/usr  --with-kvalobs=\$${KVBUILDDIR} --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info  --localstatedir=/var --sysconfdir=/etc CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" CPPFLAGS=-D__WITH_PUTOOLS__ --with-kvalobs-libversion=2; \
+	fi)
 
 #Architecture 
 build: build-arch build-indep

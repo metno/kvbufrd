@@ -44,6 +44,15 @@ case "$1" in
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;
 
+
+  upgrade)
+    #Remove an old misspelled kvbufr.sqlite
+    if [ -f /var/lib/kvbufrd/kvbufr.sqlite ]; then
+        dpkg-statoverride --remove /var/lib/kvbufrd/kvbufr.sqlite
+        rm -f /var/lib/kvbufrd/kvbufr.sqlite
+    fi
+    ;;
+  
   purge)
     for i in $BIN; do
         dpkg-statoverride --remove $BINDIR/$i
@@ -62,9 +71,7 @@ case "$1" in
      for i in $ETC_FILES; do
 	 	dpkg-statoverride --remove /etc/kvalobs/$i
      done
-     
-     dpkg-statoverride --remove $SQLLITE_DB
-     
+               
      #Delete my debconf entries in the database.
      db_purge || true
      ;;

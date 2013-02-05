@@ -1,3 +1,187 @@
+kvbufrd (2.5.4-1) lucid; urgency=low
+  * New relaase.
+  * No changes since last rc.
+  
+ -- Kvalobs <kvalobs@met.no>  Mon, 04 Feb 2013 12:00:00 +0100
+
+kvbufrd (2.5.4~rc2-1) lucid; urgency=low
+  * New rc.
+  * Fix wave values in 302021, visual observed.
+  
+ -- Kvalobs <kvalobs@met.no>  Mon, 28 Jan 2013 13:45:00 +0100
+
+
+kvbufrd (2.5.4~rc1-1) lucid; urgency=low
+  * New rc.
+  * Add encoding of max wind to BUFR SHIP.
+  * kvbufrconf (stinfosys): Add special treatment of wind parameters for platforms.
+  * Add new config parameter "height_wind_above_sea".
+  * Do not create BUFR SHIP if location (latitude/longitude) is missing. 
+
+ -- Kvalobs <kvalobs@met.no>  Wed, 23 Jan 2013 12:15:00 +0100
+
+
+kvbufrd (2.5.3-1) lucid; urgency=low
+  * New release.
+  * No changes since last rc. 
+
+ -- Kvalobs <kvalobs@met.no>  Mon, 14 Jan 2013 10:15:00 +0100
+
+kvbufrd (2.5.3~rc1-1) lucid; urgency=low 
+  * Set local data sub category for SVV stations to 20.
+  * Set local data sub category for PRECIP stations to 10. 
+  * Make the codebase compatible with kvalobs without putools.
+
+ -- Kvalobs <kvalobs@met.no>  Thu, 10 Jan 2013 12:40:00 +0100
+
+kvbufrd (2.5.2) lucid; urgency=low 
+  * New release.
+  * No changes since last rc.
+
+ -- Kvalobs <kvalobs@met.no>  Wed, 9 Jan 2013 10:15:00 +0100
+
+kvbufrd (2.5.2~rc1-1) lucid; urgency=low 
+  * New rc.
+  * Fix, Bug #1355, changed limits values for no precipitation.
+
+ -- Kvalobs <kvalobs@met.no>  Thu, 13 Des 2012 14:45:00 +0100
+  
+
+kvbufrd (2.5.1-1) lucid; urgency=low 
+  * New release.
+  * Fix several bugs kvbufrconf. 
+  	  
+ -- Kvalobs <kvalobs@met.no>  Wed, 12 Dec 2012 14:00:00 +0100
+
+kvbufrd (2.5.0-1) lucid; urgency=low 
+  * New release, no change since last RC.
+  	  
+ -- Kvalobs <kvalobs@met.no>  Tue, 11 Dec 2012 10:00:00 +0100
+
+kvbufrd (2.5.0~rc18-1) lucid; urgency=low 
+  * Only report height of tempeture sensor if it is defined in stinfosys.
+  	  
+ -- Kvalobs <kvalobs@met.no>  Fri, 7 Dec 2012 23:45:00 +0100
+
+kvbufrd (2.5.0~rc17-1) lucid; urgency=low 
+  * Take into account SD when encoding snow depth in the "PRECIP" template.
+  * Fix bug in couting of data parameters in the encoding of BUFR.
+  	  
+ -- Kvalobs <kvalobs@met.no>  Fri, 7 Dec 2012 20:43:00 +0100
+
+kvbufrd (2.5.0~rc16-1) lucid; urgency=low 
+  * Fix wrong encoding of "time significance" in descriptor 302042
+    and 302059.  
+  * Do NOT report sunshine data.
+	  
+ -- Kvalobs <kvalobs@met.no>  Mon, 3 Dec 2012 15:45:00 +0100
+
+kvbufrd (2.5.0~rc15-1) lucid; urgency=low 
+  * Back to old treatment of metadata, ie include it
+    even if the there is now value for the data entry.
+	  
+ -- Kvalobs <kvalobs@met.no>  Fri, 30 Nov 2012 15:45:00 +0100
+
+kvbufrd (2.5.0~rc14-1) lucid; urgency=low 
+  * Fix bug in IX, use ix as reported to set initial value.
+  * Fix bug in gust when it is reported in FG.
+  * kvbufrconf for ship. HACK, set owner to "KYST" when the 
+    name of the ship start with "KV ".
+  
+ -- Kvalobs <kvalobs@met.no>  Mon, 26 Nov 2012 08:45:00 +0100
+
+
+kvbufrd (2.5.0~rc13-1) lucid; urgency=low  
+  * PRECIP: Report measurement as "manual observation", value 0.
+  * Fix (again) the encoding of QUALITY OF OBSERVATION flag. 
+  * Fix GTS header and datasubcategory for SHIP. 
+  * Remove more metadata when data value it is for is missing.
+  
+ -- Kvalobs <kvalobs@met.no>  Thu, 15 Nov 2012 09:00:00 +0100
+
+
+kvbufrd (2.5.0~rc12-1) lucid; urgency=low
+  * PRECIP: Report measurement as "manual observation", value 0.
+  * PRECIP: Try again to fix encoding of precipitation.
+  * Try to not send out empty BUFR messages with only metadata.
+  * Fix the encoding of QUALITY OF OBSERVATION flag. 
+  * Fix CCn for SHIP. 
+  
+ -- Kvalobs <kvalobs@met.no>  Wed, 14 Nov 2012 14:15:00 +0100
+
+kvbufrd (2.5.0~rc11-1) lucid; urgency=low
+  * PRECIP: Do not report height of temperature sensor when no temperature data.
+  * PRECIP: Report measurement as "manual observation".
+  * PRECIP: Fix encoding of precipitation.
+  * SHIP: Add automatic generation of SHIP config from stinfosys. 
+  
+ -- Kvalobs <kvalobs@met.no>  Tue, 13 Nov 2012 15:45:00 +0100
+
+kvbufrd (2.5.0~rc10-1) lucid; urgency=low
+  * New template 308009 (SHIP) added.
+  
+ -- Kvalobs <kvalobs@met.no>  Tue, 13 Nov 2012 13:15:00 +0100
+
+kvbufrd (2.5.0~rc9-1) lucid; urgency=low
+  * Fix problems when all data for a obtime was rejected. Do not generate BUFR for this cases. 
+  * Transform Å->AA, Ø->OE and Å->AE in BUFR text elements. Other unrecognized characters is removed.
+  
+ -- Kvalobs <kvalobs@met.no>  Fri, 09 Nov 2012 15:45:00 +0200
+
+
+kvbufrd (2.5.0~rc8-1) lucid; urgency=low
+  * Make the name a kvbufrd instance is known as in the 
+    CORBA nameserver configurable. 
+  
+ -- Kvalobs <kvalobs@met.no>  Fri, 26 Oct 2012 07:45:00 +0200
+
+
+kvbufrd (2.5.0~rc7-1) lucid; urgency=low
+  * Add posiblity to run multiple instances of kvbufrd with 
+    different config files. 
+  
+ -- Kvalobs <kvalobs@met.no>  Thu, 25 Oct 2012 15:15:00 +0200
+
+kvbufrd (2.5.0~rc5-1) lucid; urgency=low
+  * Better rounding in BufrParamValidater.
+  * A bunch of small bugfix.
+  * Better logging.
+  
+ -- Kvalobs <kvalobs@met.no>  Mon, 23 Oct 2012 18:00:00 +0200
+
+
+kvbufrd (2.5.0~rc4-1) lucid; urgency=low
+  * Try to fix rounding error in BufrParamValidater.
+
+ -- Kvalobs <kvalobs@met.no>  Mon, 22 Oct 2012 16:45:00 +0200
+
+
+kvbufrd (2.5.0~rc3-1) lucid; urgency=low
+  * Fix wrng coding of cloud types in 3 02 004.
+  * Added add the BUFR encoder for precipitations 
+    stations to the list of known encoders.
+  * Set "international subcategory" in BUFR section 2.
+  * Rewrite the valid checks for int and double values, min/max check.
+  * Encode the BUFR encoder used to encode a BUFR message
+    in the filename.
+
+ -- Kvalobs <kvalobs@met.no>  Mon, 22 Oct 2012 14:15:00 +0200
+
+kvbufrd (2.5.0~rc2-1) lucid; urgency=low
+  * Lots of bugfix in automatic trigging og BUFR generation.
+  * Added preliminary support for generation of configuration files
+    for precipitation and SVV stations.
+
+ -- Kvalobs <kvalobs@met.no>  Mon, 03 Sep 2012 08:00:00 +0200
+
+kvbufrd (2.5.0~rc1-1) lucid; urgency=low
+  
+  * New BUFR encoder.
+  * Suport for veivesnet.
+  * Suport for precipitation only BUFR templates.
+
+ -- Kvalobs <kvalobs@met.no>  Thu, 21 Jun 2012 13:30:00 +0200
+
 kvbufrd (2.4.7-1) lucid; urgency=low
   
   * New release 2.4.7.
