@@ -9,8 +9,8 @@ fi
                                                                                
 
 SQL=sqlite
-BACKUPFILE=$KVALOBS/var/kvbuffer/kvbufferd.sqlite.bak
-DBFILE=$KVALOBS/var/kvbuffer/kvbufferd.sqlite
+BACKUPFILE=$KVALOBS/var/kvbuffer/kvbufrd.sqlite.bak
+DBFILE=$KVALOBS/var/kvbuffer/kvbufrd.sqlite
 
 echo 
 echo "Creating backup file!!"

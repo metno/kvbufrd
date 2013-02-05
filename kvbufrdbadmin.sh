@@ -3,11 +3,16 @@
 KVCONFIG=__KVCONFIG__
 SQL=sqlite3
 
-LOCAL_CONF_FILE=`$KVCONFIG --sysconfdir`/kvalobs/kvbufrd_dbclean.sql
+PREFIX="kvbufrd"
+if [ $# -gt 0 ]; then
+    PREFIX=$1
+fi    
+
+LOCAL_CONF_FILE=`$KVCONFIG --sysconfdir`/kvalobs/$PREFIX_dbclean.sql
 ETCDIR==`$KVCONFIG --sysconfdir`/kvalobs
 SQLDIR=`$KVCONFIG --datadir`/kvbufrd
 LOGDIR=`$KVCONFIG --logdir`
-DBFILE=`$KVCONFIG --localstatedir`/lib/kvbufrd/kvbufr.sqlite
+DBFILE=`$KVCONFIG --localstatedir`/lib/kvbufrd/$PREFIX.sqlite
 SQLCLEAN=$SQLDIR/cleanbufrdb.sql
 LIBDIR=`$KVCONFIG --pkglibdir`
 
@@ -26,7 +31,7 @@ fi
 
 
 DAY=`date '+%d'`
-LOG=$LOGDIR/kvbufr/kvbufrdbadmin-$DAY.log
+LOG=$LOGDIR/kvbufr/$PREFIXadmin-$DAY.log
 
 [ -f "$LOG" ] && rm -rf "$LOG" 
 
