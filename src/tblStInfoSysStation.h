@@ -41,6 +41,7 @@ class TblStInfoSysStation : public kvalobs::kvDbBase {
    int   hs_;
    int   hv_;
    int   hp_;
+   float maxspeed_;
    std::string name_;
    int   wmono_;
 
@@ -63,14 +64,20 @@ public:
   void clean();
 
   const char* tableName() const {return "station";}
-
+#ifdef __WITH_PUTOOLS__
   miutil::miString toSend()    const { return ""; } //NOT used
   miutil::miString toUpdate()  const{ return ""; }  //NOT used
   miutil::miString uniqueKey() const;
+#else
+  std::string toSend()    const { return ""; } //NOT used
+  std::string toUpdate()  const{ return ""; }  //NOT used
+  std::string uniqueKey() const;
+#endif
 
   int hp() const { return hp_; }
   int hs() const { return hs_; }
   int hv() const { return hv_; }
+  float maxspeed()const { return maxspeed_; }
   float lat() const { return lat_; }
   float lon() const { return lon_; }
   std::string name() const { return name_; }

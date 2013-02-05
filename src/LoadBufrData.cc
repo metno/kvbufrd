@@ -45,7 +45,9 @@ loadBufrData( const DataEntryList   &dl,
    DataEntryList::CITDataEntryList it;
    DataListEntry::ITDataList       itd;
    DataListEntry::TDataList        dataList;
+   stringstream log;
 
+   validate.clearLogger();
    sd.clear();
 
    types=info->typepriority();
@@ -73,16 +75,17 @@ loadBufrData( const DataEntryList   &dl,
 
             if(itd->sensor()==0 && itd->level()==0){
                if( validate( *itd ) ) {
-                 // cerr << "LoadBufrData: '" << itd->obstime() << "' " << itd->paramID() << ", " << itd->typeID() << ", " << itd->original() << endl;
+                  //cerr << "LoadBufrData: '" << itd->obstime() << "' " << itd->paramID() << ", " << itd->typeID() << ", " << itd->original() << endl;
                   bufrData.setData( itd->paramID(), itd->typeID(), itd->original() );
-               } else {
-                  LOGDEBUG("CheckData: do NOT use: " << itd->obstime() << " " << itd->paramID() << " " << itd->typeID() << " val: "
-                           << itd->original() << " cinfo: " << itd->controlinfo().flagstring() << " uinfo: "
-                           << itd->useinfo().flagstring() );
                }
             }else{
-               LOGINFO("loadBufr: sensor=" << itd->sensor() << " level=" << itd->level()
-                       << " not used!");
+               log << "NOT USED. sid: " << itd->stationID()
+                       << " tid: " << itd->typeID()
+                       << "pid: " << itd->paramID()
+                       << " sen: " << itd->sensor()
+                       << " lvl: " << itd->level()
+                       << " orig: " << itd->original()
+                       << endl;
             }
          }
       }
@@ -99,6 +102,23 @@ loadBufrData( const DataEntryList   &dl,
             LOGDEBUG("EXCEPTION(Unknown): Should never happend!" << endl);
          }
       }
+   }
+
+   string notUsed=log.str();
+   string rejected=validate.getLog();
+
+   if( ! rejected.empty() || ! notUsed.empty() ) {
+      log.str("");
+      if( !rejected.empty() ) {
+         log << "REJECTED";
+         if( !notUsed.empty() )
+            log << " and NOT USED";
+      } else {
+         log << "NOT USED";
+      }
+      log << " paramteres.";
+
+      LOGDEBUG2( log.str() << endl << rejected << notUsed );
    }
 }
 

@@ -68,8 +68,11 @@ readDataFile( const std::string &filename, DataEntryList &data, const miutil::mi
 
 		miutil::CommaString dataValues( line, '|' );
 
-		if( dataValues.size() != 12 )
-			continue;
+		if( dataValues.size() != 12 ) {
+		   cerr << "readDataFile: to few elements ("<< dataValues.size() << ") expecting 12\n";
+		   continue;
+		}
+
 
 		obstime = miutil::miTime( dataValues[1] );
 
@@ -78,23 +81,24 @@ readDataFile( const std::string &filename, DataEntryList &data, const miutil::mi
 
 		Data d( atoi( dataValues[0].c_str() ), obstime,
 				dataValues[2], atoi( dataValues[3].c_str() ) ,
-				atoi( dataValues[5].c_str() ), atoi( dataValues[6].c_str() )+'0',
+				atoi( dataValues[5].c_str() ), atoi( dataValues[6].c_str() ),
 				atoi( dataValues[7].c_str() ), dataValues[9], dataValues[10] );
 
-		data.insert( d );
+		//cerr << "readDataFile: insert( " << d << ")\n";
+ 		data.insert( d );
 	}
-/*
-	for( DataEntryList::CITDataEntryList itd=data.begin(); itd!=data.end(); ++itd ) {
-		std::list<int> types = itd->getTypes();
 
-		for( std::list<int>::iterator tit=types.begin(); tit!=types.end(); ++tit ) {
-			DataListEntry::TDataList dl = itd->getTypeId( *tit );
+//	for( DataEntryList::CITDataEntryList itd=data.begin(); itd!=data.end(); ++itd ) {
+//		std::list<int> types = itd->getTypes();
+//
+//		for( std::list<int>::iterator tit=types.begin(); tit!=types.end(); ++tit ) {
+//			DataListEntry::TDataList dl = itd->getTypeId( *tit );
+//
+//			for( DataListEntry::CITDataList dit=dl.begin(); dit!=dl.end(); ++dit )
+//				cerr << *dit << endl;
+//		}
+// 	}
 
-			for( DataListEntry::CITDataList dit=dl.begin(); dit!=dl.end(); ++dit )
-				cerr << *dit << endl;
-		}
- 	}
-*/
 	return true;
 }
 
@@ -120,14 +124,14 @@ loadBufrDataFromFile( const std::string &filename,
 	}
 
 	loadBufrData( rawdata, sd, info, validate );
-	/*
-	cerr << "---- START ---\n";
-	for( CIDataElementList it=sd.begin(); it != sd.end(); ++it ) {
-	   cerr << it->time() << ", " << it->FF << ", " << it->DD << endl;
-	}
-	cerr << "---- END ---\n";
-	*/
-	//cerr << sd << endl;
+//	cerr << "---- START ---\n";
+//	for( CIDataElementList it=sd.begin(); it != sd.end(); ++it ) {
+//	   cerr << it->time() << " RR_24: " << it->RR_24 << " EM: " << it->EM
+//	        <<" SA: " << it->SA << " SS_24: " << it->SS_24 << endl;
+//	}
+//	cerr << "---- END ---\n";
+
+  //cerr << sd << endl;
 	return true;
 }
 

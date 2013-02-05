@@ -113,7 +113,11 @@ set(const std::string &key,
   return true;
 }
 
+#ifdef __WITH_PUTOOLS__
 miutil::miString 
+#else
+std::string
+#endif
 TblKeyVal::
 toSend() const
 {
@@ -127,8 +131,11 @@ toSend() const
   return ost.str();
 }
 
-
+#ifdef __WITH_PUTOOLS__
 miutil::miString 
+#else
+std::string
+#endif
 TblKeyVal::
 uniqueKey()const
 {
@@ -141,7 +148,11 @@ uniqueKey()const
 
 
 
+#ifdef __WITH_PUTOOLS__
 miutil::miString 
+#else
+std::string
+#endif
 TblKeyVal::
 toUpdate()const
 {

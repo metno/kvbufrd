@@ -62,7 +62,7 @@ main(int argn, char **argv)
   bool                      listconftab=false;
   bool                      check=false;
   bool                      hasCmd=false;
-  
+
   milog::Logger::logger().logLevel(milog::INFO);
   
   for(int i=1; i<argn; i++){
@@ -117,12 +117,12 @@ main(int argn, char **argv)
   }
 
   if( file.empty() )
-     file = kvPath("sysconfdir")+"/kvbufferd.conf";
+     file = kvPath("sysconfdir")+"/kvbufrd.conf";
 
   cerr << "Reading file: " << file << endl;
 
   if(!readConfFile(file, stationList)){
-     cerr << "FATAL: error in SYNOP sections in the configuration file!";
+     cerr << "FATAL: error in station definition sections in the configuration file!";
      return 1;
   }
 
@@ -133,7 +133,8 @@ main(int argn, char **argv)
      }
      cout << endl;
   }else if(listconftab){
-     cout <<setw(6) << left << "WMONO" << "|"
+     cout <<setw(6) << left << "ID" << "|"
+          <<setw(5) << left << "code" << "|"
            << setw(15) << left << "typepriority" << "|"
            << setw(8) << "mhTypes" << "|"
            << setw(16) << left << "precipitation" << "|"
@@ -143,7 +144,8 @@ main(int argn, char **argv)
      cout << setfill('-') << setw(77) << "-" << setfill(' ') << endl;
      for(std::list<StationInfoPtr>::iterator it=stationList.begin();
            it!=stationList.end(); it++){
-        cout << setw(6)  << left << (*it)->wmono() << "|"
+        cout << setw(6)  << left << (*it)->toIdentString() << "|"
+              << setw(6)<<left << (*it)->codeToString() << "|"
               << setw(15) << left << (*it)->keyToString("typepriority") << "|"
               << setw(8)  << left << (*it)->keyToString("mustHaveTypes") << "|"
               << setw(16) << left << (*it)->keyToString("precipitation") << "|"
@@ -206,7 +208,8 @@ readConfFile(const string &file,  std::list<StationInfoPtr> &stationList)
    StationInfoParse theSynParser;
    ifstream    fs;
    ConfSection *conf;
-   ConfParser  theParser;
+   ConfParser  theParser( true );
+
 
    fs.open(file.c_str());
 

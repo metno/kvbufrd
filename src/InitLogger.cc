@@ -57,8 +57,8 @@ void
 InitLogger(int &argn, char **argv, const std::string &logname, std::string &logfile, bool doTraceToScreen )
 {
    string       filename;
-   LogLevel     traceLevel=milog::DEBUG;
-   LogLevel     logLevel=milog::INFO;
+   LogLevel     traceLevel=milog::NOTSET;
+   LogLevel     logLevel=milog::NOTSET;
    FLogStream   *fs;
    StdErrStream *trace;
    int destI;
@@ -96,6 +96,16 @@ InitLogger(int &argn, char **argv, const std::string &logname, std::string &logf
       //Remove the used args.
       compactArgv( argn, argv, destI, srcI );
    }
+
+   if( traceLevel == milog::NOTSET && logLevel == milog::NOTSET ) {
+      traceLevel=milog::INFO;
+      logLevel=milog::INFO;
+   } else if( traceLevel == milog::NOTSET ) {
+      traceLevel = logLevel;
+   } else {
+      logLevel = traceLevel;
+   }
+
 
    try{
       fs=new FLogStream(4);

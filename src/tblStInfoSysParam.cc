@@ -107,7 +107,11 @@ clean()
    standard_physical_height_ = INT_MAX;
 }
 
+#ifdef __WITH_PUTOOLS__
 miutil::miString
+#else
+std::string
+#endif
 TblStInfoSysParam::
 uniqueKey() const
 {

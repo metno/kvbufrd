@@ -65,16 +65,36 @@ set(const dnmi::db::DRow &r_)
          if(*it=="stationid"){
             stationid_ = atoi( buf.c_str() );
          }else if(*it=="lat"){
-            lat_ = static_cast<float>( atof( buf.c_str() ) );
+        	 if( buf.empty() )
+        		 lat_ = FLT_NULL;
+        	 else
+        		 lat_ = static_cast<float>( atof( buf.c_str() ) );
          }else if(*it=="lon"){
-            lon_ = static_cast<float>( atof( buf.c_str() ) );
+        	 if( buf.empty() )
+        		 lon_ = FLT_NULL;
+        	 else
+        		 lon_ = static_cast<float>( atof( buf.c_str() ) );
          }else if(*it=="hs"){
-            hs_ = atoi( buf.c_str() );
+        	 if( buf.empty() )
+        		 hs_ = INT_NULL;
+        	 else
+        		 hs_ = atoi( buf.c_str() );
          }else if(*it=="hv"){
-            hv_ = atoi( buf.c_str() );
+        	 if( buf.empty() )
+        		 hv_ = INT_NULL;
+        	 else
+        		 hv_ = atoi( buf.c_str() );
          }else if(*it=="hp"){
-            hp_ = atoi( buf.c_str() );
-         }else if(*it=="name"){
+        	 if( buf.empty() )
+        		 hp_ = INT_NULL;
+        	 else
+        		 hp_ = atoi( buf.c_str() );
+         }else if(*it=="maxspeed"){
+             if( buf.empty() )
+                 maxspeed_ = FLT_NULL;
+             else
+                 maxspeed_ = static_cast<float>( atof( buf.c_str() ) );
+         } else if(*it=="name"){
             name_=buf;
          }else if(*it=="wmono"){
             if( !buf.empty() )
@@ -121,8 +141,11 @@ clean()
    wmono_ = INT_MAX;
 }
 
-
+#ifdef __WITH_PUTOOLS__
 miutil::miString
+#else
+std::string
+#endif
 TblStInfoSysStation::
 uniqueKey() const
 {

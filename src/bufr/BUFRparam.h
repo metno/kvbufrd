@@ -30,38 +30,57 @@
 */
 #ifndef __BUFRPARAM_H__
 #define __BUFRPARAM_H__
+#include <math.h>
 #include <vector>
 #include <map>
 #include <string>
 #include <iostream>
+#include <boost/shared_ptr.hpp>
+#include "bufrexceptions.h"
 
 struct BufrParamType
 {
    typedef enum {INT, FLOAT, CODE, STRING} Type;
-   BufrParamType( Type type_, int w, int s=0, int r=0  )
-      : type(type_), width( w ), scale( s ), reference( r ){};
+   BufrParamType( Type type_, int id_, int w, int s=0, int r=0  )
+      : type(type_), id( id_ ), width( w ), scale( s ), reference( r ){};
    Type type;
+   int id;
    int width;
    int scale;
    int reference;
+   std::string name;
+   std::string unit;
 
-   std::ostream& print( std::ostream &o ) const;
+   std::string expecting()const;
+   std::string typeToString()const;
+
+   virtual bool valid( int value ) const;
+   virtual bool valid( float value ) const;
+   virtual bool valid( std::string& value ) const;
+   virtual double roundToPrec( float value )const;
+   virtual std::ostream& print( std::ostream &o ) const;
    friend std::ostream& operator<<(std::ostream &o, const BufrParamType &pt);
 };
 
 struct BufrParamInt : public BufrParamType
 {
 public:
-   BufrParamInt( int width, int scale, int reference );
-   bool valid( int value )const;
+   long min, max;
+   BufrParamInt( int id, int width, int scale, int reference );
+   virtual bool valid( int value )const;
+   virtual double roundToPrec( float value )const { return round(value); }
+   virtual std::ostream& print( std::ostream &o ) const;
    friend std::ostream& operator<<(std::ostream &o, const BufrParamInt &pt);
 };
 
 struct BufrParamFloat : public BufrParamType
 {
 public:
-   BufrParamFloat( int width, int scale, int reference );
-   bool valid( double value )const;
+   double min, max, prec;
+   BufrParamFloat( int id, int width, int scale, int reference );
+   virtual double roundToPrec( float value ) const { return round(value/prec)*prec; }
+   virtual bool valid( float value )const;
+   virtual std::ostream& print( std::ostream &o ) const;
    friend std::ostream& operator<<(std::ostream &o, const BufrParamFloat &pt);
 };
 
@@ -69,38 +88,54 @@ public:
 struct BufrParamCode : public BufrParamType
 {
    std::vector<int> validCode;
-   BufrParamCode( int width );
-
-   bool valid( int value )const;
+   BufrParamCode( int id, int width );
+   unsigned long max;
+   virtual double roundToPrec( float value )const { return round(value); }
+   virtual bool valid( int value )const;
+   virtual std::ostream& print( std::ostream &o ) const;
    friend std::ostream& operator<<(std::ostream &o, const BufrParamCode &pt);
 };
 
 struct BufrParamString : public BufrParamType
 {
-   std::vector<int> validCode;
-   BufrParamString( int width );
-
-   bool valid( const std::string &value )const;
+   BufrParamString( int id, int width );
+   virtual bool valid( std::string &value )const;
    friend std::ostream& operator<<(std::ostream &o, const BufrParamString &pt);
 };
 
 struct BufrParamFlag : public BufrParamType
 {
 
-   BufrParamFlag( int width );
+   BufrParamFlag( int id, int width );
 
-   bool valid( int value )const;
+   virtual bool valid( int value )const;
    friend std::ostream& operator<<(std::ostream &o, const BufrParamFlag &pt);
 };
 
-class BufrValidater : public std::map<int, BufrParamType*>
+class  BufrParamValidater;
+
+typedef boost::shared_ptr<BufrParamType> BufrParamTypePtr;
+typedef boost::shared_ptr<BufrParamValidater> BufrParamValidaterPtr;
+
+class BufrParamValidater : public std::map<int, BufrParamTypePtr>
 {
 public:
-   BufrValidater();
+   BufrParamValidater();
 
-   bool loadTable( const std::string &filename );
+   //Throws
+   //  IdException when the bufrParamId
+   //              is not defined.
+   //  TypeException When the value type do not match the paramdef type.
+   bool isValid( int bufrParamId, float value )const;
+   bool isValid( int bufrParamId, int value )const;
+   bool isValid( int bufrParamId, std::string &value )const;
+   double roundToPrec( int bufrParamId, float value );
+   BufrParamTypePtr findParamDef( int bufrParamId ) const;
+   static BufrParamValidaterPtr loadTable( const std::string &filename );
 
 };
+
+
 
 std::ostream& operator<<(std::ostream &o, const BufrParamType &pt);
 std::ostream& operator<<(std::ostream &o, const BufrParamInt &pi);

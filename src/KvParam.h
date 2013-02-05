@@ -83,6 +83,8 @@ public:
    const_iterator begin()const { return params.begin(); }
    const_iterator end()const { return params.end(); }
 
+   int numberOfValidParams() const;
+
    std::list<KvParam*>::size_type size()const { return params.size(); }
 };
 

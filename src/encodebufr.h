@@ -38,17 +38,6 @@
 
 
 
-class BufrEncodeException : public std::exception
-{
-   std::string message;
-
-public:
-   BufrEncodeException( const std::string &msg )
-      : message( msg ) {}
-   ~BufrEncodeException() throw (){}
-
-   const char* what()const throw() { return message.c_str(); }
-};
 
 
 class BufrEncoder {

@@ -59,10 +59,15 @@ public:
   void clean();
 
   const char* tableName() const {return "param";}
-
+#ifdef __WITH_PUTOOLS__
   miutil::miString toSend()    const { return ""; } //NOT used
   miutil::miString toUpdate()  const{ return ""; }  //NOT used
   miutil::miString uniqueKey() const;
+#else
+  std::string toSend()    const { return ""; } //NOT used
+  std::string toUpdate()  const{ return ""; }  //NOT used
+  std::string uniqueKey() const;
+#endif
 
   int paramid() const { return paramid_ ; }
   std::string name() const { return name_; }

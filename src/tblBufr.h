@@ -31,11 +31,16 @@
 #ifndef __kvbufr_tblBufr_h__
 #define __kvbufr_tblBufr_h__
 
+#include <string>
 #include <kvalobs/kvDbBase.h>
+#include "defines.h"
 
 class TblBufr : public kvalobs::kvDbBase {
 private:
    int              wmono_;
+   int              id_;
+   std::string      callsign_;
+   std::string      code_;
    miutil::miTime   obstime_;
    miutil::miTime   createtime_;
    int              crc_;
@@ -50,15 +55,21 @@ public:
    TblBufr(const TblBufr &bufr){ set(bufr);}
    TblBufr(const dnmi::db::DRow &r){set(r);}
    TblBufr(int                  wmono,
+           int                  id,
+           const std::string    &callsign,
+           const std::string    &code,
            const miutil::miTime &obtime,
            const miutil::miTime &createtime,
            int                  crc,
            int                  ccx,
            const std::string    &data,
            const std::string    &bufrBase64 )
-   { set( wmono, obtime, createtime, crc, ccx, data, bufrBase64 );}
+   { set( wmono, id, callsign, code, obtime, createtime, crc, ccx, data, bufrBase64 );}
 
    bool set(int                  wmono,
+            int                  id,
+            const std::string    &callsign,
+            const std::string    &code,
             const miutil::miTime &obtime,
             const miutil::miTime &createtime,
             int                  crc,
@@ -79,11 +90,21 @@ public:
    void clean();
 
    const char* tableName()            const {return "bufr";}
+
+#ifdef __WITH_PUTOOLS__
    miutil::miString toSend()    const;
    miutil::miString toUpdate()  const;
    miutil::miString uniqueKey() const;
+#else
+   std::string toSend()    const;
+   std::string toUpdate()  const;
+   std::string uniqueKey() const;
+#endif
 
    int              wmono()      const { return wmono_; }
+   int              id()         const { return id_; }
+   std::string      callsign()   const { return callsign_; }
+   std::string      code()       const { return code_; }
    miutil::miTime   obstime()    const { return obstime_; }
    miutil::miTime   createtime() const { return createtime_;}
    int              crc()        const { return crc_; }

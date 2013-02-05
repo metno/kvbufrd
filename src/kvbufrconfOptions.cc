@@ -27,7 +27,7 @@
   You should have received a copy of the GNU General Public License along
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+ */
 
 #include <unistd.h>
 #include <getopt.h>
@@ -44,94 +44,123 @@ using namespace std;
 void
 getOptions(int argn, char **argv, Options &opt)
 {
-    struct option long_options[]={{"help", 0, 0, 'h'},
-                                  {"conf", 1, 0, 'c'},
-                                  {"template", 1, 0, 't'},
-                                  {"out", 1, 0, 'o'},
-                                  {0,0,0,0}};
+   struct option long_options[]={{"help", 0, 0, 'h'},
+                                 {"conf", 1, 0, 'c'},
+                                 {"template", 1, 0, 't'},
+                                 {"out", 1, 0, 'o'},
+                                 {"svv", 0, 0, 0 },
+                                 {"precip", 0, 0, 0 },
+                                 {"ship", 0, 0, 0 },
+                                 {0,0,0,0}};
 
-    int c;
-    int index;
-    string error;
-    string confileAtCommandLine;
+   int c;
+   int index;
+   string error;
+   string confileAtCommandLine;
 
-    while(true){
-        c=getopt_long(argn, argv, "hc:t:o:", long_options, &index);
+   opt.type = Options::NON;
+   opt.nIsTypes = 0;
 
-        if(c==-1)
+   while(true){
+      c=getopt_long(argn, argv, "hc:t:o:", long_options, &index);
+
+      if(c==-1)
+         break;
+
+      switch(c){
+         case 0:
+            if( strcmp( long_options[index].name, "svv") == 0) {
+               opt.type= Options::SVV; ++opt.nIsTypes;
+            } else if( strcmp( long_options[index].name, "precip") == 0 ) {
+                opt.type= Options::PRECIP; ++opt.nIsTypes;
+            }else if( strcmp( long_options[index].name, "ship") == 0 ) {
+                opt.type= Options::SHIP; ++opt.nIsTypes;
+            } else
+               use( 1 );
             break;
+         case 'h':
+         use(0);
+         break;
 
-        switch(c){
-        case 'h':
-           use(0);
-           break;
-
-        case 'c':
+         case 'c':
             opt.confile=optarg;
             break;
-        case 't':
-           opt.templatefile=optarg;
-           break;
-        case 'o':
-           opt.outconf=optarg;
-           break;
-        case '?':
+         case 't':
+            opt.templatefile=optarg;
+            break;
+         case 'o':
+            opt.outconf=optarg;
+            break;
+         case '?':
             cerr << "Unknown option : <" << (char)optopt << "> unknown!" << endl;
             use(1);
             break;
-        case ':':
+         case ':':
             cerr << optopt << " missing argument!" << endl;
             use(1);
             break;
-        default:
+         default:
             cerr << "?? option caharcter: <" << (char)optopt << "> unknown!" << endl;
             use(1);
-        }
-    }
+            break;
+      }
+   }
 
-    if( opt.confile.empty() ) {
-       if( checkfile( "./kvbufrconf.conf", R_OK, error ) )
+   if( opt.nIsTypes > 1  )
+      use( 1 );
+
+   if( opt.type == Options::NON )
+       opt.type = Options::SYNOP;
+
+   if( opt.confile.empty() ) {
+      if( checkfile( "./kvbufrconf.conf", R_OK, error ) )
          opt.confile = "./kvbufrconf.conf";
-       else if( checkfile( string(kvPath("sysconfdir")+"/kvbufrconf.conf"), R_OK, error ) )
-          opt.confile = kvPath("sysconfdir")+"/kvbufrconf.conf";
-    } else if( ! checkfile( opt.confile, R_OK, error ) ) {
-       confileAtCommandLine = opt.confile;
-       opt.confile.erase();
-    }
+      else if( checkfile( string(kvPath("sysconfdir")+"/kvbufrconf.conf"), R_OK, error ) )
+         opt.confile = kvPath("sysconfdir")+"/kvbufrconf.conf";
+   } else if( ! checkfile( opt.confile, R_OK, error ) ) {
+      confileAtCommandLine = opt.confile;
+      opt.confile.erase();
+   }
 
-    if( opt.confile.empty() ) {
-       cerr << "ERROR: Can't find any confile. " << endl
+   if( opt.confile.empty() ) {
+      cerr << "ERROR: Can't find any confile. " << endl
             << "  searched: ";
 
-       if( ! confileAtCommandLine.empty() )
-          cerr << "'" << confileAtCommandLine << "'";
-       else
-          cerr << "'" << "./kvbufrconf.conf" << "', '" << kvPath("sysconfdir")+"/kvbufrconf.conf" << "'.";
+      if( ! confileAtCommandLine.empty() )
+         cerr << "'" << confileAtCommandLine << "'";
+      else
+         cerr << "'" << "./kvbufrconf.conf" << "', '" << kvPath("sysconfdir")+"/kvbufrconf.conf" << "'.";
 
-       cerr << endl;
-       use( 1 );
-    }
+      cerr << endl;
+      use( 1 );
+   }
 
-    if( !opt.templatefile.empty() && ! checkfile( opt.templatefile, R_OK, error ) ) {
-       cerr << "template: " <<  error << endl;
-       use( 1 );
-    }
+   if( !opt.templatefile.empty() && ! checkfile( opt.templatefile, R_OK, error ) ) {
+      cerr << "template: " <<  error << endl;
+      use( 1 );
+   }
 
-    ostringstream logmsg;
-    logmsg << "Using configuration file: " << opt.confile << endl
-           << "Reading template file:    " << (opt.templatefile.empty()?string("(none)"):opt.templatefile ) << endl
-           << "outfile:                  " << (opt.outconf.empty()?string("(screen)"):opt.outconf ) << endl
-           << endl;
+   ostringstream logmsg;
+   logmsg << "Using configuration file: " << opt.confile << endl
+         << "Reading template file:    " << (opt.templatefile.empty()?string("(none)"):opt.templatefile ) << endl
+         << "outfile:                  " << (opt.outconf.empty()?string("(screen)"):opt.outconf ) << endl
+         << endl;
 
-    LOGINFO( logmsg.str() );
+   LOGINFO( logmsg.str() );
 }
 
 
 void
 use(int exitstatus)
 {
-  cerr << "\n\tuse" << endl
-       <<"\t   kvbufrconf [--help|-h] [--template|-t templatefile] [--conf|-c confile] [--out|-o outfile] " << endl;
+   cerr << "\n\tuse" << endl
+        <<"\t   kvbufrconf [--help|-h] [TYPE] [--template|-t templatefile] [--conf|-c confile] [--out|-o outfile] " << endl
+        <<"\n\n"
+        <<"\t TYPE may be one of\n"
+        <<"\t\t--svv Generate a configuration file for SVV stations only.\n"
+        <<"\t\t--precip Generate a configuration file for precipitations stations only.\n"
+        <<"\t\t--ship Generate a configuration file for SHIP stations only.\n"
+        <<"\n";
 
-  exit(exitstatus);
+   exit(exitstatus);
 }

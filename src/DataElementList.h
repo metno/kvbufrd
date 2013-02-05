@@ -131,8 +131,18 @@ private:
   	KvParam WAWA;
   	KvParam  HLN;
   	KvParam  EM;    //Snow state to the gound (Markas tilstand).
-  	KvParam  E;   //BUFR parameter E or E' (0 20 062).
+  	KvParam  EE;   //BUFR parameter E or E' (0 20 062).
+  	KvParam  Es;  //Ice deposit (thickness) at observation time.
+  	KvParam  ERs; //Rate of ice accretion.
+  	KvParam XIS;  //Cause of ice accreation.
+  	KvParam Ci;   //Sea ice concentration.
+  	KvParam Bi;   //Amount and type of ice.
+  	KvParam Zi;   //Ice situation.
+  	KvParam Si;   //Ice development
+  	KvParam Di;   //Bearing of ice edge.
   	KvParam SA;    //Snow depth.
+  	KvParam SD;    //Met.no code for snow cover.
+  	KvParam SS_24; //Snow accumulation past 24 hour.
   	KvParam Vmor;  //Automatic measured horizontal visibility
   	KvParam VV;    //Human estimated horizontal visibility
   	KvParam HL;
@@ -153,6 +163,17 @@ private:
   	KvParam AA;
   	KvParam ITZ;
   	KvParam ITR;
+  	KvParam OT_1;
+  	KvParam OT_24;
+  	KvParam MDIR; //Direction of motion of moving observing platform/ship.
+  	KvParam MSPEED; //Speed of motion of moving observing platform/ship.
+  	KvParam MLAT; //Latitude of ship/platform.
+  	KvParam MLON; //Longitude of ship/platform.
+  	KvParam WDMT; //Mean wave direction.
+  	KvParam Pwa;  //Period of waves.
+  	KvParam Pw;   //Period of wind waves.
+  	KvParam Hwa;  //Height of waves.
+  	KvParam Hw;   //Height of wind waves.
   	int nSet;
   	bool onlyTypeid1;
   	std::list<int> typeidList;
@@ -178,7 +199,7 @@ private:
   	boost::uint16_t crc() const;
 
   	void writeTo( std::ostream &header, std::ostream &data, bool withId=true  )const;
-
+  	int numberOfValidParams() const{ return params.numberOfValidParams(); }
   	friend std::ostream& operator<<(std::ostream& ost,
 									  const DataElement& sd);
 };

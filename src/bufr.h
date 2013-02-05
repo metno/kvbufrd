@@ -126,7 +126,8 @@ class Bufr
                                DataElement &res);
     bool pressureTrend( const DataElement &data, DataElement &res );
     void doGeneralWeather( const DataElementList &data, BufrData &res );
-    void doEsss( const DataElementList &data, BufrData &res );
+    static void doEsss( const DataElementList &data, BufrData &res );
+    static void doSaFromSD( const DataElementList &data, BufrData &res );
     void soilTemp( const DataElementList &data, BufrData &res );
     void doSeaOrWaterTemperature(  const DataElementList &data, BufrData &res );
 
@@ -164,6 +165,9 @@ class Bufr
                  DataElementList         &bufrData,
                  BufrData             &bufr
                );
+
+    BufrDataPtr doBufr( StationInfoPtr  info,
+                        DataElementList &bufrData );
 
 };
 

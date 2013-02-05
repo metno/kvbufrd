@@ -63,9 +63,16 @@ public:
 
   const char* tableName() const {return "sensor_info";}
 
+#ifdef __WITH_PUTOOLS__
   miutil::miString toSend()    const { return ""; } //NOT used
   miutil::miString toUpdate()  const{ return ""; }  //NOT used
   miutil::miString uniqueKey() const;
+#else
+
+  std::string toSend()    const { return ""; } //NOT used
+  std::string toUpdate()  const{ return ""; }  //NOT used
+  std::string uniqueKey() const;
+#endif
 
   int equipmentid()const { return equipmentid_; }
   int paramid() const { return paramid_; }

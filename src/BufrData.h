@@ -33,6 +33,7 @@
 #define __BUFRDATA_H__
 
 #include <stdexcept>
+#include <boost/shared_ptr.hpp>
 #include "DataElementList.h"
 
 /**
@@ -79,14 +80,18 @@ public:
    };
 
    struct CloudDataExtra {
-      float vsci;
-      float Ns;
-      float C;
+      int vsci;
+      int Ns;
+      int C;
       float hshs;
 
       CloudDataExtra():
-         vsci( FLT_MAX ), Ns( FLT_MAX ), C( FLT_MAX ), hshs( FLT_MAX )
+         vsci( INT_MAX ), Ns( INT_MAX ), C( INT_MAX ), hshs( FLT_MAX )
       {}
+
+      CloudDataExtra( int vsci_, int ns, int c, int hs )
+         : vsci( vsci_ ), Ns( ns ), C( c ), hshs( hs ){}
+
       CloudDataExtra& operator=( const CloudDataExtra &rhs )
       {
          if( this != &rhs ) {
@@ -144,9 +149,12 @@ public:
 
    BufrData();
    BufrData( const BufrData &bd );
+   BufrData( const DataElement &de );
 
    BufrData& operator=( const BufrData &rhs );
 };
+
+typedef boost::shared_ptr<BufrData> BufrDataPtr;
 
 std::ostream &operator<<(std::ostream &o, const BufrData::CloudDataExtra &cd );
 std::ostream &operator<<(std::ostream &o, const BufrData::Wind &wind );

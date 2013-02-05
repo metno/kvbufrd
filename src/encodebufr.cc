@@ -43,6 +43,8 @@
 #include "bufrencodehelper.h"
 #include "base64.h"
 #include "SemiUniqueName.h"
+#include "bufr/bufrdefs.h"
+#include "bufr/BufrValueHelper.h"
 
 namespace fs = boost::filesystem;
 
@@ -111,7 +113,7 @@ encodeBufr( const BufrData &data, int ccx_ )
      }
      catch( ... ){
         kbuflen = 0;
-        throw BufrEncodeException( "NOMEM to allocate a buffer to hold the bufr message.");
+        throw EncodeException( "NOMEM to allocate a buffer to hold the bufr message.");
      }
   }
 
@@ -142,7 +144,7 @@ encodeBufr( const BufrData &data, int ccx_ )
        << ". bufren error code: " << error << endl << values.log();
      delete[] kbuff;
      kbuff = 0;
-     throw BufrEncodeException( o.str() );
+     throw EncodeException( o.str() );
   }
 }
 
@@ -165,7 +167,7 @@ saveToFile( bool overwrite)const
    if( ! kbuff ) {
       ostringstream o;
       o << "Missing bufr encoding for station '" << station->wmono() << "' obstime: " << obstime;
-      throw BufrEncodeException( o.str() );
+      throw EncodeException( o.str() );
    }
 
    if( station->copy() ) {
@@ -244,7 +246,7 @@ filePrefix()const
        ost << "wmono_" << station->wmono();
     } else {
        ost << "sid_";
-       StationInfo::TLongList ids=station->stationID();
+       StationInfo::TLongList ids=station->definedStationID();
        for( StationInfo::TLongList::const_iterator it= ids.begin();
             it != ids.end(); ++it ) {
           if( it != ids.begin() )
@@ -285,7 +287,7 @@ saveToFile( const std::string &path, bool overwrite )const
    if( ! kbuff ) {
        ostringstream o;
        o << "Missing bufr encoding for station '" << station->wmono() << "' obstime: " << obstime;
-       throw BufrEncodeException( o.str() );
+       throw EncodeException( o.str() );
    }
 
    if( ! isDirWithWritePermission( path, error ) ) {
@@ -294,7 +296,7 @@ saveToFile( const std::string &path, bool overwrite )const
         << "Path not a directory or permission denied."
         << "("<< error << ")";
 
-      throw BufrEncodeException( o.str() );
+      throw EncodeException( o.str() );
    }
 
    if( ! isDirWithWritePermission( tmppath, error ) )
@@ -310,7 +312,7 @@ saveToFile( const std::string &path, bool overwrite )const
       ost << "Failed to write BUFR file for station '" << station->wmono() << "' obstime: " << obstime
           << ". File <" << dstfile << ">.";
       LOGDEBUG( ost.str() << " Overwrite: "<< (overwrite?"true":"false") );
-      throw BufrEncodeException( ost.str() );
+      throw EncodeException( ost.str() );
    }
 
    writeToStream( f );
@@ -321,7 +323,7 @@ saveToFile( const std::string &path, bool overwrite )const
          ostringstream ost;
          ost << "Failed to move: " << tmpfile << " -> " << dstfile
                << ". Reason: " << myStrerror( errno );
-         throw BufrEncodeException( ost.str() );
+         throw EncodeException( ost.str() );
       } else {
          LOGDEBUG( "saveToFile: moved: " << tmpfile << " -> " << dstfile );
       }

@@ -116,7 +116,11 @@ clean()
    fromTime_ = miutil::miTime();
 }
 
+#ifdef __WITH_PUTOOLS__
 miutil::miString
+#else
+std::string
+#endif
 TblStInfoSysNetworkStation::
 uniqueKey() const
 {
@@ -124,6 +128,18 @@ uniqueKey() const
 
    ost << " WHERE stationid=" << stationid_
        <<   " AND networkid=" << networkid_
-       <<   " AND fromtime=" << quoted( fromTime_);
+       <<   " AND fromtime=" << quoted( fromTime_.isoTime() );
    return ost.str();
 }
+
+std::ostream&
+operator<<( std::ostream &o, const TblStInfoSysNetworkStation &nt)
+{
+  o << "[" << nt.stationid_ << ","<< nt.networkid_<< "," << nt.name_ << ","
+    << nt.externalStationcode_ << ",'" << nt.comment_ << "',"
+    << (nt.fromTime_.undef()?"(NULL)":nt.fromTime_.isoTime()) << ","
+    << (nt.toTime_.undef()?"(NULL)":nt.toTime_.isoTime()) << "]";
+
+   return o;
+}
+

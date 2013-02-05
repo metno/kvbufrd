@@ -34,9 +34,14 @@
 #include <string>
 
 struct Options {
+    typedef enum { NON, PRECIP, SVV, SHIP, SYNOP } What;
    std::string confile;              //--conf
    std::string templatefile;         //--template
    std::string outconf;              //--out
+   int nIsTypes;
+   What  type;
+
+   Options():nIsTypes(0), type( NON ) {}
 };
 
 void

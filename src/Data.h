@@ -28,18 +28,22 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvsynop_Data_h__
-#define __kvsynop_Data_h__
+#ifndef __kvbufr_Data_h__
+#define __kvbufr_Data_h__
 
+#include <set>
+#include <iostream>
+#include <string>
 #include <kvalobs/kvData.h>
 #include <kvalobs/kvDataFlag.h>
 #include <kvalobs/kvDbBase.h>
-#include <iostream>
+#include "defines.h"
 
 class Data : public kvalobs::kvDbBase {
 private:
 	int              stationid_;
 	miutil::miTime   obstime_;
+	miutil::miTime   tbtime_;
 	std::string      original_;
 	int              paramid_;
 	int              typeid_;
@@ -82,22 +86,50 @@ public:
 	void clean();
 
 	const char* tableName() const {return "data";}
+
+#ifdef __WITH_PUTOOLS__
 	miutil::miString toSend()   const;
 	miutil::miString toUpdate() const;
 	miutil::miString uniqueKey() const;
+#else
+	std::string toSend()   const;
+	std::string toUpdate() const;
+	std::string uniqueKey() const;
+#endif
 
 	int              stationID()   const { return stationid_;  }
 	miutil::miTime   obstime()     const { return obstime_;    }
+	miutil::miTime   tbtime()      const { return tbtime_;    }
 	std::string      original()    const { return original_;   }
 	int              paramID()     const { return paramid_;    }
 	int              typeID()      const { return typeid_;     }
-	int              sensor()      const { return sensor_-'0'; }
+	int              sensor()      const { return sensor_; }
 	int              level()       const { return level_;      }
 	kvalobs::kvControlInfo controlinfo()const;
 	kvalobs::kvUseInfo useinfo()const;
 
 	friend std::ostream& operator<<( std::ostream& ost,
 									 const Data& data );
+};
+
+struct DataKey {
+   int              stationid_;
+   int              typeid_;
+   int              paramid_;
+   int              sensor_;
+   int              level_;
+   miutil::miTime   obstime_;
+
+   DataKey( const kvalobs::kvData &data );
+   bool operator<(const DataKey &dk )const;
+};
+
+struct DataKeySet
+   : public std::set<DataKey>
+{
+      ///@return true if the key is added and false if the key
+      ///already is in the list.
+      bool add( const DataKey &key );
 };
 
 std::ostream& operator<<( std::ostream& ost,

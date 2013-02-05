@@ -110,7 +110,11 @@ clean()
    fromTime_ = miutil::miTime();
 }
 
+#ifdef  __WITH_PUTOOLS__
 miutil::miString
+#else
+std::string
+#endif
 TblStInfoSysStationOutmessage::
 uniqueKey() const
 {

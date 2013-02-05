@@ -29,12 +29,17 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 #include <list>
+#include <puTools/miTime.h>
 #include <milog/milog.h>
+#include <miutil/replace.h>
+#include <kvalobs/kvPath.h>
+
+#include "App.h"
 #include "Data.h"
 #include "kvDbGateProxy.h"
 #include "DataReceiver.h"
 #include "tblBufr.h"
-#include <kvalobs/kvPath.h>
+#include "defines.h"
 
 using namespace std;
 using namespace kvservice;
@@ -44,9 +49,9 @@ using namespace milog;
 DataReceiver::DataReceiver(App &app_,
                            dnmi::thread::CommandQue &inputQue_,
                            dnmi::thread::CommandQue &outputQue_):
-                           app(app_),
-                           inputQue(inputQue_),
-                           outputQue(outputQue_)
+                                 app(app_),
+                                 inputQue(inputQue_),
+                                 outputQue(outputQue_)
 {
 }
 
@@ -99,9 +104,9 @@ DataReceiver::doCheckReceivedData(ObsEvent *obsevent)
 
    setDefaultLogger(obsevent->stationInfo());
 
-   if(!obsevent->stationInfo()->msgForTime(obsevent->obstime().hour())){
-      LOGINFO("Skip BUFFER for this hour: " << obsevent->obstime() << endl <<
-              " wmono: " << obsevent->stationInfo()->wmono() );
+   if( !obsevent->stationInfo()->msgForTime( obsevent->obstime() ) ){
+      LOGINFO("Skip BUFFER for this hour: " << obsevent->obstime() <<
+              " " << obsevent->stationInfo()->toIdentString() );
       delete obsevent;
       Logger::resetDefaultLogger();
       return;
@@ -109,13 +114,13 @@ DataReceiver::doCheckReceivedData(ObsEvent *obsevent)
 
    if(!typeidReceived(*obsevent)){
       LOGERROR("Cant get information about received stationid/typeid!"<<
-               "Deleting event: " << obsevent->stationInfo()->wmono() <<
+               "Deleting event: " << obsevent->stationInfo()->toIdentString() <<
                " obstime: " << obsevent->obstime());
       delete obsevent;
       obsevent = 0;
    }else if(obsevent->nTypeidReceived()==0){
       LOGWARN("No stationid/typeid received!"<<
-              "Deleting event: " << obsevent->stationInfo()->wmono() <<
+              "Deleting event: " << obsevent->stationInfo()->toIdentString() <<
               " obstime: " << obsevent->obstime());
       delete obsevent;
       obsevent = 0;
@@ -135,9 +140,11 @@ DataReceiver::newData(kvservice::KvObsDataListPtr data)
 {
    kvalobs::kvDbGateProxy gate( app.dbThread->dbQue );
    IKvObsDataList    it;
-   StationInfoPtr    station;
+   //StationInfoPtr    station;
+   StationInfoList    stations;
    miutil::miTime    toTime;
    miutil::miTime    fromTime;
+   DataKeySet        dataInserted;
 
    //data, er en liste av lister <KvData> til observasjoner
    //med samme stationid, typeid og obstime.
@@ -158,7 +165,6 @@ DataReceiver::newData(kvservice::KvObsDataListPtr data)
          it++){
 
       KvObsData::kvDataList::iterator dit=it->dataList().begin();
-      std::list<Data> dataList;
 
       if(dit==it->dataList().end()){
          LOGWARN("Data received from kvalobs: Unexpected, NO Data!");
@@ -166,166 +172,169 @@ DataReceiver::newData(kvservice::KvObsDataListPtr data)
       }
 
 
-      station=app.findStationInfo(dit->stationID());
+      stations=app.findStationInfo(dit->stationID());
 
-      if(!station){
+      if( stations.empty() ){
          LOGWARN("NO StationInfo: " << dit->stationID());
          continue;
       }
 
-      LOGINFO("Data received from kvalobs: stationID: "
-            << it->stationid()
-            << " (" << station->wmono() << ")" << endl
-            << "       obstime: " << dit->obstime() << endl
-            << "        typeid: " << dit->typeID()  << endl
-            << "   #parameters: " << it->dataList().size() << endl);
+      for( StationList::iterator itStation=stations.begin();
+            itStation != stations.end(); ++itStation ) {
+         std::list<Data> dataList;
+         LOGINFO("Data received from kvalobs: stationID: "
+               << it->stationid()
+               << " (" << (*itStation)->toIdentString() << ")" << endl
+               << "       obstime: " << dit->obstime()  << endl
+               << "        typeid: " << dit->typeID()  << endl
+               << "   #parameters: " << it->dataList().size() << endl);
 
-      if(!app.acceptAllTimes() &&
-            (dit->obstime()<fromTime || dit->obstime()>toTime)){
-         LOGWARN("obstime to old or to early: " << dit->obstime() << endl <<
-                 "-- Valid interval: " << fromTime << " - " << toTime);
+         if(!app.acceptAllTimes() &&
+               (dit->obstime()< TO_PTIME( fromTime ) || dit->obstime()> TO_PTIME( toTime ) )){
+            LOGWARN("obstime to old or to early: " << dit->obstime() << endl <<
+                    "-- Valid interval: " << fromTime << " - " << toTime);
 
-         //No 'continue' here! We reevaluate after we have set up to log
-         //to a station specific file and write the message to the logfile
-         //before we continue.
-         //See  **1**
+            //No 'continue' here! We reevaluate after we have set up to log
+            //to a station specific file and write the message to the logfile
+            //before we continue.
+            //See  **1**
 
-      }
-
-
-      if(!station->hasTypeId(dit->typeID())){
-         LOGWARN("StationInfo: typeid: " <<dit->typeID() << " not used!");
-
-         //No 'continue' here! We reevaluate after we have set up to log
-         //to a station specific file and write the message to the logfile
-         //before we continue.
-         //See  **2**
-      }
-
-      //Setup to log to a station specific file.
-      setDefaultLogger(station);
-
-      //This is repeated here to get it out on the log file for the wmono.
-      LOGINFO("Data received from kvalobs: stationID: "
-            << it->stationid()<< endl
-            << "       obstime: " << dit->obstime() << endl
-            << "        typeid: " << dit->typeID()  << endl
-            << "   #parameters: " << it->dataList().size() << endl
-            << "Accepting data in time interval: " << fromTime << " - " <<
-            toTime);
-
-      //**1**
-      if(!app.acceptAllTimes() &&
-            (dit->obstime()<fromTime || dit->obstime()>toTime)){
-         LOGWARN("obstime to old or to early: " << dit->obstime() << endl <<
-                 "-- Valid interval: " << fromTime << " - " << toTime);
-         Logger::resetDefaultLogger();
-         LOGWARN("obstime to old or to early: " << dit->obstime() << endl <<
-                 "-- Valid interval: " << fromTime << " - " << toTime);
-         continue;
-      }
-
-      //**2**
-      if(!station->hasTypeId(dit->typeID())){
-         LOGWARN("StationInfo: typeid: " <<dit->typeID() << " not used!");
-         Logger::resetDefaultLogger();
-         LOGWARN("StationInfo: typeid: " <<dit->typeID() << " not used!");
-         continue;
-      }
-
-      for(dit=it->dataList().begin(); dit!=it->dataList().end(); dit++)
-         dataList.push_back(Data(*dit));
-
-      dit=it->dataList().begin();
-
-      if(dataList.size()==0){
-         LOGDEBUG("No new data to insert in database:" << endl
-                  << "  stationid: " << dit->stationID()
-                  << " obstime: " <<  dit->obstime()
-                  << " typeid: " << dit->typeID() << endl);
-         Logger::resetDefaultLogger();
-         LOGDEBUG("No new data to insert in database:" << endl
-                  << "  stationid: " << dit->stationID()
-                  << " obstime: " <<  dit->obstime()
-                  << " typeid: " << dit->typeID() << endl);
-         continue;
-      }
-
-      if(!gate.insert(dataList, true)){
-         LOGERROR("Cant insert data: \n  stationid: " << dit->stationID()
-                  << " obstime: " << dit->obstime()
-                  << "  reason: " << gate.getErrorStr() << endl);
-         Logger::resetDefaultLogger();
-         LOGERROR("Cant insert data: \n  stationid: " << dit->stationID()
-                  << " obstime: " << dit->obstime()
-                  << "  reason: " << gate.getErrorStr() << endl);
-
-         continue;
-      }
-
-      if(!station->msgForTime(dit->obstime().hour())){
-         LOGINFO("Skip BUFR for this hour: " << dit->obstime() << endl
-                 <<  " stationid: " << dit->stationID() << endl
-                 <<  " typeid: " << dit->typeID());
-         Logger::resetDefaultLogger();
-         LOGINFO("Skip BUFFER for this hour: " << dit->obstime() << endl
-                 <<  " stationid: " << dit->stationID() << endl
-                 <<  " typeid: " << dit->typeID());
-         continue;
-      }
-
-      std::list<Data>::iterator dataIt=dataList.begin();
-
-      ObsEvent *event;
-
-      ostringstream errs;
-
-      errs << "Inserted data # " << dataList.size() << " :" << endl
-            << "  stationid: " << dataIt->stationID()
-            << " obstime: " <<  dataIt->obstime()
-            << " typeid: " << dataIt->typeID() << endl;
-
-      LOGINFO(errs.str());
-
-      try{
-         event=new ObsEvent(dataIt->obstime(),
-                            station);
-
-         if(!typeidReceived(*event)){
-            errs << "FAILED: Cant get informatiom about (stationid/typeid) " <<
-                  "received for station <" << event->stationInfo()->wmono() <<
-                  "> at obstime: " << event->obstime() << endl;
-            LOGWARN("FAILED: Cant get informatiom about (stationid/typeid) " <<
-                    "received for station <" << event->stationInfo()->wmono() <<
-                    "> at obstime: " << event->obstime());
-         }else if(event->nTypeidReceived()==0){
-            errs << "No data received (stationid/typeid)!" << endl <<
-                  "Station (wmono): " << event->stationInfo()->wmono() <<
-                  " obstime: " << event->obstime() << endl;
-
-            LOGWARN("No data received (stationid/typeid)!" << endl <<
-                    "Station (wmono): " << event->stationInfo()->wmono() <<
-                    " obstime: " << event->obstime());
-            delete event;
-         }else{
-            app.addObsEvent(event, outputQue);
          }
+
+
+         if(!(*itStation)->hasTypeId(dit->typeID())){
+            LOGWARN("StationInfo: typeid: " <<dit->typeID() << " not used!");
+
+            //No 'continue' here! We reevaluate after we have set up to log
+            //to a station specific file and write the message to the logfile
+            //before we continue.
+            //See  **2**
+         }
+
+         //Setup to log to a station specific file.
+         setDefaultLogger(*itStation);
+
+         //This is repeated here to get it out on the log file for the wmono.
+         LOGINFO("Data received from kvalobs: stationID: "
+               << it->stationid()<< endl
+               << " (" << (*itStation)->toIdentString() << ")" << endl
+               << "       obstime: " << dit->obstime() << endl
+               << "        typeid: " << dit->typeID()  << endl
+               << "   #parameters: " << it->dataList().size() << endl
+               << "Accepting data in time interval: " << fromTime << " - " <<
+               toTime);
+
+         //**1**
+         if(!app.acceptAllTimes() &&
+               (dit->obstime()< TO_PTIME( fromTime ) || dit->obstime() > TO_PTIME( toTime ) )){
+            LOGWARN("obstime to old or to early: " << dit->obstime() << endl <<
+                    "-- Valid interval: " << fromTime << " - " << toTime);
+            Logger::resetDefaultLogger();
+            LOGWARN("obstime to old or to early: " << dit->obstime() << endl <<
+                    "-- Valid interval: " << fromTime << " - " << toTime);
+            continue;
+         }
+
+         //**2**
+         if(!(*itStation)->hasTypeId(dit->typeID())){
+            LOGWARN("StationInfo: typeid: " <<dit->typeID() << " not used!");
+            Logger::resetDefaultLogger();
+            LOGWARN("StationInfo: typeid: " <<dit->typeID() << " not used!");
+            continue;
+         }
+
+         for(dit=it->dataList().begin(); dit!=it->dataList().end(); dit++) {
+            if( dataInserted.add( DataKey(*dit) ) )
+               dataList.push_back(Data(*dit));
+         }
+
+         dit=it->dataList().begin();
+
+         if(dataList.size()==0 && dataInserted.size() == 0 ) {
+            LOGDEBUG("No new data to insert in database:" << endl
+                     << "  stationid: " << dit->stationID()
+                     << " obstime: " <<  dit->obstime()
+                     << " typeid: " << dit->typeID() << endl);
+            Logger::resetDefaultLogger();
+            LOGDEBUG("No new data to insert in database:" << endl
+                     << "  stationid: " << dit->stationID()
+                     << " obstime: " <<  dit->obstime()
+                     << " typeid: " << dit->typeID() << endl);
+            continue;
+         }
+
+         if( ! dataList.empty() && !gate.insert(dataList, true)){
+            LOGERROR("Cant insert data: \n  stationid: " << dit->stationID()
+                     << " obstime: " << dit->obstime()
+                     << "  reason: " << gate.getErrorStr() << endl);
+            Logger::resetDefaultLogger();
+            LOGERROR("Cant insert data: \n  stationid: " << dit->stationID()
+                     << " obstime: " << dit->obstime()
+                     << "  reason: " << gate.getErrorStr() << endl);
+
+            continue;
+         }
+
+         if( !(*itStation)->msgForTime( TO_MITIME( dit->obstime() ) ) ) {
+            LOGINFO("Skip BUFR for this hour: " << dit->obstime() << endl
+                    <<  " stationid: " << dit->stationID() << endl
+                    <<  " typeid: " << dit->typeID());
+            Logger::resetDefaultLogger();
+            LOGINFO("Skip BUFR for this hour: " << dit->obstime() << endl
+                    <<  " stationid: " << dit->stationID() << endl
+                    <<  " typeid: " << dit->typeID());
+            continue;
+         }
+
+         std::list<Data>::iterator dataIt=dataList.begin();
+
+         ObsEvent *event;
+
+         ostringstream errs;
+
+         errs << "Inserted data # " << dataList.size() << " :" << endl
+               << "  stationid: " << dataIt->stationID()
+               << " obstime: " <<  dataIt->obstime()
+               << " typeid: " << dataIt->typeID() << endl;
+
+         LOGINFO(errs.str());
+
+         try{
+            event=new ObsEvent(dataIt->obstime(),
+                               *itStation);
+
+            if(!typeidReceived(*event)){
+               errs << "FAILED: Cant get informatiom about (stationid/typeid) " <<
+                     "received for station <" << event->stationInfo()->toIdentString() <<
+                     "> at obstime: " << event->obstime() << endl;
+               LOGWARN("FAILED: Cant get informatiom about (stationid/typeid) " <<
+                       "received for station <" << event->stationInfo()->toIdentString() <<
+                       "> at obstime: " << event->obstime());
+            }else if(event->nTypeidReceived()==0){
+               errs << "No data received (stationid/typeid)!" << endl <<
+                     "Station: " << event->stationInfo()->toIdentString() <<
+                     " obstime: " << event->obstime() << endl;
+
+               LOGWARN("No data received (stationid/typeid)!" << endl <<
+                       "Station: " << event->stationInfo()->toIdentString() <<
+                       " obstime: " << event->obstime());
+               delete event;
+            }else{
+               app.addObsEvent(event, outputQue);
+            }
+         }
+         catch(...){
+            errs << "NOMEM: cant send a ObsEvent!";
+            LOGERROR("NOMEM: cant send a ObsEvent!");
+         }
+
+         prepareToProcessAnyBufrBasedOnThisObs(dataIt->obstime(),
+                                               *itStation);
+
+         Logger::resetDefaultLogger();
+
+         LOGINFO( errs.str() );
       }
-      catch(...){
-         errs << "NOMEM: cant send a ObsEvent!";
-         LOGERROR("NOMEM: cant send a ObsEvent!");
-      }
-
-      //if(app.isContinuesType(dataIt->typeID())){
-      //We dont need to regenerate BUFFER for typeid that
-      //are not continues in time.
-      prepareToProcessAnyBufrBasedOnThisObs(dataIt->obstime(),
-                                            station);
-      //}
-
-      Logger::resetDefaultLogger();
-
-      LOGINFO(errs.str());
    }
 }
 
@@ -334,6 +343,11 @@ DataReceiver::
 prepareToProcessAnyBufrBasedOnThisObs(const miutil::miTime &obstime,
                                       StationInfoPtr station)
 {
+   //TODO: This function only works correct for observation
+   //on whole hours. It must be looked through again to be implemented
+   //for observations with better resolution than one hour. It only
+   //regenerates BUFR that is on WMO standard times ie. 0,3,6,..,21.
+
    std::list<TblBufr> bufrData;
    miutil::miTime      now(miutil::miTime::nowTime());
    miutil::miTime      maxTime;
@@ -352,28 +366,34 @@ prepareToProcessAnyBufrBasedOnThisObs(const miutil::miTime &obstime,
    int hour=obstime.hour();
    int r=hour%3;
 
-   //Nermest BUFFER tid som er st�rre enn obstime;
+   //Nearest BUFR time larger than obstime;
    if(r==0)
       time.addHour(3);
    else
       time.addHour(3-r);
 
    while(time<=maxTime){
-      LOGINFO("Posibly regenerating BUFFER for: " <<
-              "  wmono: " << station->wmono() << " obstime: " << time<<endl);
+
+      if( ! station->msgForTime( time ) ) {
+         time.addHour(3);
+         continue;
+      }
+
+      LOGINFO("Possibly regenerating BUFR for: <" <<
+              station->toIdentString() << "> obstime: " << time<<endl);
 
       try{
          ObsEvent *event=new ObsEvent(time, station, true);
 
          if(!typeidReceived(*event)){
-            LOGWARN("FAILED: Cant get informatiom about (stationid/typeid) " <<
-                    "received for station <"<< event->stationInfo()->wmono() <<
-                    " at obstime <" << event->obstime());
+            LOGWARN("FAILED: Can't get information about (stationid/typeid) " <<
+                    "received for station <"<< event->stationInfo()->toIdentString() <<
+                    "> at obstime " << event->obstime() << ".");
             delete event;
             return;
          }else if(event->nTypeidReceived()==0){
             LOGWARN("No data received (stationid/typeid)!" << endl <<
-                    "Station (wmono): " << event->stationInfo()->wmono() <<
+                    "Station: " << event->stationInfo()->toIdentString() <<
                     " obstime: " << event->obstime());
             delete event;
          }else{
@@ -381,7 +401,7 @@ prepareToProcessAnyBufrBasedOnThisObs(const miutil::miTime &obstime,
          }
       }
       catch(...){
-         LOGERROR("NOMEM: cant send a ObsEvent!");
+         LOGERROR("NOMEM: can't send a ObsEvent!");
       }
 
       time.addHour(3);
@@ -393,7 +413,7 @@ bool
 DataReceiver::
 typeidReceived(ObsEvent &event)
 {
-   StationInfo::TLongList stations=event.stationInfo()->stationID();
+   StationInfo::TLongList stations=event.stationInfo()->definedStationID();
    StationInfo::TLongList::iterator it=stations.begin();
    ostringstream ost;
 
@@ -435,7 +455,7 @@ typeidReceived(ObsEvent &event)
 
    try{
       ost.str("");
-      ost << "typeidReceived for WMO: " << event.stationInfo()->wmono() <<
+      ost << "typeidReceived for station: " << event.stationInfo()->toIdentString() <<
             " obstime: " << event.obstime() << endl << " (stationid/typeid):";
 
       for( KvDbGateResult::const_iterator it = dbResult.begin(); it!=dbResult.end(); ++it ) {
@@ -472,9 +492,11 @@ DataReceiver::setDefaultLogger(StationInfoPtr station)
    try{
       FLogStream *logs=new FLogStream(1, 204800); //200k
       std::ostringstream ost;
+      string code( station->codeToString() );
 
-      ost << kvPath("logdir") << "/kvbufr/dr-"
-            << station->wmono() << ".log";
+      miutil::replace( code," ", "_" );
+      ost << kvPath("logdir") << "/" << options.progname << "/dr-"
+          << station->toIdentString() <<"_code_" << code << ".log";
 
       if(logs->open(ost.str())){
          Logger::setDefaultLogger(logs);
@@ -489,7 +511,7 @@ DataReceiver::setDefaultLogger(StationInfoPtr station)
       }
    }
    catch(...){
-      LOGERROR("Cant create a logstream for wmono: " <<
-               station->wmono() );
+      LOGERROR("Cant create a logstream for: " <<
+               station->toIdentString() << " codes: " << station->codeToString() );
    }
 }

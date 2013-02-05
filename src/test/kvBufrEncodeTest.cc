@@ -28,27 +28,34 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
+#include <math.h>
+#include <iomanip>
 #include <float.h>
 #include <limits.h>
 #include <string>
 #include <fstream>
+#include <list>
+#include <sstream>
+#include <boost/assign.hpp>
+#include <gtest/gtest.h>
 #include <puTools/miTime.h>
 #include <miutil/cmprspace.h>
 #include <kvalobs/kvData.h>
-#include <list>
 #include <kvalobs/kvStation.h>
 #include <milog/milog.h>
 #include "bufr.h"
 #include "kvBufrEncodeTestConf.h"
 #include "StationInfoParse.h"
-#include <sstream>
 #include "ReadDataFile.h"
-#include <gtest/gtest.h>
-#include <encodebufr.h>
-#include "BUFRparam.h"
+#include "encodebufr.h"
+#include "bufr/EncodeBufrBase.h"
+#include "bufr/BUFRparam.h"
+#include "bufr/EncodeBufrManager.h"
+#include "bufr/BufrHelper.h"
+#include "bufr/AreaDesignator.h"
 
 using namespace std;
+namespace b=boost;
 
 namespace {
 }
@@ -59,6 +66,7 @@ class BufrEncodeTest : public testing::Test
 
 protected:
 	Bufr bufrEncoder;
+	BufrParamValidaterPtr validater;
 	std::list<StationInfoPtr> stationList;
 
 	StationInfoPtr findWmoNo( int wmono ) {
@@ -70,12 +78,31 @@ protected:
 		return StationInfoPtr();
 	}
 
+	StationInfoPtr findStationId( int stationid ) {
+	      for( std::list<StationInfoPtr>::iterator it=stationList.begin(); it!=stationList.end(); ++it ) {
+	         if( (*it)->stationID() == stationid )
+	            return *it;
+	      }
+
+	      return StationInfoPtr();
+	   }
+
+	StationInfoPtr findCallsign( const std::string &callsign ) {
+	      for( std::list<StationInfoPtr>::iterator it=stationList.begin(); it!=stationList.end(); ++it ) {
+	         if( (*it)->callsign() == callsign )
+	            return *it;
+	      }
+
+	      return StationInfoPtr();
+	   }
+
 	///Called before each test case.
 	virtual void SetUp() {
 		using namespace miutil::conf;
 		ConfParser confParser;
 		//istringstream iconf(testconf);
-		std::string conffile(string(TESTDATADIR) + "/kvBufrEncodeTest.conf" );
+		string conffile(string(TESTDATADIR) + "/kvBufrEncodeTest.conf" );
+		string btabl(string(BUFRTBLDIR)+"/B0000000000098014001.TXT");
 		ifstream iconf( conffile.c_str() );
 		//Turn off almost all logging.
 		milog::Logger::logger().logLevel( milog::ERROR );
@@ -92,6 +119,9 @@ protected:
 		StationInfoParse stationParser;
 
 		ASSERT_TRUE( stationParser.parse( conf, stationList ) ) << "Cant parse the station information.";
+
+		validater = BufrParamValidater::loadTable( btabl );
+		ASSERT_TRUE( validater ) << "Cant load BUFR B table: " << btabl;
 	}
 
 	///Called after each test case.
@@ -101,6 +131,8 @@ protected:
 
 
 };
+
+
 
 TEST_F( BufrEncodeTest, RR_from_RRRtr_AND_RR1 )
 {
@@ -501,7 +533,7 @@ TEST_F( BufrEncodeTest, encode_bufr )
 {
    DataElementList data;
    StationInfoPtr  stInfo;
-   BufrData bufr;
+   BufrDataPtr bufr( new BufrData() );
    kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
    int wmono=1492;
    stInfo = findWmoNo( wmono );
@@ -512,20 +544,27 @@ TEST_F( BufrEncodeTest, encode_bufr )
    loadBufrDataFromFile( "data-18700-1.dat", stInfo, data, validData );
 
    EXPECT_TRUE( data.size() != 0 );
-   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1492;
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< 1492;
 
-   BufrEncoder encoder( stInfo, true );
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   EncodeBufrManager encoder;
+   BufrTemplateList templateList;
+   b::assign::push_back( templateList )(900000);
+
    try {
-      encoder.encodeBufr( bufr, 0 );
+      encoder.encode( templateList, bufrHelper );
    }
-   catch ( BufrEncodeException &ex ) {
+   catch ( EncodeException &ex ) {
       FAIL() << "EXCEPTION (BufrEncodeException): " << ex.what();
+   }
+   catch ( const std::exception &ex ) {
+       FAIL() << "EXCEPTION: " << ex.what();
    }
    catch( ... ) {
       FAIL() << "EXCEPTION: Unknown.";
    }
 
-   ASSERT_NO_THROW( encoder.saveToFile( ".", true ) );
+   ASSERT_NO_THROW( bufrHelper.saveToFile( ".", true ) );
 }
 
 TEST_F( BufrEncodeTest, encode_bufr2 )
@@ -533,7 +572,7 @@ TEST_F( BufrEncodeTest, encode_bufr2 )
    DataElementList allData;
    DataElementList data;
    StationInfoPtr  stInfo;
-   BufrData bufr;
+   BufrDataPtr bufr( new BufrData() );
    kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
    int wmono=1003;
    miutil::miTime dt;
@@ -547,21 +586,28 @@ TEST_F( BufrEncodeTest, encode_bufr2 )
    data=allData.subData( dt );
 
    EXPECT_TRUE( data.size() != 0 );
-   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
 
-   BufrEncoder encoder( stInfo, true );
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   EncodeBufrManager encoder;
+   BufrTemplateList templateList;
+   b::assign::push_back( templateList )(900000);
+
 
    try {
-      encoder.encodeBufr( bufr, 0 );
+      encoder.encode( templateList, bufrHelper );
    }
-   catch ( BufrEncodeException &ex ) {
+   catch ( EncodeException &ex ) {
       FAIL()<< "EXCEPTION (BufrEncodeException): " << ex.what();
    }
+   catch( const std::exception &ex) {
+         FAIL() << "EXCEPTION: Unknown: " << ex.what();
+      }
    catch( ... ) {
       FAIL() << "EXCEPTION: Unknown.";
    }
 
-   ASSERT_NO_THROW( encoder.saveToFile( ".", true ) );
+   ASSERT_NO_THROW( bufrHelper.saveToFile( ".", true ) );
 }
 
 
@@ -628,12 +674,617 @@ TEST_F( BufrEncodeTest, CloudsAndVV )
 
 }
 
+
+TEST_F( BufrEncodeTest, EncodeBufr307079 )
+{
+   DataElementList allData;
+   StationInfoPtr stInfo;
+   BufrDataPtr bufr( new BufrData() );
+   DataElementList data;
+   miutil::miTime dt;
+   EncodeBufrManager encoder;
+
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+
+   int wmono=1492;
+   stInfo = findWmoNo( wmono );
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( loadBufrDataFromFile( "data_18700.dat", stInfo, allData, validData ) )
+      << "Cant load data from filr: data_18700.dat";
+
+   dt=miutil::miTime("2012-05-17 06:00:00");
+   data=allData.subData( dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< wmono;
+
+   bufr->cloudExtra.add( BufrData::CloudDataExtra( 7, 3, 4, 1000) );
+   bufr->EM=7;
+   bufr->SA=23;
+   bufr->TGN_12=8;
+   bufr->TW=275;
+   bufr->precip24.RR = -0.1;
+
+   BufrTemplateList templateList;
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelper.setTest( true );
+   //b::assign::push_back( templateList )
+   //   (301090)(302031)(302035)(302037)(302056)(302043);
+
+   b::assign::push_back( templateList )(900000);
+
+
+   bufrHelper.setObsTime( dt );
+   bufrHelper.setSequenceNumber( 0 );
+
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+      cerr << bufrHelper.getLog() << endl;
+
+      int len;
+      const char *buf=bufrHelper.getBufr( len );
+      cerr << "#len: " << len << endl;
+      ofstream fout( "BUFR301090" );
+
+      fout.write( buf, len );
+      fout.close();
+
+
+
+   }
+   catch ( const std::exception &ex ) {
+      cerr << "<<<<< EXCEPTION LOG" << endl;
+      cerr << bufrHelper.getLog() << endl;
+      cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+   }
+}
+
+
+
+
+
+
+
+
+
+TEST_F( BufrEncodeTest, EncodeBufrSVV )
+{
+   DataElementList allData;
+   StationInfoPtr stInfo;
+   BufrDataPtr bufr( new BufrData() );
+   DataElementList data;
+   miutil::miTime dt;
+   EncodeBufrManager encoder;
+
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+
+
+   int stationid=17090;
+   stInfo = findStationId( stationid );
+
+   ASSERT_TRUE( stInfo ) << "No station information for stationid " << stationid;
+   ASSERT_TRUE( loadBufrDataFromFile( "svv_17090.dat", stInfo, allData, validData ) )
+      << "Can't load data from file: svv_17090.dat";
+
+   cerr << "allData: " << allData.size() << endl;
+   dt=miutil::miTime("2012-05-30 06:00:00");
+   data=allData.subData( dt );
+
+   //cerr << "@@@@@@ dt: " << dt << " ft: " << data.firstTime()<<endl;
+   EXPECT_TRUE( dt == data.firstTime() ) ;
+
+   cerr << "data: " << data.size() << endl;
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< stationid;
+
+   BufrTemplateList templateList;
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelper.setTest( true );
+
+   b::assign::push_back( templateList )(900001);
+   bufrHelper.setObsTime( dt );
+   bufrHelper.setSequenceNumber( 0 );
+
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+      cerr << bufrHelper.getLog() << endl;
+
+      int len;
+      const char *buf=bufrHelper.getBufr( len );
+      cerr << "#len: " << len << endl;
+      ofstream fout( "BUFR900001" );
+
+      fout.write( buf, len );
+      fout.close();
+   }
+   catch ( const std::exception &ex ) {
+      cerr << "<<<<< EXCEPTION LOG" << endl;
+      cerr << bufrHelper.getLog() << endl;
+      cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+   }
+}
+
+TEST_F( BufrEncodeTest, MsgTimeTest )
+{
+   using namespace miutil;
+   MsgTime t;
+   MsgTime::Hours hours;
+   int stationid=999991;
+   miutil::miTime test;
+   StationInfoPtr stInfo;
+   stInfo = findStationId( stationid );
+
+   ASSERT_TRUE( stInfo ) << "No station information for stationid " << stationid;
+
+   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 00:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 03:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 06:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 09:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 12:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 15:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 18:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 21:00:00" ) ));
+   ASSERT_TRUE( stInfo->msgForTime( miTime("2012-06-07 08:00:00" ) ));
+
+   try {
+      t.setMsgForTime( "0/6:0" );
+      cout << t << endl;
+
+      test = miTime("2012-06-07 00:00:00");
+      EXPECT_TRUE( t.msgForTime( test ) );
+
+      test = miTime("2012-06-07 00:01:00");
+      EXPECT_FALSE( t.msgForTime( test ) );
+
+      test = miTime("2012-06-07 04:00:00");
+      EXPECT_FALSE( t.msgForTime( test ) );
+   }
+   catch( const std::exception &e ) {
+      cout << "EXCEPTION: " << e.what() << endl;
+   }
+
+}
+
+
+double
+myRound( float val, double prec) {
+   double y=val/prec;
+   double q = round( y );
+   return q*prec;
+}
+
 TEST_F( BufrEncodeTest, BufrValidaterTest )
 {
-   string filename("share/bufrtables/B0000000000098014001.TXT");
-   BufrValidater validater;
-   validater.loadTable( filename );
+   float rr24f=-0.1;
+
+   BufrParamTypePtr pRR = validater->findParamDef(13023);
+   ASSERT_TRUE( pRR ) << "No BUFR param definition for paramid 0 13 023";
+
+//   cerr << "rr24fr: " << setprecision(20) << myRound( rr24f, 0.1 ) << endl;
+//   cerr << "rr24f : " << setprecision(20) << rr24f << endl;
+//   cerr << "rr24  : " << setprecision(20) << rr24 << endl;
+
+   ASSERT_TRUE( pRR->valid( rr24f ) );
 }
+
+TEST_F( BufrEncodeTest, EncodeBufr307079_18700 )
+{
+   DataElementList allData;
+   StationInfoPtr stInfo;
+   BufrDataPtr bufr( new BufrData() );
+   DataElementList data;
+   miutil::miTime dt;
+   EncodeBufrManager encoder;
+
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+
+   int wmono=1492;
+   stInfo = findWmoNo( wmono );
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( loadBufrDataFromFile( "18700-20121023T06.dat", stInfo, allData, validData ) )
+      << "Cant load data from file: 18700-20121023T06.dat";
+
+   dt=miutil::miTime("2012-10-23 06:00:00");
+   data=allData.subData( dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< wmono;
+
+
+
+   BufrTemplateList templateList;
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelper.setTest( true );
+
+   b::assign::push_back( templateList )(900000);
+
+
+   bufrHelper.setObsTime( dt );
+   bufrHelper.setSequenceNumber( 0 );
+
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+      cerr << bufrHelper.getLog() << endl;
+
+      int len;
+      const char *buf=bufrHelper.getBufr( len );
+      cerr << "#len: " << len << endl;
+      ofstream fout( "BUFR301090" );
+
+      fout.write( buf, len );
+      fout.close();
+   }
+   catch ( const std::exception &ex ) {
+      cerr << "<<<<< EXCEPTION LOG" << endl;
+      cerr << bufrHelper.getLog() << endl;
+      cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+   }
+}
+
+TEST_F( BufrEncodeTest, EncodeBufrBase_encodeRR)
+{
+    EXPECT_FLOAT_EQ( EncodeBufrBase::encodeRR( float(-1) ), float(0)  );
+    EXPECT_FLOAT_EQ( EncodeBufrBase::encodeRR( float( 0 ) ), float(-0.1) );
+    EXPECT_FLOAT_EQ( EncodeBufrBase::encodeRR( 0.1 ), 0.1 );
+    EXPECT_FLOAT_EQ( EncodeBufrBase::encodeRR( 1.2 ), 1.2 );
+    EXPECT_TRUE( EncodeBufrBase::encodeRR( FLT_MAX ) == FLT_MAX );
+    EXPECT_TRUE( EncodeBufrBase::encodeRR( -0.5 ) == FLT_MAX );
+    EXPECT_TRUE( EncodeBufrBase::encodeRR( -1.5 ) == FLT_MAX );
+}
+
+
+
+TEST_F( BufrEncodeTest, EncodeBufr90002)
+{
+   DataElementList allData;
+   StationInfoPtr stInfo;
+   BufrDataPtr bufr( new BufrData() );
+   DataElementList data;
+   miutil::miTime dt;
+   EncodeBufrManager encoder;
+
+
+
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+
+   int stationid=73250;
+   stInfo =  findStationId( stationid );
+
+   ASSERT_TRUE( stInfo ) << "No station information for id " << stationid;
+   ASSERT_TRUE( loadBufrDataFromFile( "73250-302-20121024T06.dat", stInfo, allData, validData ) )
+      << "Cant load data from file: 73250-302-20121024T06.dat";
+   dt=miutil::miTime("2012-10-24 06:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< stationid;
+
+   BufrTemplateList templateList;
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelper.setTest( true );
+
+   b::assign::push_back( templateList )(900002);
+
+
+   bufrHelper.setObsTime( dt );
+   bufrHelper.setSequenceNumber( 0 );
+
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+      cerr << bufrHelper.getLog() << endl;
+
+      int len;
+      const char *buf=bufrHelper.getBufr( len );
+      cerr << "#len: " << len << endl;
+      ofstream fout( "BUFR90002" );
+
+      fout.write( buf, len );
+      fout.close();
+   }
+   catch ( const std::exception &ex ) {
+      cerr << "<<<<< EXCEPTION LOG" << endl;
+      cerr << bufrHelper.getLog() << endl;
+      cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+      FAIL();
+   }
+
+
+   dt=miutil::miTime("2012-11-14 06:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< stationid;
+
+   BufrHelper bufrHelper1( validater, stInfo, bufr );
+   bufrHelper1.setTest( true );
+
+
+   bufrHelper1.setObsTime( dt );
+   bufrHelper1.setSequenceNumber( 0 );
+
+
+     try {
+         encoder.encode( templateList, bufrHelper1 );
+         cerr << bufrHelper1.getLog() << endl;
+
+        int len;
+        const char *buf=bufrHelper1.getBufr( len );
+        cerr << "#len: " << len << endl;
+        ofstream fout( "BUFR90002_1" );
+
+        fout.write( buf, len );
+        fout.close();
+     }
+     catch ( const std::exception &ex ) {
+        cerr << "<<<<< EXCEPTION LOG" << endl;
+        cerr << bufrHelper.getLog() << endl;
+        cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+        FAIL();
+     }
+
+
+}
+
+TEST_F( BufrEncodeTest, EncodeBufr90003_SHIP)
+{
+   DataElementList allData;
+   StationInfoPtr stInfo;
+   BufrDataPtr bufr( new BufrData() );
+   DataElementList data;
+   miutil::miTime dt;
+   EncodeBufrManager encoder;
+   string datafile("76991_KV_HARSTAD.dat");
+
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+
+   int stationid=76991;
+   stInfo =  findCallsign( "LMXQ" );
+
+   ASSERT_TRUE( stInfo ) << "No station information for id " << stationid;
+   ASSERT_TRUE( loadBufrDataFromFile( datafile, stInfo, allData, validData ) )
+      << "Cant load data from file: '" << datafile << "'.";
+   dt=miutil::miTime("2012-11-10 06:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< stationid;
+
+   BufrTemplateList templateList;
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelper.setTest( true );
+
+   b::assign::push_back( templateList )(900003);
+
+
+   bufrHelper.setObsTime( dt );
+   bufrHelper.setSequenceNumber( 0 );
+
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+      cerr << bufrHelper.getLog() << endl;
+
+      int len;
+      const char *buf=bufrHelper.getBufr( len );
+      cerr << "#len: " << len << endl;
+      ofstream fout( "BUFR90003_LMXQ" );
+
+      fout.write( buf, len );
+      fout.close();
+   }
+   catch ( const std::exception &ex ) {
+      cerr << "<<<<< EXCEPTION LOG" << endl;
+      cerr << bufrHelper.getLog() << endl;
+      cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+      FAIL();
+   }
+}
+
+TEST_F( BufrEncodeTest, EncodeBufr90003_Platforms)
+{
+   DataElementList allData;
+   StationInfoPtr stInfo;
+   BufrDataPtr bufr( new BufrData() );
+   DataElementList data;
+   miutil::miTime dt;
+   EncodeBufrManager encoder;
+   string datafile("76920_EKOFISK.dat");
+   string callsign("LF5U");
+
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+
+   stInfo =  findCallsign( "LF5U" );
+
+   ASSERT_TRUE( stInfo ) << "No station information for callsign " << callsign;
+   ASSERT_TRUE( loadBufrDataFromFile( datafile, stInfo, allData, validData ) )
+      << "Cant load data from file: '" << datafile << "'.";
+   dt=miutil::miTime("2012-11-10 06:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< callsign;
+
+   BufrTemplateList templateList;
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelper.setTest( true );
+
+   b::assign::push_back( templateList )(900003);
+
+
+   bufrHelper.setObsTime( dt );
+   bufrHelper.setSequenceNumber( 0 );
+
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+      cerr << bufrHelper.getLog() << endl;
+
+      int len;
+      const char *buf=bufrHelper.getBufr( len );
+      cerr << "#len: " << len << endl;
+      ofstream fout( "BUFR90003_LF5U" );
+
+      fout.write( buf, len );
+      fout.close();
+   }
+   catch ( const std::exception &ex ) {
+      cerr << "<<<<< EXCEPTION LOG" << endl;
+      cerr << bufrHelper.getLog() << endl;
+      cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+      FAIL();
+   }
+}
+
+TEST_F( BufrEncodeTest, EncodeBufr90003_FG)
+{
+   DataElementList allData;
+   StationInfoPtr stInfo;
+   BufrDataPtr bufr( new BufrData() );
+   DataElementList data;
+   miutil::miTime dt;
+   EncodeBufrManager encoder;
+   string datafile("LF5U_20121115.dat");
+   string callsign("LF5U");
+
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+
+   stInfo =  findCallsign( callsign );
+
+   ASSERT_TRUE( stInfo ) << "No station information for callsign " << callsign;
+   ASSERT_TRUE( loadBufrDataFromFile( datafile, stInfo, allData, validData ) )
+      << "Cant load data from file: '" << datafile << "'.";
+   dt=miutil::miTime("2012-11-15 06:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< callsign;
+
+   EXPECT_FLOAT_EQ( bufr->FgMax.ff, 8.2304001);
+   EXPECT_FLOAT_EQ( bufr->FgMax.dd, FLT_MAX );
+   EXPECT_FLOAT_EQ( bufr->FgMax.t, -360 );
+}
+
+
+
+TEST_F( BufrEncodeTest, AreaDesignator)
+{
+
+	//Test northern hemisphere
+	ASSERT_TRUE( computeAreaDesignator(10, 60) == "D" );
+	ASSERT_TRUE( computeAreaDesignator(100, 60) == "C" );
+	ASSERT_TRUE( computeAreaDesignator(-10, 60) == "A" );
+	ASSERT_TRUE( computeAreaDesignator(-100, 60) == "B" );
+
+	//Test southern hemisphere
+	ASSERT_TRUE( computeAreaDesignator(10, -60) == "L" );
+	ASSERT_TRUE( computeAreaDesignator(100, -60) == "K" );
+	ASSERT_TRUE( computeAreaDesignator(-10, -60) == "I" );
+	ASSERT_TRUE( computeAreaDesignator(-100, -60) == "J" );
+
+	//Test tropical belt
+	ASSERT_TRUE( computeAreaDesignator(10, 10) == "H" );
+	ASSERT_TRUE( computeAreaDesignator(100, 10) == "G" );
+	ASSERT_TRUE( computeAreaDesignator(-10, -10) == "E" );
+	ASSERT_TRUE( computeAreaDesignator(-100, -10) == "F" );
+	ASSERT_TRUE( computeAreaDesignator(0, 0) == "H" );
+}
+
+TEST_F( BufrEncodeTest, Esss )
+{
+    StationInfoPtr stInfo( findWmoNo( 1492 ) ); //Dummy
+    DataElementList data;
+    DataElement dataElement;
+    BufrDataPtr bufr;
+    miutil::miTime t("2012-12-06 06:00:00");
+
+    dataElement.time( t );
+    dataElement.SA=-1;
+    dataElement.SD=-1;
+    data.insert( t, dataElement, true );
+    bufr = bufrEncoder.doBufr( stInfo, data );
+
+    ASSERT_TRUE( bufr != 0 );
+    ASSERT_TRUE( bufr->EE == FLT_MAX );
+    ASSERT_FLOAT_EQ( 0, bufr->SA );
+
+    dataElement.SA=-1;
+    dataElement.SD=1;
+    data.insert( t, dataElement, true );
+    bufr = bufrEncoder.doBufr( stInfo, data );
+
+    ASSERT_TRUE( bufr != 0 );
+    ASSERT_TRUE( bufr->EE == FLT_MAX );
+    ASSERT_FLOAT_EQ( -0.02, bufr->SA );
+
+    dataElement.SA=0;
+    dataElement.SD=1;
+    data.insert( t, dataElement, true );
+    bufr = bufrEncoder.doBufr( stInfo, data );
+
+    ASSERT_TRUE( bufr != 0 );
+    ASSERT_TRUE( bufr->EE == FLT_MAX );
+    ASSERT_FLOAT_EQ( 0, bufr->SA );
+
+    dataElement.SA=23;
+    dataElement.SD=1;
+    data.insert( t, dataElement, true );
+    bufr = bufrEncoder.doBufr( stInfo, data );
+
+    ASSERT_TRUE( bufr != 0 );
+    ASSERT_TRUE( bufr->EE == FLT_MAX );
+    ASSERT_FLOAT_EQ( 0.23, bufr->SA );
+}
+
+
+TEST_F( BufrEncodeTest, EncodeBufr9000_only_one_parameter )
+{
+   DataElementList allData;
+   StationInfoPtr stInfo;
+   DataElementList data;
+   miutil::miTime dt;
+   EncodeBufrManager encoder;
+
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+
+
+   int wmono=1607;
+   stInfo = findWmoNo( wmono );
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( loadBufrDataFromFile( "15460-20121205T05.dat", stInfo, allData, validData ) )
+      << "Can't load data from file: 15460-20121205T05.dat";
+
+   cerr << "allData: " << allData.size() << endl;
+   dt=miutil::miTime("2012-12-05 05:00:00");
+   data=allData.subData( dt );
+
+   //cerr << "@@@@@@ dt: " << dt << " ft: " << data.firstTime()<<endl;
+   EXPECT_TRUE( dt == data.firstTime() ) ;
+
+   cerr << "data: " << data.size() << endl;
+   BufrDataPtr  bufr = bufrEncoder.doBufr( stInfo, data );
+   EXPECT_TRUE( bufr );
+
+
+   BufrTemplateList templateList;
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelper.setTest( true );
+
+   bufrHelper.setObsTime( dt );
+   bufrHelper.setSequenceNumber( 0 );
+
+
+   try {
+      encoder.encode( bufrHelper );
+      //cerr << bufrHelper.getLog() << endl;
+
+      EXPECT_TRUE(!bufrHelper.emptyBufr());
+      EXPECT_EQ( 1, bufrHelper.nValues() );
+   }
+   catch ( const std::exception &ex ) {
+      cerr << "<<<<< EXCEPTION LOG" << endl;
+      cerr << bufrHelper.getLog() << endl;
+      cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+   }
+}
+
+
 
 int
 main(int argc, char **argv) {

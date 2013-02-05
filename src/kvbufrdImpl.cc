@@ -56,49 +56,51 @@ createBufr(CORBA::Short wmono,
 	    const micutil::KeyValList& keyVals,
 	    kvbufrd::bufrcb_ptr callback)
 {
-  StationInfoPtr info=app.findStationInfoWmono(wmono);
-  StationInfo    *pInfo;
-  ObsEvent       *event;
-  miutil::miTime time(obstime);
+   StationInfoList info=app.findStationInfoWmono(wmono);
+   StationInfo    *pInfo;
+   ObsEvent       *event;
+   miutil::miTime time(obstime);
 
-  milog::LogContext context("BufrdImpl");
+   milog::LogContext context("BufrdImpl");
 
-  if(time.undef()){
-    LOGERROR("obstime: " << obstime << " Invalid!");
-    return false;
-  }
-    
+   if(time.undef()){
+      LOGERROR("obstime: " << obstime << " Invalid!");
+      return false;
+   }
 
-  if(!info){
-    LOGINFO("No configuration entry for <" << wmono << ">!");
-    return false;
-  }
 
-  
-  try{
-    pInfo=new StationInfo(*info);
-  }
-  catch(...){
-    LOGFATAL("NOMEM: copy of StationInfo!");
-    return false;
-  }
+   if( info.empty() ){
+      LOGINFO("No configuration entry for <" << wmono << ">!");
+      return false;
+   }
 
-  //CODE:
-  //Use keyVals to overide values in StationInfo 
+   for( StationInfoList::iterator itInfo=info.begin();
+         itInfo != info.end(); ++itInfo ) {
+      try{
+         pInfo=new StationInfo(**itInfo);
+      }
+      catch(...){
+         LOGFATAL("NOMEM: copy of StationInfo!");
+         return false;
+      }
 
-  try{
-    event=new ObsEvent(time, 
-		       StationInfoPtr(pInfo), 
-		       kvbufrd::bufrcb::_duplicate(callback));
-  }
-  catch(...){
-    LOGFATAL("NOMEM!");
-    return false;
-  }
+      //CODE:
+      //Use keyVals to overide values in StationInfo
 
-  que.postAndBrodcast(event);
+      try{
+         event=new ObsEvent(time,
+                            StationInfoPtr(pInfo),
+                            kvbufrd::bufrcb::_duplicate(callback));
+      }
+      catch(...){
+         LOGFATAL("NOMEM!");
+         return false;
+      }
 
-  return true;
+      que.postAndBrodcast(event);
+   }
+
+   return true;
 }
 
 CORBA::Boolean 
@@ -185,7 +187,7 @@ reloadConf(CORBA::String_out message)
    if( conf.removedStations().size() > 0 ) {
       ost << " (";
       for( StationList::iterator it=conf.removedStations().begin(); it != conf.removedStations().end(); ++it ) {
-         ost << "," << (*it)->wmono();
+         ost << "," << (*it)->toIdentString();
       }
       ost << ")";
    }
@@ -197,7 +199,7 @@ reloadConf(CORBA::String_out message)
    if( conf.newStations().size() > 0 ) {
       ost << " (";
       for( StationList::iterator it=conf.newStations().begin(); it != conf.newStations().end(); ++it ) {
-         ost << "," << (*it)->wmono();
+         ost << "," << (*it)->toIdentString();
       }
       ost << ")";
    }
@@ -209,7 +211,7 @@ reloadConf(CORBA::String_out message)
    if( conf.changedStations().size() > 0 ) {
       ost << " (";
       for( StationList::iterator it=conf.changedStations().begin(); it != conf.changedStations().end(); ++it ) {
-         ost << "," << (*it)->wmono();
+         ost << "," << (*it)->toIdentString();
       }
       ost << ")";
    }

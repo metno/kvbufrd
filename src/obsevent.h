@@ -18,16 +18,16 @@
   modify it under the terms of the GNU General Public License as 
   published by the Free Software Foundation; either version 2 
   of the License, or (at your option) any later version.
-  
+
   KVALOBS is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License along 
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+ */
 #ifndef __obsevent_h__
 #define __obsevent_h__
 
@@ -40,168 +40,169 @@
 
 class ObsEvent : public dnmi::thread::CommandBase
 {
-  	miutil::miTime        obstime_;
-  	kvbufrd::bufrcb_var ref;
-  	StationInfoPtr        stInfo;
-  	WaitingPtr            waiting_;
-  
-  	///Used to send a message back in the callback \a ref
-  	std::ostringstream    msg_; 
-  
-  	///Used to send a bufr back in the callback \a ref
-  	std::string           bufr_;
-  
-  	///Used to send status indicator back in the callback \a ref
-  	bool                  isOk_;  
+   miutil::miTime        obstime_;
+   kvbufrd::bufrcb_var ref;
+   StationInfoPtr        stInfo;
+   WaitingPtr            waiting_;
 
-  	///Used to indicate that a bufr posibly need to be regenerated
-  	///due to changed data.
-  	bool                  regenerate_;
-  
+   ///Used to send a message back in the callback \a ref
+   std::ostringstream    msg_;
 
+   ///Used to send a bufr back in the callback \a ref
+   std::string           bufr_;
 
-  	struct IdType{
-    	int sid_;
-    	int tid_;
+   ///Used to send status indicator back in the callback \a ref
+   bool                  isOk_;
 
-    	IdType(int sid, int tid):sid_(sid), tid_(tid){}
-    	IdType(const IdType &it):sid_(it.sid_), tid_(it.tid_){}
-
-    	IdType& operator=(const IdType &rhs){
-      		if(this!=&rhs){
-				sid_=rhs.sid_;
-				tid_=rhs.tid_;
-      		}
-      		return *this;
-    	}
-  	};
+   ///Used to indicate that a bufr posibly need to be regenerated
+   ///due to changed data.
+   bool                  regenerate_;
 
 
-  	std::list<IdType> typeidReceived;
- 	
- 	public:
 
-  		/**
-   		 * \brief Constructor to be used to signal a regenerate of a SYNOP.
-   		 */
- 		ObsEvent(const miutil::miTime &obstime,
-	  			 StationInfoPtr stInfo_,
-	  			 bool regenerate=false)
-    		:obstime_(obstime),
-    		 ref(kvbufrd::bufrcb::_nil()),
-    		 stInfo(stInfo_),
-    		 isOk_(false),
-    		 regenerate_(regenerate)
-   		{}
+   struct IdType{
+      int sid_;
+      int tid_;
 
-  		ObsEvent(const miutil::miTime &obstime,
-	   			 StationInfoPtr stInfo_,
-	    		 kvbufrd::bufrcb_ptr cb)
-    		:obstime_(obstime),
-    		 ref(cb),
-    		 stInfo(stInfo_),
-    		 isOk_(false),
-    		 regenerate_(false)
-    	{}
+      IdType(int sid, int tid):sid_(sid), tid_(tid){}
+      IdType(const IdType &it):sid_(it.sid_), tid_(it.tid_){}
 
-  		ObsEvent(WaitingPtr w)
-    		:obstime_(w->obstime()),
-    		 ref(kvbufrd::bufrcb::_nil()),
-    		 stInfo(w->info()),
-    		 waiting_(w),
-    		 isOk_(false),
-    		 regenerate_(false)
-    	{}
-  
-  		miutil::miTime         obstime()const{ return obstime_;}
-  		StationInfoPtr     stationInfo()const{ return stInfo;}
-  		WaitingPtr             waiting()const{ return waiting_;}
-  		kvbufrd::bufrcb_ptr callback()const
-    			{ return kvbufrd::bufrcb::_duplicate(ref);}
-  
-  		bool hasCallback()const{ return !CORBA::is_nil(ref);}
-  		bool regenerate()const { return regenerate_;}
+      IdType& operator=(const IdType &rhs){
+         if(this!=&rhs){
+            sid_=rhs.sid_;
+            tid_=rhs.tid_;
+         }
+         return *this;
+      }
+   };
 
-	    ///The following tree functions is used to comunicate 
-	    ///data back to a client trough the callback \a ref.
-	    ///The callback is only set when we get a explicit request 
-	    ///to generate a bufr.
 
-  		std::ostringstream& msg() { return msg_;}
-  		void              bufr(const std::string &s){ bufr_=s;}
- 		std::string       bufr()const { return bufr_;}
-  		void              isOk(bool f){ isOk_=f;}
-  		bool              isOk()const { return isOk_;}
+   std::list<IdType> typeidReceived;
 
-  		void              addTypeidReceived(long stationid, int typeid_){
-    								for(std::list<IdType>::iterator it=typeidReceived.begin();
-										 it!=typeidReceived.end(); 
-										 it++){
-      									if(it->sid_==stationid && it->tid_==typeid_)
-												return;
-    								}
+public:
 
-    								typeidReceived.push_back(IdType(stationid,typeid_));
-  								}
+   /**
+    * \brief Constructor to be used to signal a regenerate of a SYNOP.
+    */
+   ObsEvent( const miutil::miTime &obstime,
+             StationInfoPtr stInfo_,
+             bool regenerate=false )
+   :obstime_(obstime),
+    ref(kvbufrd::bufrcb::_nil()),
+    stInfo(stInfo_),
+    isOk_(false),
+    regenerate_(regenerate)
+   {}
 
-  		void clearTypeidReceived(){
-    				typeidReceived.clear();
-  				}
+   ObsEvent( const miutil::miTime &obstime,
+             StationInfoPtr stInfo_,
+             kvbufrd::bufrcb_ptr cb)
+   :obstime_(obstime),
+    ref(cb),
+    stInfo(stInfo_),
+    isOk_(false),
+    regenerate_(false)
+   {}
 
-  		int nTypeidReceived()const{
-    				return typeidReceived.size();
-  				}
+   ObsEvent(WaitingPtr w)
+      : obstime_(w->obstime()),
+        ref(kvbufrd::bufrcb::_nil()),
+        stInfo(w->info()),
+        waiting_(w),
+        isOk_(false),
+        regenerate_(false)
+   {}
 
-  		bool hasReceivedTypeid(int sid, int tid, bool doLogTypeidInfo)const{
-    			std::ostringstream ost;
+   miutil::miTime         obstime()const{ return obstime_;}
+   StationInfoPtr     stationInfo()const{ return stInfo;}
+   WaitingPtr             waiting()const{ return waiting_;}
+   kvbufrd::bufrcb_ptr callback()const {
+                              return kvbufrd::bufrcb::_duplicate(ref);
+                           }
 
-    			if(typeidReceived.empty()){
+   bool hasCallback()const{ return !CORBA::is_nil(ref);}
+   bool regenerate()const { return regenerate_;}
 
-      			if(doLogTypeidInfo){
-						LOGWARN("ObsEvent: TypeidReceived empty. Accept all data!");
-      			}
+   ///The following tree functions is used to comunicate
+   ///data back to a client trough the callback \a ref.
+   ///The callback is only set when we get a explicit request
+   ///to generate a bufr.
 
-      			return true;
-    			}
-    
-    			if(doLogTypeidInfo){
-      			ost << "ObsEvent: hasTypeidReceived (" << sid << "/" << tid << "):";
-      			for(std::list<IdType>::const_iterator it=typeidReceived.begin();
-	  					 it!=typeidReceived.end(); 
-	  					 it++)
-						ost << " (" << it->sid_ << "/" << it->tid_ << ")";
-    			}
+   std::ostringstream& msg() { return msg_;}
+   void              bufr(const std::string &s){ bufr_=s;}
+   std::string       bufr()const { return bufr_;}
+   void              isOk(bool f){ isOk_=f;}
+   bool              isOk()const { return isOk_;}
 
-    			for(std::list<IdType>::const_iterator it=typeidReceived.begin();
-					 it!=typeidReceived.end(); 
-					 it++){
-      			if(it->sid_==sid && it->tid_==tid){
-						if(doLogTypeidInfo){
-	  						ost << " Return: TRUE!";
-	  						LOGDEBUG3(ost.str());
-						}
+   void              addTypeidReceived(long stationid, int typeid_){
+      for(std::list<IdType>::iterator it=typeidReceived.begin();
+            it!=typeidReceived.end();
+            it++){
+         if(it->sid_==stationid && it->tid_==typeid_)
+            return;
+      }
 
-						return true;
-     				}
-    			}
-      
-    			if(doLogTypeidInfo){
-     				ost << " Return FALSE!";
-     				LOGDEBUG3(ost.str());
-    			}
-    			
-    			return false;
-  			}
+      typeidReceived.push_back(IdType(stationid,typeid_));
+   }
 
- 		bool waitingOnContinuesData()const{
-    				if(waiting_ && waiting_->waitingOnContinuesData())
-      				return true;
+   void clearTypeidReceived(){
+      typeidReceived.clear();
+   }
 
-    				return false;
-  				}
+   int nTypeidReceived()const{
+      return typeidReceived.size();
+   }
 
-  		//Do nothing
-  		bool       executeImpl(){ return true;};
+   bool hasReceivedTypeid(int sid, int tid, bool doLogTypeidInfo)const{
+      std::ostringstream ost;
+
+      if(typeidReceived.empty()){
+
+         if(doLogTypeidInfo){
+            LOGWARN("ObsEvent: TypeidReceived empty. Accept all data!");
+         }
+
+         return true;
+      }
+
+      if(doLogTypeidInfo){
+         ost << "ObsEvent: hasTypeidReceived (" << sid << "/" << tid << "):";
+         for(std::list<IdType>::const_iterator it=typeidReceived.begin();
+               it!=typeidReceived.end();
+               it++)
+            ost << " (" << it->sid_ << "/" << it->tid_ << ")";
+      }
+
+      for(std::list<IdType>::const_iterator it=typeidReceived.begin();
+            it!=typeidReceived.end();
+            it++){
+         if(it->sid_==sid && it->tid_==tid){
+            if(doLogTypeidInfo){
+               ost << " Return: TRUE!";
+               LOGDEBUG3(ost.str());
+            }
+
+            return true;
+         }
+      }
+
+      if(doLogTypeidInfo){
+         ost << " Return FALSE!";
+         LOGDEBUG3(ost.str());
+      }
+
+      return false;
+   }
+
+   bool waitingOnContinuesData()const{
+      if(waiting_ && waiting_->waitingOnContinuesData())
+         return true;
+
+      return false;
+   }
+
+   //Do nothing
+   bool       executeImpl(){ return true;};
 };
 
 #endif

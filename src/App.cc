@@ -28,11 +28,17 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+#include <unistd.h>
+#include <getopt.h>
+#include <fstream>
 #include <ctype.h>
 #include <list>
 #include <string>
 #include <sstream>
+#include <boost/filesystem.hpp>
 #include <milog/milog.h>
+#include <fileutil/pidfileutil.h>
+#include <kvalobs/kvPath.h>
 #include "kvDbGateProxy.h"
 #include "obsevent.h"
 //#include "ValidData.h"
@@ -53,8 +59,30 @@ using namespace milog;
 using namespace miutil::conf;
 using boost::mutex;
 using namespace kvservice;
+namespace fs = boost::filesystem;
+
 
 namespace {
+
+void createDirectory( const fs::path &path ) {
+   try {
+      if( ! fs::exists( path  ) ) {
+         fs::create_directories( path );
+      } else if ( ! fs::is_directory( path )  ) {
+         LOGFATAL( "The path <" << path << "> exist, but is NOT a directory.");
+         cerr << "The path <" << path << "> exist, but is NOT a directory.";
+         exit( 1 );
+      }
+   }
+   catch( const fs::filesystem_error &ex ) {
+      LOGFATAL( "The path <" << path << "> does not exist and cant be created." <<
+                "Reason: " << ex.what());
+      cerr << "The path <" << path << "> does not exist and cant be created."
+           <<  "Reason: " << ex.what() << endl;
+      exit( 1 );
+   }
+
+}
 
 class MyConnectionFactory : public kvalobs::ConnectionFactory
 {
@@ -95,10 +123,9 @@ createGlobalLogger(const std::string &id, milog::LogLevel ll)
        */
       FLogStream *logs=new FLogStream(2, 204800); //200k
       std::ostringstream ost;
+      fs::path logpath = fs::path(kvPath("logdir")) / options.progname / (id + ".log");
 
-      ost << kvPath("logdir") << "/kvbufr/" << id << ".log";
-
-      if(logs->open(ost.str())){
+      if(logs->open( logpath.native_file_string()) ){
          logs->loglevel( ll );
          if(!LogManager::createLogger(id, logs)){
             delete logs;
@@ -107,7 +134,7 @@ createGlobalLogger(const std::string &id, milog::LogLevel ll)
 
          return true;
       }else{
-         LOGERROR("Cant open the logfile <" << ost.str() << ">!");
+         LOGERROR("Cant open the logfile <" << logpath << ">!");
          delete logs;
          return false;
       }
@@ -135,6 +162,8 @@ App(int argn, char **argv,
 
    LogContext context("ApplicationInit");
 
+   createDirectory( fs::path(kvPath("logdir")) / options.progname );
+
    valElem=conf->getValue("loglevel");
 
    if( !valElem.empty() ) {
@@ -159,7 +188,7 @@ App(int argn, char **argv,
    createGlobalLogger("uinfo0");
 
 
-   //If a station is set up whith this types delay them if
+   //If a station is set up with this types delay them if
    //they has not at least 4 hours with data.
    continuesTypeID_.push_back( 311 );
    continuesTypeID_.push_back( 310 );
@@ -255,15 +284,20 @@ App(int argn, char **argv,
 
    valElem=conf->getValue("corba.kvpath");
 
-   if(valElem.empty()){
+   if(valElem.empty() || valElem[0].valAsString().empty() ){
       mypathInCorbaNS=nameserverpath;
    }else{
       mypathInCorbaNS=valElem[0].valAsString();
    }
 
-   if(!mypathInCorbaNS.empty() &&
-         mypathInCorbaNS[mypathInCorbaNS.length()-1]!='/')
-      mypathInCorbaNS+='/';
+   LOGINFO("My path in the CORBA nameserver: " << mypathInCorbaNS );
+
+   if(!mypathInCorbaNS.empty() ) {
+      if( *mypathInCorbaNS.rbegin() != '/')
+         mypathInCorbaNS+='/';
+      if( *mypathInCorbaNS.begin() == '/')
+         mypathInCorbaNS.erase(0,1);
+   }
 
    if(!readStationInfo(conf)){
       LOGFATAL("Exit! No configuration!");
@@ -298,7 +332,7 @@ initKvBufrInterface(  dnmi::thread::CommandQue &newObsQue )
       bufrRef = bufrdImpl->_this();
       IDLOGINFO( "main", "CORBAREF: " << corbaRef(bufrRef) );
       std::string nsname = "/" + mypathInCorbaNameserver();
-      nsname += "kvbufrd";
+      nsname += options.progname;
       IDLOGINFO( "main", "CORBA NAMESERVER (register as): " << nsname );
       putObjInNS(bufrRef, nsname);
    }
@@ -328,20 +362,24 @@ readWaitingElementsFromDb()
 
    if(gate.select(data, " order by delaytime")){
       for(it=data.begin(); it!=data.end(); it++){
-         StationInfoPtr info=findStationInfoWmono(it->wmono());
+         StationInfoList info=findStationInfoWmono( it->wmono() );
 
-         if(info){
+         if( info.empty() ) {
+            gate.remove(*it);
+            continue;
+         }
+
+         for( StationInfoList::iterator itInfo = info.begin();
+               itInfo != info.end(); ++itInfo ) {
             try{
                waitingList.push_back(WaitingPtr(new Waiting(it->delaytime(),
                                                             it->obstime(),
-                                                            info)));
+                                                            *itInfo)));
             }
             catch(...){
                LOGFATAL("NOMEM: while reading 'waiting' from database!");
                exit(1);
             }
-         }else{
-            gate.remove(*it);
          }
       }
    }else{
@@ -413,10 +451,10 @@ isContinuesType(int typeID)
 
 bool
 App::
-readStationInfo(miutil::conf::ConfSection *conf)
+readStationInfo( miconf::ConfSection *conf)
 {
    StationInfoParse theParser;
-   std::list<StationInfoPtr> tmpList;
+   StationList tmpList;
 
    if(!theParser.parse(conf, tmpList)){
       LOGFATAL("Cant parse the SYNOP configuration.");
@@ -481,8 +519,9 @@ listStations(kvbufrd::StationInfoList &list)
 
    for(CORBA::Long i=0; it!=stationList.end(); it++, i++){
       list[i].wmono=(*it)->wmono();
+      list[i].id = (*it)->stationID();
 
-      StationInfo::TLongList stid=(*it)->stationID();
+      StationInfo::TLongList stid=(*it)->definedStationID();
       StationInfo::ITLongList itl=stid.begin();
       list[i].stationIDList.length(stid.size());
 
@@ -527,43 +566,22 @@ releaseDbConnection(dnmi::db::Connection *con)
 }
 
 
-StationInfoPtr 
+StationInfoList
 App::
 findStationInfo(long stationid)
 {
    mutex::scoped_lock lock(mutex);
-   IStationList it=stationList.begin();
 
-   for(;it!=stationList.end(); it++){
-      if((*it)->hasStationId(stationid)){
-         break;
-      }
-   }
-
-   if(it!=stationList.end())
-      return *it;
-
-   return StationInfoPtr();
+   return stationList.findStation( stationid );
 }
 
 
-StationInfoPtr 
+StationInfoList
 App::
 findStationInfoWmono(int wmono)
 {
    mutex::scoped_lock lock(mutex);
-   IStationList it=stationList.begin();
-
-   for(;it!=stationList.end(); it++){
-      if((*it)->wmono()==wmono){
-         break;
-      }
-   }
-
-   if(it!=stationList.end())
-      return *it;
-
-   return StationInfoPtr();
+   return stationList.findStationByWmono( wmono );
 }
 
 
@@ -578,27 +596,35 @@ addWaiting( WaitingPtr w, bool replace )
    mutex::scoped_lock lock(mutex);
 
    for(it=waitingList.begin(); it!=waitingList.end(); it++){
-      if(w->info()->wmono()==(*it)->info()->wmono() &&
-            w->obstime()==(*it)->obstime()){
+      if( *w->info() == *(*it)->info() &&
+         w->obstime()==(*it)->obstime()){
 
          if(replace){
             if(w->delay()!=(*it)->delay()){
-               LOGINFO("Replace delay element for: " << w->info()->wmono()
+               LOGINFO("Replace delay element for: " << w->info()->toIdentString()
                        << " obstime: "  << w->obstime() << " delay to: "
                        << w->delay());
                *it=w;
-               w->addToDb();
+               if( ! w->addToDb() ) {
+                  LOGERROR("DBERROR while replaceing delay element for: " << w->info()->toIdentString()
+                           << " obstime: "  << w->obstime() << " delay to: "
+                           << w->delay());
+               }
             }
          }
          return *it;
       }
    }
 
-   LOGINFO("Add delay element for: " << w->info()->wmono()
+   LOGINFO("Add delay element for: " << w->info()->toIdentString()
            << " obstime: "  << w->obstime() << " delay to: "
            << w->delay());
 
-   w->addToDb();
+   if( !w->addToDb() ) {
+      LOGERROR("DBERROR while adding delay element for: " << w->info()->toIdentString()
+                 << " obstime: "  << w->obstime() << " delay to: "
+                 << w->delay());
+   }
    //We have now record for this station and obstime in the waitingList.
 
    if(waitingList.empty()){
@@ -620,14 +646,14 @@ addWaiting( WaitingPtr w, bool replace )
 WaitingPtr 
 App::    
 getWaiting( const miutil::miTime &obstime,
-            int                  wmono )
+            StationInfoPtr info )
 {
    mutex::scoped_lock lock(mutex);
    IWaitingList it;
 
    for(it=waitingList.begin(); it!=waitingList.end(); it++){
-      if((*it)->info()->wmono()==wmono &&
-            (*it)->obstime()==obstime){
+      if( *(*it)->info() == *info &&
+         (*it)->obstime()==obstime) {
          (*it)->removeFrom();
          WaitingPtr w=*it;
          waitingList.erase(it);
@@ -659,14 +685,14 @@ getExpired()
    now=miTime::nowTime();
    it=waitingList.begin();
 
-   while(it!=waitingList.end() && (*it)->delay()<=now){
+   while( it != waitingList.end() && (*it)->delay() <= now){
       LOGDEBUG("getExpired: loop");
       if(!msg){
          ost << "Expired delay for stations at time: " << now << endl;
          msg=true;
       }
-      ost << "-- " << (*it)->info()->wmono() << " obstime: " << (*it)->obstime()
-	      << " delay to: " << (*it)->delay() << endl;
+      ost << "-- " << (*it)->info()->toIdentString() << " obstime: " << (*it)->obstime()
+	       << " delay to: " << (*it)->delay() << endl;
       wl.push_back(*it);
       waitingList.erase(it);
       it=waitingList.begin();
@@ -715,6 +741,7 @@ getDelayList(miutil::miTime &nowTime)
 
       try{
          (*dl)[i].wmono=(*it)->info()->wmono();
+         (*dl)[i].id=(*it)->info()->stationID();
          (*dl)[i].obstime=(*it)->obstime().isoTime().c_str();
          (*dl)[i].delay=(*it)->delay().isoTime().c_str();
       }
@@ -729,7 +756,7 @@ getDelayList(miutil::miTime &nowTime)
 
 void           
 App::
-removeWaiting( int wmono,
+removeWaiting( StationInfoPtr info,
                const miutil::miTime &obstime )
 {
    IWaitingList it;
@@ -737,17 +764,17 @@ removeWaiting( int wmono,
    mutex::scoped_lock lock(mutex);
 
    for(it=waitingList.begin(); it!=waitingList.end(); it++){
-      if(wmono==(*it)->info()->wmono() &&
-            obstime==(*it)->obstime()){
+      if( *info == *(*it)->info() &&
+          obstime==(*it)->obstime()){
 
          if(!(*it)->removeFrom()){
-            LOGWARN("Cant remove waiting element from database: wmono: "
-                  << wmono << " obstime: " << obstime);
+            LOGWARN("Cant remove waiting element from database:  "
+                  << (*it)->info()->toIdentString() << " obstime: " << obstime);
 
          }
 
-         LOGINFO("Removed waiting element wmono: "
-               << wmono << " obstime: " << obstime << endl
+         LOGINFO("Removed waiting element: "
+               << (*it)->info()->toIdentString() << " obstime: " << obstime << endl
                << " with delay: " << (*it)->delay());
 
          waitingList.erase(it);
@@ -761,7 +788,7 @@ void
 App::
 removeWaiting( WaitingPtr w )
 {
-   LOGINFO("remove: " << w->info()->wmono() << " obstime: " << w->obstime()
+   LOGINFO("remove: " << w->info()->toIdentString() << " obstime: " << w->obstime()
            << " delay to: " << w->delay() << " from database!");
 
    w->removeFrom();
@@ -825,7 +852,7 @@ replaceStationInfo(StationInfoPtr newInfoPtr)
    IStationList it=stationList.begin();
 
    for(;it!=stationList.end(); it++){
-      if((*it)->wmono()==newInfoPtr->wmono()){
+      if( *(*it) == *newInfoPtr ){
 
          //Set the cacheReload of the new StationInfo to the same as
          //reload.
@@ -848,7 +875,7 @@ addStationInfo(StationInfoPtr newInfoPtr)
    IStationList it=stationList.begin();
 
    for(;it!=stationList.end(); it++){
-      if((*it)->wmono()==newInfoPtr->wmono()){
+      if( *(*it) == *newInfoPtr ){
          return false;
       }
    }
@@ -874,7 +901,7 @@ replaceStationConf(const StationList &newConf )
 
 bool
 App:: 
-getSavedBufrData( int wmono,
+getSavedBufrData( StationInfoPtr info,
                   const miutil::miTime &obstime,
                   std::list<TblBufr> &tblBufr )
 {
@@ -883,8 +910,10 @@ getSavedBufrData( int wmono,
 
    gate.busytimeout(120);
 
-   ost << "WHERE wmono=" << wmono << " AND obstime=\'"
-         << obstime << "\'";
+   ost << "WHERE wmono=" << info->wmono()
+       << " AND id=" << info->stationID()
+       << " AND callsign='" << info->callsign() << "'"
+       << " AND obstime=\'" << obstime << "\'";
 
    if(!gate.select(tblBufr, ost.str())){
       LOGERROR("DBERROR: getSavedBufrData: " << gate.getErrorStr());
@@ -984,37 +1013,38 @@ joinGetDataThreads(bool waitToAllIsJoined, const std::string &logid)
 
 void 
 App::
-cacheReloaded(int wmono)
+cacheReloaded( StationInfoPtr info)
 {
    mutex::scoped_lock lock(mutex);
 
    IStationList it=stationList.begin();
 
    for(;it!=stationList.end(); it++){
-      if((*it)->wmono()==wmono){
+      if( *(*it) == *info ){
          (*it)->cacheReloaded48(true);
          return;
       }
    }
 }
 
-App::StationList 
+StationList
 App::
-reloadCache(int wmono)
+reloadCache(int wmono, int id)
 {
    mutex::scoped_lock lock(mutex);
    StationList myStationList;
 
    IStationList it=stationList.begin();
 
-   if(wmono<0){
+   if(wmono < 0 ){
       for(;it!=stationList.end(); it++){
          (*it)->cacheReloaded48(false);
          myStationList.push_back(*it);
       }
    }else{
       for(;it!=stationList.end(); it++){
-         if((*it)->wmono()==wmono){
+         if((*it)->wmono()==wmono &&
+            (*it)->stationID() == id ){
             (*it)->cacheReloaded48(false);
             myStationList.push_back(*it);
             break;
@@ -1065,11 +1095,12 @@ listCacheReload()
          for(list<ObsEvent*>::iterator eit=obsEventWaitingOnCacheReload.begin();
                eit!=obsEventWaitingOnCacheReload.end();
                eit++){
-            if((*eit)->stationInfo()->wmono()==(*it)->wmono())
+            if( *(*eit)->stationInfo() == **it )
                count++;
          }
 
          (*retlist)[i].wmono=(*it)->wmono();
+         (*retlist)[i].id=(*it)->stationID();
          (*retlist)[i].eventsWaiting=count;
       }
    }
@@ -1099,7 +1130,7 @@ addObsEvent(ObsEvent *event,
    for(IStationList it=stationList.begin();
          it!=stationList.end();
          it++){
-      if(event->stationInfo()->wmono()==(*it)->wmono()){
+      if( *event->stationInfo() == **it ){
          if((*it)->cacheReloaded48()){
             //The cache for the station is reloaded post the event to
             //the event que and return.
@@ -1121,8 +1152,8 @@ addObsEvent(ObsEvent *event,
    for(std::list<ObsEvent*>::iterator it=obsEventWaitingOnCacheReload.begin();
          it!=obsEventWaitingOnCacheReload.end();
          it++){
-      if((*it)->obstime()==event->obstime() &&
-            (*it)->stationInfo()->wmono()==event->stationInfo()->wmono()){
+      if( (*it)->obstime()==event->obstime() &&
+         *(*it)->stationInfo() == *event->stationInfo() ){
          delete *it;
          *it=event;
          return;
@@ -1154,10 +1185,10 @@ checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
       for(IStationList sit=stationList.begin();
             sit!=stationList.end();
             sit++){
-         if((*it)->stationInfo()->wmono()==(*sit)->wmono()){
+         if( *(*it)->stationInfo() == **sit ){
             if((*sit)->cacheReloaded48()){
                IDLOGINFO(logid,"The cache is reloaded for station: " <<
-                         (*sit)->wmono() << " obstime: "  << (*it)->obstime());
+                         (*sit)->toIdentString() << " obstime: "  << (*it)->obstime());
 
 
                ObsEvent *event=*it;
@@ -1169,10 +1200,10 @@ checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
                }
                catch(...){
                   LOGERROR("Cant post event to the eventque for the station: " <<
-                           (*sit)->wmono());
+                           (*sit)->toIdentString());
                   IDLOGERROR(logid,
                              "Cant post event to the eventque for the station: " <<
-                             (*sit)->wmono());
+                             (*sit)->toIdentString());
 
                   delete event;
                }
@@ -1195,7 +1226,7 @@ checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
             it!=stationList.end();
             it++){
          if(!(*it)->cacheReloaded48()){
-            ost << (*it)->wmono() << " ";
+            ost << (*it)->toIdentString() << " ";
             allReloaded=false;
          }
       }
@@ -1209,4 +1240,120 @@ checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
       }
    }
 }
+
+
+
+void
+decodeArgs( int argn, char **argv, Opt &opt )
+{
+   struct option long_options[]=
+   {{"config-file", 1, 0, 'c'},
+    {"pidfile", 1, 0, 'p'},
+    {"fromtime", 1, 0, 'f'},
+    {"help", 0, 0, 'h'},
+    {0,0,0,0} };
+
+   opt.progname = getProgNameFromArgv0( argv[0] );
+
+   int c;
+   int index;
+
+   while(true){
+      c=getopt_long(argn, argv, "hp:c:", long_options, &index);
+
+      if(c==-1)
+         break;
+
+      switch(c){
+         case 'h':
+            usage( opt.progname, 1 );
+            break;
+         case 'p':
+            opt.pidfile = optarg;
+            break;
+         case 'c':
+            opt.conffile = optarg;
+            break;
+         case 'f': {
+            string tmp(optarg);
+            miTime fromTime;
+
+            if( tmp.find_first_of("-:") == string::npos ) {
+               int n = atoi( optarg );
+               if( n > 0 ) {
+                  fromTime = miTime::nowTime();
+                  fromTime.addHour(-1 * n );
+               }
+            } else {
+               fromTime = miTime( optarg );
+            }
+
+            if( fromTime.undef() ) {
+               cerr << "Invalid from time '" << optarg << "'. "
+                     << "Format YYYY-MM-DD hh:mm:ss or hours" << endl;
+               usage( opt.progname, 1 );
+            } else {
+               opt.fromTime = fromTime;
+            }
+         }
+         break;
+         case '?':
+            cout <<"Unknown option : <" << (char)optopt << ">!" << endl;
+            cout << opt.progname << " -h for help.\n\n";
+            usage( opt.progname, 1 );
+            break;
+         case ':':
+            cout << optopt << " missing argument!" << endl;
+            usage( opt.progname, 1 );
+            break;
+         default:
+            cout << "?? option caharcter: <" << (char)optopt << "> unknown!" << endl;
+            usage( opt.progname, 1 );
+            break;
+      }
+   }
+
+   if( opt.conffile.empty() ) {
+      opt.conffile = kvPath("sysconfdir")+"/"+opt.progname +".conf";
+   } else if( *opt.conffile.begin() != '/' ){
+      opt.conffile = kvPath("sysconfdir")+"/"+opt.conffile;
+   }
+
+   if( opt.pidfile.empty() ) {
+      opt.pidfile = dnmi::file::createPidFileName( kvPath("rundir"),
+                                                   opt.progname );
+   } else if( *opt.pidfile.begin() != '/') {
+      opt.pidfile = kvPath("rundir") + "/" + opt.pidfile;
+   }
+
+}
+
+
+void usage( const std::string &progname, int exitCode )
+{
+   cout << "\n " << progname << " is a program that creates BUFR message from kvalobs."
+         << "\n\nUSAGE "
+         << "\n" << progname << " [[--config-file|-c] conffile] [[--pidfile|-p] pidfile]"
+         << "\n\t   [[--fromtime|-f] 'YYYY-MM-DD hh:mm:ss' or hours back"
+         << "\n\n\t [--config-file|-c] configfile Use the configfile. If the name is not"
+         << "\n\t       an absolute path the file is looked up relative to " << kvPath("sysconfdir")
+         << "\n\t       Default value is set to " << kvPath("sysconfdir") << "/" << progname << ".conf"
+         << "\n\t [--pidfile|-p] pidfile Use this as the pid file. "
+         << "\n\t       Default value " << kvPath("rundir") << "/" << progname <<"-node.pid"
+         << "\n\t       Where node is determined by the hostname."
+         << "\n\n";
+   exit(  exitCode );
+}
+
+
+string
+getProgNameFromArgv0( const std::string &cmd )
+{
+   fs::path myname( cmd );
+   return  myname.leaf();
+}
+
+
+
+
 

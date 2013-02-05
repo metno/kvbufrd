@@ -31,11 +31,12 @@
 #ifndef __kvDbGateProxy_h__
 #define __kvDbGateProxy_h__
 
-#include "kvDbGateProxyThread.h"
+#include <string>
+#include <list>
 #include <dnmithread/CommandQue.h>
 #include <kvalobs/kvDbGate.h>
-#include <list>
-
+#include "kvDbGateProxyThread.h"
+#include "defines.h"
 /* Created by met.no/FoU/PU: j.schulze@met.no
    at Wed Aug 28 13:49:02 2002 */
 
@@ -149,8 +150,8 @@ namespace kvalobs {
 
 
     template<class T>
-    bool insert(const std::list<T>& li , bool replace=false, 
-		const miutil::miString &tblName="")
+    bool insert( const std::list<T>& li , bool replace=false,
+                 const std::string &tblName="")
     {
        dnmi::thread::CommandQue retQue;
        errorFromExecResult = false;
@@ -379,8 +380,8 @@ namespace kvalobs {
      *         or getError() to get information on the error.  
      */
     template<class T>
-    bool select( std::list<T>& li , const miutil::miString &q="",
-                 const miutil::miString &tblName="")
+    bool select( std::list<T>& li , const std::string &q="",
+                 const std::string &tblName="")
     {
        dnmi::thread::CommandQue retQue;
        errorFromExecResult = false;

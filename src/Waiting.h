@@ -90,7 +90,7 @@ std::ostream& operator<<(std::ostream& ost,
 inline std::ostream& operator<<(std::ostream& ost,
 				const Waiting& w)
 {
-  ost << "Waiting: " << w.info_->wmono() << " obstime: " 
+  ost << "Waiting: " << w.info_->toIdentString() << " obstime: "
       << w.obstime_ << " delay: "<< w.delay_;
 
   return ost;

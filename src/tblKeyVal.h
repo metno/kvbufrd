@@ -32,6 +32,7 @@
 #define __kvbuffer_tblKeyVal_h__
 
 #include <kvalobs/kvDbBase.h>
+#include "defines.h"
 
 class TblKeyVal : public kvalobs::kvDbBase {
 private:
@@ -62,9 +63,15 @@ public:
   void clean();
 
   const char* tableName()            const {return "keyval";}
+#ifdef __WITH_PUTOOLS__
   miutil::miString toSend()    const;
   miutil::miString toUpdate()  const;
   miutil::miString uniqueKey() const;
+#else
+  std::string toSend()    const;
+  std::string toUpdate()  const;
+  std::string uniqueKey() const;
+#endif
 
   std::string  key() const { return key_; }
   std::string  val() const { return val_; }

@@ -181,7 +181,7 @@ class KvDbGateInsert : public KvDbGateCommand
 {
    const  kvalobs::kvDbBase &elem;
    bool replace;
-   miutil::miString tableName;
+   std::string tableName;
 
 public:
    bool result;
@@ -202,7 +202,7 @@ public:
 class KvDbGateUpdate : public KvDbGateCommand
 {
    const  kvalobs::kvDbBase &elem;
-   miutil::miString tableName;
+   std::string tableName;
 
 public:
    bool result;
@@ -222,7 +222,7 @@ public:
 class KvDbGateReplace : public KvDbGateCommand
 {
    const  kvalobs::kvDbBase &elem;
-   miutil::miString tableName;
+   std::string tableName;
 
 public:
    bool result;
@@ -243,7 +243,7 @@ public:
 class KvDbGateRemove : public KvDbGateCommand
 {
    const  kvalobs::kvDbBase *elem;
-   miutil::miString tableName;
+   std::string tableName;
    std::string query;
 
 public:
@@ -297,12 +297,12 @@ class KvDbGateInsertList : public KvDbGateCommand
 {
    typename std::list<T> data;
    bool replace;
-   miutil::miString tableName;
+   std::string tableName;
 
 public:
    bool result;
    KvDbGateInsertList( dnmi::thread::CommandQue &retQue_, kvDbGate &gate, const std::list<T>& li , bool replace=false,
-                       const miutil::miString &tblName="")
+                       const std::string &tblName="")
       : KvDbGateCommand( retQue_, gate ), data( li ), replace( replace ), tableName( tblName )
    {
    }
@@ -316,15 +316,15 @@ public:
 template <class T>
 class KvDbGateSelect : public KvDbGateCommand
 {
-   miutil::miString query;
-   miutil::miString tableName;
+   std::string query;
+   std::string tableName;
 
 public:
    typename std::list<T> data;
    bool result;
    KvDbGateSelect( dnmi::thread::CommandQue &retQue_, kvDbGate &gate,
-                   const miutil::miString &q="",
-                   const miutil::miString &tblName="" )
+                   const std::string &q="",
+                   const std::string &tblName="" )
       : KvDbGateCommand( retQue_, gate ), query( q ), tableName( tblName )
    {
    }

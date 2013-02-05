@@ -42,8 +42,11 @@ class ConfMaker
    StInfoSysParamList params;
    std::list<StationInfoPtr> stationList;
    std::list<StationInfoPtr> templateStationList;
+   StationInfoPtr defaultVal;
 
-   StationInfoPtr findStation( int wmono, bool &newStation );
+   //StationInfoPtr findStation( int wmono, bool &newStation );
+   StationInfoPtr findStation( int wmono, int stationid, const std::string &callsign,
+                               const std::list<int> &codeList, bool &newStation );
    bool findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const;
    bool parseTemplate( miutil::conf::ConfSection *templateConf );
 
@@ -66,6 +69,9 @@ public:
 
    bool setParams( const StInfoSysParamList &params );
    bool doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
+   bool doSVVConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
+   bool doPrecipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
+   bool doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
 };
 
 

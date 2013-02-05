@@ -133,8 +133,11 @@ set(const dnmi::db::DRow &r_)
     measurement_methodid_ = INT_MAX;
  }
 
-
+#ifdef __WITH_PUTOOLS__
  miutil::miString
+#else
+ std::string
+#endif
  TblStInfoSysSensorInfo::
  uniqueKey() const
  {

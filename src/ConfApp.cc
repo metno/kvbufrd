@@ -212,6 +212,97 @@ loadParams( StInfoSysParamList &params )
 
 bool
 ConfApp::
+loadNetworkStation( StInfoSysNetworkStationList &networkStationList,
+                    const std::list<int> &networkidList )
+{
+   dnmi::db::Connection *con = getDbConnection();
+   kvDbGate gate( con );
+   ostringstream q;
+
+   networkStationList.clear();
+
+   if( networkidList.empty() ) {
+      return true;
+   }
+
+   std::list<int>::const_iterator it = networkidList.begin();
+
+   q << " WHERE fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)"
+        " AND networkid IN (" << *it;
+
+   ++it;
+
+   for( ; it != networkidList.end(); ++it )
+      q << ","<< *it;
+
+   q << ") ORDER BY networkid, stationid";
+
+   return gate.select( networkStationList, q.str() );
+}
+
+bool
+ConfApp::
+loadObsPgmH( StInfoSysObsObsPgmHList &obsPgmHList,
+             const std::list<int> &typeidList )
+{
+   dnmi::db::Connection *con = getDbConnection();
+   kvDbGate gate( con );
+   ostringstream q;
+
+   obsPgmHList.clear();
+
+   if( typeidList.empty() ) {
+      return true;
+   }
+
+   std::list<int>::const_iterator it = typeidList.begin();
+
+   q << " WHERE fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)"
+        " AND message_formatid IN (" << *it;
+
+   ++it;
+
+   for( ; it != typeidList.end(); ++it )
+      q << ","<< *it;
+
+   q << ") ORDER BY message_formatid, stationid, paramid";
+
+   return gate.select( obsPgmHList, q.str() );
+}
+
+bool
+ConfApp::
+loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors )
+{
+   dnmi::db::Connection *con = getDbConnection();
+   kvDbGate gate( con );
+   ostringstream q;
+   StInfoSysStationList stations;
+
+   q << " WHERE stationid=" << stationid << " AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)";
+
+   gate.select( stations, q.str() );
+
+   if( stations.empty() )
+      return false;
+
+   if( stations.size() > 1 ) {
+      LOGWARN( "More than one record for the station <" << stationid << "> was selected from the 'station' table in stinfosys."
+               << endl << " Using the first selected.");
+   }
+
+   station = *stations.begin();
+
+   q.str("");
+   q << " WHERE stationid=" << stationid << " AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL) AND operational=true";
+
+   gate.select( sensors, q.str() );
+
+   return true;
+}
+
+bool
+ConfApp::
 loadStationData( int stationid,
                  TblStInfoSysStation &station,
                  StInfoSysSensorInfoList &sensors,
@@ -221,7 +312,7 @@ loadStationData( int stationid,
    kvDbGate gate( con );
    ostringstream q;
    StInfoSysStationList stations;
-   std::list<TblStInfoSysNetworkStation> networkStationList;
+   StInfoSysNetworkStationList networkStationList;
 
    q << " WHERE stationid=" << stationid << " AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)";
 
@@ -250,12 +341,12 @@ loadStationData( int stationid,
    gate.select( networkStationList, q.str() );
 
    if( ! networkStationList.empty() ) {
+      networkStation = *networkStationList.begin();
       if( networkStationList.size() > 1 ) {
          LOGWARN( "More than one record for the station <" << stationid << "> was selected from the 'network_station' table in stinfosys."
-                  << endl << " Using the first selected.");
+                  << endl << " Using the first selected station (networkid=" << networkStation.networkid() << ").");
       }
 
-      networkStation = *networkStationList.begin();
    } else {
       LOGWARN("No data in the table 'network_station' for stationid " << stationid << ". ie we are missing any name for the station.");
       networkStation.clean();

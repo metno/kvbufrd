@@ -42,11 +42,11 @@ using namespace milog;
 
 
 GetData::
-GetData(App                      &app_, 
-		const miutil::miTime     &fromTime_,
-		int                      wmono_,
-		int                      hours_,
-		dnmi::thread::CommandQue &que_):
+GetData( App                      &app_,
+         const miutil::miTime     &fromTime_,
+         int                      wmono_,
+         int                      hours_,
+         dnmi::thread::CommandQue &que_):
   	app(app_), 
   	que(que_),
   	fromTime(fromTime_),
@@ -78,14 +78,14 @@ operator()()
   IDLOGINFO("GetData", "Started GetData thread!");
 
   IDLOGINFO("GetData", 
-	    "fromTime: " << fromTime << " hours: " << hours <<
-	    " wmono: " << wmono << endl <<
-	    " bufferFromTime: " << bufferFromTime);
+	         "fromTime: " << fromTime << " hours: " << hours <<
+	         " wmono: " << wmono << endl <<
+	         " bufferFromTime: " << bufferFromTime);
 
   kvalobs::kvDbGateProxy gate( app.dbThread->dbQue );
   gate.busytimeout(120);
 
-  if(wmono<=0){
+  if(wmono < 0){
     reloadAll(gate, bufferFromTime);
   }else{
     reloadOne(gate, bufferFromTime);
@@ -108,18 +108,18 @@ reloadAll(kvalobs::kvDbGateProxy    &gate,
    string logid;
 
    //Mark all station to be reloaded.
-   App::StationList stationList=app.reloadCache(-1);
+   StationList stationList=app.reloadCache(-1);
 
-   for(App::IStationList it=stationList.begin();
+   for(IStationList it=stationList.begin();
          it!=stationList.end() && !app.shutdown();
          it++){
       ost.str("");
-      ost << "GetData-" << (*it)->wmono();
+      ost << "GetData-" << (*it)->toIdentString();
       logid = ost.str();
 
       app.createGlobalLogger( logid, (*it)->loglevel() );
 
-      StationInfo::TLongList idList=(*it)->stationID();
+      StationInfo::TLongList idList=(*it)->definedStationID();
       kvservice::WhichDataHelper  which;
 
       ost.str("");
@@ -127,37 +127,37 @@ reloadAll(kvalobs::kvDbGateProxy    &gate,
       for(StationInfo::ITLongList sit=idList.begin();
             sit!=idList.end(); sit++){
          ost << " " <<*sit;
-         which.addStation(*sit, fromTime);
+         which.addStation(*sit, TO_PTIME( fromTime) );
       }
 
       IDLOGINFO( logid,
-                 "Started GetData: wmono=" << (*it)->wmono() << " stationids:" <<
+                 "Started GetData: " << (*it)->toIdentString() << " stationids:" <<
                  ost.str() << " FromTime: "  << fromTime);
 
       IDLOGINFO( "GetData",
-                 "Started GetData: wmono=" << (*it)->wmono() << " stationids:" <<
+                 "Started GetData: " << (*it)->toIdentString() << " stationids:" <<
                  ost.str() << " FromTime: "  << fromTime);
 
       GetKvDataReceiver myDataReceiver(app, bufferFromTime, que, gate, logid);
 
       if(!app.getKvData(myDataReceiver, which)){
          IDLOGERROR( "GetData",
-                     "Failed GetData: wmono=" << (*it)->wmono()
+                     "Failed GetData: " << (*it)->toIdentString()
                      << " stationids:" << ost.str() << " FromTime: "  << fromTime);
          IDLOGERROR( logid,
-                     "Failed GetData: wmono=" << (*it)->wmono()
+                     "Failed GetData: " << (*it)->toIdentString()
                      << " stationids:" << ost.str() << " FromTime: "  << fromTime);
       }
 
       IDLOGINFO( "GetData",
-                 "Success GetData: wmono=" << (*it)->wmono() << " stationids:" <<
+                 "Success GetData: " << (*it)->toIdentString() << " stationids:" <<
                  ost.str() << " FromTime: "  << fromTime);
       IDLOGINFO( logid,
-                 "Success GetData: wmono=" << (*it)->wmono() << " stationids:" <<
+                 "Success GetData: " << (*it)->toIdentString() << " stationids:" <<
                  ost.str() << " FromTime: "  << fromTime);
 
 
-      app.cacheReloaded((*it)->wmono());
+      app.cacheReloaded( *it );
    }
 }
 
@@ -168,22 +168,22 @@ reloadOne(kvalobs::kvDbGateProxy    &gate,
 {
    string logid;
    ostringstream                ost;
-   App::StationList stationList=app.reloadCache(wmono);
+   StationList stationList=app.reloadCache(wmono);
 
-   if(stationList.empty()){
-      LOGWARN("No station information for wmono: " << wmono <<"!");
+   if( stationList.empty() ){
+      LOGWARN("No station information for station: wmono:" << wmono <<"!");
       IDLOGWARN("GetData", "No station information for wmono: " << wmono <<
                 "!");
       return;
    }
 
-   ost << "GetData-" << (*stationList.begin())->wmono();
+   ost << "GetData-" << (*stationList.begin())->toIdentString();
    logid = ost.str();
 
    app.createGlobalLogger( logid );
 
 
-   StationInfo::TLongList idList=(*stationList.begin())->stationID();
+   StationInfo::TLongList idList=(*stationList.begin())->definedStationID();
    kvservice::WhichDataHelper  which;
 
    ost.str("");
@@ -191,15 +191,15 @@ reloadOne(kvalobs::kvDbGateProxy    &gate,
    for(StationInfo::ITLongList sit=idList.begin();
          sit!=idList.end(); sit++){
       ost << " " <<*sit;
-      which.addStation(*sit, fromTime);
+      which.addStation(*sit, TO_PTIME( fromTime ) ) ;
    }
 
    IDLOGINFO( logid,
-              "Started GetData: wmono=" << (*stationList.begin())->wmono()
+              "Started GetData: " << (*stationList.begin())->toIdentString()
               << " stationids:" << ost.str() << " FromTime: "  << fromTime);
 
    IDLOGINFO( "GetData",
-              "Started GetData: wmono=" << (*stationList.begin())->wmono()
+              "Started GetData: wmono=" << (*stationList.begin())->toIdentString()
               << " stationids:" << ost.str() << " FromTime: "  << fromTime);
 
 
@@ -208,20 +208,20 @@ reloadOne(kvalobs::kvDbGateProxy    &gate,
 
    if(!app.getKvData(myDataReceiver, which)){
       IDLOGERROR("GetData",
-                 "Failed GetData: wmono=" << (*stationList.begin())->wmono()
+                 "Failed GetData: " << (*stationList.begin())->toIdentString()
                  << " stationids:" << ost.str() << " FromTime: "  << fromTime);
       IDLOGERROR( logid,
-                  "Failed GetData: wmono=" << (*stationList.begin())->wmono()
+                  "Failed GetData: " << (*stationList.begin())->toIdentString()
                   << " stationids:" << ost.str() << " FromTime: "  << fromTime);
    } else {
       IDLOGINFO( "GetData",
-                 "Success GetData: wmono=" << (*stationList.begin())->wmono()
+                 "Success GetData: " << (*stationList.begin())->toIdentString()
                  << " stationids:" << ost.str() << " FromTime: "  << fromTime);
       IDLOGINFO( logid,
-                 "Success GetData: wmono=" << (*stationList.begin())->wmono()
+                 "Success GetData: " << (*stationList.begin())->toIdentString()
                  << " stationids:" << ost.str() << " FromTime: "  << fromTime);
    }
 
-   app.cacheReloaded((*stationList.begin())->wmono());
+   app.cacheReloaded( *stationList.begin() );
 
 }

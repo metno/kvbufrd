@@ -37,6 +37,19 @@ KvParamList()
 {
 }
 
+int
+KvParamList::
+numberOfValidParams() const
+{
+   int n=0;
+   for( const_iterator it=begin(); it != end(); ++it ) {
+      if( (*it)->value() != FLT_MAX )
+         ++n;
+   }
+
+   return n;
+}
+
 KvParam::KvParam()
    : id_(INT_MAX), value_(FLT_MAX )
 {

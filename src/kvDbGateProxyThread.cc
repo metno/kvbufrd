@@ -54,7 +54,7 @@ createGlobalLogger(const std::string &id)
      FLogStream *logs=new FLogStream(2, 204800); //200k
      ostringstream ost;
 
-     ost << kvPath("logdir") << "/kvbufr/" << id << ".log";
+     ost << kvPath("logdir") << "/kvbufrd/" << id << ".log";
 
      if(logs->open(ost.str())){
         if(!LogManager::createLogger(id, logs)){

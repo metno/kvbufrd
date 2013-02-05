@@ -18,25 +18,29 @@
   modify it under the terms of the GNU General Public License as 
   published by the Free Software Foundation; either version 2 
   of the License, or (at your option) any later version.
-  
+
   KVALOBS is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License along 
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+ */
 #ifndef __StationInfoParse_h__
 #define __StationInfoParse_h__
 
 #include <iostream>
-#include <miconfparser/miconfparser.h>
 #include <milog/milog.h>
 #include <string>
 #include <list>
+#include <miconfparser/miconfparser.h>
 #include "StationInfo.h"
+
+
+namespace  miconf=miutil::conf;
+
 
 //class StationInfo;
 //StationInfo::TLongList;
@@ -48,101 +52,119 @@ class StationInfoParse
    friend class ConfMaker;
 
    struct DefaultVal{
-         std::string copyto;
-         bool        copy;
-         std::string owner;
-         std::list<std::string> precipitation;
-         std::string list;
-         milog::LogLevel loglevel;
+      std::string copyto;
+      bool        copy;
+      std::string owner;
+      std::list<std::string> precipitation;
+      std::string list;
+      milog::LogLevel loglevel;
 
-         StationInfo::TDelayList delay;
-         std::string delayConf;
+      StationInfo::TDelayList delay;
+      std::string delayConf;
+      std::list<int> code;
 
-         DefaultVal(): copy(false), loglevel(milog::INFO) {
+      DefaultVal(): copy(false), loglevel(milog::INFO) {
+      }
+
+      DefaultVal(const DefaultVal &dv)
+      :copyto(dv.copyto), copy(dv.copy),owner(dv.owner),
+       precipitation(dv.precipitation), list(dv.list),
+       loglevel(dv.loglevel), delayConf( dv.delayConf ),
+       code( dv.code )
+      {
+      }
+
+      DefaultVal& operator=(const DefaultVal &dv){
+         if(&dv!=this){
+            copyto=dv.copyto;
+            copy=dv.copy;
+            owner=dv.owner;
+            precipitation=dv.precipitation;
+            list=dv.list;
+            delay=dv.delay;
+            delayConf = dv.delayConf;
+            loglevel=dv.loglevel;
+            code = dv.code;
          }
+         return *this;
+      }
 
-         DefaultVal(const DefaultVal &dv)
-         :copyto(dv.copyto), copy(dv.copy),owner(dv.owner),
-          precipitation(dv.precipitation), list(dv.list),
-          loglevel(dv.loglevel), delayConf( dv.delayConf )
-         {
-         }
+      bool valid()const;
+   };
 
-         DefaultVal& operator=(const DefaultVal &dv){
-            if(&dv!=this){
-               copyto=dv.copyto;
-               copy=dv.copy;
-               owner=dv.owner;
-               precipitation=dv.precipitation;
-               list=dv.list;
-               delay=dv.delay;
-               delayConf = dv.delayConf;
-               loglevel=dv.loglevel;
-            }
-            return *this;
-         }
+   bool doDefault( miconf::ConfSection *stationConf);
 
-         bool valid()const;
-      };
+   std::string doDefList( miconf::ValElementList &vl );
 
-      bool doWmoDefault(miutil::conf::ConfSection *stationConf);
+   std::list<int>  doDefCode( miconf::ValElementList &vl );
 
-      std::string doDefList(miutil::conf::ValElementList &vl,
-                            int wmono);
+   std::string doDefOwner( miconf::ValElementList &vl );
 
-      std::string doDefOwner(miutil::conf::ValElementList &vl,
-                             int wmono);
+   std::list<std::string> doDefPrecip( miconf::ValElementList &vl);
 
-      std::list<std::string> doDefPrecip(miutil::conf::ValElementList &vl,
-                                         int wmono);
+   milog::LogLevel doDefLogLevel( miconf::ValElementList &vl);
 
-      milog::LogLevel doDefLogLevel(miutil::conf::ValElementList &vl,
-                                    int wmono);
+   bool doDefCopy(miconf::ValElementList &vl, bool *copyIsSet=0 );
 
-      bool doDefCopy(miutil::conf::ValElementList &vl,
-                     int wmono, bool *copyIsSet=0 );
+   std::string doDefCopyto( miconf::ValElementList &vl );
 
-      std::string doDefCopyto(miutil::conf::ValElementList &vl,
-                              int wmono);
+   StationInfo::TDelayList doDefDelay(const miconf::ValElementList &vl,
+                                      std::string &confDelay,
+                                      miconf::ConfSection *stationConf );
 
-      StationInfo::TDelayList doDefDelay(const miutil::conf::ValElementList &vl,
-                                         int wmono, std::string &confDelay );
-
-      bool doStationid(const std::string &key,
-                       miutil::conf::ValElementList &vl,
-                       StationInfo &st);
-
-      bool doDelay(const std::string &key,
-                   miutil::conf::ValElementList &vl,
-                   StationInfo &st, bool mayUseDefaultValues=true);
-
-
-      bool doPrecip(const std::string &key,
-                    miutil::conf::ValElementList &vl,
+   bool doStationid(const std::string &key,
+                    miconf::ValElementList &vl,
                     StationInfo &st);
 
-
-      bool doTypePri(const std::string &key,
-                     miutil::conf::ValElementList &vl,
-                     StationInfo &st);
-
-      void   doInt( int &i, const miutil::conf::ValElementList &val );
-      void doFloat( float &f, const miutil::conf::ValElementList &val );
+   bool doDelay(const std::string &key,
+                miconf::ValElementList &vl,
+                StationInfo &st, miconf::ConfSection *conf,
+                bool mayUseDefaultValues=true);
 
 
-      StationInfo* parseSection(miutil::conf::ConfSection *stationConf,
-                                int wmono,  bool useDefaultValues );
+   bool doPrecip(const std::string &key,
+                 miconf::ValElementList &vl,
+                 StationInfo &st);
 
-      DefaultVal defVal;
-      bool ignoreMissingValues;
+
+   bool doTypePri(const std::string &key,
+                  miconf::ValElementList &vl,
+                  StationInfo &st);
+
+   void doIntList( std::list<int> &iList,
+                   const miconf::ValElementList &val );
+
+   void   doInt( int &i, const miconf::ValElementList &val );
+   void doFloat( float &f, const miconf::ValElementList &val );
+
+
+   StationInfo* parseSection(miconf::ConfSection *stationConf,
+                             const std::string &id,  bool useDefaultValues );
+   void parseStationDefSections( miconf::ConfSection *conf,
+                                 std::list<StationInfoPtr> &stationList,
+                                 bool useDefaultValues );
+
+
+   DefaultVal defVal;
+   bool ignoreMissingValues;
+
+   //The following values is used
+   //for error reporting while parsing a section.
+   std::stringstream curErr;
+   std::string  curSectionName;
+
+   std::stringstream errors;
 
 public:
-   StationInfoParse(): ignoreMissingValues( false ){}
+   StationInfoParse(bool ignoreMissingValue_=false)
+    : ignoreMissingValues( ignoreMissingValue_ ){}
    ~StationInfoParse(){}
 
-   bool parse(miutil::conf::ConfSection *stationConf,
+   StationInfoPtr defaultVal()const;
+   bool parse(miconf::ConfSection *stationConf,
               std::list<StationInfoPtr> &stationList, bool useDefaultValues=true );
 
+   std::string getErrors()const { return errors.str(); }
 };
 
 

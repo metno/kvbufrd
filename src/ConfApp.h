@@ -41,6 +41,7 @@
 #include "tblStInfoSysStationOutmessage.h"
 #include "tblStInfoSysStation.h"
 #include "tblStInfoSysSensorInfo.h"
+#include "tblStInfoSysObsPgmH.h"
 #include "StationInfo.h"
 #include "kvbufrconfOptions.h"
 
@@ -48,6 +49,8 @@ typedef std::list<TblStInfoSysParam> StInfoSysParamList;
 typedef std::list<TblStInfoSysStationOutmessage> StInfoSysStationOutmessageList;
 typedef std::list<TblStInfoSysStation> StInfoSysStationList;
 typedef std::list<TblStInfoSysSensorInfo> StInfoSysSensorInfoList;
+typedef std::list<TblStInfoSysNetworkStation> StInfoSysNetworkStationList;
+typedef std::list<TblStInfoSysObsPgmH> StInfoSysObsObsPgmHList;
 
 class ConfApp
 {
@@ -88,6 +91,11 @@ public:
 
    bool loadStationOutmessage( StInfoSysStationOutmessageList &stationOutmessages );
    bool loadParams( StInfoSysParamList &params );
+   bool loadNetworkStation( StInfoSysNetworkStationList &networkStationList,
+                            const std::list<int> &networkidList );
+   bool loadObsPgmH( StInfoSysObsObsPgmHList &obsPgmHList,
+                     const std::list<int> &typeidList );
+   bool loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors );
    bool loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors, TblStInfoSysNetworkStation &networkStation );
 
 

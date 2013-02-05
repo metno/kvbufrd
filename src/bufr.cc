@@ -136,9 +136,7 @@ doBufr( StationInfoPtr  info,
    if( bufrData.firstTime().undef() && bufrData.size() == 0 )
       return false;
 
-   bufr = BufrData();
-   bufr.time( bufrData.firstTime() );
-
+   bufr = BufrData(bufrData[bufrData.firstTime()]);
 
    bufr.TA     = c2kelvin( bufrData[0].TA );
    bufr.PO     = pressure( bufrData[0].PO );
@@ -164,6 +162,24 @@ doBufr( StationInfoPtr  info,
    return true;
 }
 
+BufrDataPtr
+Bufr::
+doBufr( StationInfoPtr  info,
+        DataElementList &bufrData )
+{
+   BufrData *bufr = new BufrData();
+
+   if( ! doBufr( info, bufrData, *bufr ) ) {
+      delete bufr;
+      bufr = 0;
+   }
+
+   return BufrDataPtr( bufr );
+}
+
+
+
+
 
 
 
@@ -171,6 +187,8 @@ void
 Bufr::
 windAtObstime( const DataElement &data, DataElement &res )
 {  
+   res.FF = FLT_MAX;
+   res.DD = FLT_MAX;
    if( data.FF != FLT_MAX ) {
       if( data.FF >= 0 && data.FF <= 98 ) {
          res.FF = static_cast<float>( static_cast<int>( ( data.FF + 0.05 )*10 ) )/10;
@@ -211,7 +229,10 @@ doIx( StationInfoPtr     info,
       return;
    }
 
-   bufr.IX = 0;
+   if( bufr.IX.valAsInt() > 0 &&  bufr.IX.valAsInt() <  4)
+       bufr.IX = 1;
+   else
+       bufr.IX = 0;
 
    for( std::list<int>::const_iterator it=bufrData[0].typeidList.begin();
          it != bufrData[0].typeidList.end(); ++it )
@@ -223,6 +244,15 @@ doIx( StationInfoPtr     info,
          }
    }
 
+   //This is NOT one of the manned typeid. Check if there is
+   //any parameters that occurs in manned stations only.
+
+   if( bufrData[0].ww != FLT_MAX || bufrData[0].W1 != FLT_MAX ||
+	   bufrData[0].W2 != FLT_MAX || bufrData[0].CH != FLT_MAX ||
+	   bufrData[0].CL != FLT_MAX || bufrData[0].CM != FLT_MAX  ) {
+	   bufr.IX = 1;
+	   return;
+   }
 }
 
 /*
@@ -511,10 +541,11 @@ maxWindGust( const DataElementList &data, BufrData &res )
 
        CIDataElementList lastIt=data.find(prevTime);
 
-       if( lastIt == data.end() || lastIt->FG == FLT_MAX || lastIt->FG < 0 )
+       if( lastIt == data.end() || lastIt == it ||
+           lastIt->FG == FLT_MAX || lastIt->FG < 0 )
           return;
 
-       for( ; it != lastIt; ++it ) {
+       for( ++it; it != lastIt; ++it ) {
           if( it->FG != FLT_MAX ) {
              return;
           }
@@ -526,8 +557,6 @@ maxWindGust( const DataElementList &data, BufrData &res )
        return;
     }
 
-    if( nTimeStr < 6 )
-       return;
 
     for(int i=0; i<6; i++){
        if( data[i].FG_1 == FLT_MAX)
@@ -844,6 +873,9 @@ pressureTrend( const DataElement &data, DataElement &res)
 {
    float PP = data.PP;
 
+   res.AA = FLT_MAX;
+   res.PP = FLT_MAX;
+
    if( PP == FLT_MAX )
       return false;
 
@@ -880,8 +912,14 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
 {
    bool pastWeather=false;
 
+   res.ww = FLT_MAX;
+   res.W1 = FLT_MAX;
+   res.W2 = FLT_MAX;
+   res.tWeatherPeriod = FLT_MAX;
+
    if( data.size() == 0 )
       return;
+
 
 	if( data[0].ww != FLT_MAX ) {
 	   res.ww = data[0].ww;
@@ -944,25 +982,25 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
  * EM -> E
  * SA -> sss
  * 
- * N�r en v�rstasjon sender 998 vil de enten ogs� sende E'= 1. (Hvis de har
- * utelatt E' m� vi dekode E' til 1 siden 998 er en s�pass bevisst handling.)
+ * Når en værstasjon sender 998 vil de enten også sende E'= 1. (Hvis de har
+ * utelatt E' må vi dekode E' til 1 siden 998 er en såpass bevisst handling.)
  *
- * Alts�, det er E' som bestemmer om SA=-1 er flekkvis sn�. I koding av bufr
- * m� en alts� for alle typeid bruke kombinasjonen av SA og E' eller SA og SD 
- * for � kunne angi 998 i bufr.
- * SA=-1 n�r sn�dybde raporteres som "blank", utelatt (gruppe) eller "0" (Ingen
- * sn�)
- * SA=-1 n�r sn�dybde raporteres som 998             (flekkvis sn�)
- * SA=0  n�r sn�dybde raporteres som 997             (mindre enn 0.5 cm sn�)
- * SA=-3 n�r sn�dybde raporteres som 999             (m�ling umulig)
- * EM=-1 n�r EM raporteres som "blank" eller utelatt (gruppe) 
+ * Altså, det er E' som bestemmer om SA=-1 er flekkvis snø. I koding av bufr
+ * må en altså for alle typeid bruke kombinasjonen av SA og E' eller SA og SD
+ * for å kunne angi 998 i bufr.
+ * SA=-1 når snødybde raporteres som "blank", utelatt (gruppe) eller "0" (Ingen
+ * snø)
+ * SA=-1 når snødybde raporteres som 998             (flekkvis snø)
+ * SA=0  når snødybde raporteres som 997             (mindre enn 0.5 cm snø)
+ * SA=-3 når snødybde raporteres som 999             (måling umulig)
+ * EM=-1 når EM raporteres som "blank" eller utelatt (gruppe)
  * EM=0  er is-lag
- * EM= 1 - 9 er andel sn�dekke og type
+ * EM= 1 - 9 er andel snødekke og type
  *
  * Bufr enkoding fra Kvalobs
- * N�r det skal lages bufr fra kvalobs s� m� det kanskje ut fra dette til en
+ * Når det skal lages bufr fra kvalobs så må det kanskje ut fra dette til en
  * justering av dagens enkoder slik at koding av SA og EM blir riktig? (For 302
- * m� kun SA benyttes i bufr - ikke SD.)
+ * må kun SA benyttes i bufr - ikke SD.)
  * 
  */
 
@@ -972,19 +1010,27 @@ doEsss( const DataElementList &data, BufrData &res  )
 {
    miutil::miTime time = data[0].time();
    res.EM = FLT_MAX;
-   res.E = FLT_MAX;
+   res.EE = FLT_MAX;
+   res.SA = FLT_MAX;
 
    if( time.hour() != 6 )
       return;
 
    int iSA = (data[0].SA == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SA) + 0.5 )));
+   int iSD = (data[0].SD == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SD) + 0.5 )));
 
-   if( data[0].EM == FLT_MAX && data[0].E == FLT_MAX && iSA == INT_MAX )
-      return;
+   if( data[0].EM == FLT_MAX && data[0].EE == FLT_MAX && iSA == INT_MAX && iSD == INT_MAX)
+         return;
 
-   if( data[0].E != FLT_MAX && data[0].E >= 0 && data[0].E < 34 ) {
-      res.E = floor( static_cast<double>( data[0].E ) + 0.5 );
-      res.EM = res.E;
+   if( (data[0].EM == FLT_MAX && data[0].EE == FLT_MAX) && iSA != INT_MAX && iSD != INT_MAX )
+         return doSaFromSD( data, res );
+
+   if( data[0].EM == FLT_MAX && data[0].EE == FLT_MAX && iSA == INT_MAX )
+       return;
+
+   if( data[0].EE != FLT_MAX && data[0].EE >= 0 && data[0].EE < 34 ) {
+      res.EE = floor( static_cast<double>( data[0].EE ) + 0.5 );
+      res.EM = res.EE;
    } else if( data[0].EM != FLT_MAX && data[0].EM>= 0 && data[0].EM <= 10 ) {
       res.EM = 10 + static_cast<int>( floor( static_cast<double>( data[0].EM ) + 0.5 ));
    }
@@ -1002,11 +1048,42 @@ doEsss( const DataElementList &data, BufrData &res  )
    }
 }
 
+void
+Bufr::
+doSaFromSD( const DataElementList &data, BufrData &res )
+{
+    miutil::miTime time = data[0].time();
+    res.SA = FLT_MAX;
+
+    if( time.hour() != 6 )
+       return;
+
+    int iSA = (data[0].SA == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SA) + 0.5 )));
+    int iSD = (data[0].SD == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SD) + 0.5 )));
+
+    if( iSA == INT_MAX && iSD == INT_MAX)
+        return;
+
+    if( iSA >= 0 ) {
+        res.SA = data[0].SA/100;
+        return;
+    }
+
+    if( iSD == INT_MAX )
+        return;
+
+    if( iSD >=1 && iSD <= 3  )
+        res.SA = -0.02;
+    else if( iSD == 0 || iSD == -1 )
+        res.SA = 0;
+}
 
 void
 Bufr::
 doSeaOrWaterTemperature(  const DataElementList &data, BufrData &res )
 {
+   res.TW = FLT_MAX;
+
   	if( data[0].TW != FLT_MAX || data[0].TWF != FLT_MAX ) {
   	   res.TW = data[0].TW!=FLT_MAX?data[0].TW:data[0].TWF;
   	   res.TW = c2kelvin( res.TW );
@@ -1027,6 +1104,8 @@ Bufr::
 soilTemp( const DataElementList &data, BufrData &res )
 {
    int nTimeStr=data.nContinuesTimes();
+
+   res.TGN_12 = FLT_MAX;
 
    if( nTimeStr == 0 )
       return;
@@ -1184,7 +1263,7 @@ Bufr::doPrecip( StationInfoPtr     info,
 
     	ost << "                   RR_24: " << fRR24          << endl
           << "                  nedb�r: " << nedboerTotal   << endl;
-  	}else{
+  	}else {
     	ost << "PrecipitationParam: UNKNOWN" << endl;
     	return;
   	}
@@ -1277,7 +1356,7 @@ Bufr::
 precipFromRA( int hours, const DataElementList &sd, const miutil::miTime &from )
 {
 
-   const float limit = 0.2;
+   const float limit = 0.19;
    const float bucketFlush = -10.0;
    miutil::miTime t;
    miutil::miTime t2;
@@ -1366,8 +1445,9 @@ precipFromRrN( float &RR1,
    precip = FLT_MAX;
    fRR24 = FLT_MAX;
 
-   if( t==6 && sd[0].RR_24 != FLT_MAX)
+   if( t==6 && sd[0].RR_24 != FLT_MAX) {
       fRR24 = max( sd[0].RR_24, 0 );
+   }
 
    if((t==6 || t==18) && sd[0].RR_12 != FLT_MAX){
       precip = max( sd[0].RR_12, 0 );
@@ -1429,7 +1509,7 @@ precipFromRrN( float &RR1,
 
 
          if(it->RR_12!=FLT_MAX){
-            if( it->RR_12 >= 0.0 )
+            if( it->RR_12 >= 0 )
                fRR24 += it->RR_12;
             else if( it->RR_12 <= -1.5f )
                hasPrecip=false;
@@ -1437,7 +1517,7 @@ precipFromRrN( float &RR1,
             hasPrecip=false;
 
          if( it2->RR_12 != FLT_MAX ){
-            if( it2->RR_12 >= 0.0 )
+            if( it2->RR_12 >= 0 )
                fRR24+=it2->RR_12;
             else if( it2->RR_12<=-1.5f )
                hasPrecip=false;
@@ -1449,8 +1529,8 @@ precipFromRrN( float &RR1,
       }
    }
 
-   if( precip < 0.1)
-      precip = 0.0;
+   if( precip < 0.05)
+      precip = 0;
 
    return h_tr;
 }  
@@ -1671,7 +1751,7 @@ float
 Bufr::
 precipFromRR(  float &RR1, float &nedbor, float &fRR24, const DataElementList &sd )
 {
-  	const float limit=0.2;
+  	const float limit=0.049;
   	int   nTimeStr=sd.nContinuesTimes();
   	int   time=sd.begin()->time().hour();
   	int   nTimes;

@@ -31,6 +31,7 @@
 #ifndef __validdata_h__
 #define __validdata_h__
 
+#include <sstream>
 #include "Data.h"
 
 namespace kvdatacheck{
@@ -54,13 +55,15 @@ class Validate {
 	bool validDataCombineControlAndUseInfo( const Data &data );
 	bool validDataNoCheck( const Data &data );
 
+	std::stringstream log;
 public:
 	enum HowToValidate { UseOnlyControlInfo, UseOnlyUseInfo, CombineControlAndUseInfo, NoCheck };
 	Validate();
 	Validate( HowToValidate howToValidate );
 
+	void clearLogger() { log.str(""); }
+	std::string getLog()const{ return log.str(); }
 	bool operator()( const Data &data );
-
 };
 
 }

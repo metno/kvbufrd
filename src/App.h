@@ -35,19 +35,36 @@
 #ifndef __kvbufrd_app_h__
 #define __kvbufrd_app_h__
 
+#include <list>
+#include <boost/filesystem.hpp>
+#include <boost/thread/mutex.hpp>
 #include <kvcpp/corba/CorbaKvApp.h>
 #include <kvdb/dbdrivermgr.h>
 #include <milog/milog.h>
-#include <list>
 #include <puTools/miTime.h>
-#include <boost/thread/mutex.hpp>
 #include "kvbufrd.hh"
 #include "kvbufrdImpl.h"
 #include "StationInfo.h"
+#include "StationInfoParse.h"
 #include "Waiting.h"
 #include "tblBufr.h"
 #include "obsevent.h"
 #include "kvDbGateProxyThread.h"
+
+
+struct Opt {
+   std::string conffile;
+   std::string progname;
+   std::string pidfile;
+   miutil::miTime fromTime;
+};
+
+std::string getProgNameFromArgv0( const std::string &cmdname );
+void decodeArgs( int argn, char **argv, Opt &opt );
+void usage( const std::string &progname, int exitCode );
+
+extern Opt options;
+
 
 namespace kvbufrd{
   class StationInfoList;
@@ -57,10 +74,6 @@ class GetData;
 
 class App : public kvservice::corba::CorbaKvApp
 {
-public:
-   typedef std::list<StationInfoPtr>                   StationList;
-   typedef std::list<StationInfoPtr>::iterator        IStationList;
-   typedef std::list<StationInfoPtr>::const_iterator CIStationList;
   
 private:
    dnmi::db::DriverManager dbMgr;
@@ -119,7 +132,7 @@ public:
    * \return true if the StationInfo data was succsessfuly read from
    *         conf and false otherwise.
    */
-  bool readStationInfo(miutil::conf::ConfSection *conf);
+  bool readStationInfo( miconf::ConfSection *conf);
 
   /**
    * \brief Read the StationInfo from the configuration file.
@@ -163,22 +176,22 @@ public:
   std::string  mypathInCorbaNameserver()const{ return mypathInCorbaNS; }
 
   /**
-   * \brief Find the station information based on the stationid.
+   * \brief Find all station information based on the stationid.
    *
    * \param stationid The stationid to find the station information too.
-   * \return A StationInfoPtr.
+   * \return A StationInfoLis.
    */
-  StationInfoPtr findStationInfo(long stationid);
+  StationInfoList findStationInfo(long stationid);
 
 
   /**
-   * \brief Find the station information based on the WMO number.
+   * \brief Find all station information that has WMO number.
    *
-   * \param wmono The WMO nubber to find the station information too.
-   * \return A StationInfoPtr.
+   * \param wmono The WMO number to find the station information too.
+   * \return A StationInfoList.
    */
 
-  StationInfoPtr findStationInfoWmono(int wmono);
+  StationInfoList findStationInfoWmono(int wmono);
   
   bool           listStations(kvbufrd::StationInfoList &list);
 
@@ -244,7 +257,6 @@ public:
    *
    * \param w The record to add to the \c waitingList.
    * \param replace Replace an already registred waiting record with this.
-   * \param con A connection to the database.
    * \return A WatingPtr if there allready is an Waiting element for
    *         this obstime and wmono. 0 otherwise.
    */
@@ -252,7 +264,7 @@ public:
 
 
   WaitingPtr getWaiting( const miutil::miTime &obstime,
-                         int                  wmono );
+                         StationInfoPtr info );
 
   /**
    * \brief getExpired return a list of \c Waiting elements that has expired.
@@ -326,11 +338,12 @@ public:
    *
    * \param wmono  The wmo number to the \a waiting element we want
    *               to remove.
+   * \param id the stationid.
    * \param obstime The obstime to the \a waiting element we want
    *               to remove.
    * \param con A open connection to the database.
    */
-  void           removeWaiting( int wmono,
+  void           removeWaiting( StationInfoPtr info,
                                 const miutil::miTime &obstime );
 
 
@@ -345,14 +358,14 @@ public:
 
   /**
    * getSavedBufrData. Search the database for a bufr message for
-   * this station, \a wmono, for the given obstime if it exist.
+   * this station, for the given obstime if it exist.
    *
-   * \param wmono The station to search for.
+   * \param info The station to search for.
    * \param obstime The obstime to search for.
    * \param tblBufr This paramter holds the synop data.
    * \return true if we there was now database error, and false otherwise.
    */
-  bool getSavedBufrData(int wmono,
+  bool getSavedBufrData( StationInfoPtr info,
                          const miutil::miTime &obstime,
                          std::list<TblBufr> &tblBufr );
   
@@ -399,17 +412,18 @@ public:
   /**
    * \brief Mark the station as relaoded with kvalobs data.
    */
-  void cacheReloaded(int wmono);
+  void cacheReloaded( StationInfoPtr info );
 
 
   /**
    * \brief Mark the a station to be relaoded with kvalobs data.
    *
    * \param wmono The WMO number to the station to be reloaded.
-   *              If wmono <0 mark all station for reload.
+   *              If wmono = -1 mark all station for reload.
+   * \param id stationid.
    * \return A list of all stations that is marked for reload.
    */
-  StationList reloadCache(int wmono);
+  StationList reloadCache(int wmono, int id=0 );
 
 
   /**

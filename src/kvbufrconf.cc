@@ -76,10 +76,22 @@ main( int argn, char **argv )
 
    ConfApp app( opt, conf );
    ConfMaker confMaker( app );
+   bool ret;
 
-   if( !confMaker.doConf( opt.outconf, templateConf ) )
-      return 1;
+   switch( opt.type ) {
+   case Options::SVV: ret = confMaker.doSVVConf( opt.outconf, templateConf );
+       break;
+   case Options::PRECIP: ret = confMaker.doPrecipConf( opt.outconf, templateConf );
+       break;
+   case Options::SHIP: ret = confMaker.doShipConf( opt.outconf, templateConf );
+       break;
+   case Options::SYNOP: ret = confMaker.doConf( opt.outconf, templateConf );
+       break;
+   default:
+       ret = false;
+       break;
+   }
 
-   return 0;
+   return ret?0:1;
 }
 

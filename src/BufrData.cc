@@ -88,9 +88,20 @@ operator[]( int index )const
 BufrData::
 BufrData():
    tWeatherPeriod( FLT_MAX ), vsci( INT_MAX ),
-   tTAX_N( INT_MAX ), tTAN_N( INT_MAX ), TAX_N( FLT_MAX ), TAN_N( FLT_MAX )
+   tTAX_N( INT_MAX ), tTAN_N( INT_MAX ),
+   TAX_N( FLT_MAX ), TAN_N( FLT_MAX )
 {
 }
+
+BufrData::
+BufrData( const DataElement &de )
+   :   DataElement( de ),
+       tWeatherPeriod( FLT_MAX ), vsci( INT_MAX ),
+       tTAX_N( INT_MAX ), tTAN_N( INT_MAX ),
+       TAX_N( FLT_MAX ), TAN_N( FLT_MAX )
+{
+}
+
 
 BufrData::
 BufrData( const BufrData &bd ):

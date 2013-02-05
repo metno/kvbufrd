@@ -110,7 +110,7 @@ DelayControl::operator()()
 
          app.addObsEvent(event, que);
 
-         ost << (*it)->info()->wmono() << " obstime: " << (*it)->obstime()
+         ost << (*it)->info()->toIdentString() << " obstime: " << (*it)->obstime()
 	        << " delay to: " << (*it)->delay() << endl;
       }
 

@@ -31,6 +31,7 @@
 #include <list>
 #include <stdlib.h>
 #include <stdio.h>
+#include <boost/lexical_cast.hpp>
 #include "tblBufr.h"
 #include <milog/milog.h>
 
@@ -42,8 +43,11 @@ void
 TblBufr::
 createSortIndex() 
 {
-   sortBy_=miString(wmono_)+obstime_.isoTime()+createtime_.isoTime()+
-         miString(ccx_);
+   using namespace boost;
+   sortBy_=lexical_cast<string>(wmono_)+lexical_cast<string>(id_)
+         + callsign_ + code_
+         + obstime_.isoTime()+createtime_.isoTime()
+         + lexical_cast<string>(ccx_);
 }
 
 void 
@@ -51,6 +55,9 @@ TblBufr::
 clean()
 {
    wmono_      = 0;
+   id_         = 0;
+   callsign_.erase();
+   code_.erase();
    obstime_    = miTime::nowTime();
    createtime_ = miTime::nowTime();
    crc_        = 0;
@@ -77,6 +84,12 @@ set(const dnmi::db::DRow &r_)
 
          if(*it=="wmono"){
             wmono_=atoi(buf.c_str());
+         } else if( *it=="id" ) {
+            id_ = atoi(buf.c_str());
+         } else if( *it=="callsign" ) {
+            callsign_ = buf;
+         }else if( *it=="code" ) {
+            code_ = buf;
          }else if(*it=="obstime"){
             obstime_=miTime(buf);
          }else if(*it=="createtime"){
@@ -107,6 +120,9 @@ TblBufr::
 set(const TblBufr &s)
 {
    wmono_      = s.wmono_;
+   id_         = s.id_;
+   callsign_   = s.callsign_;
+   code_       = s.code_;
    obstime_    = s.obstime_;
    createtime_ = s.createtime_;
    crc_        = s.crc_;
@@ -122,7 +138,10 @@ set(const TblBufr &s)
 
 bool 
 TblBufr::
-set(int                  wmono, 
+set(int                  wmono,
+    int                  id,
+    const std::string    &callsign,
+    const std::string    &code,
     const miutil::miTime &obtime,    
     const miutil::miTime &createtime,    
     int                  crc,
@@ -131,6 +150,9 @@ set(int                  wmono,
     const std::string    &bufrBase64)
 {
    wmono_      = wmono;
+   id_         = id;
+   callsign_   = callsign;
+   code_       = code;
    obstime_    = obtime;
    createtime_ = createtime;
    crc_        = crc;
@@ -143,7 +165,11 @@ set(int                  wmono,
    return true;
 }
 
+#ifdef __WITH_PUTOOLS__
 miutil::miString 
+#else
+std::string
+#endif
 TblBufr::
 toSend() const
 {
@@ -151,8 +177,11 @@ toSend() const
 
    ost << "("
          << wmono_             << ","
-         << quoted(obstime_)   << ","
-         << quoted(createtime_)<< ","
+         << id_                << ","
+         << quoted( callsign_) << ","
+         << quoted( code_) << ","
+         << quoted( obstime_.isoTime() )    << ","
+         << quoted( createtime_.isoTime() ) << ","
          << crc_               << ","
          << ccx_               << ","
          << quoted(data_)      << ","
@@ -162,33 +191,45 @@ toSend() const
    return ost.str();
 }
 
-
+#ifdef __WITH_PUTOOLS__
 miutil::miString 
+#else
+std::string
+#endif
 TblBufr::
 uniqueKey()const
 {
    ostringstream ost;
 
    ost << " WHERE wmono="   << wmono_ << " AND "
+       << "       id=" << id_ << " AND "
+       << "       callsign=" << quoted( callsign_ ) << " AND "
+       << "       code=" << quoted( code_ ) << " AND "
        << "       obstime=" << quoted(obstime_.isoTime());
 
    return ost.str();
 }
 
 
-
+#ifdef __WITH_PUTOOLS__
 miutil::miString 
+#else
+std::string
+#endif
 TblBufr::
 toUpdate()const
 {
    ostringstream ost;
 
-   ost << "SET createtime=" << quoted(createtime_) << ","
+   ost << "SET createtime=" << quoted( createtime_.isoTime() ) << ","
        <<            "crc=" << crc_                << ","
        <<            "ccx=" << ccx_                << ","
        <<           "data=" << quoted(data_)       << ","
        <<     "bufrBase64=" << quoted( bufrBase64_ )
        << " WHERE   wmono=" << wmono_ << " AND "
+       << "            id=" << id_ << " AND "
+       << "      callsign=" << quoted( callsign_ ) << " AND "
+       << "          code=" << quoted( code_ ) << " AND "
        << "       obstime=" << quoted(obstime_.isoTime());
 
    return ost.str();

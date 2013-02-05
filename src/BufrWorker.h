@@ -34,6 +34,7 @@
 #include <sstream>
 #include "App.h"
 #include <kvcpp/kvevents.h>
+#include "bufr/EncodeBufrManager.h"
 #include "DataList.h"
 #include "BufrData.h"
 #include "obsevent.h"
@@ -41,6 +42,10 @@
 
 
 class BufrWorker {
+//   BufrWorker( const BufrWorker &);
+   BufrWorker& operator=( const BufrWorker &);
+   BufrWorker();
+
   typedef enum{RdOK, 
 		 RdNoStation, 
 		 RdNoData, 
@@ -51,6 +56,8 @@ class BufrWorker {
   dnmi::thread::CommandQue &que;  
   dnmi::thread::CommandQue &replayQue;  
   std::ostringstream       &swmsg;
+  boost::shared_ptr<EncodeBufrManager> encodeBufrManager;
+  BufrParamValidaterPtr bufrParamValidater;
 
   /**
    * readData loads the data from the datacache. The 
@@ -115,11 +122,14 @@ class BufrWorker {
    * \param wmomsg The wmo message to save to disk.
    * \param ccx The CC? indicator.
    * \param base64 If not NULL, return the base64 encoding for the bufr msg.
+   * @return true is the buffer is saved and false otherwise.
    */
-  void saveTo(StationInfoPtr info,
-              BufrData  &bufr,
+  bool saveTo(StationInfoPtr info,
+              BufrDataPtr bufr,
               int ccx,
               std::string *base64=0 ) const;
+
+
 
   bool checkContinuesTypes( ObsEvent            &event,
                             const DataEntryList &data)const;

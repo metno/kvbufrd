@@ -131,8 +131,18 @@ DataElement():
     WAWA(params, "WAWA", 49),
     HLN(params, "HLN", 56 ),
     EM(params, "EM", 7),
-    E(params, "E", 129),
+    EE(params, "EE", 129),
+    Es(params, "Es", 101),
+    ERs(params, "ERs", 139),
+    XIS(params,"XIS", 11),
+	Ci(params,"Ci", 4),   //Sea ice concentration.
+  	Bi(params,"Bi", 2),   //Amount and type of ice.
+  	Zi(params,"Zi", 21),   //Ice situation.
+  	Si(params,"Si", 20),   //Ice development
+  	Di(params,"Di", 6),   //Bearing of ice edge.
     SA(params, "SA", 112 ),
+    SD(params, "SD", 18 ),
+    SS_24(params, "SS_24", 114 ),
     Vmor(params, "VMOR", 271 ),
     VV(params, "VV", 273),
     HL(params, "HL", 55 ),
@@ -153,6 +163,17 @@ DataElement():
     AA( params, "AA", 1 ),
     ITZ( params, "ITZ", 13 ),
     ITR( params, "ITR", 12 ),
+    OT_1( params, "OT_1", 121),
+    OT_24( params, "OT_24", 122 ),
+    MDIR( params, "MDIR", 403),
+    MSPEED( params, "MSPEED", 404),
+    MLAT( params, "MLAT", 401 ),
+    MLON( params, "MLON", 402 ),
+    WDMT( params, "WDMT", 68 ),
+    Pwa( params, "Pwa", 154 ),
+    Pw( params, "Pw", 151 ),
+    Hwa( params, "Hwa", 134 ),
+    Hw( params, "Hw", 131 ),
     nSet( 0 ),
     onlyTypeid1( true )
 

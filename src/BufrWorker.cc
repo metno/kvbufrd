@@ -33,27 +33,32 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sstream>
-#include "kvDbGateProxy.h"
+#include <fstream>
 #include <list>
 #include <iomanip>
-#include "Data.h"
-#include <milog/milog.h>
-#include <fstream>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/crc.hpp>
 #include <boost/cstdint.hpp>
+#include "App.h"
+#include <milog/milog.h>
+#include <kvalobs/kvPath.h>
+#include "kvDbGateProxy.h"
+#include "Data.h"
 #include "StationInfo.h"
 #include "BufrWorker.h"
 #include "obsevent.h"
 #include "bufr.h"
-#include <kvalobs/kvPath.h>
 #include "LoadBufrData.h"
-#include "encodebufr.h"
 #include "base64.h"
+#include "SemiUniqueName.h"
 
 using namespace std;
 using namespace kvalobs;
 using namespace miutil;
 using namespace milog;
+
+namespace fs = boost::filesystem;
 
 
 
@@ -61,8 +66,11 @@ BufrWorker::BufrWorker(App &app_,
                        dnmi::thread::CommandQue &que_,
                        dnmi::thread::CommandQue &replayQue_)
 : app(app_), que(que_), replayQue(replayQue_),
-  swmsg(*(new std::ostringstream()))
+  swmsg(*(new std::ostringstream())),
+  encodeBufrManager( new EncodeBufrManager() )
 {
+   string filename=string( DATADIR ) + "/B0000000000098014001.TXT";
+   bufrParamValidater = BufrParamValidater::loadTable( filename );
 }
 
 void 
@@ -97,7 +105,7 @@ BufrWorker::operator()()
          continue;
       }
 
-      LOGINFO("New observation: ("<<event->stationInfo()->wmono() << ") "
+      LOGINFO("New observation: ("<<event->stationInfo()->toIdentString() << ") "
               << event->obstime() << " regenerate: "
               << (event->regenerate()? "T":"F") << " client: "
               << (event->hasCallback()?"T":"F"));
@@ -106,8 +114,8 @@ BufrWorker::operator()()
          FLogStream *logs=new FLogStream(2, 307200); //300k
          std::ostringstream ost;
 
-         ost << kvPath("logdir") << "/kvbufr/"
-               << event->stationInfo()->wmono() << ".log";
+         ost << kvPath("logdir") << "/" << options.progname << "/"
+               << event->stationInfo()->toIdentString() << ".log";
 
          if(logs->open(ost.str())){
             Logger::setDefaultLogger(logs);
@@ -115,7 +123,7 @@ BufrWorker::operator()()
 
             //Log to stationspecific logfile also.
             LOGINFO("+++++++ Start processing observation +++++++" << endl
-                    << "New observation: ("<<event->stationInfo()->wmono() << ") "
+                    << "New observation: ("<<event->stationInfo()->toIdentString() << ") "
                     << event->obstime() << " regenerate: "
                     << (event->regenerate()? "T":"F") << " client: "
                     << (event->hasCallback()?"T":"F"));
@@ -125,8 +133,8 @@ BufrWorker::operator()()
          }
       }
       catch(...){
-         LOGERROR("Cant create a logstream for wmono: " <<
-                  event->stationInfo()->wmono() );
+         LOGERROR("Cant create a logstream for station: " <<
+                  event->stationInfo()->toIdentString() );
       }
 
       swmsg.str("");
@@ -163,8 +171,7 @@ readyForBufr( const DataEntryList &data,
    bool haveAllTypes;
    bool mustHaveTypes;
    bool force;
-   int  min;
-   bool delay;
+   int  delayMin;
    bool relativToFirst;
 
    miTime obstime=e.obstime();
@@ -176,11 +183,11 @@ readyForBufr( const DataEntryList &data,
    miTime nowTime(miTime::nowTime());
 
    haveAllTypes=checkTypes(data, info, obstime, mustHaveTypes);
-   delay=info->delay(obstime.hour(), min, force, relativToFirst);
+   delayMin = info->delay( obstime, force, relativToFirst);
 
    LOGDEBUG3("haveAllTypes:  " << (haveAllTypes?"TRUE":"FALSE") << endl <<
              "mustHaveTypes: " << (mustHaveTypes?"TRUE":"FALSE") << endl <<
-             "delay: " << (delay?"TRUE":"FALSE") << " min: " << min <<
+             "delay: " << (delayMin!=0?"TRUE":"FALSE") << " min: " << delayMin <<
              " force: " << (force?"TRUE":"FALSE") << " relativToFirst: " <<
              (relativToFirst?"TRUE":"FALSE") << endl <<
              " nowTime: " << nowTime << endl <<
@@ -197,7 +204,7 @@ readyForBufr( const DataEntryList &data,
    }
 
 
-   if(delay){
+   if( delayMin > 0 ){
       if(relativToFirst){
          //If we allready have a registred waiting element dont replace it.
          //This ensures that we only register an waiting element for
@@ -208,7 +215,7 @@ readyForBufr( const DataEntryList &data,
 
 
          delayTime=nowTime;
-         delayTime.addMin(min);
+         delayTime.addMin( delayMin );
          WaitingPtr wp=e.waiting();
 
          if(!wp){
@@ -235,12 +242,12 @@ readyForBufr( const DataEntryList &data,
             }
          }
       }else{ //Delay relative to obstime.
-         delayTime=miTime(obstime.date(),miClock(obstime.hour(), min, 0));
+         delayTime=miTime(obstime.date(),miClock(obstime.hour(), delayMin, 0));
       }
    }
 
    if(haveAllTypes){
-      if(delay){
+      if( delayMin > 0 ){
          if(!force){
             return true;
          }else{
@@ -264,7 +271,7 @@ readyForBufr( const DataEntryList &data,
       }
    }
 
-   if(delay){
+   if( delayMin > 0 ){
       if(delayTime<nowTime){
          if(mustHaveTypes){
             return true;
@@ -302,7 +309,7 @@ newObs(ObsEvent &event)
    DataEntryList   data;
    DataElementList bufrData;
    Bufr            bufrEncoder;
-   BufrData        bufr;
+   BufrDataPtr     bufr;
    StationInfoPtr  info;
    ostringstream   ost;
    boost::uint16_t oldcrc=0;
@@ -311,15 +318,18 @@ newObs(ObsEvent &event)
 
    info=event.stationInfo();
 
-   if(!info->msgForTime(event.obstime().hour())){
-      LOGINFO("Skip BUFR for time: " << event.obstime() << "  wmono: " <<
-              info->wmono());
-      swmsg << "Skip BUFR for time: " << event.obstime() << "  wmono: " <<
-            info->wmono();
+   if( !info->msgForTime( event.obstime() ) ){
+
+
+      LOGINFO("Skip BUFR for time: " << event.obstime() << " " <<
+              info->toIdentString() );
+      swmsg << "Skip BUFR for time: " << event.obstime() << " " <<
+            info->toIdentString();
+
 
       if(event.hasCallback()){
          event.msg() << "Skip BUFR for time: " << event.obstime() <<
-               "  wmono: " << info->wmono();
+               " " << info->toIdentString();
          event.bufr("");
          event.isOk(false);
       }
@@ -332,13 +342,13 @@ newObs(ObsEvent &event)
    //must allready exist. If it don't exist we could generate
    //a BUFR that is incomplete because of incomplete data.
 
-   if(event.regenerate()){
+   if( event.regenerate() ){
       list<TblBufr> tblBufrList;
 
-      LOGINFO("Regenerate event: wmono " << info->wmono() << ", obstime " <<
+      LOGINFO("Regenerate event: " << info->toIdentString() << ", obstime " <<
               event.obstime());
 
-      if(app.getSavedBufrData(info->wmono(),
+      if(app.getSavedBufrData(info,
                               event.obstime(),
                               tblBufrList)){
          if(tblBufrList.size()>0){
@@ -366,7 +376,7 @@ newObs(ObsEvent &event)
 
          switch(dataRes){
          case RdNoStation:
-            event.msg() << "NOSTATION: No station congigured!";
+            event.msg() << "NOSTATION: No station configured!";
             break;
          case RdNoData:
             event.msg() << "NODATA: No data!";
@@ -376,6 +386,7 @@ newObs(ObsEvent &event)
             break;
          default:
             event.msg() << "READERROR: cant read data!";
+            break;
          }
       }
 
@@ -385,7 +396,7 @@ newObs(ObsEvent &event)
    }
 
 
-   //If this event comes frrom the DelayControll and
+   //If this event comes from the DelayControll and
    //is for data waiting on continues types don't run
    //it through the readyForBufr test. We know that
    //the readyForBufr has previously returned true for
@@ -407,13 +418,13 @@ newObs(ObsEvent &event)
       return;
    }
 
-   app.removeWaiting(info->wmono(), event.obstime() );
+   app.removeWaiting(info, event.obstime() );
 
-   LOGINFO("ReadData: wmono: " <<info->wmono() << " obstime: " <<
+   LOGINFO("ReadData: " << info->toIdentString() << " obstime: " <<
            event.obstime() << " # " << data.size());
 
    try{
-      loadBufrData(data, bufrData, event.stationInfo());
+      loadBufrData( data, bufrData, event.stationInfo());
    }
    catch(...){
       LOGDEBUG("EXCEPTION(Unknown): Unexpected exception from "<< endl <<
@@ -424,59 +435,81 @@ newObs(ObsEvent &event)
    ost.str("");
 
    for(int i=0;it!=bufrData.end(); i++, it++)
-      ost << it->time() << "  [" << i << "] " << bufrData[i].time() <<endl;
+      ost << it->time() << "  [" << i << "] #params " << bufrData[i].numberOfValidParams() <<endl;
 
    LOGINFO("# number of bufrdata: " << bufrData.size() << endl<<
            "Continues: " << bufrData.nContinuesTimes() << endl <<
            "Time(s): " << endl << ost.str());
 
-   if( app.getSavedBufrData( info->wmono(), event.obstime(), tblBufrList ) ){
+   if( bufrData.firstTime() != event.obstime() ) {
+	   LOGWARN( "NO data at '" << event.obstime() << "' passed the valid checks. Skipping BUFR generation.");
+	   return;
+   }
+
+
+   if( app.getSavedBufrData( info, event.obstime(), tblBufrList ) ){
       if(tblBufrList.size()>0){
          ccx=tblBufrList.front().ccx();
          oldcrc=tblBufrList.front().crc();
          ++ccx;
-         LOGDEBUG("An BUFR messages for wmono: " << info->wmono() << " obstime: " << event.obstime()
-                  << " allready exist. ccx=" << ccx-1 << " crc: " << oldcrc );
+         LOGDEBUG("A BUFR for: " << info->toIdentString() << " obstime: " << event.obstime()
+                  << " exist. ccx=" << ccx-1 << " crc: " << oldcrc );
       }
    }
 
    LOGDEBUG6(bufrData);
 
-   bool bufrOk;
-
    try{
-
-      bufrOk=bufrEncoder.doBufr( info,
-                                 bufrData,
-                                 bufr );
+      bufr = bufrEncoder.doBufr( info, bufrData );
+   }
+   catch( const IdException &e ) {
+      LOGWARN("EXCEPTION: Cant resolve for BUFR id: " << info->toIdentString() <<
+                             " obstime: "  <<
+                             ((bufrData.begin()!=bufrData.end())?
+                                   bufrData.begin()->time():"(NULL)") << endl <<
+                                   "what: " << e.what() << endl);
+      swmsg << "Cant create a bufr!" << endl;
+   }
+   catch( const NotImplementedException &e ) {
+      LOGWARN("EXCEPTION: No template implemmented for: " << info->toIdentString() <<
+                       " obstime: "  <<
+                       ((bufrData.begin()!=bufrData.end())?
+                             bufrData.begin()->time():"(NULL)") << endl <<
+                             "what: " << e.what() << endl);
+               swmsg << "Cant create a bufr!" << endl;
    }
    catch(std::out_of_range &e){
-      LOGWARN("EXCEPTION: out_of_range: wmono: " << info->wmono() <<
+      LOGWARN("EXCEPTION: out_of_range: " << info->toIdentString() <<
               " obstime: "  <<
               ((bufrData.begin()!=bufrData.end())?
                     bufrData.begin()->time():"(NULL)") << endl <<
                     "what: " << e.what() << endl);
-      bufrOk=false;
       swmsg << "Cant create a bufr!" << endl;
    }
    catch(DataListEntry::TimeError &e){
-      LOGWARN("Exception: TimeError: wmono: " << info->wmono() << " obstime: "  <<
+      LOGWARN("Exception: TimeError: " << info->toIdentString() << " obstime: "  <<
               ((bufrData.begin()!=bufrData.end())?
                     bufrData.begin()->time():"(NULL)") << endl<<
                     "what: " << e.what() << endl);
-      bufrOk=false;
       swmsg << "Cant create a bufr!" << endl;
    }
+   catch( std::logic_error &e ) {
+         LOGWARN("EXCEPTION: logic_error: " << info->toIdentString() <<
+                     " obstime: "  <<
+                     ((bufrData.begin()!=bufrData.end())?
+                           bufrData.begin()->time():"(NULL)") << endl <<
+                           "what: " << e.what() << endl);
+             swmsg << "Cant create a bufr!" << endl;
+      }
    catch(...){
       LOGWARN("EXCEPTION(Unknown): Unexpected exception in Bufr::doBufr:" <<
-              endl << "wmono: " << info->wmono() << " obstime: "  <<
+              endl << " station: " << info->toIdentString() << " obstime: "  <<
               ((bufrData.begin()!=bufrData.end())?
                     bufrData.begin()->time():"(NULL)") << endl);
-      bufrOk=false;
       swmsg << "Cant create a bufr!" << endl;
    }
 
-   if(!bufrOk){
+   if(! bufr ){
       if(event.hasCallback()){
          event.isOk(false);
 
@@ -486,11 +519,11 @@ newObs(ObsEvent &event)
             event.msg() << "BUFR ERROR:(" << event.obstime() <<") cant create bufr!";
       }
 
-      LOGERROR("Cant create BUFR for <"<< info->wmono()<<"> obstime: " <<
+      LOGERROR("Cant create BUFR for <"<< info->toIdentString()<<"> obstime: " <<
                event.obstime());
       swmsg << "Cant create a BUFR!" << endl;
    }else{
-      boost::uint16_t crc=bufr.crc();
+      boost::uint16_t crc=bufr->crc();
       string          base64;
 
       bool newBufr( crc != oldcrc );
@@ -500,25 +533,29 @@ newObs(ObsEvent &event)
          ostringstream dataOst;
 
          bufrData.writeTo( dataOst );
-         saveTo( info, bufr, ccx, &base64 );
+         if( saveTo( info, bufr, ccx, &base64 ) ) {
+             if(app.saveBufrData( TblBufr( info->wmono(), info->stationID(),
+                                           info->callsign(), info->codeToString(),
+                                           event.obstime(), createTime,
+                                           crc, ccx, dataOst.str(), base64 ))) {
+                 LOGINFO("BUFR information saved to database! (" << info->toIdentString() << ") ccx: "
+                         << ccx << " crc: " << crc );
+             } else {
+                 LOGERROR("FAILED to save BUFR information to the database! (" << info->toIdentString() << ") ccx: "
+                         << ccx << " crc: " << crc );
+             }
 
-         if(app.saveBufrData( TblBufr( info->wmono(), event.obstime(),
-                                       createTime, crc, ccx, dataOst.str(), base64 ))) {
-            LOGINFO("BUFR information saved to database! ccx: " << ccx << " crc: " << crc );
-         } else {
-            LOGERROR("FAILED to save BUFR information to the database! ccx: " << ccx << " crc: " << crc );
+             swmsg << "New BUFR created. (" << info->toIdentString() << ") " << event.obstime() << endl;
          }
-
-         swmsg << "New bufr created!" << endl;
-
       }else{
-         LOGINFO("DUPLICATE: wmono=" << info->wmono() << " obstime: "
+         LOGINFO("DUPLICATE: (" << info->toIdentString() << ") "
                  << event.obstime());
 
-         swmsg << "Duplicate bufr created!" << endl;
+         swmsg << "Duplicate BUFR created. (" <<  info->toIdentString() << ") "
+               << event.obstime() << endl;
 
          if(event.hasCallback())
-            event.msg() << "DUPLICATE: wmono=" << info->wmono() << " obstime: "
+            event.msg() << "DUPLICATE: (" << info->toIdentString() << ") "
             << event.obstime();
 
       }
@@ -557,13 +594,13 @@ BufrWorker::readData( ObsEvent             &event,
 
    gate.busytimeout(120);
 
-   from.addHour(-25);
+   from.addHour( -24 );
 
-   stIDs=station->stationID();
+   stIDs=station->definedStationID();
    itStId=stIDs.rbegin();
 
    if(itStId==stIDs.rend()){
-      LOGERROR("No stationid's for station <" << station->wmono() << ">!");
+      LOGERROR("No stationid's for station <" << station->toIdentString() << ">!");
       return RdNoStation;
    }
 
@@ -573,7 +610,7 @@ BufrWorker::readData( ObsEvent             &event,
             << " AND "
             << " obstime>=\'"      << from.isoTime() << "\' AND "
             << " obstime<=\'"      << to.isoTime()   << "\'"
-            << " order by obstime;";
+            << " order by obstime, typeid;";
 
       LOGDEBUG("query: " << ost.str());
 
@@ -606,6 +643,12 @@ BufrWorker::readData( ObsEvent             &event,
                      "This should not happend!!" << endl);
          }
       }
+   }
+
+   string rejected = validate.getLog();
+
+   if( ! rejected.empty() ) {
+      LOGWARN("RJECTED data." << endl << rejected );
    }
 
    it=data.begin();
@@ -654,12 +697,12 @@ checkTypes(const DataEntryList  &data,
    mustHaveTypes=false;
 
    if(dit==data.end()){
-      LOGDEBUG("checkTypes: No data for: wmono: " << stInfo->wmono() << " obstime: " << obstime);
+      LOGDEBUG("checkTypes: No data for: " << stInfo->toIdentString() << " obstime: " << obstime);
       return false;
    }
 
    if(dit->obstime()!=obstime){
-      LOGDEBUG("checkTypes: No data for obstime: " << obstime <<  " wmono: " << stInfo->wmono());
+      LOGDEBUG("checkTypes: No data for obstime: " << obstime <<  " station: " << stInfo->toIdentString());
       return false;
    }
 
@@ -700,29 +743,51 @@ checkTypes(const DataEntryList  &data,
 
 
 
-void
+
+bool
 BufrWorker::
 saveTo( StationInfoPtr info,
-        BufrData  &bufr,
+        BufrDataPtr  bufr,
         int ccx,
         std::string *base64 ) const
 {
-   BufrEncoder encodeBufr( info );
+    bool doSave=true;
+    int nValues;
 
    try {
-      encodeBufr.encodeBufr( bufr, ccx );
-      encodeBufr.saveToFile();
+      BufrHelper bufrHelper( bufrParamValidater, info, bufr );
+      bufrHelper.setSequenceNumber( ccx );
+      encodeBufrManager->encode( bufrHelper );
+
+      if( ! bufrHelper.validBufr() ) {
+          LOGINFO("INVALID BUFR: " << bufrHelper.getErrorMessage() );
+          return false;
+      }
+
+      doSave = ! bufrHelper.emptyBufr();
+      nValues = bufrHelper.nValues();
+
+      if( !doSave ) {
+          LOGINFO("No data values was written to the BUFR message, the BUFR message is NOT saved.");
+          return false;
+      }
+
+      LOGINFO("BUFR with " << nValues << " real data values is saved.")
+      bufrHelper.saveToFile();
 
       if( base64 ) {
          ostringstream ost;
-         encodeBufr.writeToStream( ost );
+         bufrHelper.writeToStream( ost );
          string buf = ost.str();
          encode64( buf.data(), buf.size(), *base64 );
       }
+      return true;
    }
-   catch( const exception &ex ) {
-      LOGERROR("Failed to encode to BUFR: wmono: " << info->wmono() << " obstime: " << bufr.time() << ". Reason: " << ex.what());
+   catch( const std::exception &ex ) {
+      LOGERROR("Failed to encode to BUFR: " << info->toIdentString() << " obstime: " << bufr->time() << ". Reason: " << ex.what());
+      return false;
    }
+   return false;
 }
 
 bool 
@@ -747,7 +812,7 @@ checkContinuesTypes(ObsEvent &event,
       return true;
    }
 
-   w=app.getWaiting( event.obstime(), info->wmono() );
+   w=app.getWaiting( event.obstime(), info );
 
 
    std::list<int> contTypes=info->continuesTypeids(app.continuesTypeID());
@@ -773,12 +838,9 @@ checkContinuesTypes(ObsEvent &event,
 
       w->waitingOnContinuesData(true);
 
-      if(!app.addWaiting(w, true )){
-         LOGERROR("Cant add a waiting element to the Waiting database.");
-         return true;
-      }
+      app.addWaiting(w, true );
 
-      LOGINFO("Waiting on continues data: wmono: " << info->wmono() <<
+      LOGINFO("Waiting on continues data: " << info->toIdentString() <<
               " obstime: " << event.obstime() << " delay: " << w->delay());
 
       swmsg << "Waiting on continues data until: " << w->delay();

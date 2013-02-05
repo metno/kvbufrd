@@ -32,10 +32,14 @@
 #define __kvbuffer_tblWaiting_h__
 
 #include <kvalobs/kvDbBase.h>
+#include "defines.h"
 
 class TblWaiting : public kvalobs::kvDbBase {
 private:
   int              wmono_;
+  int              id_;
+  std::string      callsign_;
+  std::string      code_;
   miutil::miTime   obstime_;
   miutil::miTime   delaytime_;
 
@@ -46,13 +50,19 @@ private:
   TblWaiting(const TblWaiting &waiting){ set(waiting);}
   TblWaiting(const dnmi::db::DRow &r){set(r);}
   TblWaiting(int                  wmono,
+             int                  id,
+             const std::string    &callsign,
+             const std::string    &code,
 	     const miutil::miTime &obstime,
 	     const miutil::miTime &delaytime)
-  { set(wmono, obstime, delaytime);}
+  { set(wmono, id, callsign, code, obstime, delaytime);}
 
   bool set(int                  wmono,
-	   const miutil::miTime &obtime,
-	   const miutil::miTime &delaytime);
+           int id,
+           const std::string    &callsign,
+           const std::string    &code,
+           const miutil::miTime &obtime,
+           const miutil::miTime &delaytime);
 
   bool set(const dnmi::db::DRow&);
   bool set(const TblWaiting &waiting);
@@ -60,11 +70,20 @@ private:
   void clean();
 
   const char*            tableName() const {return "waiting";}
+#ifdef __WITH_PUTOOLS__
   miutil::miString toSend()    const;
   miutil::miString toUpdate()  const;
   miutil::miString uniqueKey() const;
+#else
+  std::string toSend()    const;
+  std::string toUpdate()  const;
+  std::string uniqueKey() const;
+#endif
 
   int              wmono()    const { return wmono_;    }
+  int              id()       const { return id_; }
+  std::string      callsign() const { return callsign_; }
+  std::string      code()     const { return code_; }
   miutil::miTime   obstime()  const { return obstime_;  }
   miutil::miTime   delaytime()const { return delaytime_;}
 

@@ -44,7 +44,8 @@ Waiting::
 addToDb()
 {
   kvDbGateProxy gate( static_cast<App*>( App::kvApp )->dbThread->dbQue );
-  TblWaiting data(info_->wmono(), obstime_, delay_);
+  TblWaiting data(info_->wmono(), info_->stationID(),
+                  info_->callsign(), info_->codeToString(),obstime_, delay_);
  
   gate.busytimeout(120);
   
@@ -61,7 +62,8 @@ Waiting::
 removeFrom()
 {
   kvDbGateProxy gate(  static_cast<App*>( App::kvApp )->dbThread->dbQue );
-  TblWaiting data(info_->wmono(), obstime_, delay_);
+  TblWaiting data(info_->wmono(), info_->stationID(), info_->callsign(),
+                  info_->codeToString(), obstime_, delay_);
   
   gate.busytimeout(120);
   
@@ -83,7 +85,9 @@ inDb()
 
   gate.busytimeout(120);
 
-  o << "WHERE wmono=" << info_->wmono() << " AND obstime=\'" 
+  o << "WHERE wmono=" << info_->wmono()
+    << " AND id=" << info_->stationID()
+    << " AND obstime=\'"
     <<obstime_ << "\'";
 
   if(gate.select(data, o.str())){

@@ -62,9 +62,16 @@ public:
 
   const char* tableName() const {return "station_outmessage";}
 
+#ifdef  __WITH_PUTOOLS__
   miutil::miString toSend()    const { return ""; } //NOT used
   miutil::miString toUpdate()  const{ return ""; }  //NOT used
   miutil::miString uniqueKey() const;
+#else
+  std::string toSend()    const { return ""; } //NOT used
+  std::string toUpdate()  const{ return ""; }  //NOT used
+  std::string uniqueKey() const;
+#endif
+
 
   std::string couplingDelay() const { return coupling_delay_; }
   std::string priorityPrecip() const { return priority_precip_; }

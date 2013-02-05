@@ -30,120 +30,214 @@
  */
 
 #include <float.h>
+#include <algorithm>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <milog/milog.h>
 #include <miutil/trimstr.h>
+#include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 #include "StationInfo.h"
 #include "StationInfoParse.h"
 #include "parseMilogLogLevel.h"
+
 
 using namespace std;
 using namespace miutil::conf;
 
 
+namespace {
+const string NoteSection="__NOTE_INTERNAL__";
+const string IdType = "idtype";
+
+string
+getIdAndType( miconf::ConfSection *conf )
+{
+
+   ostringstream ost;
+   ValElementList idTypeValue;
+
+   idTypeValue = conf->getValue( NoteSection+"."+IdType );
+
+   for(ValElementList::iterator it=idTypeValue.begin();
+         it != idTypeValue.end(); ++it ) {
+      if( it != idTypeValue.begin() )
+         ost << *it;
+      else
+         ost << " (" << *it << ")";
+   }
+
+   return ost.str();
+}
+
+}
+
 bool
 StationInfoParse::DefaultVal::
 valid()const{
-   if(copyto.empty() || owner.empty() || list.empty() || delay.empty()){
-      ostringstream ost;
-      ost << "Missing key: ";
-
-      if(copyto.empty())
-         ost << "copyto";
-      else if (owner.empty())
-         ost << "owner";
-      else if(list.empty())
-         ost << "list";
-      else
-         ost << "delay";
-
-      LOGERROR(ost.str() << "!" << endl);
-      return false;
-   }
+   //   if(copyto.empty() || owner.empty() || list.empty() || delay.empty()){
+   //      ost << "Missing key: ";
+   //
+   //      if(copyto.empty())
+   //         ost << "copyto";
+   //      else if (owner.empty())
+   //         ost << "owner";
+   //      else if(list.empty())
+   //         ost << "list";
+   //      else
+   //         ost << "delay";
+   //
+   //      LOGWARN(ost.str() << "!" << endl);
+   //      //return false;
+   //   }
 
    return true;
 }
 
-
-bool 
-StationInfoParse::parse(miutil::conf::ConfSection *conf,
-      std::list<StationInfoPtr> &stationList,  bool useDefaultValues )
+void
+StationInfoParse::
+parseStationDefSections( miconf::ConfSection *conf,
+                        std::list<StationInfoPtr> &stationList,  bool useDefaultValues )
 {
-   ConfSection *wmoDefault=0;
-   ConfSection *wmoSec;
-   string      wmono;
-   int         iWmono;
+   ConfSection *sec;
+   string      id;
    StationInfo *info;
-
-   stationList.clear();
-
-   if( useDefaultValues )
-      ignoreMissingValues = false;
-   else
-      ignoreMissingValues = true;
-
-   wmoDefault=conf->getSection("wmo_default");
-
-   if( !wmoDefault && useDefaultValues ){
-      LOGFATAL("Missing section <wmo_default> in the configuration file!");
-      return false;
-   }
-
-   if( useDefaultValues && !doWmoDefault( wmoDefault ) ){
-      LOGFATAL("Fatal errors in  <wmo_default> in the configuration file!");
-      return false;
-   }
+   string      idType;
 
    list<string> sect=conf->getSubSections();
    string::size_type i;
 
-   if( wmoDefault ) {
-      LOGDEBUG("Sections: (" << sect.size() << ")" << endl <<
-               "wmo_default: " << endl << *wmoDefault << endl);
-   } else {
-      LOGDEBUG("Sections: (" << sect.size() << ")" << endl <<
-            "wmo_default: Not using default values. " << endl);
-   }
-
    for(list<string>::iterator it=sect.begin();
          it!=sect.end(); it++){
+      idType.erase();
       i=it->find("wmo_");
 
-      if(i==string::npos)
-         continue;
-
-      wmono=it->substr(i+4);
-
-      if(wmono=="default")
-         continue;
-
-      wmoSec=conf->getSection(*it);
-
-      if(!wmoSec){
-         LOGERROR("FATAL: Missing wmoSec for <" << *it << ">!" << endl);
+      if( (i=it->find("wmo_")) != string::npos ) {
+         id = it->substr(i+4);
+         idType = "WMO";
+      } else if( (i=it->find("id_")) != string::npos ) {
+         id = it->substr(i+3);
+         idType = "ID";
+      } else if( (i=it->find("callsign_")) != string::npos ) {
+         id = it->substr(i+9);
+         idType = "CALLSIGN";
+      }else {
          continue;
       }
 
-      iWmono=atoi(wmono.c_str());
-
-      info=parseSection(wmoSec, iWmono, useDefaultValues );
-
-      if(!info){
-         LOGERROR("Cant parse section <" << *it << ">!");
+      if(id == "default" )
          continue;
+
+      ConfSectionList allSections=conf->getAllSection(*it);
+
+      if( allSections.size() > 1 ) {
+         LOGINFO("Multiple definitions for <"<<*it<<">. This is ok.");
       }
 
-      stationList.push_back(StationInfoPtr(info));
+      for( ConfSectionList::iterator cit = allSections.begin();
+            cit != allSections.end(); ++cit ) {
+         //sec=conf->getSection(*it);
+         sec = *cit;
+
+         if(!sec){
+            LOGERROR("ERROR: Missing section for <" << *it << ">!" << endl);
+            continue;
+         }
+
+         try {
+            ConfSection *noteSection=new ConfSection();
+            noteSection->addValue( IdType, ValElement(idType), true );
+            noteSection->appendValue( IdType, ValElement(id) );
+            sec->addSection( NoteSection, noteSection );
+         }
+         catch( ... ) {
+            LOGERROR("FATAL: NOMEM: Cant create internal section <" << NoteSection << ">!" << endl);
+         }
+
+         curErr.str("");
+         curSectionName = *it;
+
+         info = parseSection( sec, id, useDefaultValues );
+
+         string sErr( curErr.str() );
+
+         if(!info){
+            errors << "ERRORS while parsing section <" << *it << ">, ignoring the section!" << endl
+                  << "Reason: " << sErr;
+            LOGERROR("Error while parsing section <" << *it << ">, ignoring the section!" << endl
+                     << "Reason: " << sErr );
+            continue;
+         } else if( ! sErr.empty() ) {
+            errors << "WARNINGS while parsing section <" << *it << ">!" << endl
+                  << "  file: " << sec->getFilename() << " line: " << sec->getLineno() << "." << endl
+                  << "Reason: " << sErr;
+            LOGWARN("Warnings while parsing section <" << *it << ">."<< endl
+                    << "  file: " << sec->getFilename() << " line: " << sec->getLineno() << "." << endl
+                    << "Reason: " << sErr );
+         }
+
+         stationList.push_back(StationInfoPtr(info));
+      }
+   }
+}
+
+
+bool
+StationInfoParse::parse( miconf::ConfSection *conf,
+                        std::list<StationInfoPtr> &stationList,  bool useDefaultValues )
+{
+   string defaultConfName("wmo_default");
+   ConfSection *defaultConf=0;
+
+   stationList.clear();
+
+   //Only let useDafault controll
+   //ignoreMissingValues if it is not explicit
+   //set to true.
+   if( ! ignoreMissingValues ) {
+       if( useDefaultValues ) {
+           ignoreMissingValues = false;
+       } else {
+           ignoreMissingValues = true;
+       }
    }
 
+   defaultConf=conf->getSection( defaultConfName );
+
+   if( !defaultConf ) {
+      defaultConfName="default";
+      defaultConf=conf->getSection( defaultConfName );
+   }
+
+   if( !defaultConf && useDefaultValues ){
+      useDefaultValues = false;
+      LOGWARN("Missing section 'wmo_default' or 'default' section in the configuration file!");
+   }
+
+   if( useDefaultValues && !doDefault( defaultConf ) ){
+      LOGFATAL("Fatal errors in default section '" << defaultConfName << "' in the configuration file!");
+      return false;
+   }
+
+   list<string> sect=conf->getSubSections();
+
+   if( defaultConf ) {
+      LOGDEBUG("Sections: (" << sect.size() << ")" << endl <<
+               "default: " << endl << *defaultConf << endl);
+   } else {
+      LOGDEBUG("Sections: (" << sect.size() << ")" << endl <<
+               "Not using default values. " << endl);
+   }
+
+   parseStationDefSections( conf, stationList, useDefaultValues );
    return true;
 }
 
 StationInfo* 
-StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf, 
-      int wmono,  bool useDefaultValues )
+StationInfoParse::
+parseSection( miconf::ConfSection *stationConf,
+             const std::string &id,  bool useDefaultValues )
 {
    const char *keywords[]={"stationid", "delay", "precipitation",
                            "typepriority", "list",
@@ -151,7 +245,8 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
                            "latitude", "longitude", "height",
                            "height_visibility", "height_precip",
                            "height_pressure", "height_temperature",
-                           "height_wind", "name",
+                           "height_wind","height_wind_above_sea", "name", "callsign", "wmono",
+                           "code",
                            0 };
 
    list<std::string>           keys;
@@ -159,9 +254,19 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
    int                         i;
    StationInfo                 *st=0;
    ValElementList              value;
+   string                      idType;
+   ValElementList              idTypeValue;
    bool                        ok;
 
+   idTypeValue = stationConf->getValue( NoteSection+"."+IdType );
+
+   //   cerr << "Note: "<< NoteSection+"."+IdType << " Size: " << idTypeValue.size()
+   //        << " Value: " << (idTypeValue.size()>0?idTypeValue[0].valAsString():"N/A" ) << endl;
+   if( idTypeValue.size() > 0 )
+      idType = idTypeValue[0].valAsString();
+
    keys=stationConf->getKeys();
+
 
    for(it=keys.begin(); it!=keys.end(); it++){
       for(i=0; keywords[i]; i++){
@@ -170,8 +275,8 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
       }
 
       if(!keywords[i]){
-         LOGERROR("Unknown key <" << *it << "> in WMO section <" << wmono
-               << ">!" << endl);
+         LOGERROR("Unknown key <" << *it << "> in '"<< idType <<"' section <" << id
+                  << ">!" << endl);
       }
    }
 
@@ -183,54 +288,68 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
       return 0;
    }
 
-   st->wmono_=wmono;
+   if( idType == "WMO" ) {
+      st->wmono_= atoi( id.c_str() );
+   } else if( idType == "ID" ) {// idType == "ID"
+      st->stationID_ = atoi( id.c_str() );
+   } else {// idType == "CALLSIGN"
+      st->callsign_ = id;
+   }
 
    for(i=0; keywords[i]; i++){
       value=stationConf->getValue(keywords[i]);
 
       if(value.empty() && useDefaultValues ){
          if( strcmp( keywords[i], "precipitation") == 0 ){
-            LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in WMO section <"
-                  << wmono << ">! Using default value!" << endl);
+            LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType << " section <"
+                      << id << ">! Using default value!" << endl);
             st->precipitation_=defVal.precipitation;
          }else if( strcmp( keywords[i], "list") == 0 ){
-            LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in WMO section <"
-                  << wmono << ">! Using default value!" << endl);
+            LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType << " section <"
+                      << id << ">! Using default value!" << endl);
             st->list_=defVal.list;
          }else if( strcmp( keywords[i], "copy") == 0 ){
-            LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in WMO section <"
-                  << wmono << ">! Using default value!" << endl);
+            LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType << " section <"
+                      << id << ">! Using default value!" << endl);
             st->copy_=defVal.copy;
          }else if( strcmp( keywords[i], "copyto") == 0 ){
-            LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in WMO section <"
-                  << wmono << ">! Using default value!" << endl);
+            LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType << "  section <"
+                      << id << ">! Using default value!" << endl);
             st->copyto_=defVal.copyto;
          }else if( strcmp( keywords[i], "owner") == 0 ){
-            LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in WMO section <"
-                  << wmono << ">! Using default value!" << endl);
+            LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType << " section <"
+                      << id << ">! Using default value!" << endl);
             st->owner_=defVal.owner;
          }else if( strcmp( keywords[i],"delay") == 0 ){
-            LOGDEBUG6("NO VALUE: for key <" <<keywords[i] << "> in WMO section <"
-                  << wmono << ">! Using default value!");
+            LOGDEBUG6("NO VALUE: for key <" <<keywords[i] << "> in " << idType << " section <"
+                      << id << ">! Using default value!");
             st->delayList_=defVal.delay;
          }else if( strcmp( keywords[i], "loglevel") == 0 ){
-            LOGDEBUG6("NO VALUE: for key <" <<keywords[i] << "> in WMO section <"
-                  << wmono << ">! Using default value!");
+            LOGDEBUG6("NO VALUE: for key <" <<keywords[i] << "> in " << idType << " section <"
+                      << id << ">! Using default value!");
             st->loglevel_=defVal.loglevel;
+         }else if( strcmp( keywords[i], "code") == 0 ){
+            LOGDEBUG6("NO VALUE: for key <" <<keywords[i] << "> in " << idType << " section <"
+                      << id << ">! Using default value!");
+            st->code_=defVal.code;
          } else if( strcmp( keywords[i], "height" ) == 0 ||
-                    strcmp( keywords[i], "height_precip" ) == 0 ||
-                    strcmp( keywords[i], "height_pressure" ) == 0 ||
-                    strcmp( keywords[i], "height_temperature" ) == 0 ||
-                    strcmp( keywords[i], "height_visibility" ) == 0 ||
-                    strcmp( keywords[i], "height_wind" ) == 0 ||
-                    strcmp( keywords[i], "latitude" ) == 0 ||
-                    strcmp( keywords[i], "longitude" ) == 0  ||
-                    strcmp( keywords[i], "name" ) == 0 ) {
-            LOGDEBUG( "NO VALUE: for key <" << keywords[i] << "> in WMO section <"
-                       << wmono << ">!. Ignore!");
+               strcmp( keywords[i], "height_precip" ) == 0 ||
+               strcmp( keywords[i], "height_pressure" ) == 0 ||
+               strcmp( keywords[i], "height_temperature" ) == 0 ||
+               strcmp( keywords[i], "height_visibility" ) == 0 ||
+               strcmp( keywords[i], "height_wind" ) == 0 ||
+               strcmp( keywords[i], "height_wind_above_sea" ) == 0 ||
+               strcmp( keywords[i], "latitude" ) == 0 ||
+               strcmp( keywords[i], "longitude" ) == 0  ||
+               strcmp( keywords[i], "name" ) == 0 ||
+               strcmp( keywords[i], "callsign" ) == 0 ||
+               strcmp( keywords[i], "wmono" ) == 0) {
+            LOGDEBUG( "NO VALUE: for key <" << keywords[i] << "> in " << idType << " section <"
+                      << id << ">!. Ignore!");
          } else {
-            LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in WMO section <"
-                  << wmono << ">! And no default value!" << endl);
+            curErr << "NO VALUE: Mandatory key: <" << keywords[i] << ">! And no default value!" << endl
+                  << "    Filename: " << stationConf->getFilename() << " line: " << stationConf->getLineno() << endl;
+
             delete st;
             return 0;
          }
@@ -240,23 +359,23 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
          if( strcmp( keywords[i], "stationid" ) == 0 ){
             ok=doStationid(keywords[i], value, *st);
          }else if( strcmp( keywords[i], "delay" ) == 0 ){
-            ok=doDelay(keywords[i], value, *st, !ignoreMissingValues );
+            ok=doDelay(keywords[i], value, *st, stationConf, !ignoreMissingValues );
          }else if( strcmp( keywords[i], "precipitation" ) == 0 ){
             ok=doPrecip(keywords[i], value, *st);
          }else if( strcmp( keywords[i], "typepriority" ) == 0 ){
             ok=doTypePri(keywords[i], value, *st);
          }else if( strcmp( keywords[i], "owner" ) == 0 ){
-            st->owner_=doDefOwner(value, st->wmono());
+            st->owner_=doDefOwner( value );
             ok=ignoreMissingValues || !st->owner_.empty();
          }else if( strcmp( keywords[i], "list" ) == 0 ){
-            st->list_=doDefList(value, st->wmono());
+            st->list_=doDefList( value );
             ok=ignoreMissingValues || !st->list_.empty();
          }else if( strcmp( keywords[i], "copy" ) == 0 ){
-            st->copy_=doDefCopy(value, st->wmono(), &st->copyIsSet_ );
+            st->copy_=doDefCopy(value, &st->copyIsSet_ );
          }else if( strcmp( keywords[i], "copyto" ) == 0 ){
-            st->copyto_=doDefCopyto(value, st->wmono());
+            st->copyto_=doDefCopyto( value );
          }else if( strcmp( keywords[i], "loglevel" ) == 0 ){
-            st->loglevel_=doDefLogLevel(value, st->wmono());
+            st->loglevel_=doDefLogLevel( value );
          } else if( strcmp( keywords[i], "height" ) == 0 ) {
             doInt( st->height_, value );
          } else if( strcmp( keywords[i], "height_precip" ) == 0 ) {
@@ -269,11 +388,15 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
             doInt( st->heightVisability_, value );
          }else if( strcmp( keywords[i], "height_wind" ) == 0 ) {
             doInt( st->heightWind_, value );
-         }else if( strcmp( keywords[i], "latitude" ) == 0 ) {
+         }else if( strcmp( keywords[i], "height_wind_above_sea" ) == 0 ) {
+             doInt( st->heightWindAboveSea_, value );
+         } else if( strcmp( keywords[i], "latitude" ) == 0 ) {
             doFloat( st->latitude_, value );
          }else if( strcmp( keywords[i], "longitude" ) == 0 ) {
             doFloat( st->longitude_, value );
-         } else if( strcmp( keywords[i], "name" ) == 0 ) {
+         } else if( strcmp( keywords[i], "code") == 0 ){
+            doIntList( st->code_, value );
+         }else if( strcmp( keywords[i], "name" ) == 0 ) {
             IValElementList it=value.begin();
             if(it != value.end() ) {
                if( it->type() == STRING  )
@@ -282,80 +405,121 @@ StationInfoParse::parseSection(miutil::conf::ConfSection *stationConf,
          }
 
          if(!ok){
+            curErr << "    Filename: " << stationConf->getFilename() << " line: " << stationConf->getLineno() << endl;
             delete st;
             return 0;
          }
       }
    }
 
-   if( !ignoreMissingValues  && st->stationid_.empty() ){
-      LOGERROR("MISSING KEY <stationid> in WMO section <" << wmono
-            << ">!" << endl);
+   if( !ignoreMissingValues  && st->definedStationid_.empty() ){
+      curErr << "MISSING KEY <stationid> (mandatory key)!" << endl
+            << "    Filename: " << stationConf->getFilename() << " line: " << stationConf->getLineno() << endl;
+
       delete st;
       return 0;
    }
 
    if( !ignoreMissingValues && st->typepriority_.empty() ){
-      LOGERROR("MISSING KEY <typepriority> in WMO section <" << wmono
-            << ">!" << endl);
+      curErr << "MISSING KEY <typepriority> (mandatory key)!" << endl
+            << "    Filename: " << stationConf->getFilename() << " line: " << stationConf->getLineno() << endl;
       delete st;
       return 0;
    }
 
+   //TODO: At the moment we hardcode the BUFR 'code' value to
+   //0 (SYNOP) if it is NOT given and we have a wmo number.
+   if( st->wmono() > 0 && st->code().empty() ) {
+      st->code_.push_back( 0 );//Default value 0 is SYNOP.
+      LOGDEBUG("Missing code for station <" << st->toIdentString()
+              <<"> Setting 'code' to: 0 (SYNOP)." );
+   }
+
+   if(st->delayList_.empty() &&
+      ( st->typepriority_.size() > 1 || st->definedStationid_.size() > 1 ) ){
+      st->delayList_.push_back(DelayInfo(DelayInfo::FSTIME, 5, false) );
+      st->delayConf="fS:05";
+      LOGDEBUG("Setting default 'delay' to: " << st->delayList_.front() << endl);
+   }
+
+
    return st;
 }
 
+StationInfoPtr
+StationInfoParse::
+defaultVal()const
+{
+   StationInfoPtr p = StationInfoPtr( new StationInfo() );
+   p->precipitation_=defVal.precipitation;
+   p->list_=defVal.list;
+   p->copy_=defVal.copy;
+   p->copyto_=defVal.copyto;
+   p->owner_=defVal.owner;
+   p->delayList_=defVal.delay;
+   p->loglevel_=defVal.loglevel;
+   p->code_=defVal.code;
+
+   return p;
+}
 
 bool 
 StationInfoParse::
-doWmoDefault(miutil::conf::ConfSection *stationConf)
+doDefault(miutil::conf::ConfSection *stationConf)
 {
    list<std::string>           keys;
    list<std::string>::iterator it;
    ValElementList              value;
-
+   bool ok;
    keys=stationConf->getKeys();
 
    for(it=keys.begin(); it!=keys.end(); it++){
       value=stationConf->getValue(*it);
 
       if(value.empty()){
-         LOGWARN("NOVALUE: for key <" << *it << "> in <wmo_default> section!");
+         LOGDEBUG("NOVALUE: for key <" << *it << "> in <" << curSectionName <<"> section! Ignoring it.");
          continue;
       }
 
+      ok = true;
+
       if(*it=="list"){
-         defVal.list=doDefList(value, 0);
+         defVal.list=doDefList( value );
+         ok = ! defVal.list.empty();
       }else if(*it=="owner"){
-         defVal.owner=doDefOwner(value, 0);
+         defVal.owner=doDefOwner( value );
+         ok = ! defVal.owner.empty();
       }else if(*it=="precipitation"){
-         defVal.precipitation=doDefPrecip(value, 0);
+         defVal.precipitation=doDefPrecip( value );
+         ok = ! defVal.precipitation.empty();
       }else if(*it=="copy"){
-         defVal.copy=doDefCopy(value, 0);
+         defVal.copy=doDefCopy( value, &ok );
       }else if(*it=="copyto"){
-         defVal.copyto=doDefCopyto(value, 0);
+         defVal.copyto=doDefCopyto( value );
+         ok = ! defVal.copyto.empty();
       }else if(*it=="delay"){
-         defVal.delay=doDefDelay(value, 0, defVal.delayConf );
+         defVal.delay=doDefDelay( value, defVal.delayConf, stationConf );
+         ok = ! defVal.delay.empty();
       }else if(*it=="loglevel"){
-         defVal.loglevel=doDefLogLevel(value, 0);
+         defVal.loglevel=doDefLogLevel( value );
+      }else if(*it=="code"){
+         defVal.code = doDefCode( value ); //Default value 0 is SYNOP.
+         ok = !defVal.code.empty();
       }else{
-         LOGWARN("UNKNOWN KEY: in <wmo_default> section!");
+         LOGWARN("UNKNOWN KEY: in <"<< curSectionName << "> section! Ignoring it.");
       }
+
+      if( ! ok )
+         return false;
    }
 
-   if(defVal.delay.empty()){
-      defVal.delay.push_back(DelayInfo(DelayInfo::FSTIME, 5, false));
-      LOGINFO("Setting default delay to: " << defVal.delay.front() << endl);
-   }
-
-   return defVal.valid();
+   return true;
 }
 
 
 milog::LogLevel 
 StationInfoParse::
-doDefLogLevel(miutil::conf::ValElementList &vl,
-      int wmono)
+doDefLogLevel( miconf::ValElementList &vl)
 {
    string val;
    milog::LogLevel ll;
@@ -370,45 +534,58 @@ doDefLogLevel(miutil::conf::ValElementList &vl,
 
    if( ll == milog::NOTSET ) {
       ll = milog::INFO;
-
-      if( wmono == 0 ) {
-         LOGERROR("Invalid loglevel value <" << val << "> in section <wmo_default>. Setting default loglevel to INFO.");
-      } else {
-         LOGERROR("Invalid loglevel value <" << val << "> in section wmo <" << wmono << ">. Setting default loglevel to INFO.");
-      }
+      LOGERROR("Invalid loglevel value <" << val << "> in section <" << curSectionName << ">. Setting default loglevel to INFO.");
    }
 
    return ll;
 }
 
 
-std::string
+std::list<int>
 StationInfoParse::
-doDefList(miutil::conf::ValElementList &vl, int wmono)
+doDefCode( miconf::ValElementList &vl )
 {
+   string val;
+   list<int> codeList;
    IValElementList it=vl.begin();
 
-   ostringstream ost;
+   if(it==vl.end()) {
+      codeList.push_back( 0 );
+      return codeList;
+   }
 
-   if(wmono>0)
-      ost << wmono;
-   else
-      ost << "default";
+   for( ; it==vl.end(); ++it  ) {
+      if( it->type() != INT ) {
+         curErr<< "Invalid code value <" << val << "> in section <"<< curSectionName<< ">. Ignoring code <" << *it << ">." << endl;
+         continue;
+      }
+      codeList.push_back(it->valAsInt() );
+   }
+
+   return codeList;
+}
+
+
+
+std::string
+StationInfoParse::
+doDefList( miconf::ValElementList &vl )
+{
+   IValElementList it=vl.begin();
 
    if(it==vl.end())
       return string();
 
    if(it->type()!=STRING){
-      LOGERROR("INVALID TYPE: key <list>, expecting STRING. In WMO section <" <<
-            ost.str() << ">!");
+      curErr << "INVALID TYPE: key <list>, expecting STRING." << endl;
       return string();
    }
 
    string val=it->valAsString();
 
    if(val.size()!=2){
-      LOGERROR("INVALID FORMAT: key <list> must have a size of two (2) char!" <<
-            " In WMO section <" << ost.str() << ">!");
+      curErr << "INVALID FORMAT: key <list> must have a size of two (2) char!" <<
+            "." << endl;
       return string();
    }
 
@@ -417,7 +594,7 @@ doDefList(miutil::conf::ValElementList &vl, int wmono)
 
 std::string
 StationInfoParse::
-doDefOwner(miutil::conf::ValElementList &vl, int wmono)
+doDefOwner( miconf::ValElementList &vl )
 {
    IValElementList it=vl.begin();
 
@@ -425,14 +602,14 @@ doDefOwner(miutil::conf::ValElementList &vl, int wmono)
       return string();
 
    if(it->type()!=STRING){
-      LOGERROR("INVALID TYPE: key <owner>, expecting STRING.");
+      curErr << "INVALID TYPE: key <owner>, expecting STRING."<< endl;
       return string();
    }
 
    string val=it->valAsString();
 
    if(val.size()!=4){
-      LOGERROR("INVALID FORMAT: key <owner> must have a size of four (4) char!");
+      curErr << "INVALID FORMAT: key <owner> must have a size of four (4) char!" << endl;
       return string();
    }
 
@@ -441,27 +618,20 @@ doDefOwner(miutil::conf::ValElementList &vl, int wmono)
 
 std::list<std::string>
 StationInfoParse::
-doDefPrecip(miutil::conf::ValElementList &vl, int wmono)
+doDefPrecip( miconf::ValElementList &vl )
 {
    const char *validval[]={"RA", "RR", "RRRtr", "RR_01", "RR_1",
-         "RR_3", "RR_6","RR_12","RR_24", "RR_N", 0};
+                           "RR_3", "RR_6","RR_12","RR_24", "RR_N", 0};
    int i;
-   ostringstream ost;
    std::list<std::string> RR;
    std::list<std::string>::iterator itRR;
-
-   if(wmono>0)
-      ost << wmono;
-   else
-      ost << "default";
-
 
    IValElementList it=vl.begin();
 
    for( ; it!=vl.end(); it++, i++){
       if(it->type()!=STRING){
-         LOGERROR("INVALID TYPE: key <precipitation> element number: "
-               << i << " in WMO section <" << ost.str() << ">!" << endl);
+         curErr << "INVALID TYPE: key <precipitation> element number: "
+               << i << "." << endl;
          continue;
       }
 
@@ -471,8 +641,8 @@ doDefPrecip(miutil::conf::ValElementList &vl, int wmono)
       }
 
       if(!validval[i]){
-         LOGERROR("INVALID VALUE: key <precipitation> element number: "
-               << i << " in WMO section <" << ost.str() <<">!" << endl);
+         curErr << "INVALID VALUE: key <precipitation> element number: "
+               << i << "." << endl;
          continue;
       }
 
@@ -493,64 +663,57 @@ doDefPrecip(miutil::conf::ValElementList &vl, int wmono)
 
 bool
 StationInfoParse::
-doDefCopy(miutil::conf::ValElementList &vl, int wmono, bool *copyIsSet )
+doDefCopy( miconf::ValElementList &vl, bool *copyIsSet )
 {
    IValElementList it=vl.begin();
 
-   ostringstream ost;
-
-   if(wmono>0)
-      ost << wmono;
-   else
-      ost << "default";
+   if( copyIsSet )
+      *copyIsSet = false;
 
    if(it==vl.end())
       return false;
 
    if(it->type()!=STRING){
-      LOGERROR("INVALID TYPE: key <copy>, expecting STRING." <<
-            " In WMO section <" << ost.str() << ">!");
+      curErr << "INVALID TYPE: key <copy>, expecting STRING." << endl;
       return false;
    }
 
    string val=it->valAsString();
+   char ch;
+
+   if( val.empty() )
+      return false;
+
+   ch = val[0];
 
    if( copyIsSet )
       *copyIsSet = true;
 
-   if(val=="true")
+   if(ch=='t' || ch=='T' )
       return true;
-   else if(val=="false")
+   else if(ch=='f' || ch=='F')
       return false;
    else{
       if( copyIsSet )
-           *copyIsSet = false;
+         *copyIsSet = false;
 
-      LOGERROR("WRONG VALUE: key <copy> valid values \"true\" or \"false\"!" <<
-            " In WMO section <" << ost.str() << ">!");
+      curErr << "WRONG VALUE: key <copy> valid values \"true\" or \"false\"!" << endl;
       return false;
    }
 }
 
 std::string
 StationInfoParse::
-doDefCopyto(miutil::conf::ValElementList &vl, int wmono)
+doDefCopyto( miconf::ValElementList &vl )
 {
    IValElementList it=vl.begin();
 
-   ostringstream ost;
-
-   if(wmono>0)
-      ost << wmono;
-   else
-      ost << "default";
 
    if(it==vl.end())
       return string();
 
    if(it->type()!=STRING){
-      LOGERROR("INVALID TYPE: key <copyto>, expecting STRING." <<
-            " In WMO section <" << ost.str() << ">!");
+      curErr << "INVALID TYPE: key <copyto>, expecting STRING." << endl;
       return string();
    }
 
@@ -559,96 +722,85 @@ doDefCopyto(miutil::conf::ValElementList &vl, int wmono)
 
 StationInfo::TDelayList 
 StationInfoParse::
-doDefDelay(const miutil::conf::ValElementList &vl, int wmono,  std::string &delayConf )
+doDefDelay(const miconf::ValElementList &vl,
+           std::string &delayConf,
+           miconf::ConfSection *conf )
 {
    StationInfo::TDelayList dl;
    CIValElementList it=vl.begin();
    string::size_type i;
+   char              sign;
    string            val;
    string            sHH, sMM;
-   ostringstream     section;
    bool              force=false;
    int               hh;
    int               mm;
 
-   if(wmono==0)
-      section << "default";
-   else
-      section << wmono;
 
    for(int element=1 ; it!=vl.end(); it++, element++){
       if(it->type()!=STRING){
-         LOGERROR( "INVALID TYPE: key <delay> element number: "
-               << element << " in WMO section <" << section.str()
-               << ">, expecting STRING!" << endl);
+         curErr << "INVALID TYPE: key <delay> element number: "
+               << element << " in section <" << getIdAndType( conf )
+               << ">, expecting STRING!" << endl;
          continue;
       }
 
       val=it->valAsString();
 
-      i=val.find(":");
+      if( val.size() >  0 && (val[0]=='-' || val[0]=='+') ) {
+         sign = val[0];
+         val.erase( 0, 1 );
+      } else {
+         sign = 0;
+      }
 
-      if(i==string::npos){
-         //Is this an forced skip SYNOP definition.
-         //An skip SYNOP i started with a - character.
-         //Valid values SS - skip SYNOP for all bufrtimes.
-         //A value in the range [0, 23], skip bufr for
-         //this hour.
-         if(!val.empty() && val[0]=='-'){
-            int h;
-            val.erase(0, 1);
+      if( sign ){
+         MsgTime msgTime;
 
-            if(val=="SS"){
-               h=-1;
-            }else{
-               h=atoi(val.c_str());
-               if(h<0 || h>23){
-                  LOGERROR("Invalid hour in 'Skip bufr' spec: h=" << h <<
-                        " Valid values [0, 23].");
-                  continue;
-               }
-            }
-
-            //Look up to see if there is any SKIP_SYNOP spec
-            //Allready parsed. If so add this hour to the
-            //spec. This means that we only have one SKIP_SYNOP spec
-            //in the DelayInfo list for the station. The SKIP_SYNOP
-            //spec ia also at the start of the list.
-            StationInfo::ITDelayList itd=dl.begin();
-
-            if(itd!=dl.end())
-               if(!itd->skipMsgSpec())
-                  itd=dl.end();
-
-            if(itd==dl.end()){
-               dl.push_front(DelayInfo(DelayInfo::SKIP_SYNOP));
-               itd=dl.begin();
-            }
-
-            if(h==-1){
-               for(int i=0; i<24; i+=3)
-                  itd->msgForThisHour(i, false);
-            }else{
-               itd->msgForThisHour(h, false);
-            }
-
+         try {
+            msgTime.setMsgForTime( val );
+         }
+         catch( const std::exception &ex ) {
+            curErr << "Invalid time spec '" << sign << val << "'. " << ex.what()<< endl;
             continue;
          }
 
+         if( sign == '-' )
+            msgTime.invertHours();
 
-         LOGERROR("INVALID FORMAT: key <delay> element number: "
-               << element << " in WMO section <" << section.str()
-               <<">, format \"hh:mm\"!" << endl);
+         //Look up to see if there is any SKIP spec
+         //allready parsed. If so add this hour to the
+         //spec. This means that we only have one SKIP spec
+         //in the DelayInfo list for the station. The SKIP
+         //spec ia also at the start of the list.
+         StationInfo::ITDelayList itd=dl.begin();
+
+         if(itd!=dl.end())
+            if(!itd->skipMsgSpec())
+               itd=dl.end();
+
+         if(itd==dl.end()){
+            dl.push_front(DelayInfo(DelayInfo::SKIP));
+            itd=dl.begin();
+         }
+
+         itd->setMsgTime( msgTime );
          continue;
       }
 
-      sHH=val.substr(0, i);
-      sMM=val.substr(i+1);
+
+      i=val.find(":");
+      if( i == string::npos ) {
+         sHH = val;
+         sMM.erase();
+      } else {
+         sHH=val.substr(0, i);
+         sMM=val.substr(i+1);
+      }
 
       if(sHH.empty() || sMM.empty()){
-         LOGERROR("INVALID FORMAT: key <delay> element number: "
-               << element << " in WMO section <" << section.str()
-               <<">, format \"hh:mm\"!" << endl);
+         curErr << "INVALID FORMAT: key <delay> element number: "
+               << element << ", format \"hh:mm\"!" << endl;
          continue;
       }
 
@@ -659,6 +811,12 @@ doDefDelay(const miutil::conf::ValElementList &vl, int wmono,  std::string &dela
             break;
 
       force=false;
+
+      if( sign == '+' ) {
+         if( sHH == "HH" )
+
+            continue;
+      }
 
       //    cerr << "ii=" << ii << " sHH=" << sHH << " sMM=" << sMM << endl;
 
@@ -676,22 +834,20 @@ doDefDelay(const miutil::conf::ValElementList &vl, int wmono,  std::string &dela
          }else if(sHH=="fH"){
             hh=DelayInfo::FHTIME;
          }else{
-            LOGERROR("INVALID FORMAT: key <delay> element number: "
-                  << element << " in WMO section <" << section.str()
-                  <<">, format \"hh:mm\", where hh is a number [0,23] or the "
+            curErr << "INVALID FORMAT: key <delay> element number: "
+                  << element << ", format \"hh:mm\", where hh is a number [0,23] or the "
                   << "one of the values FH, HH, FS or SS. mm is a number"
-                  << "[0,59]!" << endl);
+                  << "[0,59]!" << endl;
             continue;
          }
       }else{
          hh=atoi(sHH.c_str());
 
          if(hh<0 || hh>23){
-            LOGERROR("INVALID FORMAT: key <delay> element number: "
-                  << element << " in WMO section <"<< section.str()
-                  <<">, format \"hh:mm\", where hh is a number [0,23] or "
+            curErr << "INVALID FORMAT: key <delay> element number: "
+                  << element << ", format \"hh:mm\", where hh is a number [0,23] or "
                   << "one of the values FH, HH, FS or SS. mm is a number"
-                  << " [0,59]!" << endl);
+                  << " [0,59]!" << endl;
             continue;
          }
       }
@@ -701,22 +857,20 @@ doDefDelay(const miutil::conf::ValElementList &vl, int wmono,  std::string &dela
             break;
 
       if(ii>=sMM.length()){
-         LOGERROR("INVALID FORMAT: key <delay> element number: "
-               << element << " in WMO section <" << section.str()
-               <<">, format \"hh:mm\", where hh is a number [0,23] or the "
+         curErr << "INVALID FORMAT: key <delay> element number: "
+               << element << ", format \"hh:mm\", where hh is a number [0,23] or the "
                << "one of the values FH, HH, FS or SS. mm is a number [0,59]!"
-               << endl);
+               << endl;
          continue;
       }
 
       mm=atoi(sMM.c_str());
 
       if(mm<0 || mm>59){
-         LOGERROR( "INVALID FORMAT: key <delay> element number: "
-               << element << " in WMO section <" << section.str()
-               <<">, format \"hh:mm\", where hh is a number [0,23] or the "
+         curErr << "INVALID FORMAT: key <delay> element number: "
+               << element << ", format \"hh:mm\", where hh is a number [0,23] or the "
                << "one of the values FH, HH, FS or SS. mm is a number"
-               << " [0,59]!" << endl);
+               << " [0,59]!" << endl;
          continue;
       }
 
@@ -730,9 +884,8 @@ doDefDelay(const miutil::conf::ValElementList &vl, int wmono,  std::string &dela
       if(itd==dl.end()){
          dl.push_back(DelayInfo(hh, mm, force));
       }else if(hh==itd->hour()){
-         LOGERROR("DUPLICATE ELEMENT: key <delay> element number: "
-               << element << " in WMO section <" << section.str()
-               <<">"  << endl);
+         curErr << "DUPLICATE ELEMENT: key <delay> element number: "
+               << element << "."  << endl;
          continue;
       }else{
          dl.insert(itd, DelayInfo(hh, mm, force));
@@ -755,7 +908,7 @@ doDefDelay(const miutil::conf::ValElementList &vl, int wmono,  std::string &dela
             val.insert( 0, "\"" );
 
          if( !val.empty() && val[val.length()-1]!='"' )
-             val += "\"";
+            val += "\"";
 
          if( it != vl.begin() )
             o << ",";
@@ -774,31 +927,37 @@ doDefDelay(const miutil::conf::ValElementList &vl, int wmono,  std::string &dela
 bool
 StationInfoParse::
 doStationid(const std::string &key,
-      miutil::conf::ValElementList &vl,
-      StationInfo &st)
+            miconf::ValElementList &vl,
+            StationInfo &st)
 {
    int i=1;
+   bool error;
+   int id;
+   StationInfo::ITLongList itl;
    IValElementList it=vl.begin();
 
    for( ; it!=vl.end(); it++, i++){
       if(it->type()!=INT){
-         LOGERROR("INVALID TYPE: key <" << key << "> element number: "
-               << i << endl);
-      }else{
-         StationInfo::ITLongList itl=st.stationid_.begin();
-
-         for( ; itl!=st.stationid_.end(); itl++){
-            if(*itl==it->valAsInt())
-               break;
-         }
-
-         if(itl==st.stationid_.end())
-            st.stationid_.push_back(it->valAsInt());
+         curErr << "INVALID TYPE: key <" << key << "> element number: "
+               << i << endl;
+         continue;
       }
+
+      id = it->valAsInt();
+
+      for( itl = st.definedStationid_.begin();
+            itl != st.definedStationid_.end(); itl++){
+
+         if(*itl== id )
+            break;
+      }
+
+      if( itl == st.definedStationid_.end() )
+         st.definedStationid_.push_back( id );
    }
 
-   if( !ignoreMissingValues && st.stationid_.empty()){
-      LOGERROR("NOVALUE: key <" << key << "> has now valid values!" << endl);
+   if( !ignoreMissingValues && st.definedStationid_.empty()){
+      curErr << "NOVALUE: key <" << key << "> has now valid values!" << endl;
       return false;
    }
 
@@ -807,16 +966,16 @@ doStationid(const std::string &key,
 
 bool
 StationInfoParse::
-doDelay(const std::string &key,
-      miutil::conf::ValElementList &vl, StationInfo &st,
-      bool mayUseDefaultValues )
+doDelay( const std::string &key,
+         miconf::ValElementList &vl, StationInfo &st,
+         miconf::ConfSection *conf,
+         bool mayUseDefaultValues )
 {
 
-   st.delayList_=doDefDelay(vl, st.wmono(), st.delayConf );
+   st.delayList_=doDefDelay(vl, st.delayConf, conf );
 
    if( st.delayList_.empty() && mayUseDefaultValues ){
-      LOGWARN("Nol value for <delay> in WMO section " << st.wmono()
-            << " using default!");
+      curErr << "No value for <delay>, using default!";
       st.delayList_=defVal.delay;
       st.delayConf = defVal.delayConf;
    }
@@ -828,9 +987,9 @@ doDelay(const std::string &key,
 bool
 StationInfoParse::
 doPrecip(const std::string &key,
-      miutil::conf::ValElementList &vl, StationInfo &st)
+         miconf::ValElementList &vl, StationInfo &st)
 {  
-   std::list<std::string> RR=doDefPrecip(vl, st.wmono());
+   std::list<std::string> RR=doDefPrecip( vl );
 
    st.precipitation_=RR;
 
@@ -840,7 +999,7 @@ doPrecip(const std::string &key,
 bool
 StationInfoParse::
 doTypePri(const std::string &key,
-      miutil::conf::ValElementList &vl, StationInfo &st)
+          miconf::ValElementList &vl, StationInfo &st)
 {
    bool error=false;
    int i;
@@ -854,8 +1013,8 @@ doTypePri(const std::string &key,
       mustHaveType=false;
 
       if(it->type()!=INT && it->type()!=STRING){
-         LOGERROR("INVALID TYPE: key <" << key << "> element number: "
-               << i << " in WMO section <" << st.wmono() << ">!" <<  endl);
+         curErr << "INVALID TYPE: key <" << key << "> element number: "
+               << i << "!" <<  endl;
          error=true;
          continue;
       }
@@ -880,9 +1039,8 @@ doTypePri(const std::string &key,
 
 
          if(sscanf(smytype.c_str(), "%ld", &mytype)!=1){
-            LOGERROR("INVALID TYPE: key <" << key << "> element number: "
-                  << i << " in WMO section <" << st.wmono()
-                  << ">! Not an integer!"  <<  endl);
+            curErr << "INVALID TYPE: key <" << key << "> element number: "
+                  << i << "! Not an integer!"  <<  endl;
             error=true;
             continue;
          }
@@ -937,7 +1095,7 @@ doTypePri(const std::string &key,
 
 void
 StationInfoParse::
-doInt( int &i, const miutil::conf::ValElementList &val )
+doInt( int &i, const miconf::ValElementList &val )
 {
    if( val.empty() ) {
       i = INT_MAX;
@@ -954,7 +1112,26 @@ doInt( int &i, const miutil::conf::ValElementList &val )
 
 void
 StationInfoParse::
-doFloat( float &f, const miutil::conf::ValElementList &val )
+doIntList( std::list<int> &iList, const miconf::ValElementList &val )
+{
+   int code;
+   iList.clear();
+
+   BOOST_FOREACH( ValElement it, val ) {
+      if( it.type() != miutil::conf::INT )
+         continue;
+
+      code = it.valAsInt();
+
+      if( find( iList.begin(), iList.end(), code ) == iList.end() )
+         iList.push_back( code );
+   }
+}
+
+
+void
+StationInfoParse::
+doFloat( float &f, const miconf::ValElementList &val )
 {
    if( val.empty() ) {
       f = FLT_MAX;

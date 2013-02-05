@@ -31,8 +31,9 @@
 #include <list>
 #include <stdlib.h>
 #include <stdio.h>
-#include "Data.h"
+#include <sstream>
 #include <milog/milog.h>
+#include "Data.h"
 
 using namespace std;
 using namespace miutil;
@@ -42,8 +43,9 @@ void
 Data::
 createSortIndex() 
 {
-  sortBy_=miString(stationid_)+miString(paramid_)+miString(sensor_)+
-    miString(level_)+obstime_.isoTime();
+    stringstream s;
+    s << stationid_ << paramid_ << sensor_<< level_ << obstime_.isoTime();
+    sortBy_ = s.str();
 }
   
 void 
@@ -66,11 +68,11 @@ Data::
 set(const kvalobs::kvData &data)
 {
   	char buf[100];
-
+  	tbtime_ = miutil::miTime::nowTime();
   	sprintf(buf, "%.2f", data.original());
   
-  	set(data.stationID(), data.obstime(), buf, data.paramID(), 
-      	data.typeID(), data.sensor(), data.level(),
+  	set(data.stationID(), TO_MITIME( data.obstime() ), buf, data.paramID(),
+      	data.typeID(), data.sensor()-'0', data.level(),
       	data.controlinfo().flagstring(),
       	data.useinfo().flagstring() );
       
@@ -95,7 +97,9 @@ set(const dnmi::db::DRow &r_)
 				stationid_=atoi(buf.c_str());
 			}else if(*it=="obstime"){
 				obstime_=miTime(buf);
-			}else if(*it=="original"){
+			}else if(*it=="tbtime"){
+            tbtime_=miTime(buf);
+         }else if(*it=="original"){
 				original_=buf;
 			}else if(*it=="paramid"){
 				paramid_=atoi(buf.c_str());
@@ -130,6 +134,7 @@ set(int pos, const miutil::miTime &obt,
     const std::string &controlinfo,
 	const std::string &useinfo)
 {
+  tbtime_ = miutil::miTime::nowTime();
   stationid_   = pos;   
   obstime_     = obt;     
   original_    = org;    
@@ -145,18 +150,24 @@ set(int pos, const miutil::miTime &obt,
   return true;
 }
 
+#ifdef __WITH_PUTOOLS__
 miutil::miString 
+#else
+std::string
+#endif
 Data::toSend() const
 {
   ostringstream ost;
+  miutil::miTime now=miutil::miTime::nowTime();
  
   ost << "(" 
       << stationid_       << ","
-      << quoted(obstime_) << ","         
+      << quoted( obstime_.isoTime() ) << ","
+      << quoted( now.isoTime() )    << ","
       << quoted(original_)<< ","        
       << paramid_         << ","         
       << typeid_          << ","          
-      << quoted(sensor_)  << ","
+      << sensor_          << ","
       << level_           << ","
       << quoted(controlinfo_) << ","
       << quoted(useinfo_) << ")";
@@ -164,8 +175,11 @@ Data::toSend() const
   return ost.str();
 }
 
-
+#ifdef __WITH_PUTOOLS__
 miutil::miString 
+#else
+std::string
+#endif
 Data::
 uniqueKey()const
 {
@@ -175,23 +189,28 @@ uniqueKey()const
       << "       obstime="   << quoted(obstime_.isoTime()) << " AND "
       << "       paramid="   << paramid_ << " AND "
       << "       typeid="    << typeid_ << " AND "
-      << "       sensor="    << quoted(sensor_) << " AND "
+      << "       sensor="    << sensor_ << " AND "
       << "       level="     << level_;
 
   return ost.str();
 }
 
 
-
+#ifdef __WITH_PUTOOLS__
 miutil::miString 
+#else
+std::string
+#endif
 Data::
 toUpdate()const
 {
   ostringstream ost;
+  miutil::miTime now=miutil::miTime::nowTime();
   
   ost << "SET original=" << quoted(original_)
-	  << "    ,controlinfo=" << quoted(controlinfo_)
-	  << "    ,useinfo=" << quoted(useinfo_)
+	   << "    ,controlinfo=" << quoted(controlinfo_)
+	   << "    ,useinfo=" << quoted( useinfo_ )
+	   << "    ,tbtime=" << quoted( now.isoTime() )
       << " WHERE stationid=" << stationid_ << " AND "
       << "       obstime="   << quoted(obstime_.isoTime()) << " AND "
       << "       paramid="   << paramid_ << " AND "
@@ -212,22 +231,23 @@ controlinfo()const
 	return kvalobs::kvControlInfo( controlinfo_ );
 }
 
- kvalobs::kvUseInfo
- Data::
- useinfo()const
- {
-	 if( useinfo_.length() != kvalobs::kvDataFlag::size )
-		 return kvalobs::kvUseInfo();
+kvalobs::kvUseInfo
+Data::
+useinfo()const
+{
+	if( useinfo_.length() != kvalobs::kvDataFlag::size )
+	   return kvalobs::kvUseInfo();
 
-	 return kvalobs::kvUseInfo( useinfo_ );
- }
+	return kvalobs::kvUseInfo( useinfo_ );
+}
 
- std::ostream&
- operator<<( std::ostream& ost,
-             const Data& data )
- {
+std::ostream&
+operator<<( std::ostream& ost,
+            const Data& data )
+{
 	ost << "["<< data.stationid_ << ", "
 		<< data.obstime_ << ", "
+		<< data.tbtime_ << ", "
 		<< data.original_ << ", "
 		<< data.paramid_ << ", "
 		<< data.typeid_ << ", "
@@ -236,4 +256,43 @@ controlinfo()const
 		<< data.controlinfo_ << ", "
 		<< data.useinfo_ << "]";
 	return ost;
- }
+}
+
+
+
+DataKey::
+DataKey( const kvalobs::kvData &data )
+   : stationid_( data.stationID() ), typeid_( data.typeID() ),
+     paramid_( data.paramID() ), sensor_( data.sensor() ),
+     level_( data.level() ), obstime_( TO_MITIME( data.obstime() ) )
+{
+
+}
+
+bool
+DataKey::
+operator<(const DataKey &rhs )const
+{
+   return ( stationid_ < rhs.stationid_) ||
+          ( stationid_ == rhs.stationid_ && typeid_<rhs.typeid_) ||
+          ( stationid_ == rhs.stationid_ && typeid_ == rhs.typeid_ &&
+            paramid_ < rhs.paramid_ ) ||
+          ( stationid_ == rhs.stationid_ && typeid_ == rhs.typeid_ &&
+            paramid_ == rhs.paramid_  && sensor_ < rhs.sensor_) ||
+          ( stationid_ == rhs.stationid_ && typeid_ == rhs.typeid_ &&
+            paramid_ == rhs.paramid_  && sensor_ == rhs.sensor_ &&
+            level_ < rhs.level_ ) ||
+          ( stationid_ == rhs.stationid_ && typeid_ == rhs.typeid_ &&
+            paramid_ == rhs.paramid_  && sensor_ == rhs.sensor_ &&
+            level_ == rhs.level_  && obstime_ < rhs.obstime_ );
+}
+
+bool
+DataKeySet::
+add( const DataKey &key )
+{
+   pair<set<value_type>::iterator, bool> ret;
+   ret = insert( key );
+   return ret.second;
+}
+
