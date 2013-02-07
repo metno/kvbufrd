@@ -19,9 +19,10 @@ LIBKVCPP2
 PKG_CHECK_MODULES(sqlite3, sqlite3)
 
 
-GTEST_CHECK
+#GTEST_CHECK
 #GMOCK_CHECK
-
+AC_PATH_PROG(CMAKE, cmake, false)
+GMOCK_DIST_CHECK([src/gtest])
 
 AX_BOOST_BASE
 AX_BOOST_THREAD
@@ -37,6 +38,7 @@ if test -z $BOOST_DATE_TIME_LIB; then AC_MSG_ERROR([Unable to find boost date_ti
 
 
 AC_CONFIG_FILES([Makefile
+                 src/gtest/Makefile
                  check_kvbufrd.sh
                  src/kvbufrd_initdb
                  src/bufr/Makefile

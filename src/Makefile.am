@@ -1,4 +1,4 @@
-SUBDIRS = bufr
+SUBDIRS = gtest bufr
 
 AM_CPPFLAGS = -D_REENTRANT \
 			  $(kvcpp_CFLAGS) \
