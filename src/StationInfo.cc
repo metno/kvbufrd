@@ -470,7 +470,8 @@ longitude_( FLT_MAX ),
 wmono_( 0 ),
 stationID_( 0 ),
 copyIsSet_( false ),
-cacheReloaded48_(true)
+cacheReloaded48_(true),
+ignore( false )
 {
 }
 
@@ -488,7 +489,8 @@ longitude_( FLT_MAX ),
 wmono_( wmono ),
 stationID_( INT_MIN ),
 copyIsSet_( false ),
-cacheReloaded48_(true)
+cacheReloaded48_(true),
+ignore( false )
 {
 }
 
@@ -522,6 +524,7 @@ StationInfo(const StationInfo &i)
    owner_=i.owner_;
    delayUntil_=i.delayUntil_;
    cacheReloaded48_=i.cacheReloaded48_;
+   ignore = i.ignore;
 }
 
 StationInfo::

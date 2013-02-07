@@ -619,6 +619,9 @@ doStationConf( StationInfoPtr station )const
    string tmp;
    string precip = precipPriorityToConfString( station );
 
+   if( station->ignoreThisStation() )
+       o << "!";
+
    if( station->wmono() > 0 )
       o << "wmo_"<< station->wmono() << " {" << endl;
    else if( ! station->callsign().empty() )

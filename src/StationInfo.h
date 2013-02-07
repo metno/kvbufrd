@@ -441,6 +441,7 @@ private:
    static std::string  debugdir_;
    milog::LogLevel loglevel_;
    bool            cacheReloaded48_;
+   bool            ignore;
 
 
    StationInfo();
@@ -451,6 +452,7 @@ public:
 
    ~StationInfo();
 
+   bool ignoreThisStation() const { return ignore; }
    std::string delayConf; //Holds the configuration line for the delay from the configuration file.
    //This information is hard to reconstruct from the delayInfo.
 

@@ -296,6 +296,9 @@ parseSection( miconf::ConfSection *stationConf,
       st->callsign_ = id;
    }
 
+   if( stationConf->ignoreThisSection() )
+       st->ignore = true;
+
    for(i=0; keywords[i]; i++){
       value=stationConf->getValue(keywords[i]);
 
