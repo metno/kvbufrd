@@ -120,13 +120,7 @@ encode()
        rr = encodeRR( data->RR_24.value() );
 
    bufr->addValue( 13023, rr, "RR24, precipitation past 24 hours" );
-
-   float ss24=FLT_MAX;
-
-   if( data->SS_24.valid() )
-	   ss24=data->SS_24/100;
-
-   bufr->addValue( 13012, ss24, "Depth of fresh snow." );
+   bufr->addValue( 13012, data->SS_24, "Depth of fresh snow." );
 
    bufr->setDataAndInternationalSubDataCategory( 0, 0 );
    bufr->setLocalDataSubCategory( 10 );

@@ -1046,6 +1046,9 @@ doEsss( const DataElementList &data, BufrData &res  )
       else if( data[0].SA > 0 )
          res.SA = data[0].SA/100;
    }
+
+   if( data[0].SS_24 != FLT_MAX )
+	   res.SS_24 = data[0].SS_24/100;
 }
 
 void
