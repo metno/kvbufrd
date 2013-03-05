@@ -43,7 +43,7 @@ Proxy( const Values *val_, int index,
 {
 }
 
-Values::Proxy::Proxy&
+Values::Proxy&
 Values::Proxy::
 operator=( const double &rhs ){
    val->values_[index] = rhs;
