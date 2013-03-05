@@ -83,8 +83,9 @@ kvbufrd_LDADD = \
 	$(BOOST_THREAD_LIB) \
     $(BOOST_FILESYSTEM_LIB) \
     $(BOOST_DATE_TIME_LIB) \
+    $(BOOST_SYSTEM_LIB) \
     -L$(HOME)/lib -lbufr \
-    -lgfortran -lm         
+    -lgfortran -lm -ldl
 else
 kvbufrd_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
 kvbufrd_LDADD = \
@@ -92,8 +93,9 @@ kvbufrd_LDADD = \
 	$(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
     $(BOOST_FILESYSTEM_LIB) \
     $(BOOST_DATE_TIME_LIB) \
+    $(BOOST_SYSTEM_LIB) \
     -L$(HOME)/lib -lbufr -lgfortran \
-    -lm
+    -lm -ldl
 endif         
 
 EXTRA_DIST = kvbufrd_schema.sql 
@@ -104,7 +106,7 @@ kvbufrclt_SOURCES = kvbufrclt.cc \
                      kvbufrCltApp.cc  kvbufrCltApp.h \
                      kvbufrCorbaThread.cc kvbufrCorbaThread.h \
                      kvbufrd.hh kvbufrdSK.cc
-kvbufrclt_LDFLAGS = -pthread $(BOOST_LDFLAGS)
+kvbufrclt_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
 if KVSTATIC
 kvbufrclt_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
@@ -125,6 +127,7 @@ kvbufrclt_LDADD = \
 	$(BOOST_THREAD_LIB) \
 	$(BOOST_FILESYSTEM_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
+	$(BOOST_SYSTEM_LIB) \
     -lm
 
 else
@@ -132,6 +135,7 @@ kvbufrclt_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
 kvbufrclt_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
 				  $(BOOST_FILESYSTEM_LIB) \
 				  $(BOOST_DATE_TIME_LIB) \
+				  $(BOOST_SYSTEM_LIB) \
                   -lm
 endif  
                    
@@ -157,11 +161,11 @@ kvbufrdbclt_LDADD = \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
-    -lm 
+    -lm -ldl
 else
 kvbufrdbclt_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
 kvbufrdbclt_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
-                     -lm 
+                     -lm -ldl
 endif                     
                      
 kvbufrdparse_SOURCES = kvbufrdparse.cc \
@@ -232,11 +236,11 @@ kvbufrconf_LDADD = \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
-   	-lm
+   	-lm -ldl
 else
 kvbufrconf_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
 kvbufrconf_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
-                   -lm
+                   -lm -ldl
 endif
                    
 kvbufrconfcmp_SOURCES = StationInfo.cc StationInfo.h \
@@ -359,6 +363,7 @@ kvBufrEncodeTest_LDADD =   \
 	$(gtest_LIBS) \
 	$(BOOST_FILESYSTEM_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
+	$(BOOST_SYSTEM_LIB) \
 	-lbufr -lgfortran \
 	-lm
 else
@@ -375,6 +380,7 @@ kvBufrEncodeTest_LDADD =   \
 	$(gtest_LIBS) \
 	$(BOOST_FILESYSTEM_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
+	$(BOOST_SYSTEM_LIB) \
 	-lbufr -lgfortran \
 	-lm
 endif			
