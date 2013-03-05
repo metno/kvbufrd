@@ -4,6 +4,7 @@ AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_PROG_LIBTOOL
+LT_INIT([dlopen])
 AM_PROG_LEX
 AM_PROG_CC_C_O
 AC_PROG_YACC
@@ -35,7 +36,8 @@ AX_BOOST_PROGRAM_OPTIONS
 if test -z $BOOST_PROGRAM_OPTIONS_LIB; then AC_MSG_ERROR([Unable to find boost program_options library]); fi
 AX_BOOST_DATE_TIME
 if test -z $BOOST_DATE_TIME_LIB; then AC_MSG_ERROR([Unable to find boost date_time library]); fi
-
+AX_BOOST_SYSTEM
+if test -z $BOOST_SYSTEM_LIB; then AC_MSG_ERROR([Unable to find boost system library]); fi
 
 AC_CONFIG_FILES([Makefile
                  src/gtest/Makefile
