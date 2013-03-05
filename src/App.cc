@@ -125,7 +125,7 @@ createGlobalLogger(const std::string &id, milog::LogLevel ll)
       std::ostringstream ost;
       fs::path logpath = fs::path(kvPath("logdir")) / options.progname / (id + ".log");
 
-      if(logs->open( logpath.native_file_string()) ){
+      if(logs->open( logpath.string()) ){
          logs->loglevel( ll );
          if(!LogManager::createLogger(id, logs)){
             delete logs;
@@ -1350,7 +1350,7 @@ string
 getProgNameFromArgv0( const std::string &cmd )
 {
    fs::path myname( cmd );
-   return  myname.leaf();
+   return  myname.filename().string();
 }
 
 
