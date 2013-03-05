@@ -35,6 +35,7 @@
 #include <list>
 #include <string>
 #include <sstream>
+#include <boost/version.hpp>
 #include <boost/filesystem.hpp>
 #include <milog/milog.h>
 #include <fileutil/pidfileutil.h>
@@ -1350,7 +1351,12 @@ string
 getProgNameFromArgv0( const std::string &cmd )
 {
    fs::path myname( cmd );
+
+#if BOOST_VERSION < 104500
+   return  myname.leaf();
+#else
    return  myname.filename().string();
+#endif
 }
 
 
