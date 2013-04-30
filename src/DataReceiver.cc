@@ -494,7 +494,7 @@ DataReceiver::setDefaultLogger(StationInfoPtr station)
       std::ostringstream ost;
       string code( station->codeToString() );
 
-      miutil::replace( code," ", "_" );
+      miutil::replaceStr( code," ", "_" );
       ost << kvPath("logdir") << "/" << options.progname << "/dr-"
           << station->toIdentString() <<"_code_" << code << ".log";
 
