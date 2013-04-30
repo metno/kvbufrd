@@ -1162,6 +1162,7 @@ TEST_F( BufrEncodeTest, EncodeBufr90003_FG)
 
 
 
+
 TEST_F( BufrEncodeTest, AreaDesignator)
 {
 
@@ -1284,6 +1285,66 @@ TEST_F( BufrEncodeTest, EncodeBufr9000_only_one_parameter )
    }
 }
 
+
+
+TEST_F( BufrEncodeTest, EncodeBufr90003_SHIP_PWA)
+{
+   DataElementList allData;
+   StationInfoPtr stInfo;
+   BufrDataPtr bufr( new BufrData() );
+   DataElementList data;
+   miutil::miTime dt;
+   EncodeBufrManager encoder;
+   string datafile("data_LF4B.dat");
+   string callSign("LF4B");
+
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+
+   stInfo =  findCallsign( callSign );
+
+   ASSERT_TRUE( stInfo ) << "No station information for id '" << callSign << "'";
+   ASSERT_TRUE( loadBufrDataFromFile( datafile, stInfo, allData, validData ) )
+      << "Cant load data from file: '" << datafile << "'.";
+   dt=miutil::miTime("2013-04-28 05:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< callSign;
+
+   BufrTemplateList templateList;
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelper.setTest( true );
+
+   b::assign::push_back( templateList )(900003);
+
+
+   bufrHelper.setObsTime( dt );
+   bufrHelper.setSequenceNumber( 0 );
+
+   EXPECT_FLOAT_EQ( bufr->Pwa, 6.0 );
+   EXPECT_FLOAT_EQ( bufr->Pw, FLT_MAX );
+   EXPECT_FLOAT_EQ( bufr->Hwa, 3.1 );
+   EXPECT_FLOAT_EQ( bufr->Hw, FLT_MAX );
+
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+      cerr << bufrHelper.getLog() << endl;
+
+      int len;
+      const char *buf=bufrHelper.getBufr( len );
+      cerr << "#len: " << len << endl;
+      ofstream fout( string(string("BUFR90003_")+callSign).c_str() );
+
+      fout.write( buf, len );
+      fout.close();
+   }
+   catch ( const std::exception &ex ) {
+      cerr << "<<<<< EXCEPTION LOG" << endl;
+      cerr << bufrHelper.getLog() << endl;
+      cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+      FAIL();
+   }
+}
 
 
 int

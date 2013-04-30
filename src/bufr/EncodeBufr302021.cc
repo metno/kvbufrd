@@ -61,7 +61,7 @@ EncodeBufr302021::
 encode( )
 {
    bufr->addValue( 22001, data->WDMT, "WDMT, direction of waves" );
-   bufr->addValue( 22011, data->Pw, "Pw, period of waves. Human made observation." );
-   bufr->addValue( 22021, data->Hw, "Hw, height of waves. Human made observation." );
+   bufr->addValue( 22011, data->Pwa, "Pwa, period of wind waves. Automatic observation." );
+   bufr->addValue( 22021, data->Hwa, "Hwa, height of waves. Automatic observation." );
 }
 
