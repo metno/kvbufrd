@@ -31,7 +31,8 @@
 #include <list>
 #include <puTools/miTime.h>
 #include <milog/milog.h>
-#include <miutil/replace.h>
+#include <boost/algorithm/string/replace.hpp>
+//#include <miutil/replace.h>
 #include <kvalobs/kvPath.h>
 
 #include "App.h"
@@ -494,7 +495,8 @@ DataReceiver::setDefaultLogger(StationInfoPtr station)
       std::ostringstream ost;
       string code( station->codeToString() );
 
-      miutil::replaceStr( code," ", "_" );
+      boost::replace_all( code, " ", "_" );
+      //miutil::replaceStr( code," ", "_" );
       ost << kvPath("logdir") << "/" << options.progname << "/dr-"
           << station->toIdentString() <<"_code_" << code << ".log";
 
