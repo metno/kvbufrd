@@ -1233,6 +1233,59 @@ TEST_F( BufrEncodeTest, Esss )
 }
 
 
+TEST_F( BufrEncodeTest, EsssFromEE )
+{
+	int wmono=1026;
+	string datafile("90450_20130510T0600.dat");
+	DataElementList data;
+    DataElement dataElement;
+    BufrDataPtr bufr;
+    miutil::miTime t("2013-05-10 06:00:00");
+    DataElementList allData;
+    StationInfoPtr stInfo;
+    EncodeBufrManager encoder;
+
+    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+    stInfo = findWmoNo( wmono );
+
+
+    ASSERT_TRUE( stInfo != 0 ) << "No station information for wmono " << wmono;
+    ASSERT_TRUE( loadBufrDataFromFile( datafile, stInfo, allData, validData ) )
+         << "Can't load data from file: " << datafile;
+
+    data = allData.subData( t );
+    bufr = bufrEncoder.doBufr( stInfo, data );
+
+    ASSERT_TRUE( bufr != 0 );
+    ASSERT_FLOAT_EQ( bufr->EE, 11 );
+    ASSERT_FLOAT_EQ( bufr->EM, 1 );
+
+    BufrTemplateList templateList;
+    BufrHelper bufrHelper( validater, stInfo, bufr );
+    bufrHelper.setTest( true );
+
+    bufrHelper.setObsTime( t );
+    bufrHelper.setSequenceNumber( 0 );
+
+
+    try {
+       encoder.encode( bufrHelper );
+       //cerr << bufrHelper.getLog() << endl;
+       //cerr << bufrHelper.getLog() << endl;
+
+       EXPECT_TRUE(!bufrHelper.emptyBufr());
+    }
+    catch ( const std::exception &ex ) {
+       cerr << "<<<<< EXCEPTION LOG" << endl;
+       cerr << bufrHelper.getLog() << endl;
+       cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+    }
+
+
+}
+
+
+
 TEST_F( BufrEncodeTest, EncodeBufr9000_only_one_parameter )
 {
    DataElementList allData;

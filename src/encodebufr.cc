@@ -541,7 +541,7 @@ void set_values(const StationInfoPtr station,
    /* 3 02 037
     *  State of ground, snow depth, ground minimum temperature
     */
-   values[idx++].toBufr( "EE", data.EM );    /* 020062 State of the ground (with or without snow) */
+   values[idx++].toBufr( "EE", data.EE );    /* 020062 State of the ground (with or without snow) */
    values[idx++].toBufr( "sss", data.SA );   /* 013013 Total snow depth */
    values[idx++].toBufr( "snTgTg", data.TGN_12 );/* 012113 Ground minimum temperature, past 12 hours */
 

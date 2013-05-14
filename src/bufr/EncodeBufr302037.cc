@@ -62,7 +62,7 @@ EncodeBufr302037::
 encode( )
 {
    //  State of ground, snow depth, ground minimum temperature
-   bufr->addValue( 20062, data->EM.valAsInt(), "EM, state of ground" );
+   bufr->addValue( 20062, data->EE.valAsInt(), "EE, state of ground" );
    bufr->addValue( 13013, data->SA, "SA, total snow depth" );
    bufr->addValue( 12113, data->TGN_12, "TGN_12, ground minimum temperature past 12 hour" );
 }
