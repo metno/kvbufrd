@@ -32,7 +32,8 @@
 #include <limits.h>
 #include <sstream>
 #include <stdlib.h>
-#include <miutil/replace.h>
+//#include <miutil/replace.h>
+#include <boost/algorithm/string/replace.hpp>
 #include <milog/milog.h>
 #include "tblStInfoSysObsPgmH.h"
 
@@ -80,11 +81,16 @@ set( const dnmi::db::DRow &r_)
             anytime_ = buf == "t";
          }else if(*it=="hour"){
             string h=buf;
-            miutil::replace( h, "}", "");
-            miutil::replace( h, "{", "");
-            miutil::replace( h, ",", "");
-            miutil::replace( h, "t", "1");
-            miutil::replace( h, "f", "0");
+            boost::replace_all( h, "}", "");
+            boost::replace_all( h, "{", "");
+            boost::replace_all( h, ",", "");
+            boost::replace_all( h, "t", "1");
+            boost::replace_all( h, "f", "0");
+//            miutil::replace( h, "}", "");
+//            miutil::replace( h, "{", "");
+//            miutil::replace( h, ",", "");
+//            miutil::replace( h, "t", "1");
+//            miutil::replace( h, "f", "0");
 
             if( h.size() > 24 )
                h.erase( 24 );

@@ -32,7 +32,7 @@
 #include <limits.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
-#include <miutil/replace.h>
+//#include <miutil/replace.h>
 #include "StationInfo.h"
 
 namespace b=boost;
@@ -982,10 +982,15 @@ keyToString(const std::string &key)
    }else if(key=="delay"){
       if( !delayConf.empty() ) {
          string val = delayConf;
-         miutil::replace( val, "(", "");
-         miutil::replace( val, ")", "");
-         miutil::replace( val, "\"", "");
-         miutil::replace( val, ",", " ");
+         boost::replace_all( val, "(", "");
+         boost::replace_all( val, ")", "");
+         boost::replace_all( val, "\"", "");
+         boost::replace_all( val, ",", " ");
+
+//         miutil::replace( val, "(", "");
+//         miutil::replace( val, ")", "");
+//         miutil::replace( val, "\"", "");
+//         miutil::replace( val, ",", " ");
          return val;
       }
 
@@ -1162,10 +1167,14 @@ operator<<(std::ostream& ost,
    ost << "          delay: ";
    if( ! sd.delayConf.empty() ) {
       string val = sd.delayConf;
-      miutil::replace( val, "(", "");
-      miutil::replace( val, ")", "");
-      miutil::replace( val, "\"", "");
-      miutil::replace( val, ",", " ");
+      boost::replace_all( val, "(", "");
+      boost::replace_all( val, ")", "");
+      boost::replace_all( val, "\"", "");
+      boost::replace_all( val, ",", " ");
+//      miutil::replace( val, "(", "");
+//      miutil::replace( val, ")", "");
+//      miutil::replace( val, "\"", "");
+//      miutil::replace( val, ",", " ");
       ost << val;
    } else {
       for(StationInfo::CITDelayList it=sd.delayList_.begin();
