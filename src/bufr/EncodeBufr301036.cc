@@ -60,7 +60,12 @@ void
 EncodeBufr301036::
 encode( )
 {
-   bufr->addValue( 1011, stationInfo->callsign(), "callsign", false );
+	//Dirty: Hack to anonymize the identity to the "coast guard".
+	if( stationInfo->owner() == "KYST")
+		bufr->addValue( 1011, "SHIP", "callsign", false );
+	else
+		bufr->addValue( 1011, stationInfo->callsign(), "callsign", false );
+
    bufr->addValue( 1012, data->MDIR, "Direction of motion of moving ship/platform", false);
    bufr->addValue( 1013, data->MSPEED, "Speed of motion of moving ship/platform", false);
    bufr->addValue( 2001, data->IX.valAsInt(), "ix", false );
