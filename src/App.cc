@@ -543,6 +543,7 @@ dnmi::db::Connection*
 App::
 createDbConnection()
 {
+	mutex::scoped_lock lock(mutexDbDriverManager);
    dnmi::db::Connection *con;
 
    con=dbMgr.connect(dbDriverId, dbConnect);
@@ -562,6 +563,7 @@ void
 App::
 releaseDbConnection(dnmi::db::Connection *con)
 {
+	mutex::scoped_lock lock(mutexDbDriverManager);
    LOGDEBUG3("Database connection released.");
    dbMgr.releaseConnection( con );
 }

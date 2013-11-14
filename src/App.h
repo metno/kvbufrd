@@ -94,6 +94,7 @@ private:
    milog::LogLevel         defaultLogLevel;
 
    mutable boost::mutex mutex;
+   mutable boost::mutex mutexDbDriverManager;
 
 public:
    boost::shared_ptr<kvalobs::KvDbGateProxyThread> dbThread;
