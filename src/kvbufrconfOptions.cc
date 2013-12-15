@@ -51,6 +51,7 @@ getOptions(int argn, char **argv, Options &opt)
                                  {"svv", 0, 0, 0 },
                                  {"precip", 0, 0, 0 },
                                  {"ship", 0, 0, 0 },
+                                 {"bstations", 0, 0, 0},
                                  {0,0,0,0}};
 
    int c;
@@ -75,6 +76,8 @@ getOptions(int argn, char **argv, Options &opt)
                 opt.type= Options::PRECIP; ++opt.nIsTypes;
             }else if( strcmp( long_options[index].name, "ship") == 0 ) {
                 opt.type= Options::SHIP; ++opt.nIsTypes;
+            } else if( strcmp( long_options[index].name, "bstations") == 0 ) {
+                opt.type= Options::BSTATIONS; ++opt.nIsTypes;
             } else
                use( 1 );
             break;
@@ -160,6 +163,8 @@ use(int exitstatus)
         <<"\t\t--svv Generate a configuration file for SVV stations only.\n"
         <<"\t\t--precip Generate a configuration file for precipitations stations only.\n"
         <<"\t\t--ship Generate a configuration file for SHIP stations only.\n"
+        <<"\t\t--bstations Generate a configuration file for bstations only.\n"
+        <<"\t\t\tbstations use the same BUFR template as SVV stations.\n"
         <<"\n";
 
    exit(exitstatus);

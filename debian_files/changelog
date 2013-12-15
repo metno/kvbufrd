@@ -1,3 +1,9 @@
+kvbufrd (2.5.10~rc1-1) lucid; urgency=low
+  * New RC.
+  * kvbufrconf: Implemented new configuration option --bstations.
+  
+ -- Kvalobs <kvalobs@met.no>  Mon, 15 Dec 2013 06:00:00 +0100
+
 kvbufrd (2.5.9-1) lucid; urgency=low
   * New RC.
   * HACK: to anonymize the identity to the "Coast Guard".

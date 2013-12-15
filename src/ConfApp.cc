@@ -31,6 +31,8 @@
 
 #include <stdlib.h>
 #include <iostream>
+#include <algorithm>
+#include <boost/function.hpp>
 #include <milog/milog.h>
 #include <kvalobs/kvPath.h>
 #include "ConfApp.h"
@@ -354,3 +356,116 @@ loadStationData( int stationid,
 
    return true;
 }
+
+bool
+ConfApp::
+findBStations( StInfoSysStationList &stations )
+{
+	string query( " WHERE wmono IS NULL AND stationid IN (SELECT stationid FROM obspgm_h WHERE paramid =211 AND totime IS NULL) AND totime IS NULL AND maxspeed=0");
+	stations.clear();
+
+	dnmi::db::Connection *con = getDbConnection();
+
+	if( !con ) {
+		LOGERROR("Can connect to stinfosys.");
+		return false;
+	}
+	kvDbGate gate( con );
+
+	gate.select( stations, query );
+
+	if( stations.empty() ) {
+		LOGWARN("No BSTATIONS found!");
+	} else {
+		LOGINFO("Found " << stations.size() << " BSTAIONS.");
+	}
+
+	return true;
+}
+
+namespace {
+
+bool
+hasEqualTypeid( const TblStInfoSysObsPgmH &o1, const TblStInfoSysObsPgmH &o2 )
+{
+	return o1.messageFormatid() == o2.messageFormatid();
+}
+}
+
+bool
+ConfApp::
+findObsPgmHTypeids( StInfoSysObsObsPgmHList &obspgm, int stationid, const std::list<int> &paramids )
+{
+	ostringstream q;
+	obspgm.clear();
+	StInfoSysObsObsPgmHList tmp;
+	dnmi::db::Connection *con = getDbConnection();
+
+	if( !con ) {
+		LOGERROR("Can connect to stinfosys.");
+		return false;
+	}
+
+	kvDbGate gate( con );
+
+	q << " WHERE stationid=" << stationid;
+
+	if( !paramids.empty() ) {
+		q << " AND paramid IN (";
+		for( list<int>::const_iterator it=paramids.begin(); it != paramids.end(); ++it ) {
+			if( it != paramids.begin() )
+				q << ",";
+			q << *it;
+		}
+		q << ")";
+	}
+
+	q << " AND fromtime <= 'today' AND totime IS NULL AND priority_message";
+
+	gate.select( tmp, q.str() );
+
+
+	std::unique_copy( tmp.begin(), tmp.end(), back_inserter( obspgm ), hasEqualTypeid );
+
+	return true;
+}
+
+bool
+ConfApp::
+hasObsPgmHParamsids( StInfoSysObsObsPgmHList &obspgm, int stationid, int typeid_,const std::list<int> &paramids )
+{
+	ostringstream q;
+	obspgm.clear();
+	dnmi::db::Connection *con = getDbConnection();
+
+	if( !con ) {
+		LOGERROR("Can connect to stinfosys.");
+		return false;
+	}
+
+	kvDbGate gate( con );
+
+	q << " WHERE stationid=" << stationid << " AND message_formatid=" << typeid_;
+
+	if( !paramids.empty() ) {
+		q << " AND paramid IN (";
+		for( list<int>::const_iterator it=paramids.begin(); it != paramids.end(); ++it ) {
+			if( it != paramids.begin() )
+				q << ",";
+			q << *it;
+		}
+		q << ")";
+	}
+
+	q << " AND fromtime <= 'today' AND totime IS NULL AND priority_message ORDER BY paramid";
+
+	if( ! gate.select( obspgm, q.str() ) ) {
+		LOGERROR("hasObsPgmHParamsids: invalid query: '" << q.str() << "'"<<endl
+				<< "Reasom: " << gate.getErrorStr() );
+		return false;
+	}
+
+
+	return true;
+}
+

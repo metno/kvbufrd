@@ -58,6 +58,9 @@ getIdAndType( miconf::ConfSection *conf )
    ostringstream ost;
    ValElementList idTypeValue;
 
+   if( ! conf )
+	   return "";
+
    idTypeValue = conf->getValue( NoteSection+"."+IdType );
 
    for(ValElementList::iterator it=idTypeValue.begin();
@@ -743,8 +746,12 @@ doDefDelay(const miconf::ValElementList &vl,
    for(int element=1 ; it!=vl.end(); it++, element++){
       if(it->type()!=STRING){
          curErr << "INVALID TYPE: key <delay> element number: "
-               << element << " in section <" << getIdAndType( conf )
-               << ">, expecting STRING!" << endl;
+               << element;
+
+         if( conf )
+        	 curErr << " in section <" << getIdAndType( conf )<< ">";
+
+         curErr << ", expecting STRING!" << endl;
          continue;
       }
 

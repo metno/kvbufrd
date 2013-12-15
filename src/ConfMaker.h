@@ -44,6 +44,7 @@ class ConfMaker
    std::list<StationInfoPtr> templateStationList;
    StationInfoPtr defaultVal;
 
+
    //StationInfoPtr findStation( int wmono, bool &newStation );
    StationInfoPtr findStation( int wmono, int stationid, const std::string &callsign,
                                const std::list<int> &codeList, bool &newStation );
@@ -58,6 +59,10 @@ class ConfMaker
    bool decodeTemperatureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
    bool decodePressureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
 
+   bool precipConfFromParams( StationInfoPtr station,
+		                      const std::list<int> &precipParams,
+		                      int stationid, int typeid_ );
+
    std::string stationIdToConfString( StationInfoPtr station )const;
    std::string typepriorityToConfString( StationInfoPtr station )const;
    std::string precipPriorityToConfString( StationInfoPtr station )const;
@@ -65,13 +70,17 @@ class ConfMaker
    std::string doStationConf( StationInfoPtr station )const;
 
 public:
-   ConfMaker( ConfApp &app );
+   typedef enum{RA=104,RR_1=106, RR_3=107, RR_6=108, RR_12=109, RR_24=110,
+	            RR_X=117, RR_2=119, RR_9=120, RR_15=125, RR_18=126 } PrecipParams;
+
+	            ConfMaker( ConfApp &app );
 
    bool setParams( const StInfoSysParamList &params );
    bool doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
    bool doSVVConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
    bool doPrecipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
    bool doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
+   bool doBStationsConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
 };
 
 

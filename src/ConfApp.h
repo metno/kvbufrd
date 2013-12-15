@@ -97,7 +97,9 @@ public:
                      const std::list<int> &typeidList );
    bool loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors );
    bool loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors, TblStInfoSysNetworkStation &networkStation );
-
+   bool findBStations( StInfoSysStationList &stations );
+   bool findObsPgmHTypeids( StInfoSysObsObsPgmHList &obspgm, int stationid, const std::list<int> &paramids );
+   bool hasObsPgmHParamsids( StInfoSysObsObsPgmHList &obspgm, int stationid, int typeid_,const std::list<int> &paramids );
 
 };
 
