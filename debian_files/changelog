@@ -1,3 +1,9 @@
+kvbufrd (2.5.10~rc3-1) lucid; urgency=low
+  * New RC.
+  * kvbufrd: Encode empty strings as missing. 
+  
+ -- Kvalobs <kvalobs@met.no>  Thu, 02 Jan 2014 10:00:00 +0100
+
 kvbufrd (2.5.10~rc2-1) lucid; urgency=low
   * New RC.
   * kvbufrd: Two new paramteres for sea waves, WHM0 (amplitude) 
