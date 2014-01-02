@@ -315,15 +315,15 @@ BufrParamString::
 BufrParamString::
 valid( std::string &value )const
 {
+	if( value.empty() )
+		return true;
    //TODO
    //Should replace all non CCITTIA5 with valid chars.
 	value = fixString( value );
-   if( value.length() != width ) {
-      if( value.length() > width )
-         value.erase( width );
-      else //value.length < width
-         value += std::string( width-value.length(), ' ' );
-   }
+	if( value.length() > width )
+		value.erase( width );
+	else //value.length < width
+		value += std::string( width-value.length(), ' ' );
 
    return true;
 }

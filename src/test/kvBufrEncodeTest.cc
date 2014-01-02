@@ -739,6 +739,61 @@ TEST_F( BufrEncodeTest, EncodeBufr307079 )
    }
 }
 
+TEST_F( BufrEncodeTest, EncodeBufr307079_EmptyName )
+{
+   DataElementList allData;
+   StationInfoPtr stInfo;
+   BufrDataPtr bufr( new BufrData() );
+   DataElementList data;
+   miutil::miTime dt;
+   EncodeBufrManager encoder;
+
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+
+   int wmono=1492;
+   stInfo = findWmoNo( wmono );
+
+   stInfo->name("", false ); //Reset the name to an empty string
+   ASSERT_TRUE( stInfo->name().empty() );
+
+   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( loadBufrDataFromFile( "data_18700.dat", stInfo, allData, validData ) )
+      << "Cant load data from filr: data_18700.dat";
+
+   dt=miutil::miTime("2012-05-17 06:00:00");
+   data=allData.subData( dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< wmono;
+
+   BufrTemplateList templateList;
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelper.setTest( true );
+
+   b::assign::push_back( templateList )(900000);
+
+
+   bufrHelper.setObsTime( dt );
+   bufrHelper.setSequenceNumber( 0 );
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+      cerr << bufrHelper.getLog() << endl;
+
+      int len;
+      const char *buf=bufrHelper.getBufr( len );
+      cerr << "#len: " << len << endl;
+      ofstream fout( "BUFR301090_empty_name" );
+
+      fout.write( buf, len );
+      fout.close();
+   }
+   catch ( const std::exception &ex ) {
+      cerr << "<<<<< EXCEPTION LOG" << endl;
+      cerr << bufrHelper.getLog() << endl;
+      cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+   }
+}
+
+
 
 
 
