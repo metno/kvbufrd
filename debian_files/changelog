@@ -1,3 +1,10 @@
+kvbufrd (2.5.10~rc2-1) lucid; urgency=low
+  * New RC.
+  * kvbufrd: Two new paramteres for sea waves, WHM0 (amplitude) 
+    and WTZ (periode). Used to encode 3 02 021 (SHIP). 
+  
+ -- Kvalobs <kvalobs@met.no>  Thu, 02 Jan 2014 08:00:00 +0100
+
 kvbufrd (2.5.10~rc1-1) lucid; urgency=low
   * New RC.
   * kvbufrconf: Implemented new configuration option --bstations.
