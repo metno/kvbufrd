@@ -170,8 +170,10 @@ private:
   	KvParam MLAT; //Latitude of ship/platform.
   	KvParam MLON; //Longitude of ship/platform.
   	KvParam WDMT; //Mean wave direction.
+  	KvParam WTZ; //Mean wave period.
   	KvParam Pwa;  //Period of waves.
   	KvParam Pw;   //Period of wind waves.
+  	KvParam WHM0;
   	KvParam Hwa;  //Height of waves.
   	KvParam Hw;   //Height of wind waves.
   	int nSet;

@@ -56,12 +56,32 @@ encodeIds()const
 
 
 
+/**
+ * Encode Waves data as amplitude and direction.
+ * There is two parameters that may be actual
+ * for each component:
+ *
+ *   - amplitude Pwa or WTZ
+ *   - direction Hwa or WHM0.
+ *
+ * If both parameters exist for the amplitude, Pwa has priority.
+ * If both parameters exist for direction, Hwa has priority.
+ */
 void
 EncodeBufr302021::
 encode( )
 {
+   float pw=data->Pwa;
+   float wa=data->Hwa;
+
+   if( pw == FLT_MAX )
+	   pw = data->WTZ;
+
+   if( wa == FLT_MAX )
+	   wa = data->WHM0;
+
    bufr->addValue( 22001, data->WDMT, "WDMT, direction of waves" );
-   bufr->addValue( 22011, data->Pwa, "Pwa, period of wind waves. Automatic observation." );
-   bufr->addValue( 22021, data->Hwa, "Hwa, height of waves. Automatic observation." );
+   bufr->addValue( 22011, pw, "Pwa, period of wind waves. Automatic observation." );
+   bufr->addValue( 22021, wa, "Hwa, height of waves. Automatic observation." );
 }
 
