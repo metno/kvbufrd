@@ -793,15 +793,6 @@ TEST_F( BufrEncodeTest, EncodeBufr307079_EmptyName )
    }
 }
 
-
-
-
-
-
-
-
-
-
 TEST_F( BufrEncodeTest, EncodeBufrSVV )
 {
    DataElementList allData;
@@ -1453,6 +1444,99 @@ TEST_F( BufrEncodeTest, EncodeBufr90003_SHIP_PWA)
       FAIL();
    }
 }
+
+TEST_F( BufrEncodeTest, EncodeBufr307079_EmptyName1 )
+{
+   DataElementList allData;
+   StationInfoPtr stInfo_1192;
+   StationInfoPtr stInfo_1204;
+   DataElementList data;
+   miutil::miTime dt;
+   EncodeBufrManager encoder;
+
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+
+   int wmono=1192;
+   stInfo_1192 = findWmoNo( wmono );
+
+   dt=miutil::miTime("2013-01-07 06:00:00");
+
+   ASSERT_TRUE( stInfo_1192 ) << "No station information for wmono " << wmono;
+   wmono=1204;
+   stInfo_1204 = findWmoNo( wmono );
+   ASSERT_TRUE( stInfo_1204 ) << "No station information for wmono " << wmono;
+//   ASSERT_TRUE( loadBufrDataFromFile( "data_18700.dat", stInfo, allData, validData ) )
+//      << "Cant load data from filr: data_18700.dat";
+
+   DataElement de;
+
+   de.TA = 10;
+   data[dt] = de;
+
+   BufrTemplateList templateList;
+   b::assign::push_back( templateList )(900000);
+
+   {
+	   BufrDataPtr bufr( new BufrData() );
+	   Bufr bEncoder;
+	   bEncoder.setTest( true );
+
+	   EXPECT_TRUE( bEncoder.doBufr( stInfo_1192, data, *bufr ) )
+	   	   << "FAILED: Cant generate bufr for "<< 1192;
+	   BufrHelper bufrHelper( validater, stInfo_1192, bufr );
+	   bufrHelper.setTest( true );
+	   bufrHelper.setObsTime( dt );
+	   bufrHelper.setSequenceNumber( 0 );
+
+	   try {
+		   encoder.encode( templateList, bufrHelper );
+		   int len;
+		   const char *buf=bufrHelper.getBufr( len );
+		   cerr << "#len: " << len << endl;
+		   ofstream fout( "BUFR301090_empty_name_1" );
+
+		   fout.write( buf, len );
+		   fout.close();
+	   }
+	   catch ( const std::exception &ex ) {
+		   cerr << "<<<<< EXCEPTION LOG" << endl;
+		   cerr << bufrHelper.getLog() << endl;
+		   cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+	   }
+   }
+
+   {
+   	   BufrDataPtr bufr( new BufrData() );
+   	   Bufr bEncoder;
+   	   bEncoder.setTest( true );
+
+   	   EXPECT_TRUE( bEncoder.doBufr( stInfo_1204, data, *bufr ) )
+   	   	   << "FAILED: Cant generate bufr for "<< 1204;
+   	   EXPECT_EQ( "", stInfo_1204->name());
+   	   BufrHelper bufrHelper( validater, stInfo_1204, bufr );
+   	   bufrHelper.setTest( true );
+   	   bufrHelper.setObsTime( dt );
+   	   bufrHelper.setSequenceNumber( 0 );
+
+   	   try {
+   		   encoder.encode( templateList, bufrHelper );
+   		   int len;
+   		   const char *buf=bufrHelper.getBufr( len );
+   		   cerr << "#len: " << len << endl;
+   		   ofstream fout( "BUFR301090_empty_name_2" );
+
+   		   fout.write( buf, len );
+   		   fout.close();
+   	   }
+   	   catch ( const std::exception &ex ) {
+   		   cerr << "<<<<< EXCEPTION LOG" << endl;
+   		   cerr << bufrHelper.getLog() << endl;
+   		   cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+   	   }
+      }
+
+}
+
 
 
 int

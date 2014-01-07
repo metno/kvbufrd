@@ -309,7 +309,17 @@ addValue( int bufrParamId, const std::string &value,
 
    try {
        if( (*values)[iValue++].insert( bufrParamId, val, iCvals+1, name ) ) {
-           strncpy(cvals[iCvals++], val.c_str(), val.length() );
+
+    	   //It seems that the BUFR software (fortran) code takes a
+    	   //copy of the value we send it and all ways takes the
+    	   //numbers of bytes specified in the 'width' from the param definition
+    	   //(B-tables) and copy to the BUFR. To remedy this we copys 'width' byte
+    	   //of '\0' to the cvals.
+
+    	   if( value.empty() )
+    		   memset(cvals[iCvals++], '\0', val.length() );
+    	   else
+    		   strncpy(cvals[iCvals++], val.c_str(), val.length() );
 
            if( countAsData )
                bufrBase->setHasValidValue();
@@ -318,7 +328,7 @@ addValue( int bufrParamId, const std::string &value,
    catch( const std::exception  &ex ) {
        ostringstream ost;
        ost << "EXCEPTION: " << bufrParamId << " countAsData: " << (countAsData?"T":"F") << " Reason: " << ex.what();
-       cerr << ost.str() << endl;
+       //cerr << ost.str() << endl;
        throw  BufrException( ost.str() );
    }
 }

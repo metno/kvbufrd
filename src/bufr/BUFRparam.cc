@@ -315,8 +315,17 @@ BufrParamString::
 BufrParamString::
 valid( std::string &value )const
 {
-	if( value.empty() )
-		return true;
+	//Check if width is less than maximum characters allowed
+	//in CVALS, this is 80 in the FORTRAN code.
+
+	if( width > 80 ) {
+		ostringstream o;
+		o << "The encoding of the PARAM '" << id << "' has a 'with' specifier "
+	      << "of '" << width << "' the maximum size allowed by the BUFR encodings "
+	      << "is 80.";
+		throw BufrException( o.str() );
+	}
+
    //TODO
    //Should replace all non CCITTIA5 with valid chars.
 	value = fixString( value );
