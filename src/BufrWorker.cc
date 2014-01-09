@@ -69,7 +69,7 @@ BufrWorker::BufrWorker(App &app_,
   swmsg(*(new std::ostringstream())),
   encodeBufrManager( new EncodeBufrManager() )
 {
-   string filename=string( DATADIR ) + "/B0000000000098014001.TXT";
+   string filename=string( DATADIR ) + "/B0000000000000019000.TXT";
    bufrParamValidater = BufrParamValidater::loadTable( filename );
 }
 

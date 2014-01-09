@@ -17,6 +17,10 @@ CLEANFILES = $(nodist_idl_sources:.idl=SK.cc) $(nodist_idl_sources:.idl=.hh)
 #	$(IDL) -bcxx -Wbinline -I$(KVIDLDIR) $<
 	$(IDL) -bcxx -I$(KVIDLDIR) $<
 
+clean-local:
+	if [ -d bufrtables ]; then\
+		rm -rf bufrtables ;\
+	fi
 
 noinst_PROGRAMS = kvBufrEncodeTest base64Test
 
@@ -335,13 +339,17 @@ kvBufrEncodeTest_SOURCES = \
 
 kvBufrEncodeTest_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 
+
 if KVSTATIC
 kvBufrEncodeTest_CPPFLAGS = \
 	-I$(KVINCLUDEDIR) \
 	$(AM_CPPFLAGS) \
 	$(gtest_CFLAGS) \
 	-DTESTDATADIR="\""$(top_srcdir)/src/test"\""\
-    -DBUFRTBLDIR="\""$(top_srcdir)/share/bufrtables"\""
+	-DBUFRTBLDIR="\""$(BUFRTABLES)"\""
+	
+#    -DBUFRTBLDIR="\""$(top_builddir)/src/bufrtables"\""
+#-DBUFRTBLDIR="\""$(top_srcdir)/share/bufrtables"\""
 
 kvBufrEncodeTest_LDADD =   \
 	$(top_builddir)/src/bufr/libbufr.la \
@@ -371,7 +379,10 @@ kvBufrEncodeTest_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
 	$(gtest_CFLAGS) \
 	-DTESTDATADIR="\""$(top_srcdir)/src/test"\""\
-    -DBUFRTBLDIR="\""$(top_srcdir)/share/bufrtables"\""
+	-DBUFRTBLDIR="\""$(BUFRTABLES)"\""
+	
+#	 -DBUFRTBLDIR="\""$(top_builddir)/src/bufrtables"\""
+#    -DBUFRTBLDIR="\""$(top_srcdir)/share/bufrtables"\""
 
 kvBufrEncodeTest_LDADD =   \
 	$(top_builddir)/src/bufr/libbufr.la \

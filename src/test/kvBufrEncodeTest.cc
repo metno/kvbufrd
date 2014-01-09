@@ -36,6 +36,7 @@
 #include <fstream>
 #include <list>
 #include <sstream>
+#include <stdlib.h>
 #include <boost/assign.hpp>
 #include <gtest/gtest.h>
 #include <puTools/miTime.h>
@@ -100,9 +101,15 @@ protected:
 	virtual void SetUp() {
 		using namespace miutil::conf;
 		ConfParser confParser;
-		//istringstream iconf(testconf);
+		string bufr_tables( BUFRTBLDIR );
+
+		 if( ! bufr_tables.empty() && *bufr_tables.rbegin() != '/' )
+			 bufr_tables += '/';
+
+		 //istringstream iconf(testconf);
+		setenv("BUFR_TABLES", bufr_tables.c_str(), 1 );
 		string conffile(string(TESTDATADIR) + "/kvBufrEncodeTest.conf" );
-		string btabl(string(BUFRTBLDIR)+"/B0000000000098014001.TXT");
+		string btabl(string(BUFRTBLDIR)+"/B0000000000000019000.TXT");
 		ifstream iconf( conffile.c_str() );
 		//Turn off almost all logging.
 		milog::Logger::logger().logLevel( milog::ERROR );

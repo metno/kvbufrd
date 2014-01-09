@@ -14,6 +14,8 @@ AC_PROG_INSTALL
 AC_CONFIG_HEADERS(config.h)
 PKG_PROG_PKG_CONFIG
 
+AC_SUBST([BUFRTABLES],[`pwd`/src/bufrtables])
+
 KV_FIND_OMNIORB4
 PKG_CHECK_MODULES(putools, puTools)
 LIBKVCPP2
@@ -40,13 +42,15 @@ AX_BOOST_SYSTEM
 if test -z $BOOST_SYSTEM_LIB; then AC_MSG_ERROR([Unable to find boost system library]); fi
 
 AC_CONFIG_FILES([Makefile
+                 share/bufrtables/Makefile
                  src/gtest/Makefile
                  check_kvbufrd.sh
                  src/kvbufrd_initdb
                  src/bufr/Makefile
                  src/Makefile
-                 share/bufrtables/Makefile
 ])
+
+
 
 
 AC_OUTPUT
