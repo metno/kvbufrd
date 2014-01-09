@@ -1,3 +1,10 @@
+kvbufrd (2.5.10~rc6-1) lucid; urgency=low
+  * New RC.
+  * kvbufrd: Update to libbufr (version 000400).
+  * Update to use master table version 19. 
+  
+ -- Kvalobs <kvalobs@met.no>  Thu, 09 Jan 2014 16:15:00 +0100
+
 kvbufrd (2.5.10~rc5-1) lucid; urgency=low
   * New RC.
   * kvbufrd: #1370, empty strings as missing, third try. 
