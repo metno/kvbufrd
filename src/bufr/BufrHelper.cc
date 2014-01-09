@@ -310,6 +310,8 @@ addValue( int bufrParamId, const std::string &value,
    try {
        if( (*values)[iValue++].insert( bufrParamId, val, iCvals+1, name ) ) {
 
+    	   //TODO: This did not work. It is at the moment not possible to set
+    	   //Characters parameters to missing.
     	   //It seems that the BUFR software (fortran) code takes a
     	   //copy of the value we send it and all ways takes the
     	   //numbers of bytes specified in the 'width' from the param definition
@@ -317,8 +319,9 @@ addValue( int bufrParamId, const std::string &value,
     	   //of '\0' to the cvals.
 
     	   if( value.empty() )
-    		   memset(cvals[iCvals++], '\0', val.length() );
+    		   memset(cvals[iCvals++], 0xFF, val.length() );
     	   else
+
     		   strncpy(cvals[iCvals++], val.c_str(), val.length() );
 
            if( countAsData )

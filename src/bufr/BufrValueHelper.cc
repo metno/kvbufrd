@@ -192,7 +192,6 @@ insert( int bufrParamId, std::string &value, int sIndex, const std::string &name
    bool isValid=true;
    double ret= val->miss;
 
-
    if( validater_ && ! validater_->isValid( bufrParamId, value )) {
       val->log_ << "NA";
       isValid = false;
