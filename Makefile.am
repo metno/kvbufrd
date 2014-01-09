@@ -22,8 +22,10 @@ install-data-hook:
 	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/log/kvalobs/kvbufr
 	$(install_sh) -m 755 -d $(DESTDIR)/$(datadir)/@PACKAGE_NAME@
 	$(install_sh) -m 755 -d $(DESTDIR)/$(pkgdatadir)/bufrtables
-	(cd $(DESTDIR)/$(pkgdatadir)/bufrtables; \
-	 tar zxpf $(top_srcdir)/share/bufrtables/bufrtables_000400.tar.gz)
+	tar zxpf $(top_srcdir)/share/bufrtables/bufrtables_000400.tar.gz -C $(DESTDIR)/$(pkgdatadir)/bufrtables
+	
+#	(cd $(DESTDIR)/$(pkgdatadir)/bufrtables; \
+#	 tar zxpf $(top_srcdir)/share/bufrtables/bufrtables_000400.tar.gz)
 
 #Install the bufr tables in src/bufrtables
 #This must be done before we run the checks in src.
