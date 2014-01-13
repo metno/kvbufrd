@@ -82,7 +82,7 @@ init_sec0134(  int *ksec0, int *ksec1, int *ksec3, int *ksec4 )
   ksec1[12] = 0;//min from obstime
   ksec1[13] = 0;       /* BUFR master table */
   ksec1[14] = 14;      /* Version number of master table used */
-  ksec1[14] = 19;      /* Version number of master table used */
+//  ksec1[14] = 19;      /* Version number of master table used */
   ksec1[15] = 0;       /* Originating sub-centre */
   ksec1[16] = 0; /* International sub-category (see common table C-13) */
   ksec1[17] = 0; //Secound from obstime
