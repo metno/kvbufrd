@@ -1,3 +1,9 @@
+kvbufrd (2.5.10~rc7-1) lucid; urgency=low
+  * New RC.
+  * Use master table version 14. 
+  
+ -- Kvalobs <kvalobs@met.no>  Mon, 13 Jan 2014 09:15:00 +0100
+
 kvbufrd (2.5.10~rc6-1) lucid; urgency=low
   * New RC.
   * kvbufrd: Update to libbufr (version 000400).
