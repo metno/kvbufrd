@@ -361,7 +361,7 @@ bool
 ConfApp::
 findBStations( StInfoSysStationList &stations )
 {
-	string query( " WHERE wmono IS NULL AND stationid IN (SELECT stationid FROM obspgm_h WHERE paramid =211 AND totime IS NULL) AND totime IS NULL AND maxspeed=0");
+	string query( " WHERE wmono IS NULL AND stationid IN (SELECT stationid FROM obspgm_h WHERE paramid IN (211,81) AND totime IS NULL) AND totime IS NULL AND maxspeed=0");
 	stations.clear();
 
 	dnmi::db::Connection *con = getDbConnection();
