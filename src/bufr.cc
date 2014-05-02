@@ -1028,7 +1028,7 @@ doEsss( const DataElementList &data, BufrData &res  )
    if( data[0].EM == FLT_MAX && data[0].EE == FLT_MAX && iSA == INT_MAX )
        return;
 
-   if( data[0].EE != FLT_MAX && data[0].EE >= 0 && data[0].EE < 34 ) {
+   if( data[0].EE != FLT_MAX && data[0].EE >= 0 && data[0].EE < 31 ) {
       res.EE = floor( static_cast<double>( data[0].EE ) + 0.5 );
       res.EM = res.EE>=10?(res.EE-10):FLT_MAX;
    } else if( data[0].EM != FLT_MAX && data[0].EM>= 0 && data[0].EM <= 10 ) {
@@ -1037,8 +1037,12 @@ doEsss( const DataElementList &data, BufrData &res  )
    
    if( data[0].SA != FLT_MAX ) {
       if( iSA == -1 ) {
-         if( res.EE != FLT_MAX && res.EE != 33 )
-            res.SA = -0.02;
+         if( res.EE != FLT_MAX  ) {
+        	 if( res.EE < 10)
+        		 res.SA = 0.00;
+        	 else
+        		 res.SA = -0.02;
+         }
       } else if( iSA == 0 )
          res.SA = -0.01;
       else if( iSA == -3 )
