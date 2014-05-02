@@ -1285,6 +1285,26 @@ TEST_F( BufrEncodeTest, Esss )
     ASSERT_FLOAT_EQ( 0.23, bufr->SA );
 }
 
+TEST_F( BufrEncodeTest, EE_SA )
+{
+    StationInfoPtr stInfo( findWmoNo( 1492 ) ); //Dummy
+    DataElementList data;
+    DataElement dataElement;
+    BufrDataPtr bufr;
+    miutil::miTime t("2014-04-30 06:00:00");
+
+    dataElement.time( t );
+    dataElement.SA=-1;
+    dataElement.EE=1;
+    data.insert( t, dataElement, true );
+    bufr = bufrEncoder.doBufr( stInfo, data );
+
+    ASSERT_TRUE( bufr != 0 );
+    ASSERT_TRUE( bufr->EE == 1 );
+    ASSERT_FLOAT_EQ( 0.00, bufr->SA ) << "Expect: Now snow.";
+}
+
+
 
 TEST_F( BufrEncodeTest, EsssFromEE )
 {
