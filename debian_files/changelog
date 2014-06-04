@@ -1,3 +1,9 @@
+kvbufrd (2.5.12-1) lucid; urgency=low
+  * New Release.
+  * kvbufrconf: #1381, Fix encoding of pressure height 0 07 031.
+  
+ -- Kvalobs <kvalobs@met.no>  Wed, 04 Jun 2014 12:00:00 +0200
+
 kvbufrd (2.5.11-1) lucid; urgency=low
   * New Relase.
   * #1378, Fix encoding of snow depth 0 13 013 when EE < 10 and SA = -1
