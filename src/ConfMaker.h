@@ -57,7 +57,9 @@ class ConfMaker
    bool decodeWindheight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
    bool decodePrecipHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
    bool decodeTemperatureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
-   bool decodePressureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station );
+   bool decodePressureHeight( const StInfoSysSensorInfoList &sensors,
+		                      const TblStInfoSysStation &tblStation,
+		                      StationInfoPtr station );
 
    bool precipConfFromParams( StationInfoPtr station,
 		                      const std::list<int> &precipParams,

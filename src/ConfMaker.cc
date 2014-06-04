@@ -474,26 +474,27 @@ decodePrecipHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr stati
 
 bool
 ConfMaker::
-decodePressureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station )
+decodePressureHeight( const StInfoSysSensorInfoList &sensors,
+		              const TblStInfoSysStation &tblStation, StationInfoPtr station )
 {
    int PP[]={ 173 , 171, 0};
    TblStInfoSysSensorInfo sensor;
 
-   if( station->heightPressure_ != INT_MAX )
+   if( station->heightPressure_ != FLT_MAX )
        return false;
+
+   if( tblStation.hp() == kvDbBase::FLT_NULL )
+	   return false;
 
    for( int i=0; PP[i]; ++i ) {
       if(  findSensor( sensors, sensor,  PP[i] ) ) {
-         if( sensor.physicalHeight() != INT_MAX && station->height_ != INT_MAX) {
-            station->heightPressure_ = sensor.physicalHeight() + station->height_;
-            return true;
-         }
+    	  station->heightPressure_ = tblStation.hp();
+    	  return true;
       }
    }
 
    LOGDEBUG( "Station '" << station->name() << "' stationid: " << *station->definedStationID().begin()
              << " has no pressure sensors.");
-
 
    return false;
 }
@@ -695,8 +696,16 @@ doStationConf( StationInfoPtr station )const
    if( station->heightTemperature_ != INT_MAX )
          o << indent.spaces() << "height_temperature=" << station->heightTemperature_ << endl;
 
-   if( station->heightPressure_ != INT_MAX )
-      o << indent.spaces() << "height_pressure=" << station->heightPressure_ << endl;
+   if( station->heightPressure_ != FLT_MAX ) {
+	   ios_base::fmtflags oldf=o.flags();
+	   streamsize oldp=o.precision();
+
+	   o.setf( ios::fixed, ios::floatfield );
+	   o.precision( 1 );
+	   o << indent.spaces() << "height_pressure=" << station->heightPressure_ << endl;
+	   o.flags( oldf );
+	   o.precision( oldp );
+   }
 
    tmp = stationIdToConfString( station );
    if( !tmp.empty() )
@@ -821,7 +830,7 @@ doSVVConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
       if( decodeTemperatureHeight( tblSensors, pStation ) )
          nValues++;
 
-      if( decodePressureHeight( tblSensors, pStation ) )
+      if( decodePressureHeight( tblSensors, tblStation, pStation ) )
          nValues++;
 
       if( decodeCouplingDelay( "+HH:00", pStation ) )
@@ -970,7 +979,7 @@ doPrecipConf( const std::string &outfile, miutil::conf::ConfSection *templateCon
       if( decodeTemperatureHeight( tblSensors, pStation ) )
          nValues++;
 
-      if( decodePressureHeight( tblSensors, pStation ) )
+      if( decodePressureHeight( tblSensors, tblStation, pStation ) )
          nValues++;
 
 //      if( decodeCouplingDelay( "+HH:00", pStation ) )
@@ -1135,7 +1144,7 @@ doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf 
 		if( decodeTemperatureHeight( tblSensors, pStation ) )
 			nValues++;
 
-		if( decodePressureHeight( tblSensors, pStation ) )
+		if( decodePressureHeight( tblSensors, tblStation, pStation ) )
 			nValues++;
 
 		if( decodeCouplingDelay( "+HH:00", pStation ) )
@@ -1318,7 +1327,7 @@ doBStationsConf( const std::string &outfile, miutil::conf::ConfSection *template
 		if( decodeTemperatureHeight( tblSensors, pStation ) )
 			nValues++;
 
-		if( decodePressureHeight( tblSensors, pStation ) )
+		if( decodePressureHeight( tblSensors, tblStation, pStation ) )
 			nValues++;
 
 		if( decodeCouplingDelay( "+HH:00", pStation ) )
@@ -1444,7 +1453,7 @@ doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
       if( decodeTemperatureHeight( tblSensors, pStation ) )
          nValues++;
 
-      if( decodePressureHeight( tblSensors, pStation ) )
+      if( decodePressureHeight( tblSensors, tblStation, pStation ) )
          nValues++;
 
       if( decodeCouplingDelay( it->couplingDelay(), pStation ) )
