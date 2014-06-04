@@ -52,6 +52,7 @@ getOptions(int argn, char **argv, Options &opt)
                                  {"precip", 0, 0, 0 },
                                  {"ship", 0, 0, 0 },
                                  {"bstations", 0, 0, 0},
+                                 {"synop", 0, 0, 0},
                                  {0,0,0,0}};
 
    int c;
@@ -78,8 +79,11 @@ getOptions(int argn, char **argv, Options &opt)
                 opt.type= Options::SHIP; ++opt.nIsTypes;
             } else if( strcmp( long_options[index].name, "bstations") == 0 ) {
                 opt.type= Options::BSTATIONS; ++opt.nIsTypes;
-            } else
+            } else if( strcmp( long_options[index].name, "synop") == 0 ) {
+                opt.type= Options::SYNOP; ++opt.nIsTypes;
+            } else {
                use( 1 );
+            }
             break;
          case 'h':
          use(0);
@@ -160,11 +164,13 @@ use(int exitstatus)
         <<"\t   kvbufrconf [--help|-h] [TYPE] [--template|-t templatefile] [--conf|-c confile] [--out|-o outfile] " << endl
         <<"\n\n"
         <<"\t TYPE may be one of\n"
-        <<"\t\t--svv Generate a configuration file for SVV stations only.\n"
-        <<"\t\t--precip Generate a configuration file for precipitations stations only.\n"
-        <<"\t\t--ship Generate a configuration file for SHIP stations only.\n"
-        <<"\t\t--bstations Generate a configuration file for bstations only.\n"
-        <<"\t\t\tbstations use the same BUFR template as SVV stations.\n"
+        <<"\t\t--synop Generate a configuration file for SYNOP stations.\n"
+        <<"\t\t--svv Generate a configuration file for SVV stations.\n"
+        <<"\t\t--precip Generate a configuration file for precipitations stations.\n"
+        <<"\t\t--ship Generate a configuration file for SHIP stations.\n"
+        <<"\t\t--bstations Generate a configuration file for bstations.\n"
+        <<"\t\t  bstations use the same BUFR template as SVV stations.\n"
+        <<"\n\t\tIf no TYPE is given the --synop option is assumed.\n"
         <<"\n";
 
    exit(exitstatus);
