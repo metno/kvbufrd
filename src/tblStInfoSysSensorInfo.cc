@@ -123,14 +123,14 @@ set(const dnmi::db::DRow &r_)
  TblStInfoSysSensorInfo::
  clean()
  {
-    equipmentid_ = INT_MAX;
-    paramid_ = INT_MAX;
-    stationid_ = INT_MAX;
-    sensor_ = INT_MAX;
-    hlevel_ = INT_MAX;
+    equipmentid_ = INT_NULL;
+    paramid_ = INT_NULL;
+    stationid_ = INT_NULL;
+    sensor_ = INT_NULL;
+    hlevel_ = INT_NULL;
     operational_ = false;
-    physical_height_ = INT_MAX;
-    measurement_methodid_ = INT_MAX;
+    physical_height_ = INT_NULL;
+    measurement_methodid_ = INT_NULL;
  }
 
 #ifdef __WITH_PUTOOLS__

@@ -387,7 +387,7 @@ parseSection( miconf::ConfSection *stationConf,
          } else if( strcmp( keywords[i], "height_precip" ) == 0 ) {
             doInt( st->heightPrecip_, value );
          }else if( strcmp( keywords[i], "height_pressure" ) == 0 ) {
-            doInt( st->heightPressure_, value );
+            doFloat( st->heightPressure_, value );
          }else if( strcmp( keywords[i], "height_temperature" ) == 0 ) {
             doInt( st->heightTemperature_, value );
          }else if( strcmp( keywords[i], "height_visibility" ) == 0 ) {

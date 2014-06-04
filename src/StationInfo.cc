@@ -461,7 +461,7 @@ StationInfo():
 height_( INT_MAX ),
 heightVisability_( INT_MAX ),
 heightTemperature_( INT_MAX ),
-heightPressure_( INT_MAX ),
+heightPressure_( FLT_MAX ),
 heightPrecip_( INT_MAX ),
 heightWind_( INT_MAX ),
 heightWindAboveSea_( INT_MAX ),
@@ -480,7 +480,7 @@ StationInfo( int wmono ):
 height_( INT_MAX ),
 heightVisability_( INT_MAX ),
 heightTemperature_( INT_MAX ),
-heightPressure_( INT_MAX ),
+heightPressure_( FLT_MAX ),
 heightPrecip_( INT_MAX ),
 heightWind_( INT_MAX ),
 heightWindAboveSea_( INT_MAX ),
@@ -565,7 +565,7 @@ heightTemperature()const
     return  heightTemperature_;
 }
 
-int
+float
 StationInfo::
 heightPressure() const
 {

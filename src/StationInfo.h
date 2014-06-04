@@ -418,7 +418,7 @@ private:
    int            height_;
    int            heightVisability_;
    int            heightTemperature_;
-   int            heightPressure_;
+   float          heightPressure_;
    int            heightPrecip_;
    int            heightWind_;
    int            heightWindAboveSea_;
@@ -475,7 +475,7 @@ public:
    void      height( int h, bool ifUnset = true );
    int       heightVisability() const;
    int       heightTemperature()const;
-   int       heightPressure() const;
+   float     heightPressure() const;
    int       heightPrecip()const;
    int       heightWind()const;
    int       heightWindAboveSea()const;

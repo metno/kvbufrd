@@ -40,7 +40,7 @@ class TblStInfoSysStation : public kvalobs::kvDbBase {
    float lon_;
    int   hs_;
    int   hv_;
-   int   hp_;
+   float hp_;
    float maxspeed_;
    std::string name_;
    int   wmono_;
@@ -74,7 +74,7 @@ public:
   std::string uniqueKey() const;
 #endif
 
-  int hp() const { return hp_; }
+  float hp() const { return hp_; }
   int hs() const { return hs_; }
   int hv() const { return hv_; }
   float maxspeed()const { return maxspeed_; }

@@ -86,9 +86,9 @@ set(const dnmi::db::DRow &r_)
         		 hv_ = atoi( buf.c_str() );
          }else if(*it=="hp"){
         	 if( buf.empty() )
-        		 hp_ = INT_NULL;
+        		 hp_ = FLT_NULL;
         	 else
-        		 hp_ = atoi( buf.c_str() );
+        		 hp_ = static_cast<float>( atof( buf.c_str() ) );
          }else if(*it=="maxspeed"){
              if( buf.empty() )
                  maxspeed_ = FLT_NULL;
@@ -131,14 +131,14 @@ void
 TblStInfoSysStation::
 clean()
 {
-   stationid_ = INT_MAX;
-   lat_ = FLT_MAX;
-   lon_ = FLT_MAX;
-   hs_ = INT_MAX;
-   hv_ = INT_MAX;
-   hp_ = INT_MAX;
+   stationid_ = INT_NULL;
+   lat_ = FLT_NULL;
+   lon_ = FLT_NULL;
+   hs_ = INT_NULL;
+   hv_ = INT_NULL;
+   hp_ = FLT_NULL;
    name_.erase();
-   wmono_ = INT_MAX;
+   wmono_ = INT_NULL;
 }
 
 #ifdef __WITH_PUTOOLS__
