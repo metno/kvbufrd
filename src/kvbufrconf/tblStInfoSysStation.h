@@ -43,6 +43,7 @@ class TblStInfoSysStation : public kvalobs::kvDbBase {
    float hp_;
    float maxspeed_;
    std::string name_;
+   std::string shortName_;
    int   wmono_;
 
   void createSortIndex();
@@ -81,6 +82,7 @@ public:
   float lat() const { return lat_; }
   float lon() const { return lon_; }
   std::string name() const { return name_; }
+  std::string shortName()const { return shortName_; }
   int stationid() const { return stationid_; }
   int wmono() const { return wmono_; }
 

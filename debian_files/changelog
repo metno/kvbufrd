@@ -1,3 +1,9 @@
+kvbufrd (2.5.13~rc1-1) lucid; urgency=low
+  * New RC
+  * kvbufrconf: #1377 - Configfiles for ship and platforms.
+  
+ -- Kvalobs <kvalobs@met.no>  Wed, 06 Jul 2014 12:00:00 +0200
+
 kvbufrd (2.5.12-1) lucid; urgency=low
   * New Release.
   * kvbufrconf: #1381, Fix encoding of pressure height 0 07 031.

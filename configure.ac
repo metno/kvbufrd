@@ -48,6 +48,7 @@ AC_CONFIG_FILES([Makefile
                  src/kvbufrd_initdb
                  src/bufr/Makefile
                  src/Makefile
+                 src/kvbufrconf/Makefile
 ])
 
 

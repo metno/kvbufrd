@@ -33,6 +33,7 @@
 #include <iostream>
 #include <algorithm>
 #include <boost/function.hpp>
+#include <boost/assign.hpp>
 #include <milog/milog.h>
 #include <kvalobs/kvPath.h>
 #include "ConfApp.h"
@@ -214,6 +215,25 @@ loadParams( StInfoSysParamList &params )
 
 bool
 ConfApp::
+hasNetworkStation( int stationid, int networkid )
+{
+	dnmi::db::Connection *con = getDbConnection();
+	kvDbGate gate( con );
+	ostringstream q;
+	StInfoSysNetworkStationList networkStationList;
+
+	q << " WHERE fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)"
+	  << "       AND networkid=" << networkid
+	  << "       AND stationid=" << stationid;
+
+	if( gate.select( networkStationList, q.str() ) )
+		return ! networkStationList.empty();
+
+	throw std::logic_error("Excpetion: hasNetworkStation: DB error: " + gate.getErrorStr() );
+}
+
+bool
+ConfApp::
 loadNetworkStation( StInfoSysNetworkStationList &networkStationList,
                     const std::list<int> &networkidList )
 {
@@ -241,6 +261,72 @@ loadNetworkStation( StInfoSysNetworkStationList &networkStationList,
 
    return gate.select( networkStationList, q.str() );
 }
+
+void
+ConfApp::
+loadNetworkStationByStationid( StInfoSysNetworkStationList &networkStationList,
+		                       int stationid,
+		                       const std::list<int> &networkidList )
+{
+   dnmi::db::Connection *con = getDbConnection();
+   kvDbGate gate( con );
+   ostringstream q;
+
+   networkStationList.clear();
+
+   if( networkidList.empty() )
+      return;
+
+   std::list<int>::const_iterator it = networkidList.begin();
+
+   q << " WHERE fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)"
+        " AND networkid IN (" << *it;
+
+   ++it;
+
+   for( ; it != networkidList.end(); ++it )
+      q << ","<< *it;
+
+   q << ") AND stationid=" << stationid << " ORDER BY networkid";
+
+   if( ! gate.select( networkStationList, q.str() ) )
+	   throw std::logic_error("Exception: loadNetworkStationByStationid: " + gate.getErrorStr() );
+}
+
+
+std::list<int>
+ConfApp::
+hasParamDefForTypeids( int stationid, const std::list<int> &typeids )
+{
+	dnmi::db::Connection *con = getDbConnection();
+
+	std::list<int> ret;
+	ostringstream q;
+
+	q << "SELECT message_formatid FROM obspgm_h WHERE stationid=" << stationid
+	  << " AND message_formatid in (";
+
+	for(std::list<int>::const_iterator it=typeids.begin(); it != typeids.end(); ++it ){
+		if( it == typeids.begin() )	q << *it;
+		else q << "," << *it;
+	}
+
+	q <<") AND (fromtime<='now' AND (totime is NULL OR totime>='now')) group by message_formatid order by message_formatid" ;
+
+	try {
+		std::auto_ptr<dnmi::db::Result> res( con->execQuery( q.str() ) );
+
+		while( res->hasNext() ) {
+			dnmi::db::DRow &row=res->next();
+			ret.push_back( boost::lexical_cast<int>( row[0] ) );
+		}
+		return ret;
+	}
+	catch( const dnmi::db::SQLException &ex ) {
+		throw std::logic_error( "DB error: " + std::string(ex.what()) );
+	}
+}
+
 
 bool
 ConfApp::
@@ -271,6 +357,35 @@ loadObsPgmH( StInfoSysObsObsPgmHList &obsPgmHList,
 
    return gate.select( obsPgmHList, q.str() );
 }
+
+
+bool
+ConfApp::
+loadStationData(int stationid,  TblStInfoSysStation &station )
+{
+   dnmi::db::Connection *con = getDbConnection();
+   kvDbGate gate( con );
+   ostringstream q;
+   StInfoSysStationList stations;
+
+   q << " WHERE stationid=" << stationid << " AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)";
+
+   if( ! gate.select( stations, q.str() ) )
+	   throw std::logic_error("Exception: loadStationData: " + gate.getErrorStr() );
+
+   if( stations.empty() )
+      return false;
+
+   if( stations.size() > 1 ) {
+      LOGWARN( "More than one record for the station <" << stationid << "> was selected from the 'station' table in stinfosys."
+               << endl << " Using the first selected.");
+   }
+
+   station = *stations.begin();
+
+   return true;
+}
+
 
 bool
 ConfApp::
@@ -359,6 +474,62 @@ loadStationData( int stationid,
 
 bool
 ConfApp::
+isPlatform( int stationid )
+{
+	std::list<int> ids;
+	StInfoSysNetworkStationList networkStationList;
+	TblStInfoSysStation station;
+	string callsign = getCallsign( stationid );
+
+	boost::assign::push_back( ids )(11)(22);
+	//Used to get the callsign. (Do we need this to verify that the station is a platform?)
+	if( callsign.empty() )
+		return false;
+
+	if( ! loadStationData( stationid, station) )
+		return false;
+
+	//networkid 105 - fast installasjon på kontinentalsokkelen
+	if( /*hasNetworkStation( stationid, 105 ) && */
+		hasObsPgmHTypeids( stationid, ids, AnyTime_Ignore) &&
+  	    (station.maxspeed() == kvDbBase::FLT_NULL || lrintf( station.maxspeed())  == 0 ) )
+		return true;
+	else
+		return false;
+}
+
+
+std::string
+ConfApp::
+getCallsign( int stationid )
+{
+	std::list<int> networksids;
+	StInfoSysNetworkStationList networkStationList;
+
+	// networkid 6 - Den internasjonale telekomunionens standard kallesignal
+	boost::assign::push_back( networksids)(6);
+	loadNetworkStationByStationid( networkStationList, stationid, networksids );
+
+	if( networkStationList.empty() )
+		return "";
+
+	return networkStationList.begin()->externalStationcode();
+}
+
+
+
+bool
+ConfApp::
+isPlatformOrShip( int stationid )
+{
+	if( ! getCallsign( stationid ).empty() )
+		return true;
+
+	return isPlatform( stationid );
+}
+
+bool
+ConfApp::
 findBStations( StInfoSysStationList &stations )
 {
 	string query( " WHERE wmono IS NULL AND stationid IN (SELECT stationid FROM obspgm_h WHERE paramid IN (211,81) AND totime IS NULL) AND totime IS NULL AND maxspeed=0");
@@ -432,7 +603,7 @@ findObsPgmHTypeids( StInfoSysObsObsPgmHList &obspgm, int stationid, const std::l
 
 bool
 ConfApp::
-hasObsPgmHParamsids( StInfoSysObsObsPgmHList &obspgm, int stationid, int typeid_,const std::list<int> &paramids )
+hasObsPgmHParamsids( StInfoSysObsObsPgmHList &obspgm, int stationid, int typeid_,const std::list<int> &paramids, ObsPgmAnyTime anytime )
 {
 	ostringstream q;
 	obspgm.clear();
@@ -457,7 +628,12 @@ hasObsPgmHParamsids( StInfoSysObsObsPgmHList &obspgm, int stationid, int typeid_
 		q << ")";
 	}
 
-	q << " AND fromtime <= 'today' AND totime IS NULL AND priority_message ORDER BY paramid";
+	q << " AND fromtime <= 'today' AND totime IS NULL AND priority_message";
+
+	if( anytime != AnyTime_Ignore )
+		q << " AND anytime=" << (anytime==AnyTime_True?"true":"false");
+
+	q << " ORDER BY paramid";
 
 	if( ! gate.select( obspgm, q.str() ) ) {
 		LOGERROR("hasObsPgmHParamsids: invalid query: '" << q.str() << "'"<<endl
@@ -468,4 +644,48 @@ hasObsPgmHParamsids( StInfoSysObsObsPgmHList &obspgm, int stationid, int typeid_
 
 	return true;
 }
+
+bool
+ConfApp::
+hasObsPgmHTypeids( int stationid, const std::list<int> &typeids, ObsPgmAnyTime anytime )
+{
+	ostringstream q;
+	dnmi::db::Connection *con = getDbConnection();
+
+	if( !con ) {
+		LOGERROR("Can connect to stinfosys.");
+		throw std::logic_error("Exception: hasObsPgmHTypeids: DB Error: Cant connect to stinfosys.");
+	}
+
+	q << "SELECT stationid, message_formatid FROM obspgm_h WHERE stationid=" << stationid;
+
+	if( !typeids.empty() ) {
+		q << " AND message_formatid IN (";
+		for( list<int>::const_iterator it=typeids.begin(); it != typeids.end(); ++it ) {
+			if( it != typeids.begin() )
+				q << ",";
+			q << *it;
+		}
+		q << ")";
+	}
+
+	q << " AND fromtime <= 'today' AND totime IS NULL AND priority_message";
+
+	if( anytime != AnyTime_Ignore )
+		q << " AND anytime=" << (anytime==AnyTime_True?"true":"false");
+
+	q << " GROUP BY stationid, message_formatid";
+
+
+	try {
+		std::auto_ptr<dnmi::db::Result> res( con->execQuery( q.str() ) );
+
+		return  res->size() > 0;
+	}
+	catch( const dnmi::db::SQLException &ex ) {
+		throw std::logic_error( "Exception: hasObsPgmHTypeid: DB error: " + std::string(ex.what()) );
+	}
+	throw std::logic_error( "Exception: hasObsPgmHTypeid: DB error: Unknown error." );
+}
+
 

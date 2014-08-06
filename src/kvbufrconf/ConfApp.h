@@ -65,6 +65,7 @@ class ConfApp
    dnmi::db::Connection* getDbConnection();
 
 public:
+   typedef enum {AnyTime_True, AnyTime_False, AnyTime_Ignore} ObsPgmAnyTime;
    ConfApp( Options &options, miutil::conf::ConfSection *conf);
    ~ConfApp();
 
@@ -88,18 +89,52 @@ public:
     */
    void                 releaseDbConnection(dnmi::db::Connection *con);
 
-
    bool loadStationOutmessage( StInfoSysStationOutmessageList &stationOutmessages );
    bool loadParams( StInfoSysParamList &params );
+   bool hasNetworkStation( int stationid, int networkid );
+
+   /**
+    * Load data from stinfosys network_station table by
+    * stationid and networkid.
+    *
+    * Returns all stations found in networkStationList.
+    *
+    * @param[out] networkStationList The stations found.
+    * @param stationid The stationid to search for.
+    * @param networkidList a list of networkids to search for.
+    * @throws std::logical_error on db error.
+    */
+   void loadNetworkStationByStationid( StInfoSysNetworkStationList &networkStationList,
+                                       int stationid, const std::list<int> &networkidList );
+
    bool loadNetworkStation( StInfoSysNetworkStationList &networkStationList,
                             const std::list<int> &networkidList );
+   std::list<int> hasParamDefForTypeids( int stationid, const std::list<int> &typeids );
    bool loadObsPgmH( StInfoSysObsObsPgmHList &obsPgmHList,
                      const std::list<int> &typeidList );
+
+   /**
+    * loadStationData loads data from the \em station table in stinfosys by stationid.
+    *
+    * @param[out] station The station data.
+    * @return true if the stationid has station data, false otherwise.
+    * @throws std::logic_error on db error.
+    */
+   bool loadStationData(int stationid,  TblStInfoSysStation &station );
    bool loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors );
    bool loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors, TblStInfoSysNetworkStation &networkStation );
+   std::string getCallsign( int stationid );
+   bool isPlatform( int stationid );
+   bool isPlatformOrShip( int stationid );
    bool findBStations( StInfoSysStationList &stations );
    bool findObsPgmHTypeids( StInfoSysObsObsPgmHList &obspgm, int stationid, const std::list<int> &paramids );
-   bool hasObsPgmHParamsids( StInfoSysObsObsPgmHList &obspgm, int stationid, int typeid_,const std::list<int> &paramids );
+   bool hasObsPgmHParamsids( StInfoSysObsObsPgmHList &obspgm, int stationid, int typeid_,const std::list<int> &paramids, ObsPgmAnyTime anytime=AnyTime_Ignore  );
+
+   /**
+    * @throws std::logic_error on DB problems.
+    */
+   bool hasObsPgmHTypeids( int stationid, const std::list<int> &typeids, ObsPgmAnyTime anytime=AnyTime_Ignore );
+
 
 };
 

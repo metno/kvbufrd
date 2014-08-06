@@ -1304,6 +1304,50 @@ TEST_F( BufrEncodeTest, EE_SA )
     ASSERT_FLOAT_EQ( 0.00, bufr->SA ) << "Expect: Now snow.";
 }
 
+TEST_F( BufrEncodeTest, PressureHeight )
+{
+    StationInfoPtr stInfo( findWmoNo( 1494 ) ); //Dummy
+    DataElementList data;
+    DataElement dataElement;
+    BufrDataPtr bufr;
+    EncodeBufrManager encoder;
+    miutil::miTime t("2014-04-30 06:00:00");
+
+    dataElement.time( t );
+    data.insert( t, dataElement, true );
+    bufr = bufrEncoder.doBufr( stInfo, data );
+
+    ASSERT_TRUE( bufr != 0 );
+
+    BufrHelper bufrHelper( validater, stInfo, bufr );
+    bufrHelper.setTest( true );
+
+    bufrHelper.setObsTime( t );
+    bufrHelper.setSequenceNumber( 0 );
+
+    try {
+    	encoder.encode( bufrHelper );
+           //cerr << bufrHelper.getLog() << endl;
+           //cerr << bufrHelper.getLog() << endl;
+
+    	int len;
+    	const char *buf=bufrHelper.getBufr( len );
+
+    	EXPECT_TRUE( buf );
+    	cerr << "#len: " << len << endl;
+    	ofstream fout( "BUFR_pressureHeight");
+
+    	fout.write( buf, len );
+    	fout.close();
+    	cerr << bufrHelper.getLog() << endl;
+    }
+    catch ( const std::exception &ex ) {
+    	cerr << "<<<<< EXCEPTION LOG" << endl;
+    	cerr << bufrHelper.getLog() << endl;
+    	cerr << ">>>>> EXCEPTION: " << ex.what() << endl;
+    }
+}
+
 
 
 TEST_F( BufrEncodeTest, EsssFromEE )

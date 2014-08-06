@@ -32,6 +32,7 @@
 #include <limits.h>
 #include <sstream>
 #include <stdlib.h>
+#include <boost/lexical_cast.hpp>
 #include <milog/milog.h>
 #include "tblStInfoSysStation.h"
 
@@ -93,9 +94,11 @@ set(const dnmi::db::DRow &r_)
              if( buf.empty() )
                  maxspeed_ = FLT_NULL;
              else
-                 maxspeed_ = static_cast<float>( atof( buf.c_str() ) );
+                 maxspeed_ = boost::lexical_cast<float>( buf );
          } else if(*it=="name"){
             name_=buf;
+         } else if(*it=="short_name"){
+        	shortName_= buf;
          }else if(*it=="wmono"){
             if( !buf.empty() )
                wmono_ = atoi( buf.c_str() );
@@ -123,7 +126,9 @@ set(const TblStInfoSysStation &station )
    hs_ = station.hs_;
    hv_ = station.hv_;
    hp_ = station.hp_;
+   maxspeed_ = station.maxspeed_;
    name_ = station.name_;
+   shortName_ = station.shortName_;
    wmono_ = station.wmono_;
 }
 
@@ -137,7 +142,9 @@ clean()
    hs_ = INT_NULL;
    hv_ = INT_NULL;
    hp_ = FLT_NULL;
+   maxspeed_ = FLT_NULL;
    name_.erase();
+   shortName_.erase();
    wmono_ = INT_NULL;
 }
 

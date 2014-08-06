@@ -1079,23 +1079,23 @@ doTypePri(const std::string &key,
    //Check if we have at least one mustHaveType. If not set
    //all types to mustHaveTypes.
 
-   mustHaveType=false;
-
-   for(StationInfo::ITTypeList itl=st.typepriority_.begin();
-         itl!=st.typepriority_.end();
-         itl++){
-      if(itl->mustHaveType()){
-         mustHaveType=true;
-         break;
-      }
-   }
-
-   if(!mustHaveType){
-      for(StationInfo::ITTypeList itl=st.typepriority_.begin();
-            itl!=st.typepriority_.end();
-            itl++)
-         itl->mustHaveType(true);
-   }
+//   mustHaveType=false;
+//
+//   for(StationInfo::ITTypeList itl=st.typepriority_.begin();
+//         itl!=st.typepriority_.end();
+//         itl++){
+//      if(itl->mustHaveType()){
+//         mustHaveType=true;
+//         break;
+//      }
+//   }
+//
+//   if(!mustHaveType){
+//      for(StationInfo::ITTypeList itl=st.typepriority_.begin();
+//            itl!=st.typepriority_.end();
+//            itl++)
+//         itl->mustHaveType(true);
+//   }
 
    if(error)
       return false;

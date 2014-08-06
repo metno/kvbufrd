@@ -1,4 +1,4 @@
-SUBDIRS = share/bufrtables src
+SUBDIRS = share/bufrtables src src/kvbufrconf
 #SUBDIRS = src 
 ACLOCAL_AMFLAGS = -I m4
 sqldir = $(datadir)/kvbufrd

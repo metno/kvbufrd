@@ -52,40 +52,9 @@ namespace {
    stationLessThan( StationInfoPtr s1, StationInfoPtr s2)
    {
       return *s1 < *s2;
-//      if( ( s1->wmono() < s2->wmono() ) ||
-//          ( s1->wmono() == s2->wmono() && s1->stationID() < s2->stationID() ) )
-//         return true;
-//      else
-//         return false;
    }
-
 }
 
-
-//StationInfoPtr
-//ConfMaker::
-//findStation( int wmono, bool &newStation )
-//{
-//   newStation = false;
-//
-//   for( std::list<StationInfoPtr>::const_iterator it=stationList.begin(); it!=stationList.end(); ++it ) {
-//      if( (*it)->wmono() == wmono )
-//         return *it;
-//   }
-//
-//   for( std::list<StationInfoPtr>::const_iterator it=templateStationList.begin(); it!=templateStationList.end(); ++it ) {
-//      if( (*it)->wmono() == wmono ) {
-//         stationList.push_back( *it );
-//         return *it;
-//      }
-//   }
-//
-//   newStation = true;
-//   StationInfoPtr ptr( new StationInfo( wmono ) );
-//   stationList.push_back( ptr );
-//
-//   return ptr;
-//}
 
 StationInfoPtr
 ConfMaker::
@@ -129,6 +98,19 @@ findStation( int wmono, int stationid, const std::string &callsign,
    return ptr;
 }
 
+void
+ConfMaker::
+removeStation(StationInfoPtr station )
+{
+	for( std::list<StationInfoPtr>::iterator it=stationList.begin();
+		 it!=stationList.end(); ++it )
+	{
+	      if( *it == station ) {
+	    	  stationList.erase( it );
+	    	  return;
+	      }
+	}
+}
 
 bool
 ConfMaker::
@@ -524,6 +506,7 @@ decodeTemperatureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr 
    return true;
 
 }
+
 
 std::string
 ConfMaker::
@@ -1037,6 +1020,69 @@ doPrecipConf( const std::string &outfile, miutil::conf::ConfSection *templateCon
 }
 
 
+//void
+//ConfMaker::
+//doPlatformsAsShip(miutil::conf::ConfSection *templateConf )
+//{
+//
+//}
+//
+
+void
+ConfMaker::
+setShipOwner( StationInfoPtr station,
+		      const TblStInfoSysStation &infoSysStation,
+		      StInfoSysNetworkStationList::iterator itNetworkStation )
+{
+	if( station->owner().empty() ) {
+		string theName=boost::algorithm::trim_copy( itNetworkStation->name() );
+		string::size_type ii=theName.find("KV");
+		if( ii != string::npos && ii == 0)
+			station->owner( "KYST" );
+		else if( ! station->callsign().empty() && app.isPlatform( station->stationID() ) )
+			station->owner( "PLAT" );
+		else
+			station->owner( "SHIP" );
+	}
+}
+
+bool
+ConfMaker::
+setShipProductCouplingAndDelay( StationInfoPtr station )
+{
+	int ret=0;
+	if( station->owner() != "PLAT" ) {
+		if( decodeProductCoupling( "typepriority=11", station  ) )
+			ret++;
+
+		if( decodeCouplingDelay( "+HH:00", station ) )
+			ret++;
+	} else {
+		std::list<int> reqTypeids;
+		std::list<int> typeids;
+		boost::assign::push_back( reqTypeids)(11)(22);
+
+		typeids = app.hasParamDefForTypeids( station->stationID(), reqTypeids );
+
+		if( typeids.size() == 2 ) {
+			if( decodeProductCoupling( "typepriority=(11,22)", station  ) )
+				ret++;
+			if( decodeCouplingDelay( "+HH:17", station ) )
+				ret++;
+		} else if( typeids.size() == 1 ) {
+			ostringstream o;
+			o << "typepriority=" << *typeids.begin() ;
+			if( decodeProductCoupling( o.str(), station  ) )
+				ret++;
+			if( decodeCouplingDelay( "+HH:00", station ) )
+				ret++;
+		}
+	}
+
+	return ret != 0;
+}
+
+
 bool
 ConfMaker::
 doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
@@ -1073,7 +1119,6 @@ doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf 
 			continue;
 		}
 
-
 		if( it->externalStationcode().empty() )
 			continue;
 
@@ -1081,11 +1126,18 @@ doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf 
 
 		pStation = findStation( 0, tblStation.stationid(), callsign, codeList, newStation );
 
-		if( ! it->name().empty() ) {
-			pStation->name( it->name() );
-			nValues++;
+		setShipOwner( pStation, tblStation, it );
+
+		if( ! setShipProductCouplingAndDelay( pStation ) ) {
+			removeStation( pStation );
+			continue;
 		}
 
+		nValues++;
+		if( ! tblStation.name().empty() ) {
+			pStation->name( tblStation.name() );
+			nValues++;
+		}
 
 		if( pStation->code_.empty() ) {
 			pStation->code_ = codeList;
@@ -1094,21 +1146,6 @@ doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf 
 		if( tblStation.hs() != INT_MAX ) {
 			pStation->height( tblStation.hs() );
 			nValues++;
-		}
-
-		if( decodeProductCoupling( "typepriority=11", pStation  ) )
-			nValues++;
-
-		//TODO: At the moment we hardcode the 'owner' and 'list'
-		//values. Ideal this should come from stinfosys.
-
-		if( pStation->owner().empty() ) {
-			string theName=boost::algorithm::trim_copy( it->name() );
-			string::size_type ii=theName.find("KV");
-		    if( ii != string::npos && ii == 0)
-		        pStation->owner("KYST");
-		    else
-		        pStation->owner("SHIP");
 		}
 
 		if( pStation->list().empty() ) {
@@ -1120,20 +1157,13 @@ doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf 
 			nValues++;
 		}
 
-		//TODO: BUFR SHIP: Find a solution to identify platforms.
-		//We have a special hack for platforms.
-		//The reported wind is NOT taken from the real height of the sensor,
-		//but reduced to 10 m above sea level.
-		//To identify this platforms we can look at the height value if
-		//this value is set and greater than 0 m  and the maxspeed
-		//is 0 we guess it is a platform.
-		//This work at the moment, but are fragile, we should find a better way.
-		if( pStation->height() != INT_MAX && pStation->height() > 0 &&
-		    (tblStation.maxspeed() == kvDbBase::FLT_NULL || lrintf( tblStation.maxspeed() ) == 0 )) {
-		    if( pStation->heightWindAboveSea_ == INT_MAX ) {
+
+		if( pStation->owner() == "PLAT" &&
+			pStation->height() != INT_MAX && pStation->height() > 0  &&
+		    pStation->heightWindAboveSea_ == INT_MAX ) {
 		        pStation->heightWindAboveSea_ = 10;
 		        pStation->heightWind_ = INT_MAX;
-		    }
+		        nValues++;
 		} else if( decodeWindheight( tblSensors, pStation ) ) {
 			nValues++;
 		}
@@ -1147,12 +1177,6 @@ doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf 
 		if( decodePressureHeight( tblSensors, tblStation, pStation ) )
 			nValues++;
 
-		if( decodeCouplingDelay( "+HH:00", pStation ) )
-			nValues++;
-		//
-		//      if( decodePrecipPriority( it->priorityPrecip(), pStation ) )
-		//         nValues++;
-
 		if( tblStation.lat() != FLT_MAX && tblStation.lon() != FLT_MAX ) {
 			pStation->latitude_ = tblStation.lat();
 			pStation->longitude_ = tblStation.lon();
@@ -1161,7 +1185,7 @@ doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf 
 
 		if( nValues == 0  && !newStation ) {
 			//There is no metadat for the station in stinfosys.
-			LOGWARN("No useful metadat values for wmono: " << tblStation.wmono() << " was found in stinfosys."<< endl );
+			LOGWARN("No useful metadat values for callsign: " << callsign << " was found in stinfosys."<< endl );
 		}
 	}
 
@@ -1413,6 +1437,10 @@ doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
 
    for( StInfoSysStationOutmessageList::const_iterator it=tblWmoList.begin(); it != tblWmoList.end(); ++it ) {
       nValues = 0;
+
+
+      if( app.isPlatformOrShip( it->stationid() ) )
+    	  continue;
 
       if( ! app.loadStationData( it->stationid(), tblStation, tblSensors, networkStation ) ) {
          LOGINFO( "No metadata for station <" << it->stationid() << ">.");

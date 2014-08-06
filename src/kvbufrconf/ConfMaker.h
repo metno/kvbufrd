@@ -48,6 +48,8 @@ class ConfMaker
    //StationInfoPtr findStation( int wmono, bool &newStation );
    StationInfoPtr findStation( int wmono, int stationid, const std::string &callsign,
                                const std::list<int> &codeList, bool &newStation );
+   void removeStation(StationInfoPtr station );
+
    bool findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const;
    bool parseTemplate( miutil::conf::ConfSection *templateConf );
 
@@ -65,9 +67,14 @@ class ConfMaker
 		                      const std::list<int> &precipParams,
 		                      int stationid, int typeid_ );
 
+
    std::string stationIdToConfString( StationInfoPtr station )const;
    std::string typepriorityToConfString( StationInfoPtr station )const;
    std::string precipPriorityToConfString( StationInfoPtr station )const;
+   void setShipOwner( StationInfoPtr station,
+   		              const TblStInfoSysStation &infoSysStation,
+   		              StInfoSysNetworkStationList::iterator itNetworkStation );
+   bool setShipProductCouplingAndDelay( StationInfoPtr station );
 
    std::string doStationConf( StationInfoPtr station )const;
 
