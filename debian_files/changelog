@@ -156,7 +156,7 @@ kvbufrd (2.5.2~rc1-1) lucid; urgency=low
   * New rc.
   * Fix, Bug #1355, changed limits values for no precipitation.
 
- -- Kvalobs <kvalobs@met.no>  Thu, 13 Des 2012 14:45:00 +0100
+ -- Kvalobs <kvalobs@met.no>  Thu, 13 Dec 2012 14:45:00 +0100
   
 
 kvbufrd (2.5.1-1) lucid; urgency=low 
