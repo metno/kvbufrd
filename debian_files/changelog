@@ -1,3 +1,9 @@
+kvbufrd (2.5.13~rc3-1) lucid; urgency=low
+  * New RC
+  * kvbufrconf: For bstations, exclude stations with callsign (SHIP's).
+  
+ -- Kvalobs <kvalobs@met.no>  Wed, 13 Aug 2014 13:00:00 +0200
+
 kvbufrd (2.5.13~rc2-1) lucid; urgency=low
   * New RC
   * kvbufrconf: For bstations, exclude svv-stations.
