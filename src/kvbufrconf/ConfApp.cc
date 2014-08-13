@@ -538,7 +538,7 @@ findBStations( StInfoSysStationList &stations )
 	string query( " WHERE wmono IS NULL AND stationid IN (SELECT stationid FROM obspgm_h WHERE paramid IN (211,81) AND totime IS NULL) AND totime IS NULL AND maxspeed=0");
 	stations.clear();
 
-	boost::assign::push_back( ids )(33);
+	boost::assign::push_back( ids )(33)(6);
 	if( ! loadNetworkStation( networkStations, ids ) ) {
 		LOGERROR("Can' load network_stations for networkid=33 (SVV-stations).");
 		return false;
@@ -559,7 +559,7 @@ findBStations( StInfoSysStationList &stations )
 		return true;
 	}
 
-	//exclude SVV (statens veivesen) stations.
+	//exclude SVV (statens veivesen) stations and stations with callsign (SHIP).
 	for( StInfoSysStationList::const_iterator it = myStations.begin(); it != myStations.end(); ++it) {
 		StInfoSysNetworkStationList::const_iterator nit;
 		for( nit = networkStations.begin(); nit != networkStations.end() && nit->stationid() != it->stationid(); ++nit);
@@ -572,7 +572,7 @@ findBStations( StInfoSysStationList &stations )
 		LOGWARN("No BSTATIONS found!");
 		return true;
 	} else 	{
-		LOGINFO("Found " << stations.size() << " BSTAIONS.");
+		LOGINFO("Found " << stations.size() << " BSTATIONS.");
 	}
 
 	return true;
