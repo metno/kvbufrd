@@ -532,8 +532,17 @@ bool
 ConfApp::
 findBStations( StInfoSysStationList &stations )
 {
+	StInfoSysNetworkStationList networkStations;
+	StInfoSysStationList myStations;
+	std::list<int> ids;
 	string query( " WHERE wmono IS NULL AND stationid IN (SELECT stationid FROM obspgm_h WHERE paramid IN (211,81) AND totime IS NULL) AND totime IS NULL AND maxspeed=0");
 	stations.clear();
+
+	boost::assign::push_back( ids )(33);
+	if( ! loadNetworkStation( networkStations, ids ) ) {
+		LOGERROR("Can' load network_stations for networkid=33 (SVV-stations).");
+		return false;
+	}
 
 	dnmi::db::Connection *con = getDbConnection();
 
@@ -543,11 +552,26 @@ findBStations( StInfoSysStationList &stations )
 	}
 	kvDbGate gate( con );
 
-	gate.select( stations, query );
+	gate.select( myStations, query );
+
+	if( myStations.empty() ) {
+		LOGWARN("No BSTATIONS found!");
+		return true;
+	}
+
+	//exclude SVV (statens veivesen) stations.
+	for( StInfoSysStationList::const_iterator it = myStations.begin(); it != myStations.end(); ++it) {
+		StInfoSysNetworkStationList::const_iterator nit;
+		for( nit = networkStations.begin(); nit != networkStations.end() && nit->stationid() != it->stationid(); ++nit);
+
+		if( nit == networkStations.end() )
+			stations.push_back( *it );
+	}
 
 	if( stations.empty() ) {
 		LOGWARN("No BSTATIONS found!");
-	} else {
+		return true;
+	} else 	{
 		LOGINFO("Found " << stations.size() << " BSTAIONS.");
 	}
 
