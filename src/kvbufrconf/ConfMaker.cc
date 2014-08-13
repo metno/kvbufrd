@@ -134,7 +134,7 @@ ConfMaker( ConfApp &app_ )
 {
 }
 
-bool
+void
 ConfMaker::
 setParams( const StInfoSysParamList &params_ )
 {

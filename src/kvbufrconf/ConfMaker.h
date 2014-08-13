@@ -84,7 +84,7 @@ public:
 
 	            ConfMaker( ConfApp &app );
 
-   bool setParams( const StInfoSysParamList &params );
+   void setParams( const StInfoSysParamList &params );
    bool doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
    bool doSVVConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
    bool doPrecipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf );
