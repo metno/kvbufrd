@@ -1,3 +1,9 @@
+kvbufrd (2.5.13~rc2-1) lucid; urgency=low
+  * New RC
+  * kvbufrconf: For bstations, exclude svv-stations.
+  
+ -- Kvalobs <kvalobs@met.no>  Wed, 13 Aug 2014 12:00:00 +0200
+
 kvbufrd (2.5.13~rc1-1) lucid; urgency=low
   * New RC
   * kvbufrconf: #1377 - Configfiles for ship and platforms.
