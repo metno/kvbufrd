@@ -320,7 +320,7 @@ public:
    /**
    * Type is a class to hold information about one typeid
    * and for witch hours it shall be used and if it is a
-   * must have type, ie we cant create a SYNOP wuithout it.
+   * must have type, ie we cant create a SYNOP without it.
    *
    * We use a bitset to hold the time information, bit 0-23 is
    * for hour 00-23. Bit 24 is the must have information.
