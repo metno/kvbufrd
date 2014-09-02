@@ -899,6 +899,8 @@ TEST_F( BufrEncodeTest, MsgTimeTest )
 }
 
 
+
+
 double
 myRound( float val, double prec) {
    double y=val/prec;
@@ -1608,6 +1610,33 @@ TEST_F( BufrEncodeTest, EncodeBufr307079_EmptyName1 )
 
 }
 
+TEST_F( BufrEncodeTest, MsgTimeNoMustHaveTypesTest )
+{
+   using namespace miutil;
+   MsgTime t;
+   MsgTime::Hours hours;
+   int minToDelay;
+   bool forceDelay;
+   bool relativeToFirst;
+   int stationid=76921;
+   miutil::miTime test;
+   StationInfoPtr stInfo;
+   stInfo = findCallsign( "LF5X" );
+
+   ASSERT_TRUE( stInfo ) << "No station information for stationid " << stationid;
+
+//   stInfo->printDelayInfo( cerr ) << endl;
+
+   minToDelay = stInfo->delay( miTime("2014-06-07 00:00:00" ), forceDelay, relativeToFirst );
+
+//   cerr << "minToDelay: " << minToDelay << " forceDelay: " << (forceDelay?"true":"false")
+//		<< " relativeToFirst: "<< (relativeToFirst?"true":"false") << endl;
+
+   ASSERT_TRUE( stInfo->msgForTime( miTime("2014-06-07 00:00:00" ) ));
+   ASSERT_TRUE( minToDelay == 17 );
+   ASSERT_FALSE( forceDelay );
+   ASSERT_FALSE( relativeToFirst );
+}
 
 
 int
