@@ -782,18 +782,20 @@ doDefDelay(const miconf::ValElementList &vl,
          //allready parsed. If so add this hour to the
          //spec. This means that we only have one SKIP spec
          //in the DelayInfo list for the station. The SKIP
-         //spec ia also at the start of the list.
+         //spec is also at the start of the list.
          StationInfo::ITDelayList itd=dl.begin();
 
          if(itd!=dl.end())
             if(!itd->skipMsgSpec())
                itd=dl.end();
 
+         //We have do not a SKIP spec, add one at the front.
          if(itd==dl.end()){
             dl.push_front(DelayInfo(DelayInfo::SKIP));
             itd=dl.begin();
          }
 
+         //We all ready have a SKIP spec, replace it with this one.
          itd->setMsgTime( msgTime );
          continue;
       }
