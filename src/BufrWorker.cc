@@ -719,24 +719,29 @@ checkTypes(const DataEntryList  &data,
    }
 
    tids=stInfo->mustHaveTypes();
-
    ostringstream ost;
 
-   ost << "checkTypes: mustHaveTypes:";
+   //If we have no must have types defined, mustHaveTypes is set to true.
+   if( tids.empty() )  {
+	   mustHaveTypes = true;
+	   ost << "checkTypes: No must have types is defined, this is ok.";
+   } else {
+	   ost << "checkTypes: mustHaveTypes:";
 
-   for(it=tids.begin();it!=tids.end(); it++)
-      ost << " " << *it;
+	   for(it=tids.begin();it!=tids.end(); it++)
+		   ost << " " << *it;
+
+	   for(it=tids.begin();it!=tids.end(); it++){
+		   if(dit->size(*it)==0)
+			   break;
+	   }
+
+	   if(it==tids.end())
+		   mustHaveTypes=true;
+   }
 
    LOGDEBUG(ost.str());
 
-   for(it=tids.begin();it!=tids.end(); it++){
-      if(dit->size(*it)==0)
-         break;
-   }
-
-   if(it==tids.end()){
-      mustHaveTypes=true;
-   }
 
    return false;
 }
