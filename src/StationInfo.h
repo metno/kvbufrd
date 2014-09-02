@@ -105,6 +105,12 @@ class StationInfoParse;
 *                 *:0 possibly create a BUFR message at all hours at full hour.
 *                     This is the default.
 *
+*                Ex. With use of both a + or - spec and a delay.
+*                   delay=("+HH:00", "HH:17"), the first spec "+HH:00" specifies
+*                   that we shall only use data on a hole hour, the second spec, "HH:17",
+*                   specifies that we shall delay the BUFR generation to 17 over each hour
+*                   if we have not data for all types we expect data for.
+*
 *                NOTE It can be only one elements with +/- in front
 *                in the list of delays. This elements do NOT specify delays
 *                but when a BUFR message is possibly generated. No BUFR message
@@ -201,7 +207,7 @@ class DelayInfo
 
 
 public:
-   enum {STIME=-1, HTIME=-2, FSTIME=-3, FHTIME=-3,
+   enum {STIME=-1, HTIME=-2, FSTIME=-3, FHTIME=-4,
          SKIP=100,HSKIP=101,SSKIP=102, UNDEF=-127};
 
    DelayInfo(int hour=UNDEF)
@@ -641,6 +647,8 @@ public:
    bool operator!=(const StationInfo &rhs) const {
       return !( *this == rhs );
    }
+
+   std::ostream& printDelayInfo( std::ostream& ost );
 };
 
 typedef boost::shared_ptr<StationInfo> StationInfoPtr;

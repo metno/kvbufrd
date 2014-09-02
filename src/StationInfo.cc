@@ -797,7 +797,7 @@ delay( const miutil::miTime &t,
    relativToFirst=false;
 
    if(it==delayList_.end())
-      return false;
+      return 0;
 
    for( ;it!=delayList_.end(); it++){
       if(it->hour()==t.hour()){
@@ -1057,6 +1057,16 @@ keyToString(const std::string &key)
 }
 
 std::ostream&
+StationInfo::
+printDelayInfo( std::ostream& ost )
+{
+	for( CITDelayList it= delayList_.begin();
+	     it!=delayList_.end(); ++it )
+		ost << (it==delayList_.begin()?"":"\n") << "DelayInfo: " <<  *it;
+	return ost;
+}
+
+std::ostream&
 operator<<( std::ostream &o, const MsgTime &mt )
 {
    if( ! mt.minForEachHour() ) {
@@ -1221,7 +1231,7 @@ operator<<(std::ostream& ost,
    }
 
    if(sd.skipMsgSpec()){
-      ost << *sd.msgtimes_;
+      ost << *sd.msgtimes_ << " (msgTimes)";
       return ost;
    }
 
