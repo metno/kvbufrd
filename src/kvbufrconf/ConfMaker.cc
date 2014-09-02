@@ -1067,7 +1067,7 @@ setShipProductCouplingAndDelay( StationInfoPtr station )
 		if( typeids.size() == 2 ) {
 			if( decodeProductCoupling( "typepriority=(11,22)", station  ) )
 				ret++;
-			if( decodeCouplingDelay( "+HH:17", station ) )
+			if( decodeCouplingDelay( "(\"+HH:00\",\"HH:17\")", station ) )
 				ret++;
 		} else if( typeids.size() == 1 ) {
 			ostringstream o;
