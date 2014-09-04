@@ -1,3 +1,8 @@
+kvbufrd (2.5.13-1) lucid; urgency=low
+  * New release. No change since last rc.
+  
+ -- Kvalobs <kvalobs@met.no>  Thu, 4 Sep 2014 12:00:00 +0200
+
 kvbufrd (2.5.13~rc4-1) lucid; urgency=low
   * New RC
   * kvbufrconf: For ships, fix delay spec when combining type 11 and 22.
