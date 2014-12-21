@@ -33,6 +33,7 @@
 #define __BUFRDATA_H__
 
 #include <stdexcept>
+#include <vector>
 #include <boost/shared_ptr.hpp>
 #include "DataElementList.h"
 

@@ -33,6 +33,7 @@
 #include <float.h>
 #include <sstream>
 #include <iostream>
+#include <vector>
 #include <decodeutility/decodeutility.h>
 #include "DataElementList.h"
 

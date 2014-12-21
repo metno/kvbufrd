@@ -32,6 +32,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include <fstream>
 #include <list>
 #include <miconfparser/miconfparser.h>

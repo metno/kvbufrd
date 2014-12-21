@@ -466,7 +466,7 @@ newObs(ObsEvent &event)
       LOGWARN("EXCEPTION: Cant resolve for BUFR id: " << info->toIdentString() <<
                              " obstime: "  <<
                              ((bufrData.begin()!=bufrData.end())?
-                                   bufrData.begin()->time():"(NULL)") << endl <<
+                                   bufrData.begin()->time().isoTime():"(NULL)") << endl <<
                                    "what: " << e.what() << endl);
       swmsg << "Cant create a bufr!" << endl;
    }
@@ -474,7 +474,7 @@ newObs(ObsEvent &event)
       LOGWARN("EXCEPTION: No template implemmented for: " << info->toIdentString() <<
                        " obstime: "  <<
                        ((bufrData.begin()!=bufrData.end())?
-                             bufrData.begin()->time():"(NULL)") << endl <<
+                             bufrData.begin()->time().isoTime():"(NULL)") << endl <<
                              "what: " << e.what() << endl);
                swmsg << "Cant create a bufr!" << endl;
    }
@@ -482,14 +482,14 @@ newObs(ObsEvent &event)
       LOGWARN("EXCEPTION: out_of_range: " << info->toIdentString() <<
               " obstime: "  <<
               ((bufrData.begin()!=bufrData.end())?
-                    bufrData.begin()->time():"(NULL)") << endl <<
+                    bufrData.begin()->time().isoTime():"(NULL)") << endl <<
                     "what: " << e.what() << endl);
       swmsg << "Cant create a bufr!" << endl;
    }
    catch(DataListEntry::TimeError &e){
       LOGWARN("Exception: TimeError: " << info->toIdentString() << " obstime: "  <<
               ((bufrData.begin()!=bufrData.end())?
-                    bufrData.begin()->time():"(NULL)") << endl<<
+                    bufrData.begin()->time().isoTime():"(NULL)") << endl<<
                     "what: " << e.what() << endl);
       swmsg << "Cant create a bufr!" << endl;
    }
@@ -497,7 +497,7 @@ newObs(ObsEvent &event)
          LOGWARN("EXCEPTION: logic_error: " << info->toIdentString() <<
                      " obstime: "  <<
                      ((bufrData.begin()!=bufrData.end())?
-                           bufrData.begin()->time():"(NULL)") << endl <<
+                           bufrData.begin()->time().isoTime():"(NULL)") << endl <<
                            "what: " << e.what() << endl);
              swmsg << "Cant create a bufr!" << endl;
       }
@@ -505,7 +505,7 @@ newObs(ObsEvent &event)
       LOGWARN("EXCEPTION(Unknown): Unexpected exception in Bufr::doBufr:" <<
               endl << " station: " << info->toIdentString() << " obstime: "  <<
               ((bufrData.begin()!=bufrData.end())?
-                    bufrData.begin()->time():"(NULL)") << endl);
+                    bufrData.begin()->time().isoTime():"(NULL)") << endl);
       swmsg << "Cant create a bufr!" << endl;
    }
 

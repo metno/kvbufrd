@@ -1,10 +1,11 @@
 SUBDIRS = gtest bufr
 
-AM_CPPFLAGS = -D_REENTRANT \
-			  $(kvcpp_CFLAGS) \
-			  $(putools_CFLAGS) \
-              $(BOOST_CPPFLAGS) \
-              $(omniORB4_CFLAGS)  
+AM_CPPFLAGS = \
+   -D_REENTRANT \
+	$(kvcpp_CFLAGS) \
+	$(putools_CFLAGS) \
+   $(BOOST_CPPFLAGS) \
+   $(omniORB4_CFLAGS)  
 
 
 nodist_idl_sources=kvbufrd.idl 
