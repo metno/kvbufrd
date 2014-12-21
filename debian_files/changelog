@@ -1,3 +1,11 @@
+kvbufrd (2.5.14~rc1-1) lucid; urgency=low
+  * #1384, use 'sensor' instead of 'hlevel' to find the used sensor.
+  * Fix use of latitude/longitude from template file.
+  * Update to latest version of puTools.
+  
+ -- Kvalobs <kvalobs@met.no>  Sun, 21 Dec 2014 08:45:00 +0100
+
+
 kvbufrd (2.5.13-1) lucid; urgency=low
   * New release. No change since last rc.
   
