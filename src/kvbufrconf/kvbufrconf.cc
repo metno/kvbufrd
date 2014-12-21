@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 #include <miconfparser/miconfparser.h>
 
@@ -51,13 +52,16 @@ main( int argn, char **argv )
    std::string confFile;
    miutil::conf::ConfSection *conf;
    miutil::conf::ConfSection *templateConf=0;
-
+   miutil::conf::ConfParser parser(false);
    InitLogger(argn, argv, "kvbufrconf");
 
    getOptions( argn, argv, opt );
 
+   if( opt.debug > 0)
+	   parser.debugLevel( opt.debug );
+
    try{
-      conf=miutil::conf::ConfParser::parse( opt.confile );
+	   conf=miutil::conf::ConfParser::parse( opt.confile );
    }
    catch( const logic_error &ex ){
       LOGFATAL( ex.what() );
@@ -66,7 +70,15 @@ main( int argn, char **argv )
 
    if( !opt.templatefile.empty() ) {
       try{
-         templateConf = miutil::conf::ConfParser::parse( opt.templatefile );
+    	  ifstream fin( opt.templatefile.c_str() );
+
+    	  if( !fin.is_open() ) {
+    		  LOGFATAL("Cant open file '" << opt.confile << "'\n\n");
+    		  return 1;
+    	  }
+    	  templateConf = parser.parse( fin );
+
+         //templateConf = miutil::conf::ConfParser::parse( opt.templatefile );
       }
       catch( const logic_error &ex ){
          LOGFATAL( "Cant parse templatefile '" << opt.templatefile << "'. Reason: " << ex.what() );

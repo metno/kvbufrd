@@ -39,9 +39,10 @@ struct Options {
    std::string templatefile;         //--template
    std::string outconf;              //--out
    int nIsTypes;
+   int debug;
    What  type;
 
-   Options():nIsTypes(0), type( NON ) {}
+   Options():nIsTypes(0), debug(0), type( NON ) {}
 };
 
 void

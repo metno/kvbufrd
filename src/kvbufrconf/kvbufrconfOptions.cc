@@ -47,6 +47,7 @@ getOptions(int argn, char **argv, Options &opt)
    struct option long_options[]={{"help", 0, 0, 'h'},
                                  {"conf", 1, 0, 'c'},
                                  {"template", 1, 0, 't'},
+								 {"debug",1, 0, "d" },
                                  {"out", 1, 0, 'o'},
                                  {"svv", 0, 0, 0 },
                                  {"precip", 0, 0, 0 },
@@ -64,7 +65,7 @@ getOptions(int argn, char **argv, Options &opt)
    opt.nIsTypes = 0;
 
    while(true){
-      c=getopt_long(argn, argv, "hc:t:o:", long_options, &index);
+      c=getopt_long(argn, argv, "hc:t:o:d:", long_options, &index);
 
       if(c==-1)
          break;
@@ -98,6 +99,10 @@ getOptions(int argn, char **argv, Options &opt)
          case 'o':
             opt.outconf=optarg;
             break;
+
+         case 'd':
+        	 opt.debug=atoi( optarg );
+        	 break;
          case '?':
             cerr << "Unknown option : <" << (char)optopt << "> unknown!" << endl;
             use(1);
