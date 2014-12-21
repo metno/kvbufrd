@@ -125,7 +125,7 @@ main(int argn, char **argv)
    //until now.
 
    if( ! options.fromTime.undef() ){
-      startTime=options.fromTime.undef();
+      startTime=options.fromTime;
    }else{
       startTime=app.checkpoint();
 
