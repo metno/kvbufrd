@@ -146,7 +146,7 @@ ConfMaker::
 findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const
 {
    for( StInfoSysSensorInfoList::const_iterator it=sensors.begin(); it != sensors.end(); ++it ) {
-      if( it->paramid() == paramid && it->hlevel() == 0 && it->operational() ) {
+      if( it->paramid() == paramid && it->sensor() == 0 && it->operational() ) {
          sensor = *it;
          return true;
       }
@@ -239,8 +239,6 @@ decodeProductCoupling( const std::string &val_, StationInfoPtr station )
             LOGWARN( "productcoupling: Failed to parse: <" << *it << ">. (ValElement: " << valElement << ")." );
             error = true;
          }
-
-
       }
    }
 
@@ -1491,8 +1489,8 @@ doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
          nValues++;
 
       if( tblStation.lat() != FLT_MAX && tblStation.lon() != FLT_MAX ) {
-         pStation->latitude_ = tblStation.lat();
-         pStation->longitude_ = tblStation.lon();
+         pStation->latitude( tblStation.lat() );
+         pStation->longitude( tblStation.lon() );
          nValues++;
       }
 
