@@ -1,9 +1,10 @@
-AM_CPPFLAGS = -D_REENTRANT \
-           -I$(top_srcdir)/src \
-			  $(kvcpp_CFLAGS) \
-			  $(putools_CFLAGS) \
-           $(BOOST_CPPFLAGS) \
-           $(omniORB4_CFLAGS)  
+AM_CPPFLAGS = \
+	-D_REENTRANT \
+   -I$(top_srcdir)/src \
+	$(kvcpp_CFLAGS) \
+	$(putools_CFLAGS) \
+   $(BOOST_CPPFLAGS) \
+   $(omniORB4_CFLAGS)  
 
 
 bin_PROGRAMS = kvbufrconf kvbufrconfcmp
