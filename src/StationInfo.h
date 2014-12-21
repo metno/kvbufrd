@@ -480,11 +480,17 @@ public:
    int       heightAdd( int ammount )const;
    void      height( int h, bool ifUnset = true );
    int       heightVisability() const;
+   void      heightVisability( int h, bool ifUnset = true);
    int       heightTemperature()const;
+   void      heightTemperature( int h, bool ifUnset = true );
    float     heightPressure() const;
+   void      heightPressure( float h, bool ifUnset=true);
    int       heightPrecip()const;
+   void      heightPrecip( int h, bool ifUnset=true );
    int       heightWind()const;
+   void      heightWind( int h, bool ifUnset=true );
    int       heightWindAboveSea()const;
+   void      heightWindAboveSea( int h, bool ifUnset=true  );
    float     latitude()const { return latitude_; }
    void      latitude( float lat, bool ifUnset=true );
    float     longitude()const { return longitude_; }

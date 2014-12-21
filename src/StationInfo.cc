@@ -30,6 +30,7 @@
  */
 #include <float.h>
 #include <limits.h>
+#include <vector>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 //#include <miutil/replace.h>
@@ -558,11 +559,28 @@ heightVisability() const
    return heightVisability_;
 }
 
+void
+StationInfo::
+heightVisability( int h, bool ifUnset )
+{
+	if( !ifUnset || heightVisability_ == INT_MAX )
+		heightVisability_ = h;
+
+}
+
 int
 StationInfo::
 heightTemperature()const
 {
     return  heightTemperature_;
+}
+
+void
+StationInfo::
+heightTemperature( int h, bool ifUnset )
+{
+	if( !ifUnset || heightTemperature_ == INT_MAX )
+	     heightTemperature_ = h;
 }
 
 float
@@ -572,6 +590,14 @@ heightPressure() const
    return heightPressure_;
 }
 
+void
+StationInfo::
+heightPressure( float h, bool ifUnset )
+{
+	if( !ifUnset || heightPressure_ == FLT_MAX )
+		heightPressure_ = h;
+}
+
 int
 StationInfo::
 heightPrecip()const
@@ -579,17 +605,43 @@ heightPrecip()const
    return heightPrecip_;
 }
 
+void
+StationInfo::
+heightPrecip( int h, bool ifUnset )
+{
+	if( !ifUnset || heightPrecip_ == INT_MAX )
+		heightPrecip_ = h;
+}
+
+
 int
 StationInfo::
 heightWind()const
 {
    return heightWind_;
 }
+
+void
+StationInfo::
+heightWind( int h, bool ifUnset  )
+{
+	if( !ifUnset || heightWind_ == INT_MAX )
+		heightWind_ = h;
+}
+
 int
 StationInfo::
 heightWindAboveSea()const
 {
    return heightWindAboveSea_;
+}
+
+void
+StationInfo::
+heightWindAboveSea( int h, bool ifUnset  )
+{
+	if( !ifUnset || heightWindAboveSea_ == INT_MAX )
+		heightWindAboveSea_ = h;
 }
 
 
