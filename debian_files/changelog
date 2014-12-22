@@ -1,3 +1,8 @@
+kvbufrd (2.5.14-1) lucid; urgency=low
+  * New release. No change since last rc.
+  
+ -- Kvalobs <kvalobs@met.no>  Mon, 22 Dec 2014 14:45:00 +0100
+
 kvbufrd (2.5.14~rc3-1) lucid; urgency=low
   * #1384, use 'sensor' AND 'hlevel' to find the used sensor.
   * Better treatment of null values from db.
