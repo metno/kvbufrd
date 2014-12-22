@@ -62,7 +62,7 @@ am_kvbufrconf_OBJECTS = kvbufrconf-StationInfo.$(OBJEXT) \
 	kvbufrconf-StationInfoParse.$(OBJEXT) \
 	kvbufrconf-splitstr.$(OBJEXT) kvbufrconf-InitLogger.$(OBJEXT) \
 	kvbufrconf-parseMilogLogLevel.$(OBJEXT) \
-	kvbufrconf-checkfile.$(OBJEXT) \
+	kvbufrconf-checkfile.$(OBJEXT) kvbufrconf-dbhelper.$(OBJEXT) \
 	kvbufrconf-tblStInfoSysParam.$(OBJEXT) \
 	kvbufrconf-tblStInfoSysNetworkStation.$(OBJEXT) \
 	kvbufrconf-tblStInfoSysSensorInfo.$(OBJEXT) \
@@ -319,12 +319,13 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CPPFLAGS = -D_REENTRANT \
-           -I$(top_srcdir)/src \
-			  $(kvcpp_CFLAGS) \
-			  $(putools_CFLAGS) \
-           $(BOOST_CPPFLAGS) \
-           $(omniORB4_CFLAGS)  
+AM_CPPFLAGS = \
+	-D_REENTRANT \
+   -I$(top_srcdir)/src \
+	$(kvcpp_CFLAGS) \
+	$(putools_CFLAGS) \
+   $(BOOST_CPPFLAGS) \
+   $(omniORB4_CFLAGS)  
 
 kvbufrconf_SOURCES = \
 		../StationInfo.cc ../StationInfo.h \
@@ -333,6 +334,7 @@ kvbufrconf_SOURCES = \
 		../InitLogger.cc ../InitLogger.h \
 		../parseMilogLogLevel.cc ../parseMilogLogLevel.h \
 		../checkfile.h ../checkfile.cc \
+		../dbhelper.cc ../dbhelper.h \
       tblStInfoSysParam.h tblStInfoSysParam.cc \
       tblStInfoSysNetworkStation.h tblStInfoSysNetworkStation.cc \
 		tblStInfoSysSensorInfo.h tblStInfoSysSensorInfo.cc \
@@ -513,6 +515,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kvbufrconf-StationInfo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kvbufrconf-StationInfoParse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kvbufrconf-checkfile.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kvbufrconf-dbhelper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kvbufrconf-kvbufrconf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kvbufrconf-kvbufrconfOptions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kvbufrconf-parseMilogLogLevel.Po@am__quote@
@@ -636,6 +639,20 @@ kvbufrconf-checkfile.obj: ../checkfile.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../checkfile.cc' object='kvbufrconf-checkfile.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(kvbufrconf_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o kvbufrconf-checkfile.obj `if test -f '../checkfile.cc'; then $(CYGPATH_W) '../checkfile.cc'; else $(CYGPATH_W) '$(srcdir)/../checkfile.cc'; fi`
+
+kvbufrconf-dbhelper.o: ../dbhelper.cc
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(kvbufrconf_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT kvbufrconf-dbhelper.o -MD -MP -MF $(DEPDIR)/kvbufrconf-dbhelper.Tpo -c -o kvbufrconf-dbhelper.o `test -f '../dbhelper.cc' || echo '$(srcdir)/'`../dbhelper.cc
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/kvbufrconf-dbhelper.Tpo $(DEPDIR)/kvbufrconf-dbhelper.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../dbhelper.cc' object='kvbufrconf-dbhelper.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(kvbufrconf_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o kvbufrconf-dbhelper.o `test -f '../dbhelper.cc' || echo '$(srcdir)/'`../dbhelper.cc
+
+kvbufrconf-dbhelper.obj: ../dbhelper.cc
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(kvbufrconf_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT kvbufrconf-dbhelper.obj -MD -MP -MF $(DEPDIR)/kvbufrconf-dbhelper.Tpo -c -o kvbufrconf-dbhelper.obj `if test -f '../dbhelper.cc'; then $(CYGPATH_W) '../dbhelper.cc'; else $(CYGPATH_W) '$(srcdir)/../dbhelper.cc'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/kvbufrconf-dbhelper.Tpo $(DEPDIR)/kvbufrconf-dbhelper.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../dbhelper.cc' object='kvbufrconf-dbhelper.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(kvbufrconf_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o kvbufrconf-dbhelper.obj `if test -f '../dbhelper.cc'; then $(CYGPATH_W) '../dbhelper.cc'; else $(CYGPATH_W) '$(srcdir)/../dbhelper.cc'; fi`
 
 kvbufrconf-tblStInfoSysParam.o: tblStInfoSysParam.cc
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(kvbufrconf_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT kvbufrconf-tblStInfoSysParam.o -MD -MP -MF $(DEPDIR)/kvbufrconf-tblStInfoSysParam.Tpo -c -o kvbufrconf-tblStInfoSysParam.o `test -f 'tblStInfoSysParam.cc' || echo '$(srcdir)/'`tblStInfoSysParam.cc

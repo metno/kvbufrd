@@ -63,7 +63,8 @@ kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
                   scanstring.cc scanstring.h \
                   SemiUniqueName.cc SemiUniqueName.h \
                   Strerror.cc Strerror.h \
-                  isDirWithWritePermission.cc isDirWithWritePermission.h
+                  isDirWithWritePermission.cc isDirWithWritePermission.h \
+                  dbhelper.cc dbhelper.h
                   
  
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)

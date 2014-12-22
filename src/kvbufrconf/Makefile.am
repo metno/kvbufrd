@@ -16,6 +16,7 @@ kvbufrconf_SOURCES = \
 		../InitLogger.cc ../InitLogger.h \
 		../parseMilogLogLevel.cc ../parseMilogLogLevel.h \
 		../checkfile.h ../checkfile.cc \
+		../dbhelper.cc ../dbhelper.h \
       tblStInfoSysParam.h tblStInfoSysParam.cc \
       tblStInfoSysNetworkStation.h tblStInfoSysNetworkStation.cc \
 		tblStInfoSysSensorInfo.h tblStInfoSysSensorInfo.cc \
