@@ -55,7 +55,7 @@ toInt( const std::string &dbVal )
 //			return static_cast<int>( f + 0.5 );
 	}
 	catch( const bad_lexical_cast &ex) {
-		cerr << "@@@@@ EXCEPTION(toInt): '" << dbVal << "':  "<< ex.what() << endl;
+		cerr << "EXCEPTION: dbhelper::toInt: '" << dbVal << "':  "<< ex.what() << endl;
 		return kvalobs::kvDbBase::INT_NULL;
 	}
 }
@@ -69,7 +69,7 @@ toFloat( const std::string &dbVal )
 		return lexical_cast<float>( dbVal );
 	}
 	catch( const bad_lexical_cast &ex  ) {
-		cerr << "@@@@@ EXCEPTION(toFloat): " << ex.what() << endl;
+		cerr << "EXCEPTION: dbhelper::toFloat: " << ex.what() << endl;
 		return kvalobs::kvDbBase::FLT_NULL;
 	}
 }
