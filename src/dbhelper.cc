@@ -29,6 +29,7 @@
  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <iostream>
 #include <boost/lexical_cast.hpp>
 #include "dbhelper.h"
 
@@ -43,9 +44,18 @@ toInt( const std::string &dbVal )
 	try {
 		if( dbVal.empty() )
 			return kvalobs::kvDbBase::INT_NULL;
-		return lexical_cast<int>( dbVal );
+
+		float f = lexical_cast<float>( dbVal );
+
+		return static_cast<int>( f );
+//		//Round to nearest int away from 0.
+//		if( f < 0 )
+//			return static_cast<int>( f - 0.5 );
+//		else
+//			return static_cast<int>( f + 0.5 );
 	}
-	catch( ... ) {
+	catch( const bad_lexical_cast &ex) {
+		cerr << "@@@@@ EXCEPTION(toInt): '" << dbVal << "':  "<< ex.what() << endl;
 		return kvalobs::kvDbBase::INT_NULL;
 	}
 }
@@ -58,7 +68,8 @@ toFloat( const std::string &dbVal )
 			return kvalobs::kvDbBase::FLT_NULL;
 		return lexical_cast<float>( dbVal );
 	}
-	catch( ... ) {
+	catch( const bad_lexical_cast &ex  ) {
+		cerr << "@@@@@ EXCEPTION(toFloat): " << ex.what() << endl;
 		return kvalobs::kvDbBase::FLT_NULL;
 	}
 }
