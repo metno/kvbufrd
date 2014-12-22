@@ -35,6 +35,7 @@
 #include <boost/lexical_cast.hpp>
 #include <milog/milog.h>
 #include "tblStInfoSysStation.h"
+#include "../dbhelper.h"
 
 using namespace std;
 using namespace dnmi;
@@ -64,46 +65,25 @@ set(const dnmi::db::DRow &r_)
          buf=r[*it];
 
          if(*it=="stationid"){
-            stationid_ = atoi( buf.c_str() );
+        	 stationid_ = dbhelper::toInt( buf );
          }else if(*it=="lat"){
-        	 if( buf.empty() )
-        		 lat_ = FLT_NULL;
-        	 else
-        		 lat_ = static_cast<float>( atof( buf.c_str() ) );
+        	 lat_ = dbhelper::toFloat( buf );
          }else if(*it=="lon"){
-        	 if( buf.empty() )
-        		 lon_ = FLT_NULL;
-        	 else
-        		 lon_ = static_cast<float>( atof( buf.c_str() ) );
+        	 lon_ = dbhelper::toFloat( buf );
          }else if(*it=="hs"){
-        	 if( buf.empty() )
-        		 hs_ = INT_NULL;
-        	 else
-        		 hs_ = atoi( buf.c_str() );
+        	 hs_ = dbhelper::toInt( buf );
          }else if(*it=="hv"){
-        	 if( buf.empty() )
-        		 hv_ = INT_NULL;
-        	 else
-        		 hv_ = atoi( buf.c_str() );
+        	 hv_ = dbhelper::toInt( buf );
          }else if(*it=="hp"){
-        	 if( buf.empty() )
-        		 hp_ = FLT_NULL;
-        	 else
-        		 hp_ = static_cast<float>( atof( buf.c_str() ) );
+        	 hp_ = dbhelper::toInt( buf );
          }else if(*it=="maxspeed"){
-             if( buf.empty() )
-                 maxspeed_ = FLT_NULL;
-             else
-                 maxspeed_ = boost::lexical_cast<float>( buf );
+        	 maxspeed_ = dbhelper::toFloat( buf );
          } else if(*it=="name"){
-            name_=buf;
+        	 name_=buf;
          } else if(*it=="short_name"){
-        	shortName_= buf;
+        	 shortName_= buf;
          }else if(*it=="wmono"){
-            if( !buf.empty() )
-               wmono_ = atoi( buf.c_str() );
-            else
-               wmono_ = INT_NULL;
+        	 wmono_ = dbhelper::toInt( buf );
          }
       }
       catch(...){

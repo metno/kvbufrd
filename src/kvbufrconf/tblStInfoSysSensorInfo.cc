@@ -33,6 +33,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <milog/milog.h>
+#include "../dbhelper.h"
 #include "tblStInfoSysSensorInfo.h"
 
 using namespace std;
@@ -76,21 +77,21 @@ set(const dnmi::db::DRow &r_)
          buf=r[*it];
 
          if(*it=="equipmentid"){
-            equipmentid_ = atoi( buf.c_str() );
+            equipmentid_ = dbhelper::toInt( buf );
          }else if(*it=="paramid"){
-            paramid_ = atoi( buf.c_str() );
+            paramid_ = dbhelper::toInt( buf );
          }else if(*it=="stationid"){
-            stationid_ = atoi( buf.c_str() );
+            stationid_ = dbhelper::toInt( buf );
          }else if(*it=="sensor"){
-            sensor_ = atoi( buf.c_str() );
+            sensor_ = dbhelper::toInt( buf );
          }else if(*it=="hlevel"){
-            hlevel_ = atoi( buf.c_str() );
+            hlevel_ = dbhelper::toInt( buf );
          }else if(*it=="operational"){
             operational_= (!buf.empty() && ( buf[0]=='t' || buf[0]=='T'))?true:false;
          }else if(*it=="physical_height"){
-            physical_height_ = atoi( buf.c_str() );
+            physical_height_ = dbhelper::toInt( buf );
          }else if(*it=="measurement_methodid"){
-            measurement_methodid_ = atoi( buf.c_str() );
+            measurement_methodid_ = dbhelper::toInt( buf );
          }
       }
       catch(...){
