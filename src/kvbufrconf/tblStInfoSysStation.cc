@@ -75,7 +75,7 @@ set(const dnmi::db::DRow &r_)
          }else if(*it=="hv"){
         	 hv_ = dbhelper::toInt( buf );
          }else if(*it=="hp"){
-        	 hp_ = dbhelper::toInt( buf );
+        	 hp_ = dbhelper::toFloat( buf );
          }else if(*it=="maxspeed"){
         	 maxspeed_ = dbhelper::toFloat( buf );
          } else if(*it=="name"){
