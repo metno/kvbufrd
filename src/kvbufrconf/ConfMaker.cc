@@ -146,7 +146,7 @@ ConfMaker::
 findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const
 {
    for( StInfoSysSensorInfoList::const_iterator it=sensors.begin(); it != sensors.end(); ++it ) {
-      if( it->paramid() == paramid && it->sensor() == 0 && it->operational() ) {
+      if( it->paramid() == paramid && it->sensor() == 0 && it->hlevel()==0 && it->operational() ) {
          sensor = *it;
          return true;
       }
@@ -438,7 +438,7 @@ decodePrecipHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr stati
 
    for( int i=0; RR[i]; ++i ) {
       if(  findSensor( sensors, sensor,  RR[i] ) ) {
-         if( sensor.physicalHeight() != INT_MAX ) {
+         if( sensor.physicalHeight() != kvalobs::kvDbBase::INT_NULL ) {
             station->heightPrecip_ = sensor.physicalHeight();
             return true;
          }
@@ -495,7 +495,7 @@ decodeTemperatureHeight( const StInfoSysSensorInfoList &sensors, StationInfoPtr 
       return false;
    }
 
-   if( sensor.physicalHeight() == INT_MAX )
+   if( sensor.physicalHeight() == kvalobs::kvDbBase::INT_NULL )
       return false;
 
 
