@@ -47,7 +47,7 @@ getOptions(int argn, char **argv, Options &opt)
    struct option long_options[]={{"help", 0, 0, 'h'},
                                  {"conf", 1, 0, 'c'},
                                  {"template", 1, 0, 't'},
-								 {"debug",1, 0, "d" },
+								 {"debug",1, 0, 'd' },
                                  {"out", 1, 0, 'o'},
                                  {"svv", 0, 0, 0 },
                                  {"precip", 0, 0, 0 },
