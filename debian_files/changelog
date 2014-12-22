@@ -1,4 +1,4 @@
-kvbufrd (2.5.14~rc2-1) lucid; urgency=low
+kvbufrd (2.5.14~rc3-1) lucid; urgency=low
   * #1384, use 'sensor' AND 'hlevel' to find the used sensor.
   * Better treatment of null values from db.
   
