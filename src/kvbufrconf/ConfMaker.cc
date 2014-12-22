@@ -419,7 +419,7 @@ decodeWindheight( const StInfoSysSensorInfoList &sensors, StationInfoPtr station
       return false;
    }
 
-   if( sensor.physicalHeight() == INT_MAX )
+   if( sensor.physicalHeight() == kvalobs::kvDbBase::INT_NULL )
       return false;
 
    station->heightWind_ = sensor.physicalHeight();
