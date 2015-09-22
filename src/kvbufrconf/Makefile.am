@@ -8,9 +8,9 @@ AM_CPPFLAGS = \
 
 
 bin_PROGRAMS = kvbufrconf kvbufrconfcmp
-                        
+
 kvbufrconf_SOURCES = \
-		../StationInfo.cc ../StationInfo.h \
+		../StationInfo.cc ../src/StationInfo.h \
       ../StationInfoParse.cc ../StationInfoParse.h \
 		../splitstr.h ../splitstr.cc \
 		../InitLogger.cc ../InitLogger.h \
@@ -27,6 +27,7 @@ kvbufrconf_SOURCES = \
 		ConfApp.h ConfApp.cc \
 		kvbufrconfOptions.cc kvbufrconfOptions.h \
 		kvbufrconf.cc
+
 kvbufrconf_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 
 if KVSTATIC
@@ -47,11 +48,14 @@ kvbufrconf_LDADD = \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
+	$(BOOST_SYSTEM_LIB) \
    	-lm -ldl
 else
 kvbufrconf_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrconf_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
-                   -lm -ldl
+kvbufrconf_LDADD = \
+	$(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
+	$(BOOST_SYSTEM_LIB) \
+   -lm -ldl
 endif
                    
 kvbufrconfcmp_SOURCES = \
@@ -83,6 +87,7 @@ kvbufrconfcmp_LDADD = \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
+	$(BOOST_SYSTEM_LIB) \
     -lm
 else
 kvbufrconfcmp_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
@@ -102,5 +107,6 @@ kvbufrconfcmp_LDADD = \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
+	$(BOOST_SYSTEM_LIB) \
     -lm
 endif

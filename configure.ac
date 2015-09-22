@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 AC_INIT([kvbufrd], [2.5.14], [kvoss@met.no])
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign subdir-objects]) 
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_PROG_LIBTOOL

@@ -167,11 +167,14 @@ kvbufrdbclt_LDADD = \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
+	$(BOOST_SYSTEM_LIB) \
     -lm -ldl
 else
 kvbufrdbclt_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrdbclt_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
-                     -lm -ldl
+kvbufrdbclt_LDADD = \
+   $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
+   $(BOOST_SYSTEM_LIB) \
+   -lm -ldl
 endif                     
                      
 kvbufrdparse_SOURCES = kvbufrdparse.cc \
@@ -198,12 +201,15 @@ kvbufrdparse_LDADD = \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
+	$(BOOST_SYSTEM_LIB) \
     -lm
 
 else
 kvbufrdparse_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrdparse_LDADD =  $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
-                     -lm
+kvbufrdparse_LDADD = \
+   $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
+   $(BOOST_SYSTEM_LIB) \
+   -lm
 endif                     
 
 
