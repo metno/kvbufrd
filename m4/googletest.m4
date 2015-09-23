@@ -99,7 +99,8 @@ CPPFLAGS="${gtest_includes} $CPPFLAGS"
 AC_CHECK_HEADER([gtest/gtest.h],
     [gtest_CFLAGS=${gtest_includes}
     have_gtest=true],
-    [AC_MSG_WARN([Unable to find header gtest/gtest.h])])
+    [have_gtest=false
+     AC_MSG_WARN([Unable to find header gtest/gtest.h])])
 
 
 AS_IF([test "x$gmock_base" = "x/usr"],

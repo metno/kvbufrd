@@ -12,10 +12,12 @@ DEBIAN_PACKAGE_NAME = $(DEBIAN_PACKAGE_NAME_BASE)_$(ARCH).deb
 DEBIAN_SOURCE_PACKAGE_NAME = $(DEBIAN_PACKAGE_NAME_BASE).dsc
 
 dist-debian: dist clean-debian
+	@echo "dist-debian"
 	tar xvzf $(PKG_DIR).tar.gz
 	cp $(PKG_DIR).tar.gz $(DEBIAN_PACKAGE).orig.tar.gz
 
 prepare-debian:
+	@echo "prepare-debian"
 	rm -rf $(DEBIAN_DIR)
 	mkdir -p $(DEBIAN_DIR)
 	(cd $(top_srcdir)/debian_files/; tar cpf - --exclude='.svn' *) | (cd $(DEBIAN_DIR); tar xpf -) 
@@ -23,15 +25,18 @@ prepare-debian:
 	if [ -e $(DEBIAN_DIR)/templates -a -d $(DEBIAN_DIR)/po ]; then  debconf-updatepo --podir=$(DEBIAN_DIR)/po; fi
 
 update-debian: prepare-debian
+	@echo "update-debian"
 	cd $(PKG_DIR) && fakeroot debian/rules binary #dpkg-buildpackage -rfakeroot -us -uc -nc
 	lintian $(DEBIAN_PACKAGE_NAME) $(DEBIAN_SOURCE_PACKAGE_NAME)
 
 build-debian:
+	@echo "build-debian"
 	cd $(PKG_DIR) && dpkg-buildpackage -rfakeroot -us -uc -sa
 	lintian $(DEBIAN_PACKAGE_NAME) $(DEBIAN_SOURCE_PACKAGE_NAME)
 
 debian: dist-debian prepare-debian build-debian
 
 clean-debian:
+	echo "clean-debian"
 	debclean
 	rm -rf $(PKG_DIR) $(DEBIAN_PACKAGE)*

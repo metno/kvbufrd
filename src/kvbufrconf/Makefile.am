@@ -10,7 +10,7 @@ AM_CPPFLAGS = \
 bin_PROGRAMS = kvbufrconf kvbufrconfcmp
 
 kvbufrconf_SOURCES = \
-		../StationInfo.cc ../src/StationInfo.h \
+		../StationInfo.cc ../StationInfo.h \
       ../StationInfoParse.cc ../StationInfoParse.h \
 		../splitstr.h ../splitstr.cc \
 		../InitLogger.cc ../InitLogger.h \

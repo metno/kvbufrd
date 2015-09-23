@@ -431,7 +431,7 @@ AM_CPPFLAGS = \
    $(omniORB4_CFLAGS)  
 
 kvbufrconf_SOURCES = \
-		../StationInfo.cc ../src/StationInfo.h \
+		../StationInfo.cc ../StationInfo.h \
       ../StationInfoParse.cc ../StationInfoParse.h \
 		../splitstr.h ../splitstr.cc \
 		../InitLogger.cc ../InitLogger.h \

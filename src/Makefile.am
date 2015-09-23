@@ -23,48 +23,49 @@ clean-local:
 		rm -rf bufrtables ;\
 	fi
 
-noinst_PROGRAMS = kvBufrEncodeTest base64Test
+noinst_PROGRAMS = base64Test
 
 bin_PROGRAMS = kvbufrd kvbufrclt kvbufrdbclt kvbufrdparse
 
-kvbufrd_SOURCES = kvbufrd.hh kvbufrdSK.cc \
-                  defines.h \
-		          kvbufrd.cc \
-                  App.cc App.h \
-                  DataReceiver.cc DataReceiver.h \
-                  Data.cc Data.h \
-                  BufrWorker.cc BufrWorker.h \
-                  BufrData.cc BufrData.h \
-                  KvParam.cc KvParam.h \
-                  DataElementList.cc DataElementList.h \
-                  DataList.cc DataList.h \
-                  StationInfo.cc StationInfo.h \
-                  StationInfoParse.cc StationInfoParse.h \
-                  tblBufr.cc tblBufr.h \
-                  kvbufrdImpl.cc kvbufrdImpl.h \
-                  Replay.cc Replay.h \
-                  bufr.cc bufr.h \
-                  Validate.cc Validate.h \
-                  tblWaiting.cc tblWaiting.h \
-                  Waiting.cc Waiting.h \
-                  delaycontrol.cc delaycontrol.h \
-                  tblKeyVal.cc tblKeyVal.h \
-                  parseMilogLogLevel.cc parseMilogLogLevel.h \
-                  InitLogger.cc InitLogger.h \
-                  Indent.h \
-                  kvDbGateProxyThread.cc kvDbGateProxyThread.h \
-                  kvDbGateProxy.cc kvDbGateProxy.h \
-                  getDataReceiver.cc getDataReceiver.h \
-                  GetDataThread.cc GetDataThread.h \
-                  kvbufrdImpl.h obsevent.h \
-                  LoadBufrData.h LoadBufrData.cc \
-                  encodebufr.h encodebufr.cc \
-                  base64.cc base64.h \
-                  scanstring.cc scanstring.h \
-                  SemiUniqueName.cc SemiUniqueName.h \
-                  Strerror.cc Strerror.h \
-                  isDirWithWritePermission.cc isDirWithWritePermission.h \
-                  dbhelper.cc dbhelper.h
+kvbufrd_SOURCES = \
+	kvbufrd.hh kvbufrdSK.cc \
+   defines.h \
+	kvbufrd.cc \
+   App.cc App.h \
+   DataReceiver.cc DataReceiver.h \
+   Data.cc Data.h \
+   BufrWorker.cc BufrWorker.h \
+   BufrData.cc BufrData.h \
+   KvParam.cc KvParam.h \
+   DataElementList.cc DataElementList.h \
+   DataList.cc DataList.h \
+   StationInfo.cc StationInfo.h \
+   StationInfoParse.cc StationInfoParse.h \
+   tblBufr.cc tblBufr.h \
+   kvbufrdImpl.cc kvbufrdImpl.h \
+   Replay.cc Replay.h \
+   bufr.cc bufr.h \
+   Validate.cc Validate.h \
+   tblWaiting.cc tblWaiting.h \
+   Waiting.cc Waiting.h \
+   delaycontrol.cc delaycontrol.h \
+   tblKeyVal.cc tblKeyVal.h \
+   parseMilogLogLevel.cc parseMilogLogLevel.h \
+   InitLogger.cc InitLogger.h \
+   Indent.h \
+   kvDbGateProxyThread.cc kvDbGateProxyThread.h \
+   kvDbGateProxy.cc kvDbGateProxy.h \
+   getDataReceiver.cc getDataReceiver.h \
+   GetDataThread.cc GetDataThread.h \
+   kvbufrdImpl.h obsevent.h \
+   LoadBufrData.h LoadBufrData.cc \
+   encodebufr.h encodebufr.cc \
+   base64.cc base64.h \
+   scanstring.cc scanstring.h \
+   SemiUniqueName.cc SemiUniqueName.h \
+   Strerror.cc Strerror.h \
+   isDirWithWritePermission.cc isDirWithWritePermission.h \
+   dbhelper.cc dbhelper.h
                   
  
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
@@ -225,13 +226,10 @@ base64Test_LDADD = -lm
 
 
 if HAVE_GTEST
-TESTS=kvBufrEncodeTest
-#noinst_PROGRAMS=kvBufrEncodeTest
-
 check_PROGRAMS=kvBufrEncodeTest
+TESTS=$(check_PROGRAMS)
 
-
-kvBufrEncodeTest_SOURCES = \
+kvBufrEncodeTest_SOURCES= \
 	test/kvBufrEncodeTest.cc \
 	test/kvBufrEncodeTestConf.h \
 	test/ReadDataFile.h test/ReadDataFile.cc \
@@ -251,7 +249,7 @@ kvBufrEncodeTest_SOURCES = \
 	scanstring.cc scanstring.h \
 	SemiUniqueName.cc SemiUniqueName.h \
 	Strerror.cc Strerror.h \
-    isDirWithWritePermission.cc isDirWithWritePermission.h
+   isDirWithWritePermission.cc isDirWithWritePermission.h
 
 kvBufrEncodeTest_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 
