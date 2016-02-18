@@ -112,8 +112,9 @@ BufrHelper( BufrParamValidaterPtr paramValidater_,
      ikdata( 0 ), iValue( 0 ), values( 0 ), iCvals( 0 ),
      ktdlen( 0 ),
      kbuflen( MAX_BUFLEN /4 ),
-     kbuff( 0 ), ccx( 0 ), test( false ), bufrBase( 0 ),
-     validBufr_( true )
+     kbuff( 0 ), ccx( 0 ), test( false ), validBufr_( true ),
+     bufrBase( 0 )
+
 {
    try {
       values = new Values( KVALS, paramValidater );
