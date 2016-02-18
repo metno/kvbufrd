@@ -265,11 +265,6 @@ void DataReceiver::newData(kvalobs::KvObsDataPtr data) {
         continue;
       }
 
-      if (dataList.empty()) {
-        LOGDEBUG("DataList: empty 'abort' called.");
-        terminate();
-      }
-
       ObsEvent *event;
 
       try {
