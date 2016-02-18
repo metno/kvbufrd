@@ -3,21 +3,10 @@ SUBDIRS = gtest bufr
 AM_CPPFLAGS = \
    -D_REENTRANT \
    $(kvsubscribe_CFLAGS) \
-	$(kvcpp_CFLAGS) \
+	-I${KVINCLUDEDIR}/kvalobs/kvskel \
 	$(putools_CFLAGS) \
    $(BOOST_CPPFLAGS) \
    $(omniORB4_CFLAGS)  
-
-
-nodist_idl_sources=kvbufrd.idl 
-
-
-CLEANFILES = $(nodist_idl_sources:.idl=SK.cc) $(nodist_idl_sources:.idl=.hh) 
-
-
-%SK.cc %.hh: %.idl
-#	$(IDL) -bcxx -Wbinline -I$(KVIDLDIR) $<
-	$(IDL) -bcxx -I$(KVIDLDIR) $<
 
 clean-local:
 	if [ -d bufrtables ]; then\
@@ -26,10 +15,10 @@ clean-local:
 
 noinst_PROGRAMS = base64Test
 
-#bin_PROGRAMS = kvbufrd kvbufrclt kvbufrdbclt kvbufrdparse
 bin_PROGRAMS = kvbufrd kvbufrdbclt  kvbufrdparse
 
 kvbufrd_SOURCES = \
+ 	kvevents.h \
    KvDataConsumer.h KvDataConsumer.cc \
    KvObsData.h KvObsData.cc \
    DbQuery.h DbQuery.cc \
@@ -75,7 +64,6 @@ if KVSTATIC
 kvbufrd_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
 kvbufrd_LDADD = \
 	$(top_builddir)/src/bufr/libbufr.la \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_corbahelper.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miconfparser.a \
@@ -106,12 +94,12 @@ kvbufrd_LDADD = \
 else
 kvbufrd_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
 kvbufrd_LDADD = \
-   	$(top_builddir)/src/bufr/libbufr.la \
-	$(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
-    $(BOOST_FILESYSTEM_LIB) \
-    $(BOOST_DATE_TIME_LIB) \
-    $(BOOST_SYSTEM_LIB) \
-    -L$(HOME)/lib -lbufr -lgfortran \
+   $(top_builddir)/src/bufr/libbufr.la \
+	$(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) \
+	$(BOOST_FILESYSTEM_LIB) \
+   $(BOOST_DATE_TIME_LIB) \
+   $(BOOST_SYSTEM_LIB) \
+   -L$(HOME)/lib -lbufr -lgfortran \
     -lm -ldl
 endif         
 
@@ -146,7 +134,7 @@ kvbufrdbclt_LDADD = \
 else
 kvbufrdbclt_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
 kvbufrdbclt_LDADD = \
-   $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
+   $(kvsubscribe_LIBS) $(putools_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
    $(BOOST_SYSTEM_LIB) \
    -lm -ldl
 endif                     
@@ -181,7 +169,7 @@ kvbufrdparse_LDADD = \
 else
 kvbufrdparse_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
 kvbufrdparse_LDADD = \
-   $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
+   $(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
    $(BOOST_SYSTEM_LIB) \
    -lm
 endif                     

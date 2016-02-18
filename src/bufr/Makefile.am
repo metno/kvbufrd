@@ -1,7 +1,7 @@
 AM_CPPFLAGS = \
 	-D_REENTRANT \
 	-I.. \
-	$(kvcpp_CFLAGS) \
+	$(kvsubscribe_CFLAGS) \
     $(BOOST_CPPFLAGS) 
 
 

@@ -21,9 +21,12 @@ AC_SUBST([BUFRTABLES],[`pwd`/src/bufrtables])
 
 KV_FIND_OMNIORB4
 PKG_CHECK_MODULES(putools, puTools)
-LIBKVCPP2
+LIBKVCPP3
 PKG_CHECK_MODULES(sqlite3, sqlite3)
 PKG_CHECK_MODULES(kvsubscribe, libkvsubscribe)
+
+#Build always static
+#AM_CONDITIONAL([KVSTATIC], true )
 
 #GTEST_CHECK
 #GMOCK_CHECK
