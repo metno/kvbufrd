@@ -14,6 +14,10 @@ all:
 	fi
 
 
+clean:
+	rm -rf $(top_builddir)/src/bufrtables
+
+distclean: clean
 
 #bufrtablesdir = $(pkgdatadir)/bufrtables
 #bufrtables_DATA = $(bufrtables_source)

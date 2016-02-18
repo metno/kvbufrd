@@ -87,7 +87,7 @@ encode()
    string A1;
    int internationalSubCategory;
 
-   switch( obstime.hour() ){
+   switch( obstime.time_of_day().hours() ){
       case 0:
       case 6:
       case 12:

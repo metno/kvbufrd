@@ -33,6 +33,7 @@
 
 #include <vector>
 #include <string>
+#include "boost/date_time/posix_time/ptime.hpp"
 #include "BufrData.h"
 #include "StationInfo.h"
 
@@ -96,7 +97,7 @@ class Bufr
     void doPrecip( StationInfoPtr     info,
                    const DataElementList &bufrData,
                    BufrData           &bufr );
-    float precipFromRA( int hours, const DataElementList &sd, const miutil::miTime &from=miutil::miTime() ); //Helper method
+    float precipFromRA( int hours, const DataElementList &sd, const boost::posix_time::ptime &from=boost::posix_time::ptime() ); //Helper method
 
     /**
      * Get the precipitation as 6 hours intervals.

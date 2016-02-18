@@ -33,6 +33,7 @@
 #define __ENCODEBUFRBASE_H__
 
 #include <list>
+#include "boost/date_time/posix_time/ptime.hpp"
 #include "BufrHelper.h"
 #include "../BufrData.h"
 #include "../StationInfo.h"
@@ -51,7 +52,7 @@ protected:
    BufrDataPtr data;
    BufrHelper *bufr;
    EncodeBufrManager *encodeMgr;
-   miutil::miTime obstime;
+   boost::posix_time::ptime obstime;
    int replicator;
 
    /**

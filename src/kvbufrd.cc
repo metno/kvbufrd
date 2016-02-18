@@ -31,24 +31,26 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <fstream>
-#include <boost/thread/thread.hpp>
-#include <boost/filesystem.hpp>
-#include <milog/milog.h>
-#include <fileutil/pidfileutil.h>
-#include <kvalobs/kvapp.h>
+#include "boost/thread/thread.hpp"
+#include "boost/filesystem.hpp"
+#include "boost/date_time/posix_time/ptime.hpp"
+#include "milog/milog.h"
+#include "fileutil/pidfileutil.h"
+#include "miutil/timeconvert.h"
+#include "kvalobs/kvapp.h"
+#include "kvalobs/kvPath.h"
 #include "BufrWorker.h"
 #include "DataReceiver.h"
 #include "App.h"
-#include "Replay.h"
 #include "delaycontrol.h"
 #include "InitLogger.h"
-#include <kvalobs/kvPath.h>
 #include "kvDbGateProxyThread.h"
 
 //using namespace kvservice;
 using namespace std;
 using namespace miutil;
 namespace fs = boost::filesystem;
+namespace pt = boost::posix_time;
 
 Opt options;
 
@@ -90,15 +92,13 @@ main(int argn, char **argv)
    }
 
    App  app(argn, argv, confFile, conf );
-   dnmi::thread::CommandQue newDataQue;
-   dnmi::thread::CommandQue newObsQue;
-   dnmi::thread::CommandQue replayQue;
+   std::shared_ptr<dnmi::thread::CommandQue> newDataQue(new dnmi::thread::CommandQue());
+   std::shared_ptr<dnmi::thread::CommandQue> newObsQue(new dnmi::thread::CommandQue());
 
    DataReceiver dataReceiver(app, newDataQue, newObsQue);
-   BufrWorker   bufrWorker(app, newObsQue, replayQue);
-   Replay       replay(app, replayQue);
+   BufrWorker   bufrWorker(app, newObsQue);
    DelayControl delayControl(app, newDataQue);
-   miTime       startTime;
+   pt::ptime startTime;
 
 
    if(dnmi::file::isRunningPidFile(pidfile, error)){
@@ -124,39 +124,14 @@ main(int argn, char **argv)
    //we shall get data from the server from this data
    //until now.
 
-   if( ! options.fromTime.undef() ){
+   if( ! options.fromTime.is_special() ){
       startTime=options.fromTime;
    }else{
       startTime=app.checkpoint();
 
-      if(!startTime.undef()){
-         IDLOGINFO("main", "checkpoint at: " << startTime);
+      if(!startTime.is_special()){
+         IDLOGINFO("main", "checkpoint at: " << pt::to_kvalobs_string(startTime));
       }
-   }
-
-
-
-   if( ! app.initKvBufrInterface(  newObsQue ) ){
-      LOGFATAL("Cant initialize the interface to <kvbufrd>.");
-      return 1;
-   }
-
-   std::string id=app.subscribeData(kvservice::KvDataSubscribeInfoHelper(), newDataQue);
-
-   if(id.empty()){
-      LOGFATAL("Cant subscribe on <kvData>.");
-      return 1;
-   }
-
-
-   //Write the subscriber id to the file $KVALOBS/var/kvbufr/datasubscriber.id
-   ofstream subidfile;
-
-   subidfile.open( string(kvPath("localstatedir", "kvbufrd")+"/" +options.progname +"_datasubscriber.id").c_str());
-
-   if(subidfile.is_open()){
-      subidfile << id << endl;
-      subidfile.close();
    }
 
    pidFile.createPidFile(pidfile);
@@ -164,20 +139,13 @@ main(int argn, char **argv)
    boost::thread bufrWorkerThread(bufrWorker);
    IDLOGDEBUG("main","Started <BufrWorkerThread>!");
 
-   if(!startTime.undef()){
-      miTime now(miTime::nowTime());
-
-      now.addHour(-48);
-
-      if(startTime<now)
-         startTime=now;
-
-   }else{
-      startTime=miTime::nowTime();
-      startTime.addHour(-48);
+   if(startTime.is_special()){
+     startTime=pt::second_clock::universal_time();
+     startTime -= pt::hours(48);
    }
 
-   IDLOGINFO("main","Getting data from kvalobs from time: " << startTime);
+   IDLOGINFO("main","Getting data from kvalobs from time: " << pt::to_kvalobs_string(startTime));
+   //app.getDataFrom(startTime, 1044, 0, newObsQue);
    app.getDataFrom(startTime, -1, 0, newObsQue);
    IDLOGDEBUG("main","Return from app.getDataFrom!");
 
@@ -185,14 +153,10 @@ main(int argn, char **argv)
    boost::thread dataReceiverThread(dataReceiver);
    IDLOGDEBUG("main","Started <dataReceiverThread>!");
 
-   boost::thread replayThread(replay);
-   IDLOGDEBUG("main","Started <replayThread>!");
-
-
    boost::thread delayThread(delayControl);
    IDLOGDEBUG("main","Started <delayControlThread>!");
 
-   app.run();
+   app.run(newDataQue);
 
    app.dbThread->dbQue->suspend();
    app.dbThread->join();
@@ -203,13 +167,10 @@ main(int argn, char **argv)
    bufrWorkerThread.join();
    IDLOGDEBUG("main","Joined <bufrWorkerThread>!");
 
-   replayThread.join();
-   IDLOGDEBUG("main","Joined <replayThread>!");
-
    delayThread.join();
    IDLOGDEBUG("main","Joined <delayControlThread>!");
 
-   app.doShutdown();
+   //app.doShutdown();
 
    return 0;
 }

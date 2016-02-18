@@ -32,8 +32,8 @@
 #define __kvbufr_tblBufr_h__
 
 #include <string>
-#include <kvalobs/kvDbBase.h>
-#include "defines.h"
+#include "boost/date_time/posix_time/ptime.hpp"
+#include "kvalobs/kvDbBase.h"
 
 class TblBufr : public kvalobs::kvDbBase {
 private:
@@ -41,8 +41,8 @@ private:
    int              id_;
    std::string      callsign_;
    std::string      code_;
-   miutil::miTime   obstime_;
-   miutil::miTime   createtime_;
+   boost::posix_time::ptime obstime_;
+   boost::posix_time::ptime createtime_;
    int              crc_;
    int              ccx_;
    std::string      data_;
@@ -58,8 +58,8 @@ public:
            int                  id,
            const std::string    &callsign,
            const std::string    &code,
-           const miutil::miTime &obtime,
-           const miutil::miTime &createtime,
+           const boost::posix_time::ptime &obtime,
+           const boost::posix_time::ptime &createtime,
            int                  crc,
            int                  ccx,
            const std::string    &data,
@@ -70,8 +70,8 @@ public:
             int                  id,
             const std::string    &callsign,
             const std::string    &code,
-            const miutil::miTime &obtime,
-            const miutil::miTime &createtime,
+            const boost::posix_time::ptime &obtime,
+            const boost::posix_time::ptime &createtime,
             int                  crc,
             int                  ccx,
             const std::string    &data,
@@ -91,28 +91,22 @@ public:
 
    const char* tableName()            const {return "bufr";}
 
-#ifdef __WITH_PUTOOLS__
-   miutil::miString toSend()    const;
-   miutil::miString toUpdate()  const;
-   miutil::miString uniqueKey() const;
-#else
    std::string toSend()    const;
    std::string toUpdate()  const;
    std::string uniqueKey() const;
-#endif
 
    int              wmono()      const { return wmono_; }
    int              id()         const { return id_; }
    std::string      callsign()   const { return callsign_; }
    std::string      code()       const { return code_; }
-   miutil::miTime   obstime()    const { return obstime_; }
-   miutil::miTime   createtime() const { return createtime_;}
+   boost::posix_time::ptime obstime()    const { return obstime_; }
+   boost::posix_time::ptime createtime() const { return createtime_;}
    int              crc()        const { return crc_; }
    int              ccx()        const { return ccx_; }
    std::string      data()       const { return data_; }
    std::string      bufrBase64() const { return bufrBase64_; }
 
-   void createtime(const miutil::miTime &t){ createtime_=t;}
+   void createtime(const boost::posix_time::ptime &t){ createtime_=t;}
    void crc(int c)                         { crc_=c; }
    void incCcx()                           { ccx_++; }
    void ccx(int c)                         { ccx_=c; }

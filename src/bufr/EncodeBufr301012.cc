@@ -60,7 +60,7 @@ void
 EncodeBufr301012::
 encode( )
 {
-   bufr->addValue( 4004, static_cast<float>( obstime.hour() ), "GG, Hour", false );
-   bufr->addValue( 4005, static_cast<float>( obstime.min() ), "gg, Minute", false );
+   bufr->addValue( 4004, static_cast<float>( obstime.time_of_day().hours() ), "GG, Hour", false );
+   bufr->addValue( 4005, static_cast<float>( obstime.time_of_day().minutes() ), "gg, Minute", false );
 }
 

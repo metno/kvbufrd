@@ -34,6 +34,7 @@
 
 #include <stdexcept>
 #include <string>
+#include "boost/date_time/posix_time/ptime.hpp"
 #include "bufrdefs.h"
 #include "bufrexceptions.h"
 #include "BUFRparam.h"
@@ -72,7 +73,7 @@ class BufrHelper {
 
    int kbuflen;
    int *kbuff; /* integer array containing bufr message */
-   miutil::miTime obstime;
+   boost::posix_time::ptime obstime;
    int ccx;
    bool test;
    std::string gtsHeader;
@@ -98,7 +99,7 @@ public:
    BufrDataPtr getData()const;
    BufrParamValidaterPtr getParamValidater()const;
    int getCCX()const { return ccx; }
-   miutil::miTime getObstime()const{ return obstime;}
+   boost::posix_time::ptime getObstime()const{ return obstime;}
    void setGTSHeader( const std::string &TT,
                       const std::string &AA );
    void setTest( bool f ) { test=f; }
@@ -106,7 +107,7 @@ public:
    //Section 1
    void setDataAndInternationalSubDataCategory( int dataCategory, int subCategory );
    void setSequenceNumber( int ccx );
-   void setObsTime( const miutil::miTime &obstime );
+   void setObsTime( const boost::posix_time::ptime &obstime );
    void setOriginatingCentreAndSubCentre( int originatingCenter,
                                           int subCenter=0 );
    /**

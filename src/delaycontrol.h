@@ -33,15 +33,16 @@
 #ifndef __DealyControl_h__
 #define __DealyControl_h__
 
+#include <memory>
 #include "App.h"
 
 class DelayControl {
   App                      &app;
-  dnmi::thread::CommandQue &que;  
+  std::shared_ptr<dnmi::thread::CommandQue> que;
 
  public:
   DelayControl(App &app, 
-	       dnmi::thread::CommandQue &que);
+	       std::shared_ptr<dnmi::thread::CommandQue> que);
 
   void operator()();
 }; 

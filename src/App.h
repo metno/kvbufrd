@@ -1,33 +1,33 @@
 /*
-  Kvalobs - Free Quality Control Software for Meteorological Observations 
+ Kvalobs - Free Quality Control Software for Meteorological Observations
 
-  $Id: App.h,v 1.13.2.9 2007/09/27 09:02:22 paule Exp $                                                       
+ $Id: App.h,v 1.13.2.9 2007/09/27 09:02:22 paule Exp $
 
-  Copyright (C) 2007 met.no
+ Copyright (C) 2007 met.no
 
-  Contact information:
-  Norwegian Meteorological Institute
-  Box 43 Blindern
-  0313 OSLO
-  NORWAY
-  email: kvalobs-dev@met.no
+ Contact information:
+ Norwegian Meteorological Institute
+ Box 43 Blindern
+ 0313 OSLO
+ NORWAY
+ email: kvalobs-dev@met.no
 
-  This file is part of KVALOBS
+ This file is part of KVALOBS
 
-  KVALOBS is free software; you can redistribute it and/or
-  modify it under the terms of the GNU General Public License as 
-  published by the Free Software Foundation; either version 2 
-  of the License, or (at your option) any later version.
-  
-  KVALOBS is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-  
-  You should have received a copy of the GNU General Public License along 
-  with KVALOBS; if not, write to the Free Software Foundation Inc., 
-  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+ KVALOBS is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License as
+ published by the Free Software Foundation; either version 2
+ of the License, or (at your option) any later version.
+
+ KVALOBS is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ General Public License for more details.
+
+ You should have received a copy of the GNU General Public License along
+ with KVALOBS; if not, write to the Free Software Foundation Inc.,
+ 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 /*
  * $Header: /var/lib/cvs/kvalobs/src/kvsynopd/App.h,v 1.13.2.9 2007/09/27 09:02:22 paule Exp $
  */
@@ -36,95 +36,100 @@
 #define __kvbufrd_app_h__
 
 #include <list>
-#include <boost/filesystem.hpp>
-#include <boost/thread/mutex.hpp>
-#include <kvcpp/corba/CorbaKvApp.h>
-#include <kvdb/dbdrivermgr.h>
-#include <milog/milog.h>
-#include <puTools/miTime.h>
-#include "kvbufrd.hh"
-#include "kvbufrdImpl.h"
+#include <atomic>
+#include "boost/filesystem.hpp"
+#include "boost/thread/mutex.hpp"
+#include "boost/date_time/posix_time/ptime.hpp"
+#include "kvcpp/KvApp.h"
+#include "kvdb/dbdrivermgr.h"
+#include "milog/milog.h"
+#include "kvdb/ConnectionPool.h"
 #include "StationInfo.h"
 #include "StationInfoParse.h"
 #include "Waiting.h"
 #include "tblBufr.h"
 #include "obsevent.h"
 #include "kvDbGateProxyThread.h"
-
+#include "DbQuery.h"
 
 struct Opt {
-   std::string conffile;
-   std::string progname;
-   std::string pidfile;
-   miutil::miTime fromTime;
+  std::string conffile;
+  std::string progname;
+  std::string pidfile;
+  milog::LogLevel loglevel;
+  bool diasableDataReceiver;
+  boost::posix_time::ptime fromTime;
 };
 
-std::string getProgNameFromArgv0( const std::string &cmdname );
-void decodeArgs( int argn, char **argv, Opt &opt );
-void usage( const std::string &progname, int exitCode );
+std::string getProgNameFromArgv0(const std::string &cmdname);
+void decodeArgs(int argn, char **argv, Opt &opt);
+void usage(const std::string &progname, int exitCode);
 
 extern Opt options;
 
-
-namespace kvbufrd{
-  class StationInfoList;
+namespace kvbufrd {
+class StationInfoList;
 }
 
 class GetData;
 
-class App : public kvservice::corba::CorbaKvApp
-{
-  
-private:
-   dnmi::db::DriverManager dbMgr;
-   std::string             dbDriver;
-   std::string             dbConnect;
-   std::string             dbDriverId;
-   StationList             stationList;
-   miutil::miTime          startTime_;
-   WaitingList             waitingList;
-   std::string             confFile;
-   std::string             mypathInCorbaNS;
-   std::list<int>          continuesTypeID_;
-   std::list<ObsEvent*>    obsEventWaitingOnCacheReload;
-   std::list<GetData*>     getDataThreads;
-   bool                    hasStationWaitingOnCacheReload;
-   bool                    acceptAllTimes_;
-   kvbufrd::bufr_var       bufrRef;
-   milog::LogLevel         defaultLogLevel;
+class App : public kvalobs::sql::DbQuery {
 
-   mutable boost::mutex mutex;
-   mutable boost::mutex mutexDbDriverManager;
+ public:
+  typedef boost::mutex Mutex;
+  typedef boost::mutex::scoped_lock Lock;
+  static volatile std::atomic_bool AppShutdown;
+ private:
 
-public:
-   boost::shared_ptr<kvalobs::KvDbGateProxyThread> dbThread;
-   //dnmi::thread::CommandQue dbQue;
+  dnmi::db::DriverManager dbMgr;
+  dnmi::db::ConnectionPool kvDbPool;
+  std::string dbDriver;
+  std::string dbConnect;
+  std::string dbDriverId;
+  std::string kvDbDriver;
+  std::string kvDbConnect;
+  std::string kvDbDriverId;
+  std::string kafkaDomain;
+  std::string kafkaBrokers;
+  StationList stationList;
+  boost::posix_time::ptime startTime_;
+  WaitingList waitingList;
+  std::string confFile;
+  std::string mypathInCorbaNS;
+  std::list<int> continuesTypeID_;
+  std::list<ObsEvent*> obsEventWaitingOnCacheReload;
+  std::list<GetData*> getDataThreads;
+  bool hasStationWaitingOnCacheReload;
+  bool acceptAllTimes_;
+  milog::LogLevel defaultLogLevel;
 
-   App( int argn, char **argv, 
-        const std::string &confFile_, miutil::conf::ConfSection *conf);
-   ~App();
+  mutable Mutex mutex;
+  mutable Mutex mutexDbDriverManager;
 
-   void readWaitingElementsFromDb();
+  void readDatabaseConf(miutil::conf::ConfSection *conf);
 
-   bool acceptAllTimes()const { return acceptAllTimes_;}
+ public:
 
-   /**
-    * \brief Setup and initialize the interface to kvbufrd.
-    * 
-    * \return true if the subsystem has been setup and false otherwise.
-    */ 
-   bool initKvBufrInterface( dnmi::thread::CommandQue &newObsQue );
-  
-   /**
-    * \brief cretae a globale logger with id \a id.
-    *
-    * \param is An id to identify the logger.
-    * \return true on success and false otherwise.
-    */
-   bool createGlobalLogger(const std::string &id, milog::LogLevel ll=milog::NOTSET );
+  static App *kvApp;
+  boost::shared_ptr<kvalobs::KvDbGateProxyThread> dbThread;
 
+  App(int argn, char **argv, const std::string &confFile_, miutil::conf::ConfSection *conf);
+  ~App();
 
-  
+  void readWaitingElementsFromDb();
+
+  bool acceptAllTimes() const {
+    return acceptAllTimes_;
+  }
+
+  /**
+   * \brief cretae a globale logger with id \a id.
+   *
+   * \param is An id to identify the logger.
+   * \return true on success and false otherwise.
+   */
+  bool createGlobalLogger(const std::string &id, milog::LogLevel ll = milog::NOTSET);
+
   /**
    * \brief Read the StationInfo from the configuration file
    * represented by \c conf.
@@ -133,7 +138,7 @@ public:
    * \return true if the StationInfo data was succsessfuly read from
    *         conf and false otherwise.
    */
-  bool readStationInfo( miconf::ConfSection *conf);
+  bool readStationInfo(miconf::ConfSection *conf);
 
   /**
    * \brief Read the StationInfo from the configuration file.
@@ -143,9 +148,29 @@ public:
    * \param[out] stList The StationInfo's is returned is this list.
    * \return true on success false otherwise.
    */
-  bool readStationInfo(std::list<StationInfoPtr> &stList)const;
+  bool readStationInfo(std::list<StationInfoPtr> &stList) const;
 
-  StationList getStationList()const;
+  StationList getStationList() const;
+
+
+  /**
+   * \brief Creates a new connection to the database.
+   *
+   * The caller must call releaseDbConnection after use.
+   *
+   * \return A database connection.
+   */
+  dnmi::db::Connection *createKvDbConnection();
+
+  /**
+   * \brief release a connection to the database.
+   *
+   * The connction to be released must be obtained by a call to
+   * getNewDbConnection().
+   *
+   * \param con The connection to release.
+   */
+  void releaseKvDbConnection(dnmi::db::Connection *con);
 
 
   /**
@@ -165,16 +190,7 @@ public:
    *
    * \param con The connection to release.
    */
-  void                 releaseDbConnection(dnmi::db::Connection *con);
-
-  /**
-   * \brief The path in the CORBA nameserver we shall register our
-   *        services.
-   *
-   *  The path is given with corba.kvpath in the configuration file.
-   *  If it is not set, the default is the same as corba.path.
-   */
-  std::string  mypathInCorbaNameserver()const{ return mypathInCorbaNS; }
+  void releaseDbConnection(dnmi::db::Connection *con);
 
   /**
    * \brief Find all station information based on the stationid.
@@ -182,8 +198,7 @@ public:
    * \param stationid The stationid to find the station information too.
    * \return A StationInfoLis.
    */
-  StationInfoList findStationInfo(long stationid);
-
+  StationInfoList findStationInfo(long stationid, long typeId=0, const boost::posix_time::ptime &obtime=boost::posix_time::ptime());
 
   /**
    * \brief Find all station information that has WMO number.
@@ -193,32 +208,26 @@ public:
    */
 
   StationInfoList findStationInfoWmono(int wmono);
-  
-  bool           listStations(kvbufrd::StationInfoList &list);
 
-  
   /**
    * \brief The time the application was started.
    * 
    * \return The start time.
    */
-  miutil::miTime startTime()const { return startTime_;}
-  miutil::miTime checkpoint();
-  void           createCheckpoint(const miutil::miTime &checkpoint);
+  boost::posix_time::ptime startTime() const {
+    return startTime_;
+  }
 
+  boost::posix_time::ptime checkpoint();
+  void createCheckpoint(const boost::posix_time::ptime &checkpoint);
 
-
-  
   /**
    * \brief Set the list of typeids where the data is continues with 
    * respect on obstime.
    */
-  
+
   void continuesTypeID(const std::list<int> &continuesTimes);
 
-
-  
-  
   /**
    * \brief Typeids where the data is expected to hava a continues timeserie.
    * \return a list of typeids.
@@ -226,13 +235,12 @@ public:
 
   std::list<int> continuesTypeID();
 
-  
   /**
    * \brief Check if \a typeID is a continues typeid.
    *
    * \return true if typeID is a continues typeid and false otherwise.
    */
-  
+
   bool isContinuesType(int typeID);
 
   /**
@@ -240,7 +248,6 @@ public:
    *   with respect on obstime.
    */
   bool onlyNoContinuesTypeID(StationInfoPtr st);
-
 
   /**
    *\brief  addWaiting, put the \c Waiting record,\a w, in the list of delayed
@@ -261,11 +268,9 @@ public:
    * \return A WatingPtr if there allready is an Waiting element for
    *         this obstime and wmono. 0 otherwise.
    */
-  WaitingPtr addWaiting(WaitingPtr w, bool replace );
+  WaitingPtr addWaiting(WaitingPtr w, bool replace);
 
-
-  WaitingPtr getWaiting( const miutil::miTime &obstime,
-                         StationInfoPtr info );
+  WaitingPtr getWaiting(const boost::posix_time::ptime &obstime, StationInfoPtr info);
 
   /**
    * \brief getExpired return a list of \c Waiting elements that has expired.
@@ -276,7 +281,7 @@ public:
    *
    * \sa App::removeWaiting
    */
-  WaitingList    getExpired();
+  WaitingList getExpired();
 
   /**
    * \brief Replace the StationInfo for the \c wmono represented
@@ -292,7 +297,6 @@ public:
    */
   StationInfoPtr replaceStationInfo(StationInfoPtr newInfoPtr);
 
-
   /**
    * \brief Add a new StationInfo for to the list of stationinformation.
    *
@@ -303,25 +307,12 @@ public:
    * \return true on success and false otherwice.
    */
   bool addStationInfo(StationInfoPtr newInfoPtr);
-  
 
   /**
    * Replace the current configuration with the new one.
    * @param newConf The new configuration to replace the old.
    */
-  void replaceStationConf(const StationList &newConf );
-
-
-  /**
-   * \brief getDelayList, fill a \a DelayList with data from 
-   * the \c waitingList.
-   *
-   * This method is used by the CORBA client interface, \c kvsynopdImpl.
-   *
-   * \param nowTime The time when the \c waitingList was sampled.
-   * \return A pointer to a \a DelayList on sucess, 0 on fail.
-   */
-  kvbufrd::DelayList* getDelayList(miutil::miTime &nowTime);
+  void replaceStationConf(const StationList &newConf);
 
   /**
    * \brief removeWaiting, remove the waiting element \a w from the database.
@@ -329,7 +320,7 @@ public:
    * \param w The Waiting element to remove from the \c waitingList.
    * \param con A open connection to the database.
    */
-  void           removeWaiting(WaitingPtr w );
+  void removeWaiting(WaitingPtr w);
 
   /**
    * \brief removeWaiting, remove a waiting element from the database
@@ -344,9 +335,7 @@ public:
    *               to remove.
    * \param con A open connection to the database.
    */
-  void           removeWaiting( StationInfoPtr info,
-                                const miutil::miTime &obstime );
-
+  void removeWaiting(StationInfoPtr info, const boost::posix_time::ptime &obstime);
 
   /**
    * saveBufrData, save data for a generated bufr to the database.
@@ -354,8 +343,7 @@ public:
    * \param tblBufr The data to be saved.
    * \return true if the data was saved and false on error.
    */
-  bool saveBufrData(const TblBufr &tblBufr );
-
+  bool saveBufrData(const TblBufr &tblBufr);
 
   /**
    * getSavedBufrData. Search the database for a bufr message for
@@ -366,10 +354,7 @@ public:
    * \param tblBufr This paramter holds the synop data.
    * \return true if we there was now database error, and false otherwise.
    */
-  bool getSavedBufrData( StationInfoPtr info,
-                         const miutil::miTime &obstime,
-                         std::list<TblBufr> &tblBufr );
-  
+  bool getSavedBufrData(StationInfoPtr info, const boost::posix_time::ptime &obstime, std::list<TblBufr> &tblBufr);
 
   /**
    * \brief Start a background thread to get data from kvalobs.
@@ -387,11 +372,7 @@ public:
    *              \a t. If hours>=0 get data from \a t until current time.
    * \param que   post Synop event on this que.
    */
-  bool           getDataFrom( const miutil::miTime &t,
-                              int                  wmono,
-			                     int                  hours,
-			                     dnmi::thread::CommandQue &que);
-
+  bool getDataFrom(const boost::posix_time::ptime &t, int wmono, int hours, std::shared_ptr<dnmi::thread::CommandQue> que);
 
   /**
    * \brief Join all joinable GetData threads.
@@ -408,13 +389,13 @@ public:
    * \return true if one or more threads was joined, and false if no threads 
    *         are joined.
    */
-  bool joinGetDataThreads(bool waitToAllIsJoined, const std::string &logid="");
+  bool joinGetDataThreads(bool waitToAllIsJoined, const std::string &logid = "");
 
   /**
    * \brief Mark the station as relaoded with kvalobs data.
    */
-  void cacheReloaded( StationInfoPtr info );
-
+  void cacheReloaded(StationInfoPtr info);
+  void cacheReload(StationInfoPtr station);
 
   /**
    * \brief Mark the a station to be relaoded with kvalobs data.
@@ -424,16 +405,7 @@ public:
    * \param id stationid.
    * \return A list of all stations that is marked for reload.
    */
-  StationList reloadCache(int wmono, int id=0 );
-
-
-  /**
-   * \brief return a list of current stations marked for reload.
-   * 
-   * \return a list of station waiting on cache reload and number
-   *         of \a ObsEvent waiting.
-   */
-  kvbufrd::ReloadList* listCacheReload();
+  StationList reloadCache(int wmono, int id = 0);
 
 
   /**
@@ -453,14 +425,16 @@ public:
    * reloaded. If so post the event on the event que \a que.
    *
    * \param que The event que to post the event on.
+   *
+   * \return true if there still is station waiting on reloading and false otherwise.
    */
-  void checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
-					 const std::string &logid="");
+  bool checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que, const std::string &logid = "");
 
+  bool shutdown();
 
+  void run( std::shared_ptr<dnmi::thread::CommandQue> newDataQue);
 
 };
 
 #endif
-
 

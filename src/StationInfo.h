@@ -35,12 +35,13 @@
 
 #include <bitset>
 #include <iostream>
-#include <boost/shared_ptr.hpp>
-#include <miconfparser/miconfparser.h>
-#include <milog/milog.h>
 #include <list>
 #include <string>
-#include <puTools/miTime.h>
+#include "boost/shared_ptr.hpp"
+#include "boost/date_time/posix_time/ptime.hpp"
+#include "miconfparser/miconfparser.h"
+#include "milog/milog.h"
+
 
 //#include "StationInfoParse.h"
 
@@ -169,7 +170,7 @@ public:
    MsgTime& operator=( const MsgTime &rhs );
    bool operator==(const MsgTime &rhs)const;
 
-   bool msgForTime( const miutil::miTime & t )const;
+   bool msgForTime( const boost::posix_time::ptime &t )const;
    Minutes minAtHour( int h )const;
    void setMsgForTime( int hour, int min, bool flag );
 
@@ -294,8 +295,8 @@ public:
    }
 
    //Shall we generate bufr for this hour
-   bool msgForThisTime( const miutil::miTime &t )const{
-      if( t.undef() )
+   bool msgForThisTime( const boost::posix_time::ptime  &t )const{
+      if( t.is_special() )
          return false;
 
       if(!msgtimes_)
@@ -443,7 +444,7 @@ private:
    bool           copy_;
    std::string    copyto_;
    std::string    owner_;
-   miutil::miTime delayUntil_;
+   boost::posix_time::ptime delayUntil_;
    static std::string  debugdir_;
    milog::LogLevel loglevel_;
    bool            cacheReloaded48_;
@@ -502,6 +503,12 @@ public:
 
    TLongList definedStationID()const { return definedStationid_;}
    bool      hasDefinedStationId(long stid)const;
+
+   /**
+    * Is this station definition defined for stationid and typeid at hour.
+    * If hour<0 ignore the hour, \see hasTypeId.
+    */
+   bool      hasDefinedStationIdAndTypeId(long stid, long tid, int hour=-1)const;
 
    /**
    * The stationid is set if the station definition comes from
@@ -569,7 +576,7 @@ public:
    * \brief Do we have typeID in the list of typeriority_.
    *
    * \param hour Return the a list of typeis's that is valid for
-   *             the hour \a hour. A negativ value mins all typeids.
+   *             the hour \a hour. A negative value means all typeids.
    * \return true if \em typeID is in the list of types we shall
    *         use data from when encoding SYNOP. false othewise.
    */
@@ -578,12 +585,12 @@ public:
    /**
    *  \brief Setter function to set the delay.
    */
-   void delayUntil(const miutil::miTime &delay){ delayUntil_=delay; }
+   void delayUntil(const boost::posix_time::ptime &delay){ delayUntil_=delay; }
 
    /**
    * \brief Getter function to get the delay.
    */
-   miutil::miTime delayUntil()const { return delayUntil_;}
+   boost::posix_time::ptime delayUntil()const { return delayUntil_;}
 
 
    /**
@@ -603,9 +610,9 @@ public:
    *                            data for for a given bufr time.
    * \return Return the minutes to delay, if 0 do not delay.
    */
-   int delay( const miutil::miTime &t, bool &force, bool &relativToFirst)const;
+   int delay( const boost::posix_time::ptime &t, bool &force, bool &relativToFirst)const;
 
-   bool msgForTime( const miutil::miTime &t )const;
+   bool msgForTime( const boost::posix_time::ptime &t )const;
 
    friend std::ostream& operator<<(std::ostream& ost,
                                    const StationInfo& sd);
@@ -667,7 +674,12 @@ public:
       StationList();
       ~StationList();
 
-      StationInfoList findStation( int stationid )const;
+      /**
+       * Find all stations that has defined stationid, typeid and hour in obstime.
+       *  - If typeId is 0 ignore typeid and obstime.
+       *  - If obstime is undefined ignore hour.
+       */
+      StationInfoList findStation( long stationid, long typeId=0, const boost::posix_time::ptime &obstime=boost::posix_time::ptime() )const;
       StationInfoList findStationByWmono( int wmono )const;
       StationInfoList findStationById( int stationid )const;
       StationInfoList findStationByCallsign( const std::string &callsign )const;

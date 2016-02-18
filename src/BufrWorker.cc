@@ -36,13 +36,14 @@
 #include <fstream>
 #include <list>
 #include <iomanip>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/crc.hpp>
-#include <boost/cstdint.hpp>
+#include "boost/filesystem.hpp"
+#include "boost/filesystem/fstream.hpp"
+#include "boost/crc.hpp"
+#include "boost/cstdint.hpp"
+#include "miutil/timeconvert.h"
+#include "milog/milog.h"
+#include "kvalobs/kvPath.h"
 #include "App.h"
-#include <milog/milog.h>
-#include <kvalobs/kvPath.h>
 #include "kvDbGateProxy.h"
 #include "Data.h"
 #include "StationInfo.h"
@@ -59,13 +60,12 @@ using namespace miutil;
 using namespace milog;
 
 namespace fs = boost::filesystem;
-
+namespace pt = boost::posix_time;
 
 
 BufrWorker::BufrWorker(App &app_,
-                       dnmi::thread::CommandQue &que_,
-                       dnmi::thread::CommandQue &replayQue_)
-: app(app_), que(que_), replayQue(replayQue_),
+                       std::shared_ptr<dnmi::thread::CommandQue> que_)
+: app(app_), que(que_),
   swmsg(*(new std::ostringstream())),
   encodeBufrManager( new EncodeBufrManager() )
 {
@@ -83,7 +83,7 @@ BufrWorker::operator()()
 
    while(!app.shutdown()){
       try{
-         com=que.get(1);
+         com=que->get(1);
       }
       catch(dnmi::thread::QueSuspended &e){
          LOGDEBUG6("EXCEPTION(QueSuspended): Input que is susspended!" << endl);
@@ -106,9 +106,8 @@ BufrWorker::operator()()
       }
 
       LOGINFO("New observation: ("<<event->stationInfo()->toIdentString() << ") "
-              << event->obstime() << " regenerate: "
-              << (event->regenerate()? "T":"F") << " client: "
-              << (event->hasCallback()?"T":"F"));
+              << pt::to_kvalobs_string(event->obstime()) << " regenerate: "
+              << (event->regenerate()? "T":"F") );
 
       try{
          FLogStream *logs=new FLogStream(2, 307200); //300k
@@ -124,9 +123,8 @@ BufrWorker::operator()()
             //Log to stationspecific logfile also.
             LOGINFO("+++++++ Start processing observation +++++++" << endl
                     << "New observation: ("<<event->stationInfo()->toIdentString() << ") "
-                    << event->obstime() << " regenerate: "
-                    << (event->regenerate()? "T":"F") << " client: "
-                    << (event->hasCallback()?"T":"F"));
+                    << pt::to_kvalobs_string(event->obstime()) << " regenerate: "
+                    << (event->regenerate()? "T":"F") );
          }else{
             LOGERROR("Cant open the logfile <" << ost.str() << ">!");
             delete logs;
@@ -147,11 +145,7 @@ BufrWorker::operator()()
                   "BufrWorker::newObs" << endl);
       }
 
-      if(event->hasCallback()){
-         replayQue.postAndBrodcast(event);
-      }else{
-         delete event;
-      }
+      delete event;
 
       LOGINFO("------- End processing observation -------");
 
@@ -174,13 +168,13 @@ readyForBufr( const DataEntryList &data,
    int  delayMin;
    bool relativToFirst;
 
-   miTime obstime=e.obstime();
+   pt::ptime obstime=e.obstime();
    StationInfoPtr info=e.stationInfo();
 
    milog::LogContext context("readyForBufr");
 
-   miTime delayTime;
-   miTime nowTime(miTime::nowTime());
+   pt::ptime delayTime;
+   pt::ptime nowTime(pt::second_clock::universal_time());
 
    haveAllTypes=checkTypes(data, info, obstime, mustHaveTypes);
    delayMin = info->delay( obstime, force, relativToFirst);
@@ -203,7 +197,6 @@ readyForBufr( const DataEntryList &data,
       return false;
    }
 
-
    if( delayMin > 0 ){
       if(relativToFirst){
          //If we allready have a registred waiting element dont replace it.
@@ -213,9 +206,8 @@ readyForBufr( const DataEntryList &data,
          if(haveAllTypes)
             return true;
 
-
          delayTime=nowTime;
-         delayTime.addMin( delayMin );
+         delayTime += pt::minutes( delayMin );
          WaitingPtr wp=e.waiting();
 
          if(!wp){
@@ -242,7 +234,7 @@ readyForBufr( const DataEntryList &data,
             }
          }
       }else{ //Delay relative to obstime.
-         delayTime=miTime(obstime.date(),miClock(obstime.hour(), delayMin, 0));
+         delayTime=pt::ptime(obstime.date(),pt::time_duration(obstime.time_of_day().hours(), delayMin, 0));
       }
    }
 
@@ -298,8 +290,8 @@ readyForBufr( const DataEntryList &data,
 
 
 /*
-  If the event has a callback registred we write some error
-  message that can be returned to the celler.
+  If the event has a callback registered we write some error
+  message that can be returned to the caller.
  */
 void 
 BufrWorker::
@@ -319,20 +311,10 @@ newObs(ObsEvent &event)
    info=event.stationInfo();
 
    if( !info->msgForTime( event.obstime() ) ){
-
-
-      LOGINFO("Skip BUFR for time: " << event.obstime() << " " <<
+      LOGINFO("Skip BUFR for time: " << pt::to_kvalobs_string(event.obstime()) << " " <<
               info->toIdentString() );
-      swmsg << "Skip BUFR for time: " << event.obstime() << " " <<
+      swmsg << "Skip BUFR for time: " << pt::to_kvalobs_string(event.obstime()) << " " <<
             info->toIdentString();
-
-
-      if(event.hasCallback()){
-         event.msg() << "Skip BUFR for time: " << event.obstime() <<
-               " " << info->toIdentString();
-         event.bufr("");
-         event.isOk(false);
-      }
 
       return;
    }
@@ -346,7 +328,7 @@ newObs(ObsEvent &event)
       list<TblBufr> tblBufrList;
 
       LOGINFO("Regenerate event: " << info->toIdentString() << ", obstime " <<
-              event.obstime());
+              pt::to_kvalobs_string(event.obstime()));
 
       if(app.getSavedBufrData(info,
                               event.obstime(),
@@ -371,26 +353,7 @@ newObs(ObsEvent &event)
    dataRes=readData( event, data);
 
    if(dataRes!=RdOK){
-      if(event.hasCallback()){
-         event.isOk(false);
-
-         switch(dataRes){
-         case RdNoStation:
-            event.msg() << "NOSTATION: No station configured!";
-            break;
-         case RdNoData:
-            event.msg() << "NODATA: No data!";
-            break;
-         case RdMissingObstime:
-            event.msg() << "MISSING OBSTIME: No data for the obstime!";
-            break;
-         default:
-            event.msg() << "READERROR: cant read data!";
-            break;
-         }
-      }
-
-      swmsg << event.msg().str();
+     swmsg << event.msg().str();
 
       return;
    }
@@ -406,13 +369,13 @@ newObs(ObsEvent &event)
       //Don't delay a observation that is explicit asked for.
       //A BUFR that is explicit asked for has a callback.
 
-      if(!event.hasCallback() && !readyForBufr(data, event)){
+      if( !readyForBufr(data, event)){
          return;
       }
    }
 
-   //Check if shall test for continuesTypes. We do that
-   //if we have now Waiting pointer or we have a Waiting pointer
+   //Check if we shall test for continuesTypes. We do that
+   //if we have no Waiting pointer or we have a Waiting pointer,
    //but it has not been tested for waiting on continues data.
    if(!checkContinuesTypes(event, data)){
       return;
@@ -421,7 +384,7 @@ newObs(ObsEvent &event)
    app.removeWaiting(info, event.obstime() );
 
    LOGINFO("ReadData: " << info->toIdentString() << " obstime: " <<
-           event.obstime() << " # " << data.size());
+           pt::to_kvalobs_string(event.obstime()) << " # " << data.size());
 
    try{
       loadBufrData( data, bufrData, event.stationInfo());
@@ -442,7 +405,7 @@ newObs(ObsEvent &event)
            "Time(s): " << endl << ost.str());
 
    if( bufrData.firstTime() != event.obstime() ) {
-	   LOGWARN( "NO data at '" << event.obstime() << "' passed the valid checks. Skipping BUFR generation.");
+	   LOGWARN( "NO data at '" << pt::to_kvalobs_string(event.obstime()) << "' passed the valid checks. Skipping BUFR generation.");
 	   return;
    }
 
@@ -452,7 +415,7 @@ newObs(ObsEvent &event)
          ccx=tblBufrList.front().ccx();
          oldcrc=tblBufrList.front().crc();
          ++ccx;
-         LOGDEBUG("A BUFR for: " << info->toIdentString() << " obstime: " << event.obstime()
+         LOGDEBUG("A BUFR for: " << info->toIdentString() << " obstime: " << pt::to_kvalobs_string(event.obstime())
                   << " exist. ccx=" << ccx-1 << " crc: " << oldcrc );
       }
    }
@@ -466,7 +429,7 @@ newObs(ObsEvent &event)
       LOGWARN("EXCEPTION: Cant resolve for BUFR id: " << info->toIdentString() <<
                              " obstime: "  <<
                              ((bufrData.begin()!=bufrData.end())?
-                                   bufrData.begin()->time().isoTime():"(NULL)") << endl <<
+                                   pt::to_kvalobs_string(bufrData.begin()->time()):"(NULL)") << endl <<
                                    "what: " << e.what() << endl);
       swmsg << "Cant create a bufr!" << endl;
    }
@@ -474,7 +437,7 @@ newObs(ObsEvent &event)
       LOGWARN("EXCEPTION: No template implemmented for: " << info->toIdentString() <<
                        " obstime: "  <<
                        ((bufrData.begin()!=bufrData.end())?
-                             bufrData.begin()->time().isoTime():"(NULL)") << endl <<
+                             pt::to_kvalobs_string(bufrData.begin()->time()):"(NULL)") << endl <<
                              "what: " << e.what() << endl);
                swmsg << "Cant create a bufr!" << endl;
    }
@@ -482,14 +445,14 @@ newObs(ObsEvent &event)
       LOGWARN("EXCEPTION: out_of_range: " << info->toIdentString() <<
               " obstime: "  <<
               ((bufrData.begin()!=bufrData.end())?
-                    bufrData.begin()->time().isoTime():"(NULL)") << endl <<
+                    pt::to_kvalobs_string(bufrData.begin()->time()):"(NULL)") << endl <<
                     "what: " << e.what() << endl);
       swmsg << "Cant create a bufr!" << endl;
    }
    catch(DataListEntry::TimeError &e){
       LOGWARN("Exception: TimeError: " << info->toIdentString() << " obstime: "  <<
               ((bufrData.begin()!=bufrData.end())?
-                    bufrData.begin()->time().isoTime():"(NULL)") << endl<<
+                    pt::to_kvalobs_string(bufrData.begin()->time()):"(NULL)") << endl<<
                     "what: " << e.what() << endl);
       swmsg << "Cant create a bufr!" << endl;
    }
@@ -497,7 +460,7 @@ newObs(ObsEvent &event)
          LOGWARN("EXCEPTION: logic_error: " << info->toIdentString() <<
                      " obstime: "  <<
                      ((bufrData.begin()!=bufrData.end())?
-                           bufrData.begin()->time().isoTime():"(NULL)") << endl <<
+                           pt::to_kvalobs_string(bufrData.begin()->time()):"(NULL)") << endl <<
                            "what: " << e.what() << endl);
              swmsg << "Cant create a bufr!" << endl;
       }
@@ -505,22 +468,13 @@ newObs(ObsEvent &event)
       LOGWARN("EXCEPTION(Unknown): Unexpected exception in Bufr::doBufr:" <<
               endl << " station: " << info->toIdentString() << " obstime: "  <<
               ((bufrData.begin()!=bufrData.end())?
-                    bufrData.begin()->time().isoTime():"(NULL)") << endl);
+                    pt::to_kvalobs_string(bufrData.begin()->time()):"(NULL)") << endl);
       swmsg << "Cant create a bufr!" << endl;
    }
 
    if(! bufr ){
-      if(event.hasCallback()){
-         event.isOk(false);
-
-         if(bufrData.size()==0)
-            event.msg() << "NODATA:(" << event.obstime() <<") cant create bufr!";
-         else
-            event.msg() << "BUFR ERROR:(" << event.obstime() <<") cant create bufr!";
-      }
-
       LOGERROR("Cant create BUFR for <"<< info->toIdentString()<<"> obstime: " <<
-               event.obstime());
+               pt::to_kvalobs_string(event.obstime()));
       swmsg << "Cant create a BUFR!" << endl;
    }else{
       boost::uint16_t crc=bufr->crc();
@@ -529,7 +483,7 @@ newObs(ObsEvent &event)
       bool newBufr( crc != oldcrc );
 
       if(newBufr){
-         miTime createTime(miTime::nowTime());
+         pt::ptime createTime(pt::second_clock::universal_time());
          ostringstream dataOst;
 
          bufrData.writeTo( dataOst );
@@ -545,28 +499,17 @@ newObs(ObsEvent &event)
                          << ccx << " crc: " << crc );
              }
 
-             swmsg << "New BUFR created. (" << info->toIdentString() << ") " << event.obstime() << endl;
+             swmsg << "New BUFR created. (" << info->toIdentString() << ") " << pt::to_kvalobs_string(event.obstime()) << endl;
          }
       }else{
          LOGINFO("DUPLICATE: (" << info->toIdentString() << ") "
-                 << event.obstime());
+                 << pt::to_kvalobs_string(event.obstime()));
 
          swmsg << "Duplicate BUFR created. (" <<  info->toIdentString() << ") "
-               << event.obstime() << endl;
-
-         if(event.hasCallback())
-            event.msg() << "DUPLICATE: (" << info->toIdentString() << ") "
-            << event.obstime();
-
+               << pt::to_kvalobs_string(event.obstime()) << endl;
       }
 
       ost.str("");
-
-      if(event.hasCallback()){
-         //If we have a callback registred. Return the bufr
-         event.bufr( base64 );
-         event.isOk(true);
-      }
    }
 }
 
@@ -582,8 +525,8 @@ BufrWorker::readData( ObsEvent             &event,
    StationInfo::TLongList          stIDs;
    StationInfo::RITLongList        itStId;
    StationInfoPtr                  station=event.stationInfo();
-   miutil::miTime                  from(event.obstime());
-   miutil::miTime                  to(event.obstime());
+   pt::ptime                  from(event.obstime());
+   pt::ptime                  to(event.obstime());
    bool                            hasObstime=false;
    kvdatacheck::Validate validate( kvdatacheck::Validate::UseOnlyUseInfo );
 
@@ -594,7 +537,7 @@ BufrWorker::readData( ObsEvent             &event,
 
    gate.busytimeout(120);
 
-   from.addHour( -24 );
+   from -= pt::hours( 24 );
 
    stIDs=station->definedStationID();
    itStId=stIDs.rbegin();
@@ -608,8 +551,8 @@ BufrWorker::readData( ObsEvent             &event,
       ost.str("");
       ost << " where stationid=" << *itStId
             << " AND "
-            << " obstime>=\'"      << from.isoTime() << "\' AND "
-            << " obstime<=\'"      << to.isoTime()   << "\'"
+            << " obstime>=\'"      << pt::to_kvalobs_string(from) << "\' AND "
+            << " obstime<=\'"      << pt::to_kvalobs_string(to)   << "\'"
             << " order by obstime, typeid;";
 
       LOGDEBUG("query: " << ost.str());
@@ -655,10 +598,10 @@ BufrWorker::readData( ObsEvent             &event,
 
    if(it!=data.end()){
       ostringstream ost;
-      ost << "First obstime: " << it->obstime() << " - ";
+      ost << "First obstime: " << pt::to_kvalobs_string(it->obstime()) << " - ";
       it=data.end();
       it--;
-      ost << it->obstime();
+      ost << pt::to_kvalobs_string(it->obstime());
       LOGDEBUG(ost.str());
    }else{
       LOGWARN("No data in the cache for the station!");
@@ -666,7 +609,7 @@ BufrWorker::readData( ObsEvent             &event,
    }
 
    if(!hasObstime){
-      LOGERROR("No data for the obstime: " << event.obstime());
+      LOGERROR("No data for the obstime: " << pt::to_kvalobs_string(event.obstime()));
       return RdMissingObstime;
    }
 
@@ -687,7 +630,7 @@ bool
 BufrWorker::
 checkTypes(const DataEntryList  &data, 
            StationInfoPtr stInfo,
-           const miutil::miTime obstime,
+           const pt::ptime &obstime,
            bool           &mustHaveTypes)const
 {
    StationInfo::TLongList          tids=stInfo->typepriority();
@@ -697,12 +640,12 @@ checkTypes(const DataEntryList  &data,
    mustHaveTypes=false;
 
    if(dit==data.end()){
-      LOGDEBUG("checkTypes: No data for: " << stInfo->toIdentString() << " obstime: " << obstime);
+      LOGDEBUG("checkTypes: No data for: " << stInfo->toIdentString() << " obstime: " << pt::to_kvalobs_string(obstime));
       return false;
    }
 
    if(dit->obstime()!=obstime){
-      LOGDEBUG("checkTypes: No data for obstime: " << obstime <<  " station: " << stInfo->toIdentString());
+      LOGDEBUG("checkTypes: No data for obstime: " << pt::to_kvalobs_string(obstime) <<  " station: " << stInfo->toIdentString());
       return false;
    }
 
@@ -789,7 +732,7 @@ saveTo( StationInfoPtr info,
       return true;
    }
    catch( const std::exception &ex ) {
-      LOGERROR("Failed to encode to BUFR: " << info->toIdentString() << " obstime: " << bufr->time() << ". Reason: " << ex.what());
+      LOGERROR("Failed to encode to BUFR: " << info->toIdentString() << " obstime: " << pt::to_kvalobs_string(bufr->time()) << ". Reason: " << ex.what());
       return false;
    }
    return false;
@@ -810,7 +753,7 @@ checkContinuesTypes(ObsEvent &event,
       return true;
    }
 
-   if((event.obstime().hour()%3)!=0){
+   if((event.obstime().time_of_day().hours()%3)!=0){
       //Just interested in bufrtimes that use data from
       //multiple hours.
 
@@ -829,8 +772,8 @@ checkContinuesTypes(ObsEvent &event,
 
    if(!data.hasContinuesTimes(contTypes, 4)){
       if(!w){
-         miutil::miTime now(miutil::miTime::nowTime());
-         now.addMin(5);
+         pt::ptime now(pt::second_clock::universal_time());
+         now += pt::minutes(5);
 
          try{
             w=WaitingPtr(new Waiting(now, event.obstime(), info, true));
@@ -846,9 +789,9 @@ checkContinuesTypes(ObsEvent &event,
       app.addWaiting(w, true );
 
       LOGINFO("Waiting on continues data: " << info->toIdentString() <<
-              " obstime: " << event.obstime() << " delay: " << w->delay());
+              " obstime: " << pt::to_kvalobs_string(event.obstime()) << " delay: " << pt::to_kvalobs_string(w->delay()));
 
-      swmsg << "Waiting on continues data until: " << w->delay();
+      swmsg << "Waiting on continues data until: " << pt::to_kvalobs_string(w->delay());
 
       return false;
    }

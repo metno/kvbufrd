@@ -29,12 +29,11 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include <time.h>
-#include <kvDbGateProxy.h>
 #include <sstream>
+#include "kvDbGateProxy.h"
 //#include <milog/milog.h>
 
 using namespace std;
-using namespace miutil;
 using namespace dnmi::db;
 
 

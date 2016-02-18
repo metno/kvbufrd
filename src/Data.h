@@ -34,16 +34,17 @@
 #include <set>
 #include <iostream>
 #include <string>
-#include <kvalobs/kvData.h>
-#include <kvalobs/kvDataFlag.h>
-#include <kvalobs/kvDbBase.h>
-#include "defines.h"
+#include "boost/date_time/posix_time/ptime.hpp"
+#include "kvalobs/kvData.h"
+#include "kvalobs/kvDataFlag.h"
+#include "kvalobs/kvDbBase.h"
+
 
 class Data : public kvalobs::kvDbBase {
 private:
 	int              stationid_;
-	miutil::miTime   obstime_;
-	miutil::miTime   tbtime_;
+	boost::posix_time::ptime obstime_;
+	boost::posix_time::ptime tbtime_;
 	std::string      original_;
 	int              paramid_;
 	int              typeid_;
@@ -60,7 +61,7 @@ public:
 	Data(const kvalobs::kvData &data){ set(data);}
 	Data(const dnmi::db::DRow &r){set(r);}
 	Data(int                      pos,
-			const miutil::miTime    &obt,
+			const boost::posix_time::ptime &obt,
 			const std::string       &org,
 			int                      par,
 			int                      typ,
@@ -71,7 +72,7 @@ public:
 	{ set(pos, obt, org, par, typ, sen, lvl, controlinfo, useinfo);}
 
 	bool set(int                      pos,
-			const miutil::miTime    &obt,
+			const boost::posix_time::ptime &obt,
 			const std::string       &org,
 			int                      par,
 			int                      typ,
@@ -87,19 +88,13 @@ public:
 
 	const char* tableName() const {return "data";}
 
-#ifdef __WITH_PUTOOLS__
-	miutil::miString toSend()   const;
-	miutil::miString toUpdate() const;
-	miutil::miString uniqueKey() const;
-#else
 	std::string toSend()   const;
 	std::string toUpdate() const;
 	std::string uniqueKey() const;
-#endif
 
 	int              stationID()   const { return stationid_;  }
-	miutil::miTime   obstime()     const { return obstime_;    }
-	miutil::miTime   tbtime()      const { return tbtime_;    }
+	boost::posix_time::ptime obstime()     const { return obstime_;    }
+	boost::posix_time::ptime tbtime()      const { return tbtime_;    }
 	std::string      original()    const { return original_;   }
 	int              paramID()     const { return paramid_;    }
 	int              typeID()      const { return typeid_;     }
@@ -112,13 +107,15 @@ public:
 									 const Data& data );
 };
 
+std::list<Data> kvDataToData( const std::list<kvalobs::kvData> &data);
+
 struct DataKey {
    int              stationid_;
    int              typeid_;
    int              paramid_;
    int              sensor_;
    int              level_;
-   miutil::miTime   obstime_;
+   boost::posix_time::ptime obstime_;
 
    DataKey( const kvalobs::kvData &data );
    bool operator<(const DataKey &dk )const;

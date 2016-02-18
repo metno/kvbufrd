@@ -63,9 +63,9 @@ encode( )
 {
    float t_ww;
 
-   if( (obstime.hour()%6) == 0 )
+   if( (obstime.time_of_day().hours()%6) == 0 )
       t_ww = -6;
-   else if( (obstime.hour()%3) == 0 )
+   else if( (obstime.time_of_day().hours()%3) == 0 )
       t_ww = -3;
    else
       t_ww = FLT_MAX;
