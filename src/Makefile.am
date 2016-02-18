@@ -3,21 +3,10 @@ SUBDIRS = gtest bufr
 AM_CPPFLAGS = \
    -D_REENTRANT \
    $(kvsubscribe_CFLAGS) \
-	$(kvcpp_CFLAGS) \
+	-I${KVINCLUDEDIR}/kvalobs/kvskel \
 	$(putools_CFLAGS) \
    $(BOOST_CPPFLAGS) \
    $(omniORB4_CFLAGS)  
-
-
-nodist_idl_sources=kvbufrd.idl 
-
-
-CLEANFILES = $(nodist_idl_sources:.idl=SK.cc) $(nodist_idl_sources:.idl=.hh) 
-
-
-%SK.cc %.hh: %.idl
-#	$(IDL) -bcxx -Wbinline -I$(KVIDLDIR) $<
-	$(IDL) -bcxx -I$(KVIDLDIR) $<
 
 clean-local:
 	if [ -d bufrtables ]; then\
@@ -26,15 +15,15 @@ clean-local:
 
 noinst_PROGRAMS = base64Test
 
-#bin_PROGRAMS = kvbufrd kvbufrclt kvbufrdbclt kvbufrdparse
 bin_PROGRAMS = kvbufrd kvbufrdbclt  kvbufrdparse
 
 kvbufrd_SOURCES = \
+   kvevents.h \
    KvDataConsumer.h KvDataConsumer.cc \
    KvObsData.h KvObsData.cc \
    DbQuery.h DbQuery.cc \
-	kvbufrd.cc \
-	App.cc App.h \
+   kvbufrd.cc \
+   App.cc App.h \
    DataReceiver.cc DataReceiver.h \
    Data.cc Data.h \
    BufrWorker.cc BufrWorker.h \
@@ -67,7 +56,6 @@ kvbufrd_SOURCES = \
    Strerror.cc Strerror.h \
    isDirWithWritePermission.cc isDirWithWritePermission.h \
    dbhelper.cc dbhelper.h
-                  
  
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
@@ -75,7 +63,6 @@ if KVSTATIC
 kvbufrd_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
 kvbufrd_LDADD = \
 	$(top_builddir)/src/bufr/libbufr.la \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_corbahelper.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miconfparser.a \
@@ -98,16 +85,16 @@ kvbufrd_LDADD = \
 	-lrdkafka \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
-   $(BOOST_FILESYSTEM_LIB) \
-   $(BOOST_DATE_TIME_LIB) \
-   $(BOOST_SYSTEM_LIB) \
-   $(top_builddir)/ecmwf/libbufr.a \
-   -lgfortran -lm -ldl
+        $(BOOST_FILESYSTEM_LIB) \
+        $(BOOST_DATE_TIME_LIB) \
+        $(BOOST_SYSTEM_LIB) \
+        $(top_builddir)/ecmwf/libbufr.a \
+        -lgfortran -lm -ldl
 else
 kvbufrd_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
 kvbufrd_LDADD = \
-   	$(top_builddir)/src/bufr/libbufr.la \
-	$(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
+    $(top_builddir)/src/bufr/libbufr.la \
+    $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
     $(BOOST_FILESYSTEM_LIB) \
     $(BOOST_DATE_TIME_LIB) \
     $(BOOST_SYSTEM_LIB) \
@@ -118,8 +105,6 @@ endif
 
 EXTRA_DIST = kvbufrd_schema.sql 
 
- 
-                   
 kvbufrdbclt_SOURCES = kvbufrdbclt.cc \
                        tblBufr.cc tblBufr.h
 kvbufrdbclt_LDFLAGS = -pthread $(BOOST_LDFLAGS)
@@ -147,11 +132,11 @@ kvbufrdbclt_LDADD = \
 else
 kvbufrdbclt_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
 kvbufrdbclt_LDADD = \
-   $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
+   $(kvsubscribe_LIBS) $(putools_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
    $(BOOST_SYSTEM_LIB) \
    -lm -ldl
 endif                     
-                     
+
 kvbufrdparse_SOURCES = kvbufrdparse.cc \
                         StationInfo.cc StationInfo.h \
                         parseMilogLogLevel.cc parseMilogLogLevel.h \
@@ -182,7 +167,7 @@ kvbufrdparse_LDADD = \
 else
 kvbufrdparse_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
 kvbufrdparse_LDADD = \
-   $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
+   $(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
    $(BOOST_SYSTEM_LIB) \
    -lm
 endif                     
@@ -212,7 +197,7 @@ kvBufrEncodeTest_SOURCES= \
 	DataElementList.cc DataElementList.h \
 	BufrData.cc BufrData.h \
 	StationInfo.cc StationInfo.h \
-    StationInfoParse.cc StationInfoParse.h \
+        StationInfoParse.cc StationInfoParse.h \
 	bufr.cc bufr.h \
 	Validate.cc Validate.h \
 	InitLogger.cc InitLogger.h \
@@ -223,7 +208,7 @@ kvBufrEncodeTest_SOURCES= \
 	scanstring.cc scanstring.h \
 	SemiUniqueName.cc SemiUniqueName.h \
 	Strerror.cc Strerror.h \
-   isDirWithWritePermission.cc isDirWithWritePermission.h
+        isDirWithWritePermission.cc isDirWithWritePermission.h
 
 kvBufrEncodeTest_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 
@@ -235,7 +220,7 @@ kvBufrEncodeTest_CPPFLAGS = \
 	$(gtest_CFLAGS) \
 	-DTESTDATADIR="\""$(top_srcdir)/src/test"\""\
 	-DBUFRTBLDIR="\""$(BUFRTABLES)"\""
-	
+
 #    -DBUFRTBLDIR="\""$(top_builddir)/src/bufrtables"\""
 #-DBUFRTBLDIR="\""$(top_srcdir)/share/bufrtables"\""
 
@@ -269,7 +254,7 @@ kvBufrEncodeTest_CPPFLAGS = \
 	$(gtest_CFLAGS) \
 	-DTESTDATADIR="\""$(top_srcdir)/src/test"\""\
 	-DBUFRTBLDIR="\""$(BUFRTABLES)"\""
-	
+
 #	 -DBUFRTBLDIR="\""$(top_builddir)/src/bufrtables"\""
 #    -DBUFRTBLDIR="\""$(top_srcdir)/share/bufrtables"\""
 

@@ -1,7 +1,7 @@
 AM_CPPFLAGS = \
 	-D_REENTRANT \
    -I$(top_srcdir)/src \
-	$(kvcpp_CFLAGS) \
+	$(kvsubscribe_CFLAGS) \
 	$(putools_CFLAGS) \
    $(BOOST_CPPFLAGS) \
    $(omniORB4_CFLAGS)  
@@ -53,7 +53,7 @@ kvbufrconf_LDADD = \
 else
 kvbufrconf_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
 kvbufrconf_LDADD = \
-	$(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
+	$(kvsubscribe_LIBS) $(putools_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
 	$(BOOST_SYSTEM_LIB) \
    -lm -ldl
 endif
