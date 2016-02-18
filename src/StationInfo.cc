@@ -31,12 +31,14 @@
 #include <float.h>
 #include <limits.h>
 #include <vector>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-//#include <miutil/replace.h>
+#include <algorithm>
+#include "miutil/timeconvert.h"
+#include "boost/lexical_cast.hpp"
+#include "boost/algorithm/string.hpp"
 #include "StationInfo.h"
 
 namespace b=boost;
+namespace pt=boost::posix_time;
 using namespace std;
 
 namespace {
@@ -204,13 +206,13 @@ count()const
 
 bool
 MsgTime::
-msgForTime( const miutil::miTime & t )const
+msgForTime( const pt::ptime &t )const
 {
-   if( ! hours_.test( t.hour() ) )
+   if( ! hours_.test( t.time_of_day().hours() ) )
       return false;
 
-   Minutes min=minAtHour( t.hour() );
-   return min.test( t.min() );
+   Minutes min=minAtHour( t.time_of_day().hours() );
+   return min.test( t.time_of_day().minutes() );
 }
 
 bool
@@ -691,6 +693,13 @@ hasDefinedStationId(long stid)const
    return false;
 }
 
+
+bool
+StationInfo::
+hasDefinedStationIdAndTypeId(long stid, long tid, int hour)const{
+  return hasDefinedStationId(stid) && hasTypeId( tid, hour);
+}
+
 StationInfo::TLongList 
 StationInfo::
 typepriority(int hour)const
@@ -793,12 +802,12 @@ mustHaveType( int typeid_, int hour )const
 
 bool
 StationInfo::
-msgForTime( const miutil::miTime &t)const
+msgForTime( const pt::ptime &t)const
 {
-   if( t.undef() )
+   if( t.is_special() )
       return false;
 
-   TLongList tp=typepriority( t.hour() );
+   TLongList tp=typepriority( t.time_of_day().hours() );
 
    //Check to see if we have any types for this hour.
    if(tp.size()==0)
@@ -812,7 +821,7 @@ msgForTime( const miutil::miTime &t)const
 
    //TODO: For now. Only return true if the obstime is on a full hour.
 
-   return t.min()==0;
+   return t.time_of_day().minutes()==0;
    //return true;
 }
 
@@ -837,13 +846,13 @@ codeToString()const
 
 int
 StationInfo::
-delay( const miutil::miTime &t,
+delay( const pt::ptime &t,
        bool &force,  bool &relativToFirst)const
 {
-   if( t.undef() )
+   if( t.is_special() )
       return 0;
 
-   bool         stime=t.hour()%3==0; //Is it a WMO standard time.
+   bool         stime=t.time_of_day().hours()%3==0; //Is it a WMO standard time.
    CITDelayList it=delayList_.begin();
 
    relativToFirst=false;
@@ -852,7 +861,7 @@ delay( const miutil::miTime &t,
       return 0;
 
    for( ;it!=delayList_.end(); it++){
-      if(it->hour()==t.hour()){
+      if(it->hour()==t.time_of_day().hours()){
          break;
       }else if(it->hour()<0){
          if(stime){
@@ -1247,10 +1256,10 @@ operator<<(std::ostream& ost,
    ost << endl;
 
    ost << "     delayUntil: ";
-   if(sd.delayUntil_.undef())
+   if(sd.delayUntil_.is_special())
       ost << "UNDEF";
    else
-      ost << sd.delayUntil_;
+      ost << pt::to_kvalobs_string(sd.delayUntil_);
 
    ost << endl;
    ost << "             latitude: " << printOut( sd.latitude_) << endl;
@@ -1346,19 +1355,19 @@ StationList::
 {
 }
 
-StationInfoList
-StationList::
-findStation( int stationid )const
-{
-   StationInfoList ret;
-   for( StationList::const_iterator it=begin();
-         it != end(); ++it ) {
-      if((*it)->hasDefinedStationId(stationid)){
-         ret.push_back( *it );
-      }
-   }
+StationInfoList StationList::findStation(long sid, long tid, const boost::posix_time::ptime &obstime) const {
+  using std::for_each;
+  int h = obstime.is_special() ? -1 : obstime.time_of_day().hours();
+  StationInfoList r;
 
-   return ret;
+  if (tid == 0)
+    for_each(begin(), end(),
+             [=,&r](StationInfoPtr s) {if(s->hasDefinedStationId(sid)) r.push_back(s);});
+  else
+    for_each(begin(), end(),
+             [=,&r](StationInfoPtr s) {if(s->hasDefinedStationIdAndTypeId(sid, tid, h)) r.push_back(s);});
+
+  return r;
 }
 
 StationInfoList

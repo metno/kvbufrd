@@ -33,31 +33,38 @@
 #ifndef __kvbuffer_getdatathread_h__
 #define __kvbuffer_getdatathread_h__
 
-#include <boost/thread/thread.hpp>
+#include <memory>
+#include "boost/thread/thread.hpp"
+#include "boost/date_time/posix_time/ptime.hpp"
 
 class App;
 
 class GetData {
   	App                      &app;
-  	dnmi::thread::CommandQue &que;  
-  	miutil::miTime           fromTime;
+  	std::shared_ptr<dnmi::thread::CommandQue> que;
+  	boost::posix_time::ptime fromTime;
   	boost::shared_ptr<bool>  joinable_;
   	boost::shared_ptr<boost::thread> thread;
   	int                      wmono;
   	int                      hours;
 
   	void reloadAll(kvalobs::kvDbGateProxy &gate,
-		 		   const miutil::miTime &bufferFromTime);
+		 		   const boost::posix_time::ptime &bufferFromTime);
 
   	void reloadOne(kvalobs::kvDbGateProxy &gate,
-		           const miutil::miTime &bufferFromTime);
+		           const boost::posix_time::ptime &bufferFromTime);
+
+  	void reload(kvalobs::kvDbGateProxy    &gate,
+  	          const StationInfoPtr station,
+  	          const boost::posix_time::ptime &bufferFromTime);
+
 
  	public:
   		GetData(App &app,
-	  		    const miutil::miTime &fromTime,
+	  		    const boost::posix_time::ptime &fromTime,
 	  			int                  wmono,
 	  			int                  hours,
-	  			dnmi::thread::CommandQue &que);
+	  			std::shared_ptr<dnmi::thread::CommandQue> que);
 
   		void operator()();
  		bool joinable(){ return *joinable_; }

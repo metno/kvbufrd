@@ -34,15 +34,16 @@
 #include <math.h>
 #include <iostream>
 #include <fstream>
-#include <boost/assign/list_inserter.hpp>
-#include <miconfparser/miconfparser.h>
-#include <miutil/trimstr.h>
-#include <kvalobs/kvPath.h>
+#include "boost/assign/list_inserter.hpp"
+#include "boost/algorithm/string.hpp"
+#include "miconfparser/miconfparser.h"
+#include "miutil/trimstr.h"
+#include "kvalobs/kvPath.h"
 #include "Indent.h"
 #include "ConfMaker.h"
 #include "StationInfo.h"
 #include "splitstr.h"
-#include <StationInfoParse.h>
+#include "../StationInfoParse.h"
 
 using namespace std;
 using namespace kvalobs;

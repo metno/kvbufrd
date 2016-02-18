@@ -31,8 +31,10 @@
 #ifndef __tblStInfoSysNetworkStation_h__
 #define __tblStInfoSysNetworkStation_h__
 
-#include <kvalobs/kvDbBase.h>
-#include "defines.h"
+#include "boost/date_time/posix_time/ptime.hpp"
+#include "kvalobs/kvDbBase.h"
+
+namespace pt=boost::posix_time;
 
 class TblStInfoSysNetworkStation : public kvalobs::kvDbBase {
    int stationid_;
@@ -40,8 +42,8 @@ class TblStInfoSysNetworkStation : public kvalobs::kvDbBase {
    std::string name_;
    std::string externalStationcode_;
    std::string comment_;
-   miutil::miTime toTime_;
-   miutil::miTime fromTime_;
+   pt::ptime toTime_;
+   pt::ptime fromTime_;
 
   void createSortIndex();
 
@@ -62,23 +64,17 @@ public:
   void clean();
 
   const char* tableName() const {return "network_station";}
-#ifdef __WITH_PUTOOLS__
-  miutil::miString toSend()    const { return ""; } //NOT used
-  miutil::miString toUpdate()  const{ return ""; }  //NOT used
-  miutil::miString uniqueKey() const;
-#else
   std::string toSend()    const { return ""; } //NOT used
   std::string toUpdate()  const{ return ""; }  //NOT used
   std::string uniqueKey() const;
-#endif
 
   int stationid()const { return stationid_; }
   int networkid()const { return networkid_; }
   std::string name()const { return name_; }
   std::string externalStationcode()const { return externalStationcode_; }
   std::string comment()const { return comment_; }
-  miutil::miTime toTime()const { return toTime_; }
-  miutil::miTime fromTime()const { return fromTime_; }
+  pt::ptime toTime()const { return toTime_; }
+  pt::ptime fromTime()const { return fromTime_; }
 
   friend std::ostream& operator<<( std::ostream &o, const TblStInfoSysNetworkStation &nt);
 };

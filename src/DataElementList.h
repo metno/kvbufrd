@@ -36,10 +36,10 @@
 #include <list>
 #include <string>
 #include <sstream>
-#include <boost/cstdint.hpp>
-#include <boost/crc.hpp>
-#include <boost/thread/tss.hpp>
-#include <puTools/miTime.h>
+#include "boost/cstdint.hpp"
+#include "boost/crc.hpp"
+#include "boost/thread/tss.hpp"
+#include "boost/date_time/posix_time/ptime.hpp"
 #include "KvParam.h"
 
 
@@ -69,7 +69,7 @@ private:
    static boost::thread_specific_ptr<KvParamList> pParams;
    ParamListPtrHelper setParamPointer;
 
-  	miutil::miTime time_;
+  	boost::posix_time::ptime time_;
 
   	friend class DataElementList;
   	//  friend class BufrDataList::BufrDataProxy
@@ -194,10 +194,10 @@ private:
   	 * Removes data that only generates groups with slashes.
   	 */
 
-  	void           time(const miutil::miTime &t){time_=t;}
-  	miutil::miTime time()const{ return time_;}
+  	void           time(const boost::posix_time::ptime &t){time_=t;}
+  	boost::posix_time::ptime time()const{ return time_;}
 
-  	bool undef()const{ return time_.undef() || nSet == 0;}
+  	bool undef()const{ return time_.is_special() || nSet == 0;}
   	boost::uint16_t crc() const;
 
   	void writeTo( std::ostream &header, std::ostream &data, bool withId=true  )const;
@@ -223,7 +223,7 @@ class DataElementList{
   	//is ilegal c++. I cant see any reason why this shouldnt be allowed.
 
   	void setTime(std::list<DataElement>::iterator it,
-			     const miutil::miTime &t){ it->time_=t;}
+			     const boost::posix_time::ptime &t){ it->time_=t;}
 public:
   
   	class DataElementProxy{
@@ -231,12 +231,12 @@ public:
     	//to deceide if the array operator [] is used
     	//as a lvalue or a rvalue.
     
-    	DataElementList                  *sdl;
-    	miutil::miTime                 timeIndex;
+    	DataElementList          *sdl;
+    	boost::posix_time::ptime timeIndex;
     
   	public:
     	DataElementProxy(DataElementList *sdl_,
-					   const miutil::miTime &t)
+					   const boost::posix_time::ptime &t)
       		:sdl(sdl_), timeIndex(t){}
 
     	DataElementProxy& operator=(const DataElement &rhs); //used as lvalue use
@@ -254,9 +254,9 @@ public:
 
 
   	/**
-  	 * @return undef if list is empty.
+  	 * @return is_special if list is empty.
   	 */
-  	miutil::miTime firstTime() const;
+  	boost::posix_time::ptime firstTime() const;
 
   	/**
   	 * If used as a lvalue the BufrData record wil be inserted if it don't
@@ -267,8 +267,8 @@ public:
   	 * \exception std::out_of_range, used as rvalue, if there is now BufrData
   	 *            at timeIndex.
   	 */
-  	const DataElementProxy operator[](const miutil::miTime &timeIndex)const;
-  	DataElementProxy operator[](const miutil::miTime &timeIndex);
+  	const DataElementProxy operator[](const boost::posix_time::ptime &timeIndex)const;
+  	DataElementProxy operator[](const boost::posix_time::ptime &timeIndex);
   
   	/**
   	 * \exception std::out_of_range if index is not in [0, size()>
@@ -295,21 +295,21 @@ public:
   	 *         replace is false and there allready is a BufrData record at
   	 *         timeIndex.
   	 */
- 	 bool      insert(const miutil::miTime &timeIndex,
+ 	 bool      insert(const boost::posix_time::ptime &timeIndex,
 		   			  const DataElement &bd,
 		   			  bool replace=false);
 
   	int       size()const { return dataList.size();}
 
-  	IDataElementList find(const miutil::miTime &from);
-  	CIDataElementList find(const miutil::miTime &from)const;
+  	IDataElementList find(const boost::posix_time::ptime &from);
+  	CIDataElementList find(const boost::posix_time::ptime &from)const;
     
   	IDataElementList  begin(){ return dataList.begin();}
   	CIDataElementList begin()const{ return dataList.begin();}
   	IDataElementList  end(){ return dataList.end();}
   	CIDataElementList end()const { return dataList.end();}
 
-  	DataElementList subData( const miutil::miTime &from, const miutil::miTime &to=miutil::miTime() ) const;
+  	DataElementList subData( const boost::posix_time::ptime &from, const boost::posix_time::ptime &to=boost::posix_time::ptime() ) const;
 
   	DataElementList& operator=( const DataElementList &rhs );
 

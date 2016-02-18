@@ -31,8 +31,7 @@
 #ifndef __kvbuffer_tblKeyVal_h__
 #define __kvbuffer_tblKeyVal_h__
 
-#include <kvalobs/kvDbBase.h>
-#include "defines.h"
+#include "kvalobs/kvDbBase.h"
 
 class TblKeyVal : public kvalobs::kvDbBase {
 private:

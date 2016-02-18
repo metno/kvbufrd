@@ -27,7 +27,7 @@ db_get kvalobs/homedir && KV_HOME="$RET"
 
 #BINDIR, BIN and DIR must be in sync with the respectives variables in postrm.
 BINDIR="/usr/bin"
-BIN="check_kvbufrd.sh kvbufrclt kvbufrd kvbufrdbadmin kvbufrdbclt
+BIN="check_kvbufrd.sh kvbufrd kvbufrdbadmin kvbufrdbclt
      kvbufrd_initdb kvbufrdparse"
 
 KVBINDIR=""
@@ -39,8 +39,8 @@ DIRS="/usr/share/kvbufrd
       /var/lib/kvbufrd
       /var/lib/kvbufrd/bufr2norcom
       /var/lib/kvbufrd/bufr2norcom/tmp
-      /var/log/kvalobs/kvbufr/debug
-      /var/log/kvalobs/kvbufr
+      /var/log/kvalobs/kvbufrd/debug
+      /var/log/kvalobs/kvbufrd
       /var/run/kvalobs"     
 
 SQLLITE_DB="/var/lib/kvbufrd/kvbufrd.sqlite"

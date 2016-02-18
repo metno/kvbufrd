@@ -5,6 +5,6 @@ var/lib/kvbufrd
 var/lib/kvbufrd/bufr2norcom
 var/lib/kvbufrd/bufr2norcom/tmp
 var/log/kvalobs
-var/log/kvalobs/kvbufr
-var/log/kvalobs/kvbufr/debug
+var/log/kvalobs/kvbufrd
+var/log/kvalobs/kvbufrd/debug
 var/run/kvalobs

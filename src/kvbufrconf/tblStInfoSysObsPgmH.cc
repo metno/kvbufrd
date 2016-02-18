@@ -32,13 +32,16 @@
 #include <limits.h>
 #include <sstream>
 #include <stdlib.h>
-//#include <miutil/replace.h>
-#include <boost/algorithm/string/replace.hpp>
-#include <milog/milog.h>
+#include "boost/algorithm/string/replace.hpp"
+#include "milog/milog.h"
+#include "miutil/timeconvert.h"
 #include "tblStInfoSysObsPgmH.h"
 
 using namespace std;
 using namespace dnmi;
+using boost::posix_time::to_kvalobs_string;
+using boost::posix_time::time_from_string_nothrow;
+
 
 void
 TblStInfoSysObsPgmH::
@@ -99,9 +102,9 @@ set( const dnmi::db::DRow &r_)
          }else if(*it=="test"){
             test_ = buf=="t";
          }else if(*it=="totime"){
-            totime_ = (buf.empty()?miutil::miTime():miutil::miTime( buf ));
+            totime_ = (buf.empty()?pt::ptime():time_from_string_nothrow( buf ));
          }else if(*it=="fromtime"){
-            fromtime_ = (buf.empty()?miutil::miTime():miutil::miTime( buf ));
+            fromtime_ = (buf.empty()?pt::ptime():time_from_string_nothrow( buf ));
          }
       }
       catch(...){
@@ -144,15 +147,11 @@ clean()
    anytime_ = false;
    hour_ = hour_.reset();
    test_ = false;
-   totime_ = miutil::miTime();
-   fromtime_ = miutil::miTime();
+   totime_ = pt::ptime();
+   fromtime_ = pt::ptime();
 }
 
-#ifdef  __WITH_PUTOOLS__
-miutil::miString
-#else
 std::string
-#endif
 TblStInfoSysObsPgmH::
 uniqueKey() const
 {
@@ -176,7 +175,7 @@ operator<<(std::ostream &o, TblStInfoSysObsPgmH &op )
      << (op.anytime_?"t":"t") << ","
      << "(" << op.hour_ << "),"
      << (op.test_?"t":"f") << ","
-     << "'" << (op.totime_.undef()?"(NULL)":op.totime_.isoTime()) << "',"
-     << "'" << (op.fromtime_.undef()?"(NULL)":op.fromtime_.isoTime()) << "']";
+     << "'" << (op.totime_.is_special()?"(NULL)":to_kvalobs_string(op.totime_)) << "',"
+     << "'" << (op.fromtime_.is_special()?"(NULL)":to_kvalobs_string(op.fromtime_)) << "']";
    return o;
 }

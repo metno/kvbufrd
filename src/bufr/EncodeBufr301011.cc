@@ -60,8 +60,8 @@ void
 EncodeBufr301011::
 encode( )
 {
-   bufr->addValue( 4001, static_cast<float>( obstime.year() ), "Year", false );
-   bufr->addValue( 4002, static_cast<float>( obstime.month() ), "Month", false );
-   bufr->addValue( 4003, static_cast<float>( obstime.day() ), "YY (Day)", false );
+   bufr->addValue( 4001, static_cast<float>( obstime.date().year() ), "Year", false );
+   bufr->addValue( 4002, static_cast<float>( obstime.date().month() ), "Month", false );
+   bufr->addValue( 4003, static_cast<float>( obstime.date().day() ), "YY (Day)", false );
 }
 

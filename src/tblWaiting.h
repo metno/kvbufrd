@@ -31,8 +31,8 @@
 #ifndef __kvbuffer_tblWaiting_h__
 #define __kvbuffer_tblWaiting_h__
 
-#include <kvalobs/kvDbBase.h>
-#include "defines.h"
+#include "boost/date_time/posix_time/ptime.hpp"
+#include "kvalobs/kvDbBase.h"
 
 class TblWaiting : public kvalobs::kvDbBase {
 private:
@@ -40,8 +40,8 @@ private:
   int              id_;
   std::string      callsign_;
   std::string      code_;
-  miutil::miTime   obstime_;
-  miutil::miTime   delaytime_;
+  boost::posix_time::ptime obstime_;
+  boost::posix_time::ptime delaytime_;
 
   void createSortIndex();
 
@@ -53,16 +53,16 @@ private:
              int                  id,
              const std::string    &callsign,
              const std::string    &code,
-	     const miutil::miTime &obstime,
-	     const miutil::miTime &delaytime)
+	     const boost::posix_time::ptime &obstime,
+	     const boost::posix_time::ptime &delaytime)
   { set(wmono, id, callsign, code, obstime, delaytime);}
 
   bool set(int                  wmono,
            int id,
            const std::string    &callsign,
            const std::string    &code,
-           const miutil::miTime &obtime,
-           const miutil::miTime &delaytime);
+           const boost::posix_time::ptime &obtime,
+           const boost::posix_time::ptime &delaytime);
 
   bool set(const dnmi::db::DRow&);
   bool set(const TblWaiting &waiting);
@@ -70,24 +70,18 @@ private:
   void clean();
 
   const char*            tableName() const {return "waiting";}
-#ifdef __WITH_PUTOOLS__
-  miutil::miString toSend()    const;
-  miutil::miString toUpdate()  const;
-  miutil::miString uniqueKey() const;
-#else
   std::string toSend()    const;
   std::string toUpdate()  const;
   std::string uniqueKey() const;
-#endif
 
   int              wmono()    const { return wmono_;    }
   int              id()       const { return id_; }
   std::string      callsign() const { return callsign_; }
   std::string      code()     const { return code_; }
-  miutil::miTime   obstime()  const { return obstime_;  }
-  miutil::miTime   delaytime()const { return delaytime_;}
+  boost::posix_time::ptime obstime()  const { return obstime_;  }
+  boost::posix_time::ptime delaytime()const { return delaytime_;}
 
-  void delaytime(const miutil::miTime &t){ delaytime_=t;}
+  void delaytime(const boost::posix_time::ptime &t){ delaytime_=t;}
 };
 
 #endif

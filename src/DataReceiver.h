@@ -31,20 +31,23 @@
 #ifndef __DataReceiver_h__
 #define __DataReceiver_h__
 
-#include <App.h>
-#include <kvalobs/kvData.h>
-#include <kvcpp/kvevents.h>
+#include <memory>
+#include "boost/date_time/posix_time/ptime.hpp"
+#include "kvalobs/kvData.h"
+#include "App.h"
+#include "kvevents.h"
+#include "KvObsData.h"
 #include "obsevent.h"
 
 class DataReceiver {
   App                      &app;
-  dnmi::thread::CommandQue &inputQue;  
-  dnmi::thread::CommandQue &outputQue;  
+  std::shared_ptr<dnmi::thread::CommandQue> inputQue;
+  std::shared_ptr<dnmi::thread::CommandQue> outputQue;
 
  public:
   DataReceiver(App &app, 
-	       dnmi::thread::CommandQue &inputQue,
-	       dnmi::thread::CommandQue &outputQue);
+               std::shared_ptr<dnmi::thread::CommandQue> inputQue,
+               std::shared_ptr<dnmi::thread::CommandQue> outputQue);
 
   /**
    * Which data is received for the station given with wmono in
@@ -57,8 +60,8 @@ class DataReceiver {
    * looked up to retrive all stations/typeid it is received data for,
    * before an event is sent to BufrWorker.
    */
-  void newData(kvservice::KvObsDataListPtr data);
-  void prepareToProcessAnyBufrBasedOnThisObs(const miutil::miTime &obstime,
+  void newData(kvalobs::KvObsDataPtr data);
+  void prepareToProcessAnyBufrBasedOnThisObs(const boost::posix_time::ptime &obstime,
 					      StationInfoPtr station);
   bool typeidReceived(ObsEvent &event);
   

@@ -33,15 +33,13 @@
 
 #include <sstream>
 #include <dnmithread/CommandQue.h>
-#include <puTools/miTime.h>
-#include "kvbufrd.hh"
+#include "boost/date_time/posix_time/ptime.hpp"
 #include "StationInfo.h"
 #include "Waiting.h"
 
 class ObsEvent : public dnmi::thread::CommandBase
 {
-   miutil::miTime        obstime_;
-   kvbufrd::bufrcb_var ref;
+   boost::posix_time::ptime obstime_;
    StationInfoPtr        stInfo;
    WaitingPtr            waiting_;
 
@@ -84,43 +82,28 @@ public:
    /**
     * \brief Constructor to be used to signal a regenerate of a SYNOP.
     */
-   ObsEvent( const miutil::miTime &obstime,
+   ObsEvent( const boost::posix_time::ptime &obstime,
              StationInfoPtr stInfo_,
              bool regenerate=false )
    :obstime_(obstime),
-    ref(kvbufrd::bufrcb::_nil()),
     stInfo(stInfo_),
     isOk_(false),
     regenerate_(regenerate)
    {}
 
-   ObsEvent( const miutil::miTime &obstime,
-             StationInfoPtr stInfo_,
-             kvbufrd::bufrcb_ptr cb)
-   :obstime_(obstime),
-    ref(cb),
-    stInfo(stInfo_),
-    isOk_(false),
-    regenerate_(false)
-   {}
 
    ObsEvent(WaitingPtr w)
       : obstime_(w->obstime()),
-        ref(kvbufrd::bufrcb::_nil()),
         stInfo(w->info()),
         waiting_(w),
         isOk_(false),
         regenerate_(false)
    {}
 
-   miutil::miTime         obstime()const{ return obstime_;}
+   boost::posix_time::ptime obstime()const{ return obstime_;}
    StationInfoPtr     stationInfo()const{ return stInfo;}
    WaitingPtr             waiting()const{ return waiting_;}
-   kvbufrd::bufrcb_ptr callback()const {
-                              return kvbufrd::bufrcb::_duplicate(ref);
-                           }
 
-   bool hasCallback()const{ return !CORBA::is_nil(ref);}
    bool regenerate()const { return regenerate_;}
 
    ///The following tree functions is used to comunicate

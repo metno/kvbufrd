@@ -32,8 +32,10 @@
 #define __kvbufferd_waiting_h__
 
 #include <list>
-#include <boost/shared_ptr.hpp>
-#include <kvdb/kvdb.h>
+#include "boost/date_time/posix_time/ptime.hpp"
+#include "boost/shared_ptr.hpp"
+#include "kvdb/kvdb.h"
+#include "miutil/timeconvert.h"
 #include "StationInfo.h"
 
 class Waiting
@@ -42,16 +44,16 @@ class Waiting
   Waiting(const Waiting &w);
   Waiting& operator=(const Waiting &);
   
-  miutil::miTime delay_;
-  miutil::miTime obstime_;
+  boost::posix_time::ptime delay_;
+  boost::posix_time::ptime obstime_;
   StationInfoPtr info_;
   bool           waitingOnContiniusData_;
   int            count_; //How many times has this observation
                          //been waiting. To prevent an unlimited loop.
 
  public:
-  Waiting(const miutil::miTime &delay, 
-	  const miutil::miTime &obstime,
+  Waiting(const boost::posix_time::ptime &delay,
+	  const boost::posix_time::ptime &obstime,
 	  StationInfoPtr info,
 	  bool  waitingOnConData=false):
     delay_(delay),
@@ -62,8 +64,8 @@ class Waiting
     {
     }
 
-  miutil::miTime delay()const{ return delay_;}
-  miutil::miTime obstime()const{ return obstime_;}
+  boost::posix_time::ptime delay()const{ return delay_;}
+  boost::posix_time::ptime obstime()const{ return obstime_;}
   StationInfoPtr info()const{ return info_;}
 
   bool addToDb();
@@ -90,8 +92,10 @@ std::ostream& operator<<(std::ostream& ost,
 inline std::ostream& operator<<(std::ostream& ost,
 				const Waiting& w)
 {
+  using boost::posix_time::to_kvalobs_string;
+
   ost << "Waiting: " << w.info_->toIdentString() << " obstime: "
-      << w.obstime_ << " delay: "<< w.delay_;
+      << to_kvalobs_string(w.obstime_) << " delay: "<< to_kvalobs_string(w.delay_);
 
   return ost;
 }

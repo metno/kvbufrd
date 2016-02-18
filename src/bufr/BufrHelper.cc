@@ -38,9 +38,9 @@
 #include <sstream>
 #include <fstream>
 #include <new>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <milog/milog.h>
+#include "boost/filesystem.hpp"
+#include "boost/filesystem/fstream.hpp"
+#include "milog/milog.h"
 #include "../bufrencodehelper.h"
 #include "../base64.h"
 #include "../SemiUniqueName.h"
@@ -52,6 +52,7 @@
 
 
 namespace fs = boost::filesystem;
+namespace pt = boost::posix_time;
 
 using namespace std;
 
@@ -220,15 +221,17 @@ setSequenceNumber( int ccx )
 
 void
 BufrHelper::
-setObsTime( const miutil::miTime &obstime_ )
+setObsTime( const pt::ptime &obstime_ )
 {
    obstime = obstime_;
-   ksec1[ 8] = obstime.year();
-   ksec1[ 9] = obstime.month();
-   ksec1[10] = obstime.day();
-   ksec1[11] = obstime.hour();
-   ksec1[12] = obstime.min();
-   ksec1[17] = obstime.sec();
+   boost::gregorian::date d=obstime.date();
+   pt::time_duration t=obstime.time_of_day();
+   ksec1[ 8] = d.year();
+   ksec1[ 9] = d.month();
+   ksec1[10] = d.day();
+   ksec1[11] = t.hours();
+   ksec1[12] = t.minutes();
+   ksec1[17] = t.seconds();
 }
 
 void
@@ -404,9 +407,9 @@ writeToStream( std::ostream &o )
 
    ostringstream ost;
 
-   ost << setw(2) << setfill( '0') << obstime.day()
-       << setw(2) << setfill( '0') << obstime.hour()
-       << setw(2) << setfill( '0') << obstime.min();
+   ost << setw(2) << setfill( '0') << obstime.date().day()
+       << setw(2) << setfill( '0') << obstime.time_of_day().hours()
+       << setw(2) << setfill( '0') << obstime.time_of_day().minutes();
 
    if( ccx > 0 ) {
       ost << " ";
@@ -436,9 +439,9 @@ filePrefix( )const
 
    ost << stationInfo->toIdentString();
    ost << "-"
-       << setfill('0') << setw(2) << obstime.day()
-       << setfill('0') << setw(2) << obstime.hour()
-       << setfill('0') << setw(2) << obstime.min();
+       << setfill('0') << setw(2) << obstime.date().day()
+       << setfill('0') << setw(2) << obstime.time_of_day().hours()
+       << setfill('0') << setw(2) << obstime.time_of_day().minutes();
 
    if( !encoderName.empty() )
       ost << "-C" << encoderName;

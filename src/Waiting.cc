@@ -30,14 +30,17 @@
 */
 #include <time.h>
 #include <sstream>
+#include "milog/milog.h"
 #include "kvDbGateProxy.h"
-#include <milog/milog.h>
 #include "Waiting.h"
 #include "tblWaiting.h"
 #include "App.h"
 
 using namespace std;
 using namespace kvalobs;
+
+namespace pt=boost::posix_time;
+
 
 bool 
 Waiting::
@@ -87,8 +90,7 @@ inDb()
 
   o << "WHERE wmono=" << info_->wmono()
     << " AND id=" << info_->stationID()
-    << " AND obstime=\'"
-    <<obstime_ << "\'";
+    << " AND obstime=\'"<< pt::to_kvalobs_string(obstime_) << "\'";
 
   if(gate.select(data, o.str())){
     if(data.empty())

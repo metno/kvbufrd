@@ -29,9 +29,10 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 #include <time.h>
-#include <milog/milog.h>
 #include <sstream>
-#include <puTools/miTime.h>
+#include "boost/date_time/posix_time/ptime.hpp"
+#include "milog/milog.h"
+#include "miutil/timeconvert.h"
 #include "obsevent.h"
 #include "delaycontrol.h"
 
@@ -39,9 +40,10 @@ using namespace std;
 using namespace kvalobs;
 using namespace miutil;
 
+namespace pt=boost::posix_time;
 
 DelayControl::DelayControl(App &app_, 
-                           dnmi::thread::CommandQue &que_)
+                           std::shared_ptr<dnmi::thread::CommandQue> que_)
 : app(app_), que(que_)
 {
 }
@@ -49,10 +51,11 @@ DelayControl::DelayControl(App &app_,
 void 
 DelayControl::operator()()
 {
+   bool    cachereload=true;
    time_t   nextTime;
    time_t   checkPoint;
    time_t   tNow;
-   miTime   oldCheckpoint=app.checkpoint();
+   pt::ptime oldCheckpoint=app.checkpoint();
    ObsEvent *event;
    ostringstream ost;
 
@@ -66,30 +69,34 @@ DelayControl::operator()()
    nextTime=tNow-tNow%60+60;  //Compute the nearest minute in the future.
    checkPoint=tNow-tNow%3600; //Compute the nearest hour in the future
 
-   if(!oldCheckpoint.undef()){
-      if(oldCheckpoint<miTime(checkPoint)){
-         app.createCheckpoint(miTime(checkPoint));
+   if(!oldCheckpoint.is_special()){
+      if(oldCheckpoint<pt::from_time_t(checkPoint)){
+         app.createCheckpoint(pt::from_time_t(checkPoint));
       }
    }else{
-      app.createCheckpoint(miTime(checkPoint));
+      app.createCheckpoint(pt::from_time_t(checkPoint));
    }
 
    checkPoint+=3600;    //Compute next checkpoint time
 
-   IDLOGDEBUG("DelayCtl","checkPont: " << miTime(checkPoint));
-   IDLOGDEBUG("DelayCtl","nextTime:  " << miTime(nextTime));
+   IDLOGDEBUG("DelayCtl","checkPont: " << pt::to_kvalobs_string(pt::from_time_t(checkPoint)));
+   IDLOGDEBUG("DelayCtl","nextTime:  " << pt::to_kvalobs_string(pt::from_time_t(nextTime)));
 
    while(!app.shutdown()){
       time(&tNow);
 
       if(checkPoint<tNow){
-         app.createCheckpoint(miTime(checkPoint));
+         app.createCheckpoint(pt::from_time_t(checkPoint));
          checkPoint+=3600;
       }
 
       if(nextTime>tNow){
-         sleep(1);
-         continue;
+        if( cachereload ) {
+          cachereload = app.checkObsEventWaitingOnCacheReload(*que, "DelayCtl");
+        }
+
+        sleep(1);
+        continue;
       }
 
       if(app.joinGetDataThreads(false, "DelayCtl")){
@@ -108,21 +115,21 @@ DelayControl::operator()()
             break;
          }
 
-         app.addObsEvent(event, que);
+         app.addObsEvent(event, *que);
 
-         ost << (*it)->info()->toIdentString() << " obstime: " << (*it)->obstime()
-	        << " delay to: " << (*it)->delay() << endl;
+         ost << (*it)->info()->toIdentString() << " obstime: " << pt::to_kvalobs_string((*it)->obstime())
+	        << " delay to: " << pt::to_kvalobs_string((*it)->delay()) << endl;
       }
 
       if(!ost.str().empty()){
-         LOGINFO("Expired stations: " << miTime::nowTime() << endl << ost.str());
+         LOGINFO("Expired stations: " << pt::to_kvalobs_string(pt::second_clock::universal_time()) << endl << ost.str());
          IDLOGINFO("DelayCtl",
-                   "Expired stations: " << miTime::nowTime() << endl
+                   "Expired stations: " << pt::to_kvalobs_string(pt::second_clock::universal_time()) << endl
                    << ost.str());
       }
 
       ost.str("");
-      app.checkObsEventWaitingOnCacheReload(que, "DelayCtl");
+      cachereload = app.checkObsEventWaitingOnCacheReload(*que, "DelayCtl");
    }
 
    IDLOGINFO("DelayCtl", "Join all getDataThreads!");

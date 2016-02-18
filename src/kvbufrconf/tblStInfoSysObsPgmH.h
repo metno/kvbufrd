@@ -32,8 +32,10 @@
 #define __tblStInfoSysObsPgmH_h__
 
 #include <bitset>
-#include <kvalobs/kvDbBase.h>
-#include "defines.h"
+#include "boost/date_time/posix_time/ptime.hpp"
+#include "kvalobs/kvDbBase.h"
+
+namespace pt=boost::posix_time;
 
 class TblStInfoSysObsPgmH : public kvalobs::kvDbBase {
    int stationid_;
@@ -45,8 +47,8 @@ class TblStInfoSysObsPgmH : public kvalobs::kvDbBase {
    bool anytime_;
    std::bitset<24> hour_;
    bool test_;
-   miutil::miTime totime_;
-   miutil::miTime fromtime_;
+   pt::ptime totime_;
+   pt::ptime fromtime_;
 
 
   void createSortIndex();
@@ -69,15 +71,9 @@ public:
 
   const char* tableName() const {return "obspgm_h";}
 
-#ifdef  __WITH_PUTOOLS__
-  miutil::miString toSend()    const { return ""; } //NOT used
-  miutil::miString toUpdate()  const{ return ""; }  //NOT used
-  miutil::miString uniqueKey() const;
-#else
   std::string toSend()    const { return ""; } //NOT used
   std::string toUpdate()  const{ return ""; }  //NOT used
   std::string uniqueKey() const;
-#endif
 
   int stationid()const { return  stationid_; }
   int paramid()const { return paramid_; }
@@ -88,8 +84,8 @@ public:
   bool anytime() const { return anytime_; }
   std::bitset<24> hour()const { return hour_; }
   bool test()const { return test_; }
-  miutil::miTime totime() const { return totime_; }
-  miutil::miTime fromtime() const { return fromtime_; }
+  pt::ptime totime() const { return totime_; }
+  pt::ptime fromtime() const { return fromtime_; }
 
   friend std::ostream& operator<<(std::ostream &o, TblStInfoSysObsPgmH &op );
 };

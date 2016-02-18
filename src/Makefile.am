@@ -2,6 +2,7 @@ SUBDIRS = gtest bufr
 
 AM_CPPFLAGS = \
    -D_REENTRANT \
+   $(kvsubscribe_CFLAGS) \
 	$(kvcpp_CFLAGS) \
 	$(putools_CFLAGS) \
    $(BOOST_CPPFLAGS) \
@@ -25,13 +26,15 @@ clean-local:
 
 noinst_PROGRAMS = base64Test
 
-bin_PROGRAMS = kvbufrd kvbufrclt kvbufrdbclt kvbufrdparse
+#bin_PROGRAMS = kvbufrd kvbufrclt kvbufrdbclt kvbufrdparse
+bin_PROGRAMS = kvbufrd kvbufrdbclt  kvbufrdparse
 
 kvbufrd_SOURCES = \
-	kvbufrd.hh kvbufrdSK.cc \
-   defines.h \
+   KvDataConsumer.h KvDataConsumer.cc \
+   KvObsData.h KvObsData.cc \
+   DbQuery.h DbQuery.cc \
 	kvbufrd.cc \
-   App.cc App.h \
+	App.cc App.h \
    DataReceiver.cc DataReceiver.h \
    Data.cc Data.h \
    BufrWorker.cc BufrWorker.h \
@@ -42,8 +45,6 @@ kvbufrd_SOURCES = \
    StationInfo.cc StationInfo.h \
    StationInfoParse.cc StationInfoParse.h \
    tblBufr.cc tblBufr.h \
-   kvbufrdImpl.cc kvbufrdImpl.h \
-   Replay.cc Replay.h \
    bufr.cc bufr.h \
    Validate.cc Validate.h \
    tblWaiting.cc tblWaiting.h \
@@ -57,7 +58,7 @@ kvbufrd_SOURCES = \
    kvDbGateProxy.cc kvDbGateProxy.h \
    getDataReceiver.cc getDataReceiver.h \
    GetDataThread.cc GetDataThread.h \
-   kvbufrdImpl.h obsevent.h \
+   obsevent.h \
    LoadBufrData.h LoadBufrData.cc \
    encodebufr.h encodebufr.cc \
    base64.cc base64.h \
@@ -76,16 +77,25 @@ kvbufrd_LDADD = \
 	$(top_builddir)/src/bufr/libbufr.la \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_corbahelper.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miconfparser.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
-	$(putools_LIBS) \
+	$(KVLIBDIR)/${KVLIBPREFIX}_decoderbase.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvsubscribe.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_decodeutility.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_decoderbase.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
+	-lxml++-2.6 \
+	-lglibmm-2.4 \
+	-lrdkafka++ \
+	-lrdkafka \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
    $(BOOST_FILESYSTEM_LIB) \
@@ -109,43 +119,6 @@ endif
 EXTRA_DIST = kvbufrd_schema.sql 
 
  
-kvbufrclt_SOURCES = kvbufrclt.cc \
-                     kvbufrCltBufrcbImp.cc kvbufrCltBufrcbImp.h \
-                     kvbufrCltApp.cc  kvbufrCltApp.h \
-                     kvbufrCorbaThread.cc kvbufrCorbaThread.h \
-                     kvbufrd.hh kvbufrdSK.cc
-kvbufrclt_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
-
-if KVSTATIC
-kvbufrclt_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrclt_LDADD = \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_corbahelper.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_miconfparser.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
-	$(putools_LIBS) \
-	$(omniORB4_LIBS) \
-	$(BOOST_THREAD_LIB) \
-	$(BOOST_FILESYSTEM_LIB) \
-	$(BOOST_DATE_TIME_LIB) \
-	$(BOOST_SYSTEM_LIB) \
-    -lm
-
-else
-kvbufrclt_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrclt_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
-				  $(BOOST_FILESYSTEM_LIB) \
-				  $(BOOST_DATE_TIME_LIB) \
-				  $(BOOST_SYSTEM_LIB) \
-                  -lm
-endif  
                    
 kvbufrdbclt_SOURCES = kvbufrdbclt.cc \
                        tblBufr.cc tblBufr.h
