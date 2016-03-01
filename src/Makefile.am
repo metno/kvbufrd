@@ -94,7 +94,7 @@ else
 kvbufrd_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
 kvbufrd_LDADD = \
     $(top_builddir)/src/bufr/libbufr.la \
-    $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
+    $(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) \
     $(BOOST_FILESYSTEM_LIB) \
     $(BOOST_DATE_TIME_LIB) \
     $(BOOST_SYSTEM_LIB) \
