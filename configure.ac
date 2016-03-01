@@ -1,5 +1,5 @@
 AC_PREREQ([2.59])
-AC_INIT([kvbufrd], [2.5.14], [kvoss@met.no])
+AC_INIT([kvbufrd], [2.5.15], [kvoss@met.no])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 #AM_INIT_AUTOMAKE([foreign]) 
 AC_CONFIG_MACRO_DIR([m4])
@@ -43,6 +43,8 @@ AX_BOOST_SYSTEM
 if test -z $BOOST_SYSTEM_LIB; then AC_MSG_ERROR([Unable to find boost system library]); fi
 
 AC_CONFIG_FILES([Makefile
+                 ecmwf/Makefile
+                 debian_files/Makefile
                  share/bufrtables/Makefile
                  src/gtest/Makefile
                  check_kvbufrd.sh

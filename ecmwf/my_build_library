@@ -1,0 +1,267 @@
+#! /bin/sh
+
+set -e
+
+umask 0
+
+echo "R64:        $64"
+echo "CNAME:      $CNAME"
+echo "INSTALLDIR: $INSTALLDIR"
+
+#  make sure all directories exists.
+for subdirs in fortranC bufrdc bufrtables pbio examples config options 
+do
+   if test ! -d $subdirs ; then
+       echo
+       echo "Tarfile is incomplete ;  $subdirs does not exist."
+       echo "         Incorrect tarfile downloaded?"
+       quit
+   fi
+done
+
+
+# is the uname available ?
+
+type uname > /dev/null 2>&1
+if test $? -ne 0 ; then
+    echo "install: uname not found."
+    echo "You should try compilation without install script"
+    quit
+fi
+target=`uname -s | tr '[A-Z]' '[a-z]'`
+
+gnu=
+
+echo
+
+case $target in
+
+linux )
+    target=linux
+    gnu=yes
+    platform=`uname -m`
+    case $platform in
+    x86_64 )
+        A64=A64
+        ;;
+    ia64 )
+        gnu=
+        A64=
+        target=itanium
+        ;;
+    * )
+        A64=
+        ;;
+    esac
+        echo "Default compilers are Portland: pgf77 and pgcc."
+    ;;
+darwin* )
+    target=darwin
+    platform=`machine`
+    CNAME=_gfortran
+    case $platform in
+    ppc970 )
+        target=ppc
+        A64=_G5
+        ;;
+    ppc* )
+        target=ppc
+        A64=
+        ;;
+    i486 )
+        target=darwin
+        A64=_i486
+        ;;
+    *64 )
+        target=darwin
+        A64=A64
+        ;;
+    * )
+        target=darwin
+        A64=
+        ;;
+    esac
+       echo "Default compilers are : gfortran and gcc."
+    ;;
+sunos )
+    target=sun4
+#    platform=`uname -m`
+#      if test "$platform" = "i86pc" ; then
+#        target=i86pc
+#      fi
+    ;;
+irix* )
+    target=sgimips
+    ;;
+aix )
+    target=ibm_power7
+    ;;
+osf1 )
+    target=decalpha
+    ;;
+hp-ux )
+    target=hppa
+    platform=`uname -m`
+  if test "$platform" = "ia64" ; then
+    target=hpia64
+  fi
+    ;;
+fujitsu* )
+    target=FUJITSU
+    ;;
+
+ * )
+        echo
+        echo "install: products can only be installed on Linux, Solaris, Sgi"
+        echo "Alpha, HP, IBM operating systems."
+        echo "You should try compilation without install script"
+        quit
+    ;;
+esac
+
+#CNAME=$CNAME
+if test "$gnu" = "yes" -a "x$CNAME" = "x" ; then
+       echo "Do you want to work with GNU gfortran/gcc (answer y), ifort (answer i) ? [n]"
+       read ans
+       echo
+       if test -n "$ans" ; then
+          if test "$ans" = "y" -o "$ans" = "yes" ; then
+              CNAME=_gfortran
+          fi
+          if test "$ans" = "i" -o "$ans" = "intel" ; then
+              CNAME=_intel
+          fi
+       fi
+fi
+
+
+if test "$target" = "darwin" -a "x$CNAME" = "x" ; then
+   echo "Do you want to work with g95 gfortran/gcc (answer y), ifort (answer i) ? [n]"
+   read ans
+   echo
+   if test -n "$ans" ; then
+      if test "$ans" = "y" -o "$ans" = "yes" ; then
+         CNAME=_g95
+      fi
+   fi
+fi
+
+if test "$target" = "rs6000" -a "x$CNAME" = "x" ; then
+   echo "Do you want to force 64 bit addressing mode? (answer y) [n]"
+   read ans
+   echo
+   if test -n "$ans" ; then
+      if test "$ans" = "y" -o "$ans" = "yes" ; then
+         A64=A64
+     fi
+   fi
+fi
+
+if [ "x$R64" = "x" ]; then 
+   echo "Default is  32 bit reals."
+   echo "Do you want 64 bit reals ? [y,n]"
+   read ans
+   echo
+ 
+   if test -n "$ans" ; then
+      if test "$ans" = "y" -o "$ans" = "yes" ; then
+         R64=R64
+      fi
+   fi
+fi
+
+if [ "$R64" = "yes" ]; then
+   R64=R64
+elif [ "$R64" = "no" ]; then
+   R64=
+fi
+
+
+echo $R64 > .r64
+
+
+INSTALL_DIR=/usr/local/lib
+
+if [ "x$INSTALLDIR" = "x" ]; then
+   echo
+   echo "   The default directory for BUFR tables and libbufr$R64.a"
+   echo "is $INSTALL_DIR,"
+   echo "but you may install them anywhere you wish,"
+   echo "assuming you have permission to do so."
+   echo "   You can specify your directory or just"
+   echo "press RETURN if you want default"
+   echo "Bufr library and tables directory [$INSTALL_DIR]: "
+   read ans
+   echo
+
+   if test -n "$ans" ; then
+       INSTALL_DIR=$ans
+   fi
+else 
+   INSTALL_DIR=$INSTALLDIR
+fi
+
+echo "R64:         $R64"
+echo "CNAME:       $CNAME"
+echo "INSTALL_DIR: $INSTALL_DIR"
+
+
+echo using config/config.$target$CNAME$R64$A64
+cat config/config.$target$CNAME$R64$A64.in | sed s:emos:$INSTALL_DIR: > config/config.$target$CNAME$R64$A64
+
+echo $INSTALL_DIR > .emos
+
+cat Makefile.in | sed s:%reals%:$R64: | sed s:%install_dir%:$INSTALL_DIR: > Makefile
+cat bufrdc/Makefile.in | sed s:%reals%:$R64: | sed s:%arch%:$target: | sed s:%comp%:$CNAME: | sed s:%plat%:$A64: | sed s:%depl%:bufr: | sed s:%install_dir%:$INSTALL_DIR:  > bufrdc/Makefile
+cat bufrtables/Makefile.in | sed s:%reals%:$R64: |sed s:%arch%:$target: | sed s:%comp%:$CNAME: | sed s:%plat%:$A64: | sed s:%depl%:bufr: | sed s:%install_dir%:$INSTALL_DIR: > bufrtables/Makefile
+cat pbio/Makefile.in | sed s:%reals%:$R64: |sed s:%arch%:$target: | sed s:%comp%:$CNAME: | sed s:%plat%:$A64: | sed s:%depl%:bufr: | sed s:%install_dir%:$INSTALL_DIR: > pbio/Makefile
+cat fortranC/Makefile.in | sed s:%reals%:$R64: |sed s:%arch%:$target: | sed s:%comp%:$CNAME: | sed s:%plat%:$A64: | sed s:%depl%:bufr: | sed s:%install_dir%:$INSTALL_DIR: > fortranC/Makefile
+cat examples/Makefile.in | sed s:%reals%:$R64: |sed s:%arch%:$target: | sed s:%plat%:$A64: | sed s:%comp%:$CNAME: | sed s:%install_dir%:$INSTALL_DIR: > examples/Makefile
+
+make
+
+chmod a-xw libbufr$R64.a
+
+ls bufrtables/*.TXT > .list
+ls bufrtables/*.distinct > .list
+
+
+echo "*******************************************************************"
+echo
+echo "Compilation complete!"
+echo
+echo "*******************************************************************"
+echo
+echo "   You can put other options for compilation in"
+echo "config/config.$target$CNAME$R64$A64 like level of optimisation etc."
+echo "and make compilation again "
+echo
+echo "When you finish your changes run "
+echo
+echo "make clean"
+echo "make"
+echo
+echo "in order to produce library "
+echo
+echo "*******************************************************************"
+echo
+echo "   In order to make conversion between Bufr and Crex formats "
+echo "(bufr2crex, crex2bufr) you should also download Crex software"
+echo "and invoke libcrex$R64.a in your Makefile !"
+echo
+echo "*******************************************************************"
+echo
+echo "   Now, if you want to install libbufr$R64.a and bufrtables it is recomended "
+echo "to do that runing ./install script."
+echo "You must have root permission runing ./install , if you want"
+echo "to put them on: /usr/local/lib"
+echo
+echo "*******************************************************************"
+echo
+echo "Any comments on the document or the software would be appreciated."
+echo
+echo "e-mail software.services@ecmwf.int"
+echo
+echo "*******************************************************************"
+
+exit 0

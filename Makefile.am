@@ -1,4 +1,4 @@
-SUBDIRS = share/bufrtables src src/kvbufrconf
+SUBDIRS = ecmwf debian_files share/bufrtables src src/kvbufrconf
 #SUBDIRS = src 
 ACLOCAL_AMFLAGS = -I m4
 sqldir = $(datadir)/kvbufrd
@@ -10,8 +10,7 @@ SED_SUBST = sed s,__KVCONFIG__,$(bindir)/kvconfig,g $< > $@
 kvbufrdbadmin: kvbufrdbadmin.sh 
 	$(SED_SUBST)
 	
-EXTRA_DIST = cleanbufrdb.sql kvbufrdbadmin.sh changelog 
-
+EXTRA_DIST = cleanbufrdb.sql kvbufrdbadmin.sh changelog  
 CLEANFILES = kvbufrdbadmin
 
 install-data-hook:

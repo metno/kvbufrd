@@ -88,11 +88,11 @@ kvbufrd_LDADD = \
 	$(putools_LIBS) \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
-    $(BOOST_FILESYSTEM_LIB) \
-    $(BOOST_DATE_TIME_LIB) \
-    $(BOOST_SYSTEM_LIB) \
-    -L$(HOME)/lib -lbufr \
-    -lgfortran -lm -ldl
+   $(BOOST_FILESYSTEM_LIB) \
+   $(BOOST_DATE_TIME_LIB) \
+   $(BOOST_SYSTEM_LIB) \
+   $(top_builddir)/ecmwf/libbufr.a \
+   -lgfortran -lm -ldl
 else
 kvbufrd_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
 kvbufrd_LDADD = \
@@ -101,7 +101,8 @@ kvbufrd_LDADD = \
     $(BOOST_FILESYSTEM_LIB) \
     $(BOOST_DATE_TIME_LIB) \
     $(BOOST_SYSTEM_LIB) \
-    -L$(HOME)/lib -lbufr -lgfortran \
+    $(top_builddir)/ecmwf/libbufr.a \
+    -lgfortran \
     -lm -ldl
 endif         
 
@@ -286,7 +287,8 @@ kvBufrEncodeTest_LDADD =   \
 	$(BOOST_FILESYSTEM_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
 	$(BOOST_SYSTEM_LIB) \
-	-lbufr -lgfortran \
+	$(top_builddir)/ecmwf/libbufr.a \
+	-lgfortran \
 	-lm
 else
 kvBufrEncodeTest_CPPFLAGS = \
@@ -306,7 +308,8 @@ kvBufrEncodeTest_LDADD =   \
 	$(BOOST_FILESYSTEM_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
 	$(BOOST_SYSTEM_LIB) \
-	-lbufr -lgfortran \
+	$(top_builddir)/ecmwf/libbufr.a \
+	-lgfortran \
 	-lm
 endif			
 endif			

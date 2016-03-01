@@ -890,7 +890,7 @@ doPrecipConf( const std::string &outfile, miutil::conf::ConfSection *templateCon
 
    std::list<int> typeids;
 
-   boost::assign::push_back( typeids)(302)(304);
+   boost::assign::push_back( typeids)(302)(304)(305);
    boost::assign::push_back( codeList)(2);  //BUFR template for PRECIP stations.
 
    app.loadObsPgmH( obspgm, typeids );
