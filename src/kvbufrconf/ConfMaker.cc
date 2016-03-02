@@ -936,7 +936,7 @@ doPrecipConf( const std::string &outfile, miutil::conf::ConfSection *templateCon
       //values. Ideal this should come from stinfosys.
 
       if( pStation->owner().empty() ) {
-         if( it->messageFormatid() == 302 )
+         if( it->messageFormatid() == 302 || it->messageFormatid() == 305 )
             pStation->owner("NEDB");
          else if( it->messageFormatid() == 304 )
             pStation->owner("SKRD");

@@ -1,3 +1,8 @@
+kvbufrd (2.5.16-1) lucid; urgency=low
+  * Set owner to "NEDB" for typeid 305.
+  
+ -- Kvalobs <kvalobs@met.no>  Wed, 2 Mar 2016 06:30:00 +0200
+
 kvbufrd (2.5.15-2) lucid; urgency=low
   * Add typeid 305 to precip.
   
