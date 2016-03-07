@@ -2,7 +2,7 @@ kvbufrd (2.9.0-1) lucid; urgency=low
   * No CORBA. Use kafka to receive observations.
   * Connect directly to the kvalobsdb to read observation.
   
- -- Kvalobs <kvalobs@met.no>  Tue,  Mar 2016 08:00:00 +0200
+ -- Kvalobs <kvalobs@met.no>  Tue, 7 Mar 2016 08:00:00 +0200
 
 kvbufrd (2.5.16~kafka1-1) lucid; urgency=low
   * No CORBA. Use kafka to receive observations.

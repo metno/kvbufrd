@@ -2,12 +2,14 @@ Source: kvbufrd
 Section: science
 Priority: extra
 Maintainer: kvalobs <kvalobs@met.no>
-Build-Depends: debhelper (>= 5), autotools-dev, lsb-base, g++ (>= 4.1.1), debconf,
+Build-Depends: debhelper (>= 5), autotools-dev, lsb-base, g++ (>= 4.6), debconf,
+ devscripts, fakeroot, gfortran (>= 4.8), 
  automake, libtool,  sqlite3 (>= 3.3.8), libsqlite3-dev (>= 3.3.8),
  libboost-dev (>= 1.33.1), libboost-thread-dev (>= 1.33.1), 
  libboost-regex-dev (>= 1.33.1), libboost-filesystem-dev (>= 1.33.1),
  libboost-program-options-dev (>= 1.33.1), libomniorb4-dev (>= 4.0.6),
- omniidl4 (>= 4.0.6) | omniidl (>= 4.0.6), metlibs-putools-dev (>= 3.0)
+ omniidl4 (>= 4.0.6) | omniidl (>= 4.0.6), metlibs-putools-dev (>= 3.0),
+ librdkafka-dev
 # , libkvcpp2-dev 
 Standards-Version: 3.7.2
 
