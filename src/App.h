@@ -81,7 +81,6 @@ class App : public kvalobs::sql::DbQuery {
   static volatile std::atomic_bool AppShutdown;
  private:
 
-  dnmi::db::DriverManager dbMgr;
   dnmi::db::ConnectionPool kvDbPool;
   std::string dbDriver;
   std::string dbConnect;
@@ -104,7 +103,6 @@ class App : public kvalobs::sql::DbQuery {
   milog::LogLevel defaultLogLevel;
 
   mutable Mutex mutex;
-  mutable Mutex mutexDbDriverManager;
 
   void readDatabaseConf(miutil::conf::ConfSection *conf);
 

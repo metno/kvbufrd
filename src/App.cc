@@ -203,16 +203,16 @@ void App::readDatabaseConf(miutil::conf::ConfSection *conf){
 
   LOGINFO("Loading driver for database engine <" << dbDriver << ">!\n");
 
-  if (!dbMgr.loadDriver(dbDriver, dbDriverId)) {
-    LOGFATAL("Can't load driver <" << dbDriver << endl << dbMgr.getErr() << endl << "Check if the driver is in the directory $KVALOBS/lib/db???");
+  if (!dnmi::db::DriverManager::loadDriver(dbDriver, dbDriverId)) {
+    LOGFATAL("Can't load driver <" << dbDriver << endl << dnmi::db::DriverManager::getErr() << endl << "Check if the driver is in the directory $KVALOBS/lib/db???");
 
     exit(1);
   }
 
   LOGINFO("Loading driver for database engine <" << kvDbDriver << ">!\n");
 
-  if (!dbMgr.loadDriver(kvDbDriver, kvDbDriverId)) {
-    LOGFATAL("Can't load driver <" << dbDriver << endl << dbMgr.getErr() << endl << "Check if the driver is in the directory $KVALOBS/lib/db???");
+  if (!dnmi::db::DriverManager::loadDriver(kvDbDriver, kvDbDriverId)) {
+    LOGFATAL("Can't load driver <" << dbDriver << endl << dnmi::db::DriverManager::getErr() << endl << "Check if the driver is in the directory $KVALOBS/lib/db???");
 
     exit(1);
   }
@@ -468,10 +468,9 @@ StationList App::getStationList() const {
 
 dnmi::db::Connection*
 App::createKvDbConnection() {
-  Lock lock(mutexDbDriverManager);
   dnmi::db::Connection *con;
 
-  con = dbMgr.connect(kvDbDriverId, kvDbConnect);
+  con = dnmi::db::DriverManager::connect(kvDbDriverId, kvDbConnect);
 
   if (!con) {
     LOGERROR("Can't create a database connection  (" << kvDbDriverId << ")" << endl << "Connect string: <" << kvDbConnect << ">!");
@@ -483,19 +482,17 @@ App::createKvDbConnection() {
 }
 
 void App::releaseKvDbConnection(dnmi::db::Connection *con) {
-  Lock lock(mutexDbDriverManager);
   LOGDEBUG("Database connection released (" << kvDbDriverId << ").");
-  dbMgr.releaseConnection(con);
+  dnmi::db::DriverManager::releaseConnection(con);
 }
 
 
 
 dnmi::db::Connection*
 App::createDbConnection() {
-  Lock lock(mutexDbDriverManager);
   dnmi::db::Connection *con;
 
-  con = dbMgr.connect(dbDriverId, dbConnect);
+  con = dnmi::db::DriverManager::connect(dbDriverId, dbConnect);
 
   if (!con) {
     LOGERROR("Can't create a database connection  (" << dbDriverId << ")" << endl << "Connect string: <" << dbConnect << ">!");
@@ -507,9 +504,8 @@ App::createDbConnection() {
 }
 
 void App::releaseDbConnection(dnmi::db::Connection *con) {
-  Lock lock(mutexDbDriverManager);
   LOGDEBUG3("Database connection released.");
-  dbMgr.releaseConnection(con);
+  dnmi::db::DriverManager::releaseConnection(con);
 }
 
 StationInfoList App::findStationInfo(long stationid, long typeId, const boost::posix_time::ptime &obstime) {

@@ -63,9 +63,9 @@ ConfApp( Options &options, miutil::conf::ConfSection *conf)
 
    LOGINFO("Loading driver for database engine <" << dbDriver << ">!\n");
 
-   if(!dbMgr.loadDriver(dbDriver, dbDriverId)){
+   if(!dnmi::db::DriverManager::loadDriver(dbDriver, dbDriverId)){
      LOGFATAL("Can't load driver <" << dbDriver << ">" << endl
-         << dbMgr.getErr() << endl
+         << dnmi::db::DriverManager::getErr() << endl
          << "Check if the driver is in the directory $KVALOBS/lib/db???");
 
      exit(1);
@@ -141,7 +141,7 @@ getNewDbConnection()
 {
   dnmi::db::Connection *con;
 
-  con=dbMgr.connect(dbDriverId, dbConnect);
+  con=dnmi::db::DriverManager::connect(dbDriverId, dbConnect);
 
   if(!con){
     LOGERROR("Can't create a database connection  ("
@@ -158,7 +158,7 @@ void
 ConfApp::
 releaseDbConnection(dnmi::db::Connection *con)
 {
-  dbMgr.releaseConnection(con);
+  dnmi::db::DriverManager::releaseConnection(con);
 }
 
 bool
