@@ -39,7 +39,7 @@ using std::string;
 using kvalobs::subscribe::DataSubscriber;
 
 KvDataConsumer::KvDataConsumer(  const std::string &domain, const std::string &brokers, std::shared_ptr<dnmi::thread::CommandQue> newDataQue )
-:DataSubscriber([this](const kvalobs::serialize::KvalobsData &data){newData(data);},domain,DataSubscriber::Latest,brokers),
+:DataSubscriber([this](const kvalobs::serialize::KvalobsData &data){newData(data);},domain,brokers),
  que(newDataQue){
 }
 
