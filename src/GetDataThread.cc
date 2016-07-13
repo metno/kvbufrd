@@ -45,14 +45,12 @@ GetData::
 GetData( App                      &app_,
          const miutil::miTime     &fromTime_,
          int                      wmono_,
-         int                      hours_,
          dnmi::thread::CommandQue &que_):
   	app(app_), 
   	que(que_),
   	fromTime(fromTime_),
   	joinable_(new bool(false)),
-  	wmono(wmono_),
-  	hours(hours_)
+  	wmono(wmono_)
 {
 }
   
@@ -60,15 +58,19 @@ void
 GetData::
 operator()()
 {
-  miTime                   now(miTime::nowTime());
-  miTime                   bufferFromTime(now);
+  miTime now(miTime::nowTime());
+  miTime bufferFromTime(fromTime);
+  miTime minFromTime(now);
 
-  if(hours>=0){
-    bufferFromTime.addHour(-6);
+  minFromTime.addHour(-168);
 
-    if(fromTime>=bufferFromTime)
-      bufferFromTime=fromTime;
-  }
+  // Load data for at max 168 hours (7 days) back in time.
+  if(fromTime<minFromTime)
+    fromTime = minFromTime;
+
+  bufferFromTime=fromTime;
+  //We need at least 6 hours with data to generate a full synop BUFR.
+  fromTime.addHour(-6);
 
   LogContext lContext("GetDataKv("+now.isoTime()+")"); 
 
@@ -78,7 +80,7 @@ operator()()
   IDLOGINFO("GetData", "Started GetData thread!");
 
   IDLOGINFO("GetData", 
-	         "fromTime: " << fromTime << " hours: " << hours <<
+	         "fromTime: " << fromTime <<
 	         " wmono: " << wmono << endl <<
 	         " bufferFromTime: " << bufferFromTime);
 

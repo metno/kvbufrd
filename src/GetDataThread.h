@@ -44,7 +44,6 @@ class GetData {
   	boost::shared_ptr<bool>  joinable_;
   	boost::shared_ptr<boost::thread> thread;
   	int                      wmono;
-  	int                      hours;
 
   	void reloadAll(kvalobs::kvDbGateProxy &gate,
 		 		   const miutil::miTime &bufferFromTime);
@@ -54,10 +53,9 @@ class GetData {
 
  	public:
   		GetData(App &app,
-	  		    const miutil::miTime &fromTime,
-	  			int                  wmono,
-	  			int                  hours,
-	  			dnmi::thread::CommandQue &que);
+  		        const miutil::miTime &fromTime,
+  		        int                  wmono,
+  		        dnmi::thread::CommandQue &que);
 
   		void operator()();
  		bool joinable(){ return *joinable_; }

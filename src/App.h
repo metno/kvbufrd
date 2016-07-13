@@ -377,19 +377,13 @@ public:
    *  Getdata from kvalobs for the \a wmono from time \a t.
    *  If \a wmono is <0 get data for all defined wmo stations.
    *
-   *  If \a hours is <0 it is only generated one synop event, and this
-   *  event is for the time \a t.
-   *
    * \param t reload the cache with data from this time.
    * \param wmono The WMO number we want to reload the cache for.
    *              wmono<0, reload the cache for all defined stations.
-   * \param hours If hours<0 get \a hours with data back in time from
-   *              \a t. If hours>=0 get data from \a t until current time.
    * \param que   post Synop event on this que.
    */
   bool           getDataFrom( const miutil::miTime &t,
                               int                  wmono,
-			                     int                  hours,
 			                     dnmi::thread::CommandQue &que);
 
 

@@ -167,7 +167,7 @@ main(int argn, char **argv)
    if(!startTime.undef()){
       miTime now(miTime::nowTime());
 
-      now.addHour(-48);
+      now.addHour(-168);
 
       if(startTime<now)
          startTime=now;
@@ -178,7 +178,7 @@ main(int argn, char **argv)
    }
 
    IDLOGINFO("main","Getting data from kvalobs from time: " << startTime);
-   app.getDataFrom(startTime, -1, 0, newObsQue);
+   app.getDataFrom(startTime, -1, newObsQue);
    IDLOGDEBUG("main","Return from app.getDataFrom!");
 
 

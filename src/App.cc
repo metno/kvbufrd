@@ -948,7 +948,6 @@ bool
 App::          
 getDataFrom(const miutil::miTime &t,
             int                  wmono,
-            int                  hours,
             dnmi::thread::CommandQue &que)
 {
    LogContext lContext("getDataFrom");
@@ -958,7 +957,7 @@ getDataFrom(const miutil::miTime &t,
    GetData *getData;
 
    try{
-      getData=new GetData(*this, t, wmono, hours, que);
+      getData=new GetData(*this, t, wmono, que);
    }
    catch(...){
       LOGERROR("NO MEM!");
