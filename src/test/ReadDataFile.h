@@ -35,15 +35,16 @@
 #include <string>
 #include <DataList.h>
 #include <LoadBufrData.h>
+#include <boost/date_time.hpp>
 
 bool
-readDataFile( const std::string &filename, DataEntryList &data, const miutil::miTime &fromtime=miutil::miTime() );
+readDataFile( const std::string &filename, DataEntryList &data, const boost::posix_time::ptime &fromtime=boost::posix_time::ptime() );
 
 bool
 loadBufrDataFromFile( const std::string &filename,
 					   StationInfoPtr      info,
 					   DataElementList       &sd,
 					   kvdatacheck::Validate &validate,
-					   const miutil::miTime &fromtime=miutil::miTime() );
+					   const boost::posix_time::ptime &fromtime=boost::posix_time::ptime() );
 
 #endif

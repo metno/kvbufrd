@@ -259,15 +259,26 @@ kvBufrEncodeTest_CPPFLAGS = \
 #    -DBUFRTBLDIR="\""$(top_srcdir)/share/bufrtables"\""
 
 kvBufrEncodeTest_LDADD =   \
-	$(top_builddir)/src/bufr/libbufr.la \
-	$(kvcpp_LIBS) \
-	-L$(HOME)/lib \
 	$(gtest_LIBS) \
-	$(BOOST_FILESYSTEM_LIB) \
-	$(BOOST_DATE_TIME_LIB) \
-	$(BOOST_SYSTEM_LIB) \
+	$(top_builddir)/src/bufr/libbufr.la \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_corbahelper.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_miconfparser.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
 	$(top_builddir)/ecmwf/libbufr.a \
-	-lgfortran \
-	-lm
+	$(putools_LIBS) \
+	$(omniORB4_LIBS) \
+	$(BOOST_THREAD_LIB) \
+	$(BOOST_DATE_TIME_LIB) \
+	$(BOOST_FILESYSTEM_LIB) \
+	$(BOOST_SYSTEM_LIB) \
+    -lgfortran -lm -ldl
 endif			
 endif			
