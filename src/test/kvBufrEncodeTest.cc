@@ -30,14 +30,18 @@
 */
 #include <math.h>
 #include <iomanip>
+#include <locale>
 #include <float.h>
 #include <limits.h>
 #include <string>
 #include <fstream>
 #include <list>
 #include <sstream>
+#include <iostream>
 #include <stdlib.h>
 #include <boost/assign.hpp>
+#include <boost/date_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <gtest/gtest.h>
 #include <puTools/miTime.h>
 #include <miutil/cmprspace.h>
@@ -128,7 +132,7 @@ protected:
 		ASSERT_TRUE( stationParser.parse( conf, stationList ) ) << "Cant parse the station information.";
 
 		validater = BufrParamValidater::loadTable( btabl );
-		ASSERT_TRUE( validater ) << "Cant load BUFR B table: " << btabl;
+		ASSERT_TRUE( validater.get() ) << "Cant load BUFR B table: " << btabl;
 	}
 
 	///Called after each test case.
@@ -140,6 +144,14 @@ protected:
 };
 
 
+namespace
+{
+	boost::posix_time::ptime getTime(const std::string & formatted)
+	{
+		return boost::posix_time::time_from_string(formatted);
+	}
+}
+
 
 TEST_F( BufrEncodeTest, RR_from_RRRtr_AND_RR1 )
 {
@@ -147,16 +159,16 @@ TEST_F( BufrEncodeTest, RR_from_RRRtr_AND_RR1 )
    int wmono=1492;
    DataElementList allData;
    DataElementList data;
-   miTime dt;
+   boost::posix_time::ptime dt;
    StationInfoPtr stInfo;
    BufrData bufr;
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
    stInfo = findWmoNo( wmono );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_18700_precip.dat", stInfo, allData, validData );
-   dt=miTime("2010-10-21 06:00:00");
+   dt=getTime("2010-10-21 06:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( data.firstTime() == dt );
@@ -175,16 +187,16 @@ TEST_F( BufrEncodeTest, RR_FROM_RR1_negativ_RR1 )
    int wmono=1342;
    DataElementList allData;
    DataElementList data;
-   miTime dt;
+   boost::posix_time::ptime dt;
    StationInfoPtr stInfo;
    BufrData bufr;
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
    stInfo = findWmoNo( wmono );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_1342_342_20110314T09.dat", stInfo, allData, validData );
-   dt=miTime("2011-03-14 09:00:00");
+   dt=getTime("2011-03-14 09:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( data.firstTime() == dt );
@@ -201,16 +213,16 @@ TEST_F( BufrEncodeTest, TGN )
    int wmono=1027;
    DataElementList allData;
    DataElementList data;
-   miTime dt;
+   boost::posix_time::ptime dt;
    StationInfoPtr stInfo;
    BufrData bufr;
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
    stInfo = findWmoNo( wmono );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_90400_tgn.dat", stInfo, allData, validData );
-   dt=miTime("2010-10-27 06:00:00");
+   dt=getTime("2010-10-27 06:00:00");
    data=allData.subData( dt );
 
    //Minimum and maximum temeratire at 6 o'clock
@@ -228,20 +240,20 @@ TEST_F( BufrEncodeTest, MaxAndMinTemperature )
    int wmono=1002;
    DataElementList allData;
    DataElementList data;
-   miTime dt;
+   boost::posix_time::ptime dt;
    StationInfoPtr stInfo;
    BufrData bufr;
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
    stInfo = findWmoNo( wmono );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_99927_temp.dat", stInfo, allData, validData );
 
    /******
     * Minimum and maximum temperature at 6 o'clock
     ******/
-   dt=miTime("2010-10-27 06:00:00");
+   dt=getTime("2010-10-27 06:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( data.firstTime() == dt );
@@ -258,7 +270,7 @@ TEST_F( BufrEncodeTest, MaxAndMinTemperature )
    /*******
     * Minimum and maximum temperature at 18 o'clock
     *******/
-   dt=miTime("2010-10-26 18:00:00");
+   dt=getTime("2010-10-26 18:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( data.firstTime() == dt );
@@ -275,7 +287,7 @@ TEST_F( BufrEncodeTest, MaxAndMinTemperature )
    /*******
     * Hourly min/max except 06 and 18 o'clock.
     *******/
-   dt=miTime("2010-10-27 05:00:00");
+   dt=getTime("2010-10-27 05:00:00");
    data=allData.subData( dt );
 
    //Minimum and maximum temperature at 6 o'clock
@@ -296,7 +308,7 @@ TEST_F( BufrEncodeTest, MaxAndMinTemperature )
     * Min/max temperature at 06 and 18 o'clock, but
     * the values cant be computed.
     *******/
-   dt=miTime("2010-10-28 06:00:00");
+   dt=getTime("2010-10-28 06:00:00");
    data=allData.subData( dt );
 
    //Minimum and maximum temperature at 6 o'clock
@@ -320,16 +332,16 @@ TEST_F( BufrEncodeTest, RR_from_RA )
    int wmono=1493;
    DataElementList allData;
    DataElementList data;
-   miTime dt;
+   boost::posix_time::ptime dt;
    StationInfoPtr stInfo;
    BufrData bufr;
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
    stInfo = findWmoNo( wmono );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data-18700-RA.dat", stInfo, allData, validData );
-   dt=miTime("2010-06-22 06:00:00");
+   dt=getTime("2010-06-22 06:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( data.firstTime() == dt );
@@ -350,7 +362,7 @@ TEST_F( BufrEncodeTest, RR24_for_RRRtr )
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
    stInfo = findWmoNo( 1389 );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << 1389;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << 1389;
 
    loadBufrDataFromFile( "data_7010-1.dat", stInfo, data, validData );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
@@ -386,7 +398,7 @@ TEST_F( BufrEncodeTest, encode_TzFxFx )
    int wmono=1001;
    stInfo = findWmoNo( wmono );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_TzFxFx-1.dat", stInfo, data, validData );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
@@ -425,7 +437,7 @@ TEST_F( BufrEncodeTest, encode_FgFx )
    int wmono=1006;
    stInfo = findWmoNo( wmono );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_99735.dat", stInfo, allData, validData );
 
@@ -433,7 +445,7 @@ TEST_F( BufrEncodeTest, encode_FgFx )
    EXPECT_FLOAT_EQ( 11.6, bufr.FgMax.ff );
    EXPECT_FLOAT_EQ( 9.9, bufr.FxMax.ff );
 
-   miutil::miTime dt=miutil::miTime("2010-10-21 07:00:00");
+   boost::posix_time::ptime dt=getTime("2010-10-21 07:00:00");
    DataElementList data=allData.subData( dt );
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
@@ -451,66 +463,66 @@ TEST_F( BufrEncodeTest, encode_nddff )
    DataElementList data;
    StationInfoPtr stInfo;
    BufrData bufr;
-   miTime dt;
+   boost::posix_time::ptime dt;
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
    int wmono=1001;
    stInfo = findWmoNo( wmono );
 
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_nddff.dat", stInfo, allData, validData );
 
-   dt=miTime("2010-02-21 06:00:00");
+   dt=getTime("2010-02-21 06:00:00");
    data = allData.subData( dt );
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 21.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( FLT_MAX, bufr.DD ) << "DD: Failed time: " << dt;
 
-   dt=miTime("2010-02-22 06:00:00");
+   dt=getTime("2010-02-22 06:00:00");
    data = allData.subData( dt );
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 1.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( 360.0, bufr.DD ) << "DD: Failed time: " << dt;
 
-   dt=miTime("2010-02-23 06:00:00");
+   dt=getTime("2010-02-23 06:00:00");
    data = allData.subData( dt );
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 1.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( 360.0, bufr.DD ) << "DD: Failed time: " << dt;
 
-   dt=miTime("2010-02-24 06:00:00");
+   dt=getTime("2010-02-24 06:00:00");
    data = allData.subData( dt );
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 1.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( 35.0, bufr.DD ) << "DD: Failed time: " << dt;
 
-   dt=miTime("2010-02-25 06:00:00");
+   dt=getTime("2010-02-25 06:00:00");
    data = allData.subData( dt );
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 1.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( FLT_MAX, bufr.DD ) << "DD: Failed time: " << dt;
 
-   dt=miTime("2010-02-26 06:00:00");
+   dt=getTime("2010-02-26 06:00:00");
    data = allData.subData( dt );
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 0.0, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( 0.0, bufr.DD ) << "DD: Failed time: " << dt;
 
-   dt=miTime("2010-02-27 06:00:00");
+   dt=getTime("2010-02-27 06:00:00");
    data = allData.subData( dt );
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
    EXPECT_FLOAT_EQ( 0.9, bufr.FF ) << "FF: Failed time: " << dt;
    EXPECT_FLOAT_EQ( 348.0, bufr.DD ) << "DD: Failed time: " << dt;
 
-   dt=miTime("2010-02-28 06:00:00");
+   dt=getTime("2010-02-28 06:00:00");
    data = allData.subData( dt );
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1389;
@@ -529,7 +541,7 @@ TEST_F( BufrEncodeTest, encode_noData )
    stInfo = findWmoNo( wmono );
 
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_4780-1.dat", stInfo, data, validData );
 
@@ -546,7 +558,7 @@ TEST_F( BufrEncodeTest, encode_bufr )
    stInfo = findWmoNo( wmono );
 
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data-18700-1.dat", stInfo, data, validData );
 
@@ -582,14 +594,14 @@ TEST_F( BufrEncodeTest, encode_bufr2 )
    BufrDataPtr bufr( new BufrData() );
    kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
    int wmono=1003;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    stInfo = findWmoNo( wmono );
 
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_99950.dat", stInfo, allData, validData );
-   dt=miutil::miTime("2010-10-28 17:00:00");
+   dt=getTime("2010-10-28 17:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( data.size() != 0 );
@@ -629,7 +641,7 @@ TEST_F( BufrEncodeTest, writeTo )
    ostringstream ost;
    string sData;
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data-18700-1.dat", stInfo, data, validData );
 
@@ -646,31 +658,31 @@ TEST_F( BufrEncodeTest, CloudsAndVV )
    StationInfoPtr stInfo;
    BufrData bufr;
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    //kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
    int wmono=1385;
    stInfo = findWmoNo( wmono );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
 
    loadBufrDataFromFile( "data_4780_cloud.dat", stInfo, allData, validData );
 
-   dt=miutil::miTime("2010-10-28 06:00:00");
+   dt=getTime("2010-10-28 06:00:00");
    data=allData.subData( dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1006;
    EXPECT_FLOAT_EQ( 75, bufr.N );
    EXPECT_FLOAT_EQ( 300, bufr.HL );
 
 
-   dt=miutil::miTime("2010-10-28 08:00:00");
+   dt=getTime("2010-10-28 08:00:00");
    data=allData.subData( dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< 1006;
    EXPECT_FLOAT_EQ( FLT_MAX, bufr.N );
    EXPECT_FLOAT_EQ( 3610, bufr.HL );
 
    /*
-   miutil::miTime dt=miutil::miTime("2010-10-28 06:00:00");
+   boost::posix_time::ptime dt=getTime("2010-10-28 06:00:00");
    DataElementList data=allData.subData( dt );
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
@@ -688,7 +700,7 @@ TEST_F( BufrEncodeTest, EncodeBufr307079 )
    StationInfoPtr stInfo;
    BufrDataPtr bufr( new BufrData() );
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    EncodeBufrManager encoder;
 
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
@@ -696,11 +708,11 @@ TEST_F( BufrEncodeTest, EncodeBufr307079 )
    int wmono=1492;
    stInfo = findWmoNo( wmono );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
    ASSERT_TRUE( loadBufrDataFromFile( "data_18700.dat", stInfo, allData, validData ) )
       << "Cant load data from filr: data_18700.dat";
 
-   dt=miutil::miTime("2012-05-17 06:00:00");
+   dt=getTime("2012-05-17 06:00:00");
    data=allData.subData( dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< wmono;
 
@@ -752,7 +764,7 @@ TEST_F( BufrEncodeTest, EncodeBufr307079_EmptyName )
    StationInfoPtr stInfo;
    BufrDataPtr bufr( new BufrData() );
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    EncodeBufrManager encoder;
 
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
@@ -763,11 +775,11 @@ TEST_F( BufrEncodeTest, EncodeBufr307079_EmptyName )
    stInfo->name("", false ); //Reset the name to an empty string
    ASSERT_TRUE( stInfo->name().empty() );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
    ASSERT_TRUE( loadBufrDataFromFile( "data_18700.dat", stInfo, allData, validData ) )
       << "Cant load data from filr: data_18700.dat";
 
-   dt=miutil::miTime("2012-05-17 06:00:00");
+   dt=getTime("2012-05-17 06:00:00");
    data=allData.subData( dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< wmono;
 
@@ -806,7 +818,7 @@ TEST_F( BufrEncodeTest, EncodeBufrSVV )
    StationInfoPtr stInfo;
    BufrDataPtr bufr( new BufrData() );
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    EncodeBufrManager encoder;
 
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
@@ -815,12 +827,12 @@ TEST_F( BufrEncodeTest, EncodeBufrSVV )
    int stationid=17090;
    stInfo = findStationId( stationid );
 
-   ASSERT_TRUE( stInfo ) << "No station information for stationid " << stationid;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for stationid " << stationid;
    ASSERT_TRUE( loadBufrDataFromFile( "svv_17090.dat", stInfo, allData, validData ) )
       << "Can't load data from file: svv_17090.dat";
 
    cerr << "allData: " << allData.size() << endl;
-   dt=miutil::miTime("2012-05-30 06:00:00");
+   dt=getTime("2012-05-30 06:00:00");
    data=allData.subData( dt );
 
    //cerr << "@@@@@@ dt: " << dt << " ft: " << data.firstTime()<<endl;
@@ -863,33 +875,33 @@ TEST_F( BufrEncodeTest, MsgTimeTest )
    MsgTime t;
    MsgTime::Hours hours;
    int stationid=999991;
-   miutil::miTime test;
+   boost::posix_time::ptime test;
    StationInfoPtr stInfo;
    stInfo = findStationId( stationid );
 
-   ASSERT_TRUE( stInfo ) << "No station information for stationid " << stationid;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for stationid " << stationid;
 
-   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 00:00:00" ) ));
-   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 03:00:00" ) ));
-   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 06:00:00" ) ));
-   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 09:00:00" ) ));
-   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 12:00:00" ) ));
-   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 15:00:00" ) ));
-   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 18:00:00" ) ));
-   ASSERT_FALSE( stInfo->msgForTime( miTime("2012-06-07 21:00:00" ) ));
-   ASSERT_TRUE( stInfo->msgForTime( miTime("2012-06-07 08:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( getTime("2012-06-07 00:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( getTime("2012-06-07 03:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( getTime("2012-06-07 06:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( getTime("2012-06-07 09:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( getTime("2012-06-07 12:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( getTime("2012-06-07 15:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( getTime("2012-06-07 18:00:00" ) ));
+   ASSERT_FALSE( stInfo->msgForTime( getTime("2012-06-07 21:00:00" ) ));
+   ASSERT_TRUE( stInfo->msgForTime( getTime("2012-06-07 08:00:00" ) ));
 
    try {
       t.setMsgForTime( "0/6:0" );
       cout << t << endl;
 
-      test = miTime("2012-06-07 00:00:00");
+      test = getTime("2012-06-07 00:00:00");
       EXPECT_TRUE( t.msgForTime( test ) );
 
-      test = miTime("2012-06-07 00:01:00");
+      test = getTime("2012-06-07 00:01:00");
       EXPECT_FALSE( t.msgForTime( test ) );
 
-      test = miTime("2012-06-07 04:00:00");
+      test = getTime("2012-06-07 04:00:00");
       EXPECT_FALSE( t.msgForTime( test ) );
    }
    catch( const std::exception &e ) {
@@ -913,7 +925,7 @@ TEST_F( BufrEncodeTest, BufrValidaterTest )
    float rr24f=-0.1;
 
    BufrParamTypePtr pRR = validater->findParamDef(13023);
-   ASSERT_TRUE( pRR ) << "No BUFR param definition for paramid 0 13 023";
+   ASSERT_TRUE( pRR.get() ) << "No BUFR param definition for paramid 0 13 023";
 
 //   cerr << "rr24fr: " << setprecision(20) << myRound( rr24f, 0.1 ) << endl;
 //   cerr << "rr24f : " << setprecision(20) << rr24f << endl;
@@ -928,7 +940,7 @@ TEST_F( BufrEncodeTest, EncodeBufr307079_18700 )
    StationInfoPtr stInfo;
    BufrDataPtr bufr( new BufrData() );
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    EncodeBufrManager encoder;
 
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
@@ -936,11 +948,11 @@ TEST_F( BufrEncodeTest, EncodeBufr307079_18700 )
    int wmono=1492;
    stInfo = findWmoNo( wmono );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
    ASSERT_TRUE( loadBufrDataFromFile( "18700-20121023T06.dat", stInfo, allData, validData ) )
       << "Cant load data from file: 18700-20121023T06.dat";
 
-   dt=miutil::miTime("2012-10-23 06:00:00");
+   dt=getTime("2012-10-23 06:00:00");
    data=allData.subData( dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< wmono;
 
@@ -995,7 +1007,7 @@ TEST_F( BufrEncodeTest, EncodeBufr90002)
    StationInfoPtr stInfo;
    BufrDataPtr bufr( new BufrData() );
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    EncodeBufrManager encoder;
 
 
@@ -1005,10 +1017,10 @@ TEST_F( BufrEncodeTest, EncodeBufr90002)
    int stationid=73250;
    stInfo =  findStationId( stationid );
 
-   ASSERT_TRUE( stInfo ) << "No station information for id " << stationid;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for id " << stationid;
    ASSERT_TRUE( loadBufrDataFromFile( "73250-302-20121024T06.dat", stInfo, allData, validData ) )
       << "Cant load data from file: 73250-302-20121024T06.dat";
-   dt=miutil::miTime("2012-10-24 06:00:00");
+   dt=getTime("2012-10-24 06:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< stationid;
@@ -1044,7 +1056,7 @@ TEST_F( BufrEncodeTest, EncodeBufr90002)
    }
 
 
-   dt=miutil::miTime("2012-11-14 06:00:00");
+   dt=getTime("2012-11-14 06:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< stationid;
@@ -1085,7 +1097,7 @@ TEST_F( BufrEncodeTest, EncodeBufr90003_SHIP)
    StationInfoPtr stInfo;
    BufrDataPtr bufr( new BufrData() );
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    EncodeBufrManager encoder;
    string datafile("76991_KV_HARSTAD.dat");
 
@@ -1094,10 +1106,10 @@ TEST_F( BufrEncodeTest, EncodeBufr90003_SHIP)
    int stationid=76991;
    stInfo =  findCallsign( "LMXQ" );
 
-   ASSERT_TRUE( stInfo ) << "No station information for id " << stationid;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for id " << stationid;
    ASSERT_TRUE( loadBufrDataFromFile( datafile, stInfo, allData, validData ) )
       << "Cant load data from file: '" << datafile << "'.";
-   dt=miutil::miTime("2012-11-10 06:00:00");
+   dt=getTime("2012-11-10 06:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< stationid;
@@ -1139,7 +1151,7 @@ TEST_F( BufrEncodeTest, EncodeBufr90003_Platforms)
    StationInfoPtr stInfo;
    BufrDataPtr bufr( new BufrData() );
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    EncodeBufrManager encoder;
    string datafile("76920_EKOFISK.dat");
    string callsign("LF5U");
@@ -1148,10 +1160,10 @@ TEST_F( BufrEncodeTest, EncodeBufr90003_Platforms)
 
    stInfo =  findCallsign( "LF5U" );
 
-   ASSERT_TRUE( stInfo ) << "No station information for callsign " << callsign;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for callsign " << callsign;
    ASSERT_TRUE( loadBufrDataFromFile( datafile, stInfo, allData, validData ) )
       << "Cant load data from file: '" << datafile << "'.";
-   dt=miutil::miTime("2012-11-10 06:00:00");
+   dt=getTime("2012-11-10 06:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< callsign;
@@ -1193,7 +1205,7 @@ TEST_F( BufrEncodeTest, EncodeBufr90003_FG)
    StationInfoPtr stInfo;
    BufrDataPtr bufr( new BufrData() );
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    EncodeBufrManager encoder;
    string datafile("LF5U_20121115.dat");
    string callsign("LF5U");
@@ -1202,10 +1214,10 @@ TEST_F( BufrEncodeTest, EncodeBufr90003_FG)
 
    stInfo =  findCallsign( callsign );
 
-   ASSERT_TRUE( stInfo ) << "No station information for callsign " << callsign;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for callsign " << callsign;
    ASSERT_TRUE( loadBufrDataFromFile( datafile, stInfo, allData, validData ) )
       << "Cant load data from file: '" << datafile << "'.";
-   dt=miutil::miTime("2012-11-15 06:00:00");
+   dt=getTime("2012-11-15 06:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< callsign;
@@ -1247,7 +1259,7 @@ TEST_F( BufrEncodeTest, Esss )
     DataElementList data;
     DataElement dataElement;
     BufrDataPtr bufr;
-    miutil::miTime t("2012-12-06 06:00:00");
+    boost::posix_time::ptime t = getTime("2012-12-06 06:00:00");
 
     dataElement.time( t );
     dataElement.SA=-1;
@@ -1293,7 +1305,7 @@ TEST_F( BufrEncodeTest, EE_SA )
     DataElementList data;
     DataElement dataElement;
     BufrDataPtr bufr;
-    miutil::miTime t("2014-04-30 06:00:00");
+    boost::posix_time::ptime t = getTime("2014-04-30 06:00:00");
 
     dataElement.time( t );
     dataElement.SA=-1;
@@ -1313,7 +1325,7 @@ TEST_F( BufrEncodeTest, PressureHeight )
     DataElement dataElement;
     BufrDataPtr bufr;
     EncodeBufrManager encoder;
-    miutil::miTime t("2014-04-30 06:00:00");
+    boost::posix_time::ptime t = getTime("2014-04-30 06:00:00");
 
     dataElement.time( t );
     data.insert( t, dataElement, true );
@@ -1359,7 +1371,7 @@ TEST_F( BufrEncodeTest, EsssFromEE )
 	DataElementList data;
     DataElement dataElement;
     BufrDataPtr bufr;
-    miutil::miTime t("2013-05-10 06:00:00");
+    boost::posix_time::ptime t = getTime("2013-05-10 06:00:00");
     DataElementList allData;
     StationInfoPtr stInfo;
     EncodeBufrManager encoder;
@@ -1410,7 +1422,7 @@ TEST_F( BufrEncodeTest, EncodeBufr9000_only_one_parameter )
    DataElementList allData;
    StationInfoPtr stInfo;
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    EncodeBufrManager encoder;
 
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
@@ -1419,12 +1431,12 @@ TEST_F( BufrEncodeTest, EncodeBufr9000_only_one_parameter )
    int wmono=1607;
    stInfo = findWmoNo( wmono );
 
-   ASSERT_TRUE( stInfo ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
    ASSERT_TRUE( loadBufrDataFromFile( "15460-20121205T05.dat", stInfo, allData, validData ) )
       << "Can't load data from file: 15460-20121205T05.dat";
 
    cerr << "allData: " << allData.size() << endl;
-   dt=miutil::miTime("2012-12-05 05:00:00");
+   dt=getTime("2012-12-05 05:00:00");
    data=allData.subData( dt );
 
    //cerr << "@@@@@@ dt: " << dt << " ft: " << data.firstTime()<<endl;
@@ -1432,7 +1444,7 @@ TEST_F( BufrEncodeTest, EncodeBufr9000_only_one_parameter )
 
    cerr << "data: " << data.size() << endl;
    BufrDataPtr  bufr = bufrEncoder.doBufr( stInfo, data );
-   EXPECT_TRUE( bufr );
+   EXPECT_TRUE( bufr.get() );
 
 
    BufrTemplateList templateList;
@@ -1465,7 +1477,7 @@ TEST_F( BufrEncodeTest, EncodeBufr90003_SHIP_PWA)
    StationInfoPtr stInfo;
    BufrDataPtr bufr( new BufrData() );
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    EncodeBufrManager encoder;
    string datafile("data_LF4B.dat");
    string callSign("LF4B");
@@ -1474,10 +1486,10 @@ TEST_F( BufrEncodeTest, EncodeBufr90003_SHIP_PWA)
 
    stInfo =  findCallsign( callSign );
 
-   ASSERT_TRUE( stInfo ) << "No station information for id '" << callSign << "'";
+   ASSERT_TRUE( stInfo.get() ) << "No station information for id '" << callSign << "'";
    ASSERT_TRUE( loadBufrDataFromFile( datafile, stInfo, allData, validData ) )
       << "Cant load data from file: '" << datafile << "'.";
-   dt=miutil::miTime("2013-04-28 05:00:00");
+   dt=getTime("2013-04-28 05:00:00");
    data=allData.subData( dt );
 
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< callSign;
@@ -1524,7 +1536,7 @@ TEST_F( BufrEncodeTest, EncodeBufr307079_EmptyName1 )
    StationInfoPtr stInfo_1192;
    StationInfoPtr stInfo_1204;
    DataElementList data;
-   miutil::miTime dt;
+   boost::posix_time::ptime dt;
    EncodeBufrManager encoder;
 
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
@@ -1532,12 +1544,12 @@ TEST_F( BufrEncodeTest, EncodeBufr307079_EmptyName1 )
    int wmono=1192;
    stInfo_1192 = findWmoNo( wmono );
 
-   dt=miutil::miTime("2013-01-07 06:00:00");
+   dt=getTime("2013-01-07 06:00:00");
 
-   ASSERT_TRUE( stInfo_1192 ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo_1192.get() ) << "No station information for wmono " << wmono;
    wmono=1204;
    stInfo_1204 = findWmoNo( wmono );
-   ASSERT_TRUE( stInfo_1204 ) << "No station information for wmono " << wmono;
+   ASSERT_TRUE( stInfo_1204.get() ) << "No station information for wmono " << wmono;
 //   ASSERT_TRUE( loadBufrDataFromFile( "data_18700.dat", stInfo, allData, validData ) )
 //      << "Cant load data from filr: data_18700.dat";
 
@@ -1619,20 +1631,20 @@ TEST_F( BufrEncodeTest, MsgTimeNoMustHaveTypesTest )
    bool forceDelay;
    bool relativeToFirst;
    int stationid=76921;
-   miutil::miTime test;
+   boost::posix_time::ptime test;
    StationInfoPtr stInfo;
    stInfo = findCallsign( "LF5X" );
 
-   ASSERT_TRUE( stInfo ) << "No station information for stationid " << stationid;
+   ASSERT_TRUE( stInfo.get() ) << "No station information for stationid " << stationid;
 
 //   stInfo->printDelayInfo( cerr ) << endl;
 
-   minToDelay = stInfo->delay( miTime("2014-06-07 00:00:00" ), forceDelay, relativeToFirst );
+   minToDelay = stInfo->delay( getTime("2014-06-07 00:00:00" ), forceDelay, relativeToFirst );
 
 //   cerr << "minToDelay: " << minToDelay << " forceDelay: " << (forceDelay?"true":"false")
 //		<< " relativeToFirst: "<< (relativeToFirst?"true":"false") << endl;
 
-   ASSERT_TRUE( stInfo->msgForTime( miTime("2014-06-07 00:00:00" ) ));
+   ASSERT_TRUE( stInfo->msgForTime( getTime("2014-06-07 00:00:00" ) ));
    ASSERT_TRUE( minToDelay == 17 );
    ASSERT_FALSE( forceDelay );
    ASSERT_FALSE( relativeToFirst );
