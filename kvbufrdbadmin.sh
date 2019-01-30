@@ -31,7 +31,7 @@ fi
 
 
 DAY=`date '+%d'`
-LOG=$LOGDIR/kvbufr/$PREFIXadmin-$DAY.log
+LOG=$LOGDIR/$PREFIX/${PREFIX}admin-$DAY.log
 
 [ -f "$LOG" ] && rm -rf "$LOG" 
 
