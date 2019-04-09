@@ -147,7 +147,7 @@ ConfMaker::
 findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const
 {
    for( StInfoSysSensorInfoList::const_iterator it=sensors.begin(); it != sensors.end(); ++it ) {
-      if( it->paramid() == paramid && it->sensor() == 0 && it->hlevel()==0 && it->operational() ) {
+      if( it->paramgroupid() == paramid && it->sensor() == 0 && it->hlevel()==0 && it->operational() ) {
          sensor = *it;
          return true;
       }
