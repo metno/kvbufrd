@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations
 
-  $Id: InitLogger.cc,v 1.1.2.2 2007/09/27 09:02:22 paule Exp $
+  $Id: bufr.h,v 1.12.2.5 2007/09/27 09:02:18 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -29,16 +29,29 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef __parseMilogLogLevel_h__
-#define __parseMilogLogLevel_h__
+#ifndef __kvbufrd_util_h__
+#define __kvbufrd_util_h__
 
-#include <iostream>
 #include <string>
-#include <milog/milog.h>
+#include <stdexcept>
+#include <boost/filesystem.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <kvalobs/milog/milogtypes.h>
 
-milog::LogLevel parseMilogLogLevel(const std::string &logLevel);
+namespace util {
+  namespace file {
+    /**
+     * Returns the modification time for the file given with path. Returns the modification time
+     * if the file exist and an undefined time if the file do not exist. Other error give an exception.
+     * 
+     * @param path path to the file
+     * @return the modification time if the file exist and an undefined time if the file do not exist.
+     * @exception std::runtime_error on other errors.
+     */
+    boost::posix_time::ptime modificationTime(const std::string &path);
+  }
+}
 
-
-
+std::ostream &operator<<(std::ostream &o, milog::LogLevel ll);
 
 #endif

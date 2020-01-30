@@ -194,7 +194,7 @@ DataElement( const DataElement &p):
    typeidList( p.typeidList )
 {
    if( params.size() != p.params.size() ) {
-      cerr << "FATAL BUG: Something nasty have happend.  DataElement copy CTOR  size differ!" << params.size() << " " << p.params.size() << endl;
+      cerr << "FATAL BUG CTOR: Something nasty have happend.  DataElement copy CTOR  size differ!" << params.size() << " " << p.params.size() << endl;
       abort();
    }
 
@@ -600,17 +600,21 @@ operator DataElement()const //rvalue use
 
 void
 DataElementList::
-writeTo( std::ostream &o, bool withId )const
+writeTo( std::ostream &o, bool withId, bool debug )const
 {
-   ostringstream header, data;
-   TDataElementList::const_reverse_iterator it=dataList.rbegin();
+  if( ! debug ) {
+    return;
+  }
 
-   if( it != dataList.rend() ) {
-      it->writeTo( header, data, withId );
-      o << header.str() << endl;
-      o << data.str() << endl;
-      ++it;
-   }
+  ostringstream header, data;
+  TDataElementList::const_reverse_iterator it=dataList.rbegin();
+
+  if( it != dataList.rend() ) {
+    it->writeTo( header, data, withId );
+    o << header.str() << endl;
+    o << data.str() << endl;
+    ++it;
+  }
 
    for( ; it != dataList.rend(); ++it ) {
       header.str("");

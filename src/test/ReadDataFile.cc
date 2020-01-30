@@ -70,11 +70,14 @@ readDataFile( const std::string &filename, DataEntryList &data, const boost::pos
 		std::vector<std::string> dataValues;
 		boost::split(dataValues, line, boost::is_any_of("|"));
 
+		for(std::vector<std::string>::size_type i=0; i<dataValues.size(); ++i) {
+			dataValues[i]=boost::trim_copy(dataValues[i]);
+		}
+
 		if( dataValues.size() != 12 ) {
 		   cerr << "readDataFile: to few elements ("<< dataValues.size() << ") expecting 12\n";
 		   continue;
 		}
-
 
 		obstime = boost::posix_time::time_from_string( dataValues[1] );
 
@@ -85,7 +88,7 @@ readDataFile( const std::string &filename, DataEntryList &data, const boost::pos
 				dataValues[2], atoi( dataValues[3].c_str() ) ,
 				atoi( dataValues[5].c_str() ), atoi( dataValues[6].c_str() ),
 				atoi( dataValues[7].c_str() ), dataValues[9], dataValues[10] );
-
+	
 		//cerr << "readDataFile: insert( " << d << ")\n";
  		data.insert( d );
 	}
@@ -124,7 +127,6 @@ loadBufrDataFromFile( const std::string &filename,
 		cerr << "Failed to read datafile <" << filename << ">." << endl;
 		return false;
 	}
-
 	loadBufrData( rawdata, sd, info, validate );
 //	cerr << "---- START ---\n";
 //	for( CIDataElementList it=sd.begin(); it != sd.end(); ++it ) {

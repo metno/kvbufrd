@@ -153,6 +153,84 @@ namespace
 }
 
 
+
+TEST_F( BufrEncodeTest, GustFrom_FG_1_or_FG_010 )
+{
+   using namespace miutil;
+   DataElementList allData;
+   DataElementList data;
+   StationInfoPtr  stInfo;
+   boost::posix_time::ptime dt;
+   BufrDataPtr bufr( new BufrData() );
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   int wmono=1495;
+   stInfo = findWmoNo( wmono );
+
+
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data_18700_501_2019051404.dat", stInfo, allData, validData );
+   dt=getTime("2019-05-14 06:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
+
+   EXPECT_TRUE( data.size() != 0 );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< wmono;
+
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   EncodeBufrManager encoder;
+   BufrTemplateList templateList;
+   b::assign::push_back( templateList )(900000);
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+   }
+   catch ( EncodeException &ex ) {
+      FAIL() << "EXCEPTION (BufrEncodeException): " << ex.what();
+   }
+   catch ( const std::exception &ex ) {
+       FAIL() << "EXCEPTION: " << ex.what();
+   }
+   catch( ... ) {
+      FAIL() << "EXCEPTION: Unknown.";
+   }
+
+   ASSERT_NO_THROW( bufrHelper.saveToFile( ".", true ) );
+}
+
+
+
+/*
+TEST_F( BufrEncodeTest, GustFrom_FG_1_or_FG_010 )
+{
+   using namespace miutil;
+   int wmono=1495;
+   DataElementList allData;
+   DataElementList data;
+   boost::posix_time::ptime dt;
+   StationInfoPtr stInfo;
+   BufrData bufr;
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   stInfo = findWmoNo( wmono );
+
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "data_18700_501_2019051404.dat", stInfo, allData, validData );
+   dt=getTime("2019-05-14 06:00:00");
+   data=allData.subData( dt );
+
+   EXPECT_TRUE( data.firstTime() == dt );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) );
+   cerr << "GustFrom_FG_1_or_FG_010: (" << bufrEncoder.getTestValue().getF("GUST") <<")\n";
+   EXPECT_FLOAT_EQ( 1.2, bufr.FG_1 );
+   ASSERT_FAIL(true);
+   
+}
+*/
+
+
 TEST_F( BufrEncodeTest, RR_from_RRRtr_AND_RR1 )
 {
    using namespace miutil;
@@ -339,16 +417,16 @@ TEST_F( BufrEncodeTest, RR_from_RA )
    stInfo = findWmoNo( wmono );
 
    ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
-
+   
    loadBufrDataFromFile( "data-18700-RA.dat", stInfo, allData, validData );
    dt=getTime("2010-06-22 06:00:00");
+   
    data=allData.subData( dt );
-
+   
    EXPECT_TRUE( data.firstTime() == dt );
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, bufr ) ) << "FAILED: Cant generate bufr for "<< wmono;
    EXPECT_FLOAT_EQ( -12, bufr.precipRegional.hTr );
    EXPECT_FLOAT_EQ( 2.0, bufr.precipRegional.RR );
-
    EXPECT_FLOAT_EQ( 5.0, bufr.precip24.RR );
 }
 

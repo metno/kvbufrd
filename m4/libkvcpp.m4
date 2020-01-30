@@ -187,3 +187,63 @@ AM_CONDITIONAL([KVSTATIC], test "${KVSTATIC_LIBS}" = "true" )
 ])
 
 
+
+AC_DEFUN([LIBKVCPP4],
+[
+AC_ARG_WITH(
+    [kvalobs],
+    AS_HELP_STRING([--with-kvalobs=PATH]
+                   [Specify which kvalobs to build against.]),
+    [KVBUILD_DIR="${with_kvalobs}"],
+    [KVBUILD_DIR=""]
+)
+
+AC_ARG_WITH(
+    [kvalobs-static],
+    AS_HELP_STRING([--with-kvalobs-static]
+                   [Link static against kvalobs library.]),
+    [KVSTATIC_LIBS="true"],
+    [KVSTATIC_LIBS="false"]
+)
+
+AC_MSG_RESULT([KVBUILD_DIR: ${KVBUILD_DIR}])
+if test -z "${KVBUILD_DIR}"; then
+    PKG_CHECK_MODULES(kvsubscribe, libkvsubscribe)
+    KVLIBDIR=`${PKG_CONFIG} --variable=libdir libkvsubscribe`
+    KVINCLUDEDIR=`${PKG_CONFIG} --variable=includedir libkvsubscribe`
+    KVCFLAGS=`${PKG_CONFIG} --cflags-only-other libkvsubscribe`
+    KVLDFLAGS=`${PKG_CONFIG} --libs-only-other libkvsubscribe`
+else
+    PKGCONF_SAVED=${PKG_CONFIG_PATH}
+    export PKG_CONFIG_PATH="${KVBUILD_DIR}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+    PKG_CHECK_MODULES(kvsubscribe, libkvsubscribe)
+    
+    KVLIBDIR=${KVBUILD_DIR}/lib
+    KVINCLUDEDIR=${KVBUILD_DIR}/include
+    KVCFLAGS=`${PKG_CONFIG} --cflags-only-other libkvsubscribe`
+    KVLDFLAGS=`${PKG_CONFIG} --libs-only-other libkvsubscribe`
+    KVIDLDIR=${KVBUILD_DIR}/share/kvalobs/idl
+    AC_MSG_RESULT([KVLIBDIR: ${KVBUILD_DIR}/lib])
+    AC_MSG_RESULT([KVINCLUDEDIR: ${KVBUILD_DIR}/lib])
+    AC_MSG_RESULT([KVCFLAGS: ${KVCFLAGS}])
+    AC_MSG_RESULT([KVLDLAGS: ${KVLDLAGS}])
+    AC_MSG_RESULT([PKG_CONFIG_PATH: ${PKG_CONFIG_PATH}])
+    AC_MSG_RESULT([KVLIBDIR: ${KVBUILD_DIR}/lib])
+    export PKG_CONFIG_PATH=${PKGCONF_SAVED}
+fi
+
+KVLIBPREFIX=libkvalobs
+
+AC_SUBST(KVLIBPREFIX)
+AC_SUBST(KVIDLDIR)
+AC_SUBST(KVLIBDIR)
+AC_SUBST(KVINCLUDEDIR)
+AC_SUBST(KVCFLAGS)
+AC_SUBST(KVLDFLAGS)
+
+
+#AM_CONDITIONAL([KVSTATIC], test "${KVBUILD_DIR}" )
+
+#Allways build static
+AM_CONDITIONAL([KVSTATIC], test "${KVSTATIC_LIBS}" = "true" )
+])

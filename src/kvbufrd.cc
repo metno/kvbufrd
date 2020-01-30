@@ -30,6 +30,7 @@
  */
 #include <unistd.h>
 #include <getopt.h>
+#include <stdlib.h>
 #include <fstream>
 #include "boost/thread/thread.hpp"
 #include "boost/filesystem.hpp"
@@ -45,6 +46,8 @@
 #include "delaycontrol.h"
 #include "InitLogger.h"
 #include "kvDbGateProxyThread.h"
+#include "cachedb.h"
+#include "cachedbcleaner.h"
 
 //using namespace kvservice;
 using namespace std;
@@ -52,70 +55,56 @@ using namespace miutil;
 namespace fs = boost::filesystem;
 namespace pt = boost::posix_time;
 
+void checkPidfile(const Opt &opts);
+
 Opt options;
 
 int
 main(int argn, char **argv)
 {
-   bool error;
-   std::string pidfile;
+   miutil::conf::ConfSection *conf;
+   dnmi::file::PidFileHelper pidFile;
+// checkAndInitCacheDB("/build/kvbufrd/kvbufrd.sqlite");
+// return 0;
    std::string confFile;
-
    decodeArgs( argn, argv, options );
    InitLogger(argn, argv, options.progname );
 
-
-   confFile = options.conffile;
-   pidfile = options.pidfile;
-
-   dnmi::file::PidFileHelper pidFile;
-   miutil::conf::ConfSection *conf;
-
-   cerr << "conffile: '" << confFile << "'" << endl;
-   cerr << "pidfile:  '" << pidfile << "'" << endl;
+   cerr << "conffile: '" << options.conffile << "'" << endl;
+   cerr << "pidfile:  '" << options.pidfile << "'" << endl;
    cerr << "progname: '" << options.progname << "'" << endl;
 
-   if( ! fs::exists( fs::path( confFile ) ) ) {
-      LOGFATAL("The configuration file '" << confFile
+   if( ! fs::exists( fs::path( options.conffile ) ) ) {
+      LOGFATAL("The configuration file '" << options.conffile
                << "' does not exist!");
-      cerr << "The configuration file '" << pidfile
+      cerr << "The configuration file '" << options.conffile
            << "' does not exist!";
       exit( 1 );
    }
 
    try{
-      conf=miutil::conf::ConfParser::parse(confFile, true);
+      conf=miutil::conf::ConfParser::parse(options.conffile, true);
    }
    catch( const logic_error &ex ){
       LOGFATAL( ex.what() );
       return 1;
    }
 
-   App  app(argn, argv, confFile, conf );
+   //exit if an instance is allready running.
+   checkPidfile(options);
+   
+   App  app(argn, argv, options.conffile, conf );
    std::shared_ptr<dnmi::thread::CommandQue> newDataQue(new dnmi::thread::CommandQue());
    std::shared_ptr<dnmi::thread::CommandQue> newObsQue(new dnmi::thread::CommandQue());
 
    DataReceiver dataReceiver(app, newDataQue, newObsQue);
    BufrWorker   bufrWorker(app, newObsQue);
    DelayControl delayControl(app, newDataQue);
+   CacheDbCleaner cacheDbCleaner(app);
+   
+   pidFile.createPidFile(options.pidfile);
+   
    pt::ptime startTime;
-
-
-   if(dnmi::file::isRunningPidFile(pidfile, error)){
-      if(error){
-         LOGFATAL("An error occured while reading the pidfile:" << endl
-                  << pidfile << " remove the file if it exist and"
-                  << endl << options.progname << " is not running. " <<
-                  "If it is running and there is problems. Kill " << options.progname <<
-                  " and " << endl << "restart it." << endl << endl);
-         return 1;
-      }else{
-         LOGFATAL("Is " << options.progname << " allready running?" << endl
-                  << "If not remove the pidfile: " << pidfile);
-         return 1;
-      }
-   }
-
 
    //COMMENT:
    //For debugging. At the momment a time spec
@@ -134,14 +123,14 @@ main(int argn, char **argv)
       }
    }
 
-   pidFile.createPidFile(pidfile);
+   
 
    boost::thread bufrWorkerThread(bufrWorker);
    IDLOGDEBUG("main","Started <BufrWorkerThread>!");
 
    if(startTime.is_special()){
      startTime=pt::second_clock::universal_time();
-     startTime -= pt::hours(48);
+     startTime -= pt::hours(6);
    }
 
    IDLOGINFO("main","Getting data from kvalobs from time: " << pt::to_kvalobs_string(startTime));
@@ -155,6 +144,9 @@ main(int argn, char **argv)
 
    boost::thread delayThread(delayControl);
    IDLOGDEBUG("main","Started <delayControlThread>!");
+
+   boost::thread cacheDbCleanerThread(cacheDbCleaner);
+
 
    app.run(newDataQue);
 
@@ -170,8 +162,29 @@ main(int argn, char **argv)
    delayThread.join();
    IDLOGDEBUG("main","Joined <delayControlThread>!");
 
+   cacheDbCleanerThread.join();
+   IDLOGDEBUG("main","Joined <cacheDbCleanerThread>!");
    //app.doShutdown();
 
    return 0;
 }
 
+void checkPidfile(const Opt &opts) {
+   bool error;
+   
+   if(dnmi::file::isRunningPidFile(opts.pidfile, error)){
+      if(error){
+         LOGFATAL("An error occured while reading the pidfile:" << endl
+                  << opts.pidfile << " remove the file if it exist and"
+                  << endl << opts.progname << " is not running. " <<
+                  "If it is running and there is problems. Kill " << opts.progname <<
+                  " and " << endl << "restart it." << endl << endl);
+         exit(1);
+      }else{
+         LOGFATAL("Is " << opts.progname << " allready running?" << endl
+                  << "If not remove the pidfile: " << opts.pidfile);
+         exit(1);
+      }
+   }
+
+}

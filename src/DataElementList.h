@@ -75,65 +75,65 @@ private:
   	//  friend class BufrDataList::BufrDataProxy
   	
  public:
-  	KvParam  TA;       
-  	KvParam  TAM;       
-  	KvParam  TAN;       
-  	KvParam  TAX;
-  	KvParam  TD;
-  	KvParam  UU;       
-  	KvParam  UM;       
-  	KvParam  FF;   
-  	KvParam  FM;   
-  	KvParam  FG;    //Gust since last observation
-  	KvParam  FG_1;
-  	KvParam  FG_6;
-  	KvParam  FG_12;
-  	KvParam  FG_010; //Gust 10 last minutes before observation.
-  	KvParam  FX;    //Max wind since last observation
-  	KvParam  FX_1;   
-  	KvParam  FX_3;
-  	KvParam  FX_6;
-  	KvParam  DD;   
-  	KvParam  DM;   
-  	KvParam  DG;
-  	KvParam  DG_010;
-  	KvParam  DG_1;
-  	KvParam  DG_6;
-  	KvParam  DX;
-  	KvParam  DX_3;   
-  	KvParam  RA;    
-  	KvParam  RR_1; 
-  	KvParam  RR_2;
-  	KvParam  RR_3;  
-  	KvParam  RR_6;
+  	KvParam TA;       
+  	KvParam TAM;       
+  	KvParam TAN;       
+  	KvParam TAX;
+  	KvParam TD;
+  	KvParam UU;       
+  	KvParam UM;       
+  	KvParam FF;   
+  	KvParam FM;   
+  	KvParam FG;    //Gust since last observation
+  	KvParam FG_1;
+  	KvParam FG_6;
+  	KvParam FG_12;
+  	KvParam FG_010; //Gust 10 last minutes before observation.
+  	KvParam FX;    //Max wind since last observation
+  	KvParam FX_1;   
+  	KvParam FX_3;
+  	KvParam FX_6;
+  	KvParam DD;   
+  	KvParam DM;   
+  	KvParam DG;
+  	KvParam DG_010;
+  	KvParam DG_1;
+  	KvParam DG_6;
+  	KvParam DX;
+  	KvParam DX_3;   
+  	KvParam RA;    
+  	KvParam RR_1; 
+  	KvParam RR_2;
+  	KvParam RR_3;  
+  	KvParam RR_6;
   	KvParam RR_9;
   	KvParam RR_12;
-  	KvParam  RR_15;
+  	KvParam RR_15;
   	KvParam RR_18;
-  	KvParam  RR_24;
-  	KvParam  RT_1;     
-  	KvParam  PO;  //PO, stasjonstrykk.    
-  	KvParam  POM;  //POM, stasjonstrykk.  
+  	KvParam RR_24;
+  	KvParam RT_1;     
+  	KvParam PO;  //PO, stasjonstrykk.    
+  	KvParam POM;  //POM, stasjonstrykk.  
   	KvParam PON;  //PON, stasjonstrykk.  
-  	KvParam  POX;  //POX, stasjonstrykk.  
-  	KvParam  PH;  //PH, trykk redusert til havets niv�, ICAO standard.   
-  	KvParam  PR;  //PR, trykk redusert til havets niv�.
-  	KvParam  PP;  
-  	KvParam  TAN_12;
+  	KvParam POX;  //POX, stasjonstrykk.  
+  	KvParam PH;  //PH, trykk redusert til havets niv�, ICAO standard.   
+  	KvParam PR;  //PR, trykk redusert til havets niv�.
+  	KvParam PP;  
+  	KvParam TAN_12;
   	KvParam TAX_12;
   	KvParam TWF;
   	KvParam TW;
-  	KvParam  TWM;
-  	KvParam  TWN;
+  	KvParam TWM;
+  	KvParam TWN;
   	KvParam TWX;
-  	KvParam  TGN;
+  	KvParam TGN;
   	KvParam TGN_12;
   	KvParam WAWA;
-  	KvParam  HLN;
-  	KvParam  EM;    //Snow state to the gound (Markas tilstand).
-  	KvParam  EE;   //BUFR parameter E or E' (0 20 062).
-  	KvParam  Es;  //Ice deposit (thickness) at observation time.
-  	KvParam  ERs; //Rate of ice accretion.
+  	KvParam HLN;
+  	KvParam EM;    //Snow state to the gound (Markas tilstand).
+  	KvParam EE;   //BUFR parameter E or E' (0 20 062).
+  	KvParam Es;  //Ice deposit (thickness) at observation time.
+  	KvParam ERs; //Rate of ice accretion.
   	KvParam XIS;  //Cause of ice accreation.
   	KvParam Ci;   //Sea ice concentration.
   	KvParam Bi;   //Amount and type of ice.
@@ -313,7 +313,7 @@ public:
 
   	DataElementList& operator=( const DataElementList &rhs );
 
-  	void writeTo( std::ostream &o, bool withId=true )const;
+  	void writeTo( std::ostream &o, bool withId=true, bool debug=true )const;
 
   	friend std::ostream& operator<<(std::ostream& ost,
 				 					  const DataElementList& sd);

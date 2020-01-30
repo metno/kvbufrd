@@ -22,6 +22,7 @@
 select date('now', '-7 day') AS "Deleting data before!";
 delete from data where obstime<date('now', '-7  day');
 
+
 --
 -- Deletes from bufr all records that is more than 1 month old.
 --

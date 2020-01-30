@@ -541,7 +541,7 @@ public:
    * list is used to create WMO message. The second use is
    * to select which Data that shall be used if there is more 
    * than one Data for one parameter. The Data is selected in the
-   * order in the list. A Data with typeid preciding a another typeid
+   * order in the list. A Data with typeid preciding another typeid
    * in the list is used before the other.
    *
    * \param hour Return the a list of typeid's that is valid for
@@ -660,6 +660,11 @@ public:
    bool operator!=(const StationInfo &rhs) const {
       return !( *this == rhs );
    }
+
+   /**
+    * Returns a string on the form [stationid1,stationid2,..,stationidN/typeid1,typeid2,..,typeidN] 
+    */
+   std::string getStationsAndTypes()const;
 
    std::ostream& printDelayInfo( std::ostream& ost );
 };

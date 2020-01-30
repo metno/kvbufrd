@@ -261,7 +261,7 @@ addDescriptorList( const BufrTemplateList &templateList )
 void
 BufrHelper::
 addDelayedReplicationFactor( int paramid, int value,
-                             const std::string &name )
+                             const std::string &name)
 {
    kdata[ikdata++] = value;
    (*values)[iValue++].insert( paramid, value, name );
@@ -270,9 +270,12 @@ addDelayedReplicationFactor( int paramid, int value,
 void
 BufrHelper::
 addValue( int bufrParamId, float value,
-          const std::string &name, bool countAsData )
+          const std::string &name, bool countAsData, const std::string &testId )
 {
    if( (*values)[iValue++].insert( bufrParamId, value, name ) ) {
+      if ( test && !testId.empty()) {
+         testHelper.setF(value, testId);
+      }
 	   if( countAsData ) {
 		   bufrBase->setHasValidValue();
 	   }
@@ -282,11 +285,14 @@ addValue( int bufrParamId, float value,
 void
 BufrHelper::
 addValue( int bufrParamId, int value,
-          const std::string &name, bool countAsData )
+          const std::string &name, bool countAsData, const std::string &testId )
 {
    try {
 
       if( (*values)[iValue++].insert( bufrParamId, value, name ) ) {
+        if ( test && !testId.empty()) {
+            testHelper.setI(value, testId);
+        }
     	  if( countAsData )
     		  bufrBase->setHasValidValue();
       }
@@ -308,7 +314,7 @@ addValue( int bufrParamId, int value,
 void
 BufrHelper::
 addValue( int bufrParamId, const std::string &value,
-          const std::string &name, bool countAsData )
+          const std::string &name, bool countAsData, const std::string &testId )
 {
    string val( value );
 
@@ -326,8 +332,12 @@ addValue( int bufrParamId, const std::string &value,
     	   else
     		   strncpy(cvals[iCvals++], val.c_str(), val.length() );
 
-           if( countAsData )
-               bufrBase->setHasValidValue();
+         if ( test && !testId.empty()) {
+            testHelper.setS(value, testId);
+         }
+
+         if( countAsData )
+            bufrBase->setHasValidValue();
        }
    }
    catch( const std::exception  &ex ) {

@@ -22,6 +22,7 @@ kvbufrd_SOURCES = \
    KvDataConsumer.h KvDataConsumer.cc \
    KvObsData.h KvObsData.cc \
    DbQuery.h DbQuery.cc \
+	 cachedbcleaner.h cachedbcleaner.cc \
    kvbufrd.cc \
    App.cc App.h \
    DataReceiver.cc DataReceiver.h \
@@ -55,12 +56,15 @@ kvbufrd_SOURCES = \
    SemiUniqueName.cc SemiUniqueName.h \
    Strerror.cc Strerror.h \
    isDirWithWritePermission.cc isDirWithWritePermission.h \
-   dbhelper.cc dbhelper.h
+   dbhelper.cc dbhelper.h \
+	 cachedb.h cachedb.cc \
+	 utils.h utils.cc
  
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
 if KVSTATIC
-kvbufrd_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
+kvbufrd_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" \
+	-DCACHEDIR="\""$(localstatedir)/lib/kvbufrd"\""
 kvbufrd_LDADD = \
 	$(top_builddir)/src/bufr/libbufr.la \
 	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
@@ -78,6 +82,7 @@ kvbufrd_LDADD = \
 	$(KVLIBDIR)/${KVLIBPREFIX}_decoderbase.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
 	-lxml++-2.6 \
 	-lglibmm-2.4 \
@@ -91,7 +96,8 @@ kvbufrd_LDADD = \
         $(top_builddir)/ecmwf/libbufr.a \
         -lgfortran -lm -ldl
 else
-kvbufrd_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
+kvbufrd_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" \
+	-DCACHEDIR="\""$(localstatedir)/lib/kvbufrd"\""
 kvbufrd_LDADD = \
     $(top_builddir)/src/bufr/libbufr.la \
     $(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) \
@@ -121,6 +127,7 @@ kvbufrdbclt_LDADD = \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
 	$(putools_LIBS) \
@@ -155,6 +162,7 @@ kvbufrdparse_LDADD = \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
 	$(putools_LIBS) \
@@ -162,7 +170,7 @@ kvbufrdparse_LDADD = \
 	$(BOOST_THREAD_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
 	$(BOOST_SYSTEM_LIB) \
-    -lm
+  -lm
 
 else
 kvbufrdparse_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)

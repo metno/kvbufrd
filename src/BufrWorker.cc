@@ -53,6 +53,7 @@
 #include "LoadBufrData.h"
 #include "base64.h"
 #include "SemiUniqueName.h"
+#include "utils.h"
 
 using namespace std;
 using namespace kvalobs;
@@ -307,6 +308,9 @@ newObs(ObsEvent &event)
    boost::uint16_t oldcrc=0;
    int             ccx=0;
    list<TblBufr>   tblBufrList;
+   pt::ptime       start=pt::microsec_clock::universal_time();
+   auto logLevel = LOGLEVEL();
+   bool debug = logLevel >= milog::LogLevel::DEBUG;
 
    info=event.stationInfo();
 
@@ -384,7 +388,8 @@ newObs(ObsEvent &event)
    app.removeWaiting(info, event.obstime() );
 
    LOGINFO("ReadData: " << info->toIdentString() << " obstime: " <<
-           pt::to_kvalobs_string(event.obstime()) << " # " << data.size());
+           pt::to_kvalobs_string(event.obstime()) << " # " << data.size() 
+           << " debug: " << (debug?"true":"false") << " loglevel: " << logLevel);
 
    try{
       loadBufrData( data, bufrData, event.stationInfo());
@@ -486,20 +491,33 @@ newObs(ObsEvent &event)
          pt::ptime createTime(pt::second_clock::universal_time());
          ostringstream dataOst;
 
-         bufrData.writeTo( dataOst );
+         bufrData.writeTo( dataOst, true, debug );
          if( saveTo( info, bufr, ccx, &base64 ) ) {
-             if(app.saveBufrData( TblBufr( info->wmono(), info->stationID(),
-                                           info->callsign(), info->codeToString(),
-                                           event.obstime(), createTime,
-                                           crc, ccx, dataOst.str(), base64 ))) {
-                 LOGINFO("BUFR information saved to database! (" << info->toIdentString() << ") ccx: "
+            if(app.saveBufrData( TblBufr( info->wmono(), info->stationID(),
+                                          info->callsign(), info->codeToString(),
+                                          event.obstime(), createTime,
+                                          crc, ccx, dataOst.str(), base64 ))) {
+                LOGINFO("BUFR information saved to database! (" << info->toIdentString() << ") ccx: "
                          << ccx << " crc: " << crc );
-             } else {
+            } else {
                  LOGERROR("FAILED to save BUFR information to the database! (" << info->toIdentString() << ") ccx: "
                          << ccx << " crc: " << crc );
-             }
+            }
 
-             swmsg << "New BUFR created. (" << info->toIdentString() << ") " << pt::to_kvalobs_string(event.obstime()) << endl;
+            pt::ptime now=pt::microsec_clock::universal_time();
+            auto duration=(now-start).total_milliseconds();
+
+            std::string state="new";
+
+            if ( ccx > 0 ) {
+               state="corection";
+            }
+
+            IDLOGINFO("observation", state << ": (" << info->wmono() <<"/" << info->stationID() << "/"  << 
+               info->callsign() << "/" << info->codeToString() << "/" << ccx << "/" << pt::to_kvalobs_string(event.obstime()) <<") " <<
+               info->getStationsAndTypes() << " duration=" << duration << "ms");
+
+            swmsg << "New BUFR created. (" << info->toIdentString() << ") " << pt::to_kvalobs_string(event.obstime()) << endl;
          }
       }else{
          LOGINFO("DUPLICATE: (" << info->toIdentString() << ") "
@@ -507,6 +525,11 @@ newObs(ObsEvent &event)
 
          swmsg << "Duplicate BUFR created. (" <<  info->toIdentString() << ") "
                << pt::to_kvalobs_string(event.obstime()) << endl;
+         pt::ptime now=pt::microsec_clock::universal_time();
+         auto duration=(now-start).total_milliseconds();
+         IDLOGINFO("observation", "duplicate: (" << info->wmono() <<"/" << info->stationID() << "/"  << 
+            info->callsign() << "/" << info->codeToString() << "/" << ccx << "/" << pt::to_kvalobs_string(event.obstime()) <<") " << 
+            info->getStationsAndTypes() << " duration=" << duration << "ms");
       }
 
       ost.str("");
@@ -684,13 +707,8 @@ checkTypes(const DataEntryList  &data,
    }
 
    LOGDEBUG(ost.str());
-
-
    return false;
 }
-
-
-
 
 bool
 BufrWorker::

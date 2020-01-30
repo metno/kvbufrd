@@ -1,5 +1,5 @@
 AC_PREREQ([2.59])
-AC_INIT([kvbufrd], [3.0.2], [kvoss@met.no])
+AC_INIT([kvbufrd], [3.0.3~rc3], [kvoss@met.no])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 #AM_INIT_AUTOMAKE([foreign]) 
 AC_CONFIG_MACRO_DIR([m4])
@@ -19,11 +19,11 @@ PKG_PROG_PKG_CONFIG
 
 AC_SUBST([BUFRTABLES],[`pwd`/src/bufrtables])
 
-KV_FIND_OMNIORB4
+#KV_FIND_OMNIORB4
 PKG_CHECK_MODULES(putools, puTools)
-LIBKVCPP3
+LIBKVCPP4
 PKG_CHECK_MODULES(sqlite3, sqlite3)
-PKG_CHECK_MODULES(kvsubscribe, libkvsubscribe)
+#PKG_CHECK_MODULES(kvsubscribe, libkvsubscribe)
 
 #Build always static
 #AM_CONDITIONAL([KVSTATIC], true )

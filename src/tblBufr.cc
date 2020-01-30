@@ -182,7 +182,8 @@ toSend() const
          << crc_               << ","
          << ccx_               << ","
          << quoted(data_)      << ","
-         << quoted( bufrBase64_ )
+         << quoted( bufrBase64_ ) << ","
+         << quoted( pt::to_kvalobs_string( pt::second_clock::universal_time() ) )
          << ")";
 
    return ost.str();
@@ -218,7 +219,8 @@ toUpdate()const
        << "            id=" << id_ << " AND "
        << "      callsign=" << quoted( callsign_ ) << " AND "
        << "          code=" << quoted( code_ ) << " AND "
-       << "       obstime=" << quoted(pt::to_kvalobs_string(obstime_));
+       << "       obstime=" << quoted( pt::to_kvalobs_string( obstime_ ) ) << " AND "
+       << "        tbtime=" << quoted( pt::to_kvalobs_string( pt::second_clock::universal_time() ) );
 
    return ost.str();
 }

@@ -70,8 +70,8 @@ loadBufrData( const DataEntryList   &dl,
          for(;itd!=dataList.end(); itd++){
             //COMMENT:
             //We use only the default sensor for every parameter, ie sensor=0.
-            //This may be to restrective. Shuld this be a configuration option for
-            //the parameters we wish to overide tis behavior for.
+            //This may be to restrective. Shuold this be a configuration option for
+            //the parameters we wish to overide this behavior for.
 
             if(itd->sensor()==0 && itd->level()==0){
                if( validate( *itd ) ) {
@@ -81,7 +81,7 @@ loadBufrData( const DataEntryList   &dl,
             }else{
                log << "NOT USED. sid: " << itd->stationID()
                        << " tid: " << itd->typeID()
-                       << "pid: " << itd->paramID()
+                       << " pid: " << itd->paramID()
                        << " sen: " << itd->sensor()
                        << " lvl: " << itd->level()
                        << " orig: " << itd->original()

@@ -141,6 +141,7 @@ void DataReceiver::newData(kvalobs::KvObsDataPtr data) {
   pt::ptime fromTime;
   DataKeySet dataInserted;
 
+
   //data, er en liste av lister <KvData> til observasjoner
   //med samme stationid, typeid og obstime.
 
@@ -150,7 +151,9 @@ void DataReceiver::newData(kvalobs::KvObsDataPtr data) {
   toTime = pt::second_clock::universal_time();
   fromTime = toTime;
   toTime += pt::hours(3);
-  fromTime -= pt::hours(3);
+  
+  //7 days ago
+  fromTime -= pt::hours(7*24);
 
   LOGINFO("Accepting data in the time interval: " << pt::to_kvalobs_string(fromTime)<< " - " << pt::to_kvalobs_string(toTime));
 

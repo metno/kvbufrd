@@ -120,6 +120,8 @@ class App : public kvalobs::sql::DbQuery {
     return acceptAllTimes_;
   }
 
+  std::string getCacheDbFile()const;
+
   /**
    * \brief cretae a globale logger with id \a id.
    *

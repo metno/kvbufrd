@@ -1127,6 +1127,39 @@ printDelayInfo( std::ostream& ost )
 	return ost;
 }
 
+
+std::string 
+StationInfo::
+getStationsAndTypes()const {
+   ostringstream ost;
+   bool first=true;
+
+   ost << "[";
+   for( auto &s : definedStationid_) {
+      if( first ) {
+         ost << s;
+         first=false;
+      } else {
+         ost << "," << s;
+      }
+   }
+   
+   ost << "/";
+   first=true;
+   
+   for( auto &t : typepriority_) {
+      if( first ) {
+         ost << t.typeID();
+         first=false;
+      } else {
+         ost << "," << t.typeID();
+      }
+   }
+   
+   ost << "]";
+   return ost.str();
+}
+
 std::ostream&
 operator<<( std::ostream &o, const MsgTime &mt )
 {

@@ -24,8 +24,12 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 CFLAGS = -Wall -g
 CXXFLAGS=$(CFLAGS)
-CXX=g++-4.1
-CC=gcc-4.1
+#CXX=g++-4.1
+#CC=gcc-4.1
+
+CXX=g++
+CC=gcc
+
 
 #ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 #	CFLAGS += -O0
@@ -45,10 +49,16 @@ ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 endif
 	
 	# Add here commands to configure the package.
+	#(if test "$(KVBUILDDIR)x" = "x"; then \
+	#   ./configure --prefix=/usr  --with-kvalobs-static=true --with-kvalobs=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info  --localstatedir=/var --sysconfdir=/etc CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" ; \
+	#else \
+	#   ./configure --prefix=/usr  --with-kvalobs-static=true --with-kvalobs=\$${KVBUILDDIR} --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info  --localstatedir=/var --sysconfdir=/etc CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" ; \
+	#fi)
+
 	(if test "$(KVBUILDDIR)x" = "x"; then \
 	   ./configure --prefix=/usr  --with-kvalobs=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info  --localstatedir=/var --sysconfdir=/etc CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" ; \
 	else \
-	   ./configure --prefix=/usr  --with-kvalobs=\$${KVBUILDDIR} --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info  --localstatedir=/var --sysconfdir=/etc CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" CPPFLAGS=-D__WITH_PUTOOLS__ --with-kvalobs-libversion=2; \
+	   ./configure --prefix=/usr  --with-kvalobs=\$${KVBUILDDIR} --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info  --localstatedir=/var --sysconfdir=/etc CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" ; \
 	fi)
 
 #Architecture 

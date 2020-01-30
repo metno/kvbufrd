@@ -66,7 +66,7 @@ checkfile( const std::string &filename, int mode, std::string &error )
       ostringstream out;
 
       strerror_r( errno, s, 256 );
-      out << "ERROR: Cant stat configuration file '" << filename << "'. Reason: " << s;
+      out << "ERROR: Cant stat file '" << filename << "'. Reason: " << s;
       error = out.str();
 
       return false;

@@ -42,6 +42,9 @@ using namespace std;
 using namespace kvalobs;
 using namespace miutil::conf;
 
+
+
+
 ConfApp::
 ConfApp( Options &options, miutil::conf::ConfSection *conf)
    : connection( 0 )

@@ -56,6 +56,7 @@
 #include "parseMilogLogLevel.h"
 #include "KvDataConsumer.h"
 #include "parseMilogLogLevel.h"
+#include "cachedb.h"
 
 using namespace std;
 using namespace miutil;
@@ -229,6 +230,7 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   ValElementList valElem;
   string val;
   string bufr_tables(DATADIR);
+  string logdir = kvPath("logdir");
   bool bufr_tables_names( false);
 
   kvApp = this;
@@ -261,7 +263,9 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   createGlobalLogger("main");
   createGlobalLogger("uinfo0");
   createGlobalLogger("kafka");
-
+  milog::createGlobalLogger(logdir, options.progname, "observation", milog::DEBUG, 200, 1, new milog::StdLayout1());
+  milog::createGlobalLogger(logdir, options.progname, "cachedb", milog::DEBUG, 500, 2, new milog::StdLayout1());
+ 
   readDatabaseConf(conf);
 
   //If a station is set up with this types delay them if
@@ -334,6 +338,9 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
     exit(1);
   }
 
+  //Create cacheDB if it does not exist.
+  checkAndInitCacheDB(getCacheDbFile());
+
   dbThread = boost::shared_ptr<KvDbGateProxyThread>(new KvDbGateProxyThread(boost::shared_ptr<MyConnectionFactory>(new MyConnectionFactory(this))));
   dbThread->start();
 
@@ -344,6 +351,11 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
 }
 
 App::~App() {
+}
+
+
+std::string App::getCacheDbFile()const {
+  return dbConnect;
 }
 
 void App::readWaitingElementsFromDb() {
