@@ -36,10 +36,10 @@
 #include <list>
 #include <string>
 #include <sstream>
-#include <boost/cstdint.hpp>
-#include <boost/crc.hpp>
-#include <boost/thread/tss.hpp>
-#include <puTools/miTime.h>
+#include "boost/cstdint.hpp"
+#include "boost/crc.hpp"
+#include "boost/thread/tss.hpp"
+#include "boost/date_time/posix_time/ptime.hpp"
 #include "KvParam.h"
 
 
@@ -69,71 +69,71 @@ private:
    static boost::thread_specific_ptr<KvParamList> pParams;
    ParamListPtrHelper setParamPointer;
 
-  	miutil::miTime time_;
+  	boost::posix_time::ptime time_;
 
   	friend class DataElementList;
   	//  friend class BufrDataList::BufrDataProxy
   	
  public:
-  	KvParam  TA;       
-  	KvParam  TAM;       
-  	KvParam  TAN;       
-  	KvParam  TAX;
-  	KvParam  TD;
-  	KvParam  UU;       
-  	KvParam  UM;       
-  	KvParam  FF;   
-  	KvParam  FM;   
-  	KvParam  FG;    //Gust since last observation
-  	KvParam  FG_1;
-  	KvParam  FG_6;
-  	KvParam  FG_12;
-  	KvParam  FG_010; //Gust 10 last minutes before observation.
-  	KvParam  FX;    //Max wind since last observation
-  	KvParam  FX_1;   
-  	KvParam  FX_3;
-  	KvParam  FX_6;
-  	KvParam  DD;   
-  	KvParam  DM;   
-  	KvParam  DG;
-  	KvParam  DG_010;
-  	KvParam  DG_1;
-  	KvParam  DG_6;
-  	KvParam  DX;
-  	KvParam  DX_3;   
-  	KvParam  RA;    
-  	KvParam  RR_1; 
-  	KvParam  RR_2;
-  	KvParam  RR_3;  
-  	KvParam  RR_6;
+  	KvParam TA;       
+  	KvParam TAM;       
+  	KvParam TAN;       
+  	KvParam TAX;
+  	KvParam TD;
+  	KvParam UU;       
+  	KvParam UM;       
+  	KvParam FF;   
+  	KvParam FM;   
+  	KvParam FG;    //Gust since last observation
+  	KvParam FG_1;
+  	KvParam FG_6;
+  	KvParam FG_12;
+  	KvParam FG_010; //Gust 10 last minutes before observation.
+  	KvParam FX;    //Max wind since last observation
+  	KvParam FX_1;   
+  	KvParam FX_3;
+  	KvParam FX_6;
+  	KvParam DD;   
+  	KvParam DM;   
+  	KvParam DG;
+  	KvParam DG_010;
+  	KvParam DG_1;
+  	KvParam DG_6;
+  	KvParam DX;
+  	KvParam DX_3;   
+  	KvParam RA;    
+  	KvParam RR_1; 
+  	KvParam RR_2;
+  	KvParam RR_3;  
+  	KvParam RR_6;
   	KvParam RR_9;
   	KvParam RR_12;
-  	KvParam  RR_15;
+  	KvParam RR_15;
   	KvParam RR_18;
-  	KvParam  RR_24;
-  	KvParam  RT_1;     
-  	KvParam  PO;  //PO, stasjonstrykk.    
-  	KvParam  POM;  //POM, stasjonstrykk.  
+  	KvParam RR_24;
+  	KvParam RT_1;     
+  	KvParam PO;  //PO, stasjonstrykk.    
+  	KvParam POM;  //POM, stasjonstrykk.  
   	KvParam PON;  //PON, stasjonstrykk.  
-  	KvParam  POX;  //POX, stasjonstrykk.  
-  	KvParam  PH;  //PH, trykk redusert til havets niv�, ICAO standard.   
-  	KvParam  PR;  //PR, trykk redusert til havets niv�.
-  	KvParam  PP;  
-  	KvParam  TAN_12;
+  	KvParam POX;  //POX, stasjonstrykk.  
+  	KvParam PH;  //PH, trykk redusert til havets niv�, ICAO standard.   
+  	KvParam PR;  //PR, trykk redusert til havets niv�.
+  	KvParam PP;  
+  	KvParam TAN_12;
   	KvParam TAX_12;
   	KvParam TWF;
   	KvParam TW;
-  	KvParam  TWM;
-  	KvParam  TWN;
+  	KvParam TWM;
+  	KvParam TWN;
   	KvParam TWX;
-  	KvParam  TGN;
+  	KvParam TGN;
   	KvParam TGN_12;
   	KvParam WAWA;
-  	KvParam  HLN;
-  	KvParam  EM;    //Snow state to the gound (Markas tilstand).
-  	KvParam  EE;   //BUFR parameter E or E' (0 20 062).
-  	KvParam  Es;  //Ice deposit (thickness) at observation time.
-  	KvParam  ERs; //Rate of ice accretion.
+  	KvParam HLN;
+  	KvParam EM;    //Snow state to the gound (Markas tilstand).
+  	KvParam EE;   //BUFR parameter E or E' (0 20 062).
+  	KvParam Es;  //Ice deposit (thickness) at observation time.
+  	KvParam ERs; //Rate of ice accretion.
   	KvParam XIS;  //Cause of ice accreation.
   	KvParam Ci;   //Sea ice concentration.
   	KvParam Bi;   //Amount and type of ice.
@@ -194,10 +194,10 @@ private:
   	 * Removes data that only generates groups with slashes.
   	 */
 
-  	void           time(const miutil::miTime &t){time_=t;}
-  	miutil::miTime time()const{ return time_;}
+  	void           time(const boost::posix_time::ptime &t){time_=t;}
+  	boost::posix_time::ptime time()const{ return time_;}
 
-  	bool undef()const{ return time_.undef() || nSet == 0;}
+  	bool undef()const{ return time_.is_special() || nSet == 0;}
   	boost::uint16_t crc() const;
 
   	void writeTo( std::ostream &header, std::ostream &data, bool withId=true  )const;
@@ -223,7 +223,7 @@ class DataElementList{
   	//is ilegal c++. I cant see any reason why this shouldnt be allowed.
 
   	void setTime(std::list<DataElement>::iterator it,
-			     const miutil::miTime &t){ it->time_=t;}
+			     const boost::posix_time::ptime &t){ it->time_=t;}
 public:
   
   	class DataElementProxy{
@@ -231,12 +231,12 @@ public:
     	//to deceide if the array operator [] is used
     	//as a lvalue or a rvalue.
     
-    	DataElementList                  *sdl;
-    	miutil::miTime                 timeIndex;
+    	DataElementList          *sdl;
+    	boost::posix_time::ptime timeIndex;
     
   	public:
     	DataElementProxy(DataElementList *sdl_,
-					   const miutil::miTime &t)
+					   const boost::posix_time::ptime &t)
       		:sdl(sdl_), timeIndex(t){}
 
     	DataElementProxy& operator=(const DataElement &rhs); //used as lvalue use
@@ -254,9 +254,9 @@ public:
 
 
   	/**
-  	 * @return undef if list is empty.
+  	 * @return is_special if list is empty.
   	 */
-  	miutil::miTime firstTime() const;
+  	boost::posix_time::ptime firstTime() const;
 
   	/**
   	 * If used as a lvalue the BufrData record wil be inserted if it don't
@@ -267,8 +267,8 @@ public:
   	 * \exception std::out_of_range, used as rvalue, if there is now BufrData
   	 *            at timeIndex.
   	 */
-  	const DataElementProxy operator[](const miutil::miTime &timeIndex)const;
-  	DataElementProxy operator[](const miutil::miTime &timeIndex);
+  	const DataElementProxy operator[](const boost::posix_time::ptime &timeIndex)const;
+  	DataElementProxy operator[](const boost::posix_time::ptime &timeIndex);
   
   	/**
   	 * \exception std::out_of_range if index is not in [0, size()>
@@ -295,25 +295,25 @@ public:
   	 *         replace is false and there allready is a BufrData record at
   	 *         timeIndex.
   	 */
- 	 bool      insert(const miutil::miTime &timeIndex,
+ 	 bool      insert(const boost::posix_time::ptime &timeIndex,
 		   			  const DataElement &bd,
 		   			  bool replace=false);
 
   	int       size()const { return dataList.size();}
 
-  	IDataElementList find(const miutil::miTime &from);
-  	CIDataElementList find(const miutil::miTime &from)const;
+  	IDataElementList find(const boost::posix_time::ptime &from);
+  	CIDataElementList find(const boost::posix_time::ptime &from)const;
     
   	IDataElementList  begin(){ return dataList.begin();}
   	CIDataElementList begin()const{ return dataList.begin();}
   	IDataElementList  end(){ return dataList.end();}
   	CIDataElementList end()const { return dataList.end();}
 
-  	DataElementList subData( const miutil::miTime &from, const miutil::miTime &to=miutil::miTime() ) const;
+  	DataElementList subData( const boost::posix_time::ptime &from, const boost::posix_time::ptime &to=boost::posix_time::ptime() ) const;
 
   	DataElementList& operator=( const DataElementList &rhs );
 
-  	void writeTo( std::ostream &o, bool withId=true )const;
+  	void writeTo( std::ostream &o, bool withId=true, bool debug=true )const;
 
   	friend std::ostream& operator<<(std::ostream& ost,
 				 					  const DataElementList& sd);

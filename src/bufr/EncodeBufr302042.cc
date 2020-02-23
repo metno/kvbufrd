@@ -63,18 +63,31 @@ encode( )
 {
    /* Wind data */
 
-    bufr->addValue(  7032, stationInfo->heightWind(), "h_Wind, height of sensor", false);
-    bufr->addValue(  2002, 8, "Type of instrumentation", false);
-    bufr->addValue(  8021, 2, "Time significance (=2: time averaged)", false);
-    bufr->addValue(  4025, static_cast<float>(-10), "Time period or displacement (minutes)", false);
-    bufr->addValue( 11001, data->DD, "DD, wind direction");
-    bufr->addValue( 11002, data->FF, "FF, wind speed");
-    bufr->addValue(  8021, INT_MAX, "Time significance", false);
-    bufr->addValue(  4025, (data->FG_010.valid()?static_cast<float>(-10):FLT_MAX), "Time period or displacement (minutes)", false);
-    bufr->addValue( 11043, data->DG_010, "DG_010, wind direction (gust)");
-    bufr->addValue( 11041, data->FG_010, "FG_010, wind speed (gust)");
-    bufr->addValue(  4025, data->FgMax.t, "Time period or displacement (minutes)", false);
-    bufr->addValue( 11043, data->FgMax.dd, "FgMax.dd, maximum wind gust direction");
-    bufr->addValue( 11041, data->FgMax.ff, "FgMax.ff, maximum wind gust speed");
+   bufr->addValue(  7032, stationInfo->heightWind(), "h_Wind, height of sensor", false);
+   bufr->addValue(  2002, 8, "Type of instrumentation", false);
+   bufr->addValue(  8021, 2, "Time significance (=2: time averaged)", false);
+   bufr->addValue(  4025, static_cast<float>(-10), "Time period or displacement (minutes)", false);
+   bufr->addValue( 11001, data->DD, "DD, wind direction");
+   bufr->addValue( 11002, data->FF, "FF, wind speed");
+   bufr->addValue(  8021, INT_MAX, "Time significance", false);
+
+   boost::posix_time::ptime  obstime = bufr->getObstime();
+
+   if (obstime.time_of_day().hours()%6 != 0 || !data->FG_1.valid())  {
+      //Gust last 10 minutes
+      bufr->addValue(  4025, (data->FG_010.valid()?static_cast<float>(-10):FLT_MAX), "Time period or displacement (minutes)", false, "GUST");
+      bufr->addValue( 11043, data->DG_010, "DG_010, wind direction (gust)", true, "GUST");
+      bufr->addValue( 11041, data->FG_010, "FG_010, wind speed (gust)"), true, "GUST";
+   } else { //hours 00, 06, 12, 18
+      //Gust last 60 minutes
+      bufr->addValue(  4025, (data->FG_1.valid()?static_cast<float>(-60):FLT_MAX), "Time period or displacement (minutes)", false, "GUST");
+      bufr->addValue( 11043, data->DG_1, "DG_1, Gust direction (gust 3s)", true, "GUST");
+      bufr->addValue( 11041, data->FG_1, "FG_1, Gust speed (gust 3s)", true, "GUST");
+   }
+
+   //Max 
+   bufr->addValue(  4025, data->FgMax.t, "Time period or displacement (minutes)", false);
+   bufr->addValue( 11043, data->FgMax.dd, "FgMax.dd, maximum wind gust direction");
+   bufr->addValue( 11041, data->FgMax.ff, "FgMax.ff, maximum wind gust speed");
 }
 

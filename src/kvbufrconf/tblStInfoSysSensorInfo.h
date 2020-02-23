@@ -35,7 +35,7 @@
 
 class TblStInfoSysSensorInfo : public kvalobs::kvDbBase {
    int equipmentid_;
-   int paramid_;
+   int paramgroupid_;
    int stationid_;
    int sensor_;
    int hlevel_;
@@ -75,7 +75,7 @@ public:
 #endif
 
   int equipmentid()const { return equipmentid_; }
-  int paramid() const { return paramid_; }
+  int paramgroupid() const { return paramgroupid_; }
   int stationid() const { return stationid_; }
   int sensor() const { return sensor_; }
   int hlevel() const { return hlevel_; }

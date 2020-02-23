@@ -33,8 +33,8 @@
 
 #include <list>
 #include <map>
-#include <puTools/miTime.h>
 #include <exception>
+#include "boost/date_time/posix_time/ptime.hpp"
 #include "Data.h"
 
 
@@ -58,7 +58,7 @@ public:
 
 
 private:
-	miutil::miTime obsTime_;
+	boost::posix_time::ptime obsTime_;
 	TTypeList      dataList;
 
 public:
@@ -67,14 +67,14 @@ public:
 	DataListEntry(const DataListEntry &de)
 	:obsTime_(de.obsTime_), dataList(de.dataList){}
 
-	DataListEntry(const miutil::miTime &t)
+	DataListEntry(const boost::posix_time::ptime &t)
 	:obsTime_(t){}
 
 	~DataListEntry(){}
 
 	DataListEntry& operator=(const DataListEntry &de);
 
-	miutil::miTime obstime()const{ return obsTime_;}
+	boost::posix_time::ptime obstime()const{ return obsTime_;}
 
 	/**
 	 * Returns the list of Data elements for typeID.
@@ -86,6 +86,10 @@ public:
 	 */
 	std::list<int> getTypes()const;
 
+
+	std::set<long> stationIds(int typeID)const;
+
+	boost::posix_time::ptime maxTbTime(long stationid, int typeID)const;
 
 	/**
 	 * size, returns the number of Data elements for typeID.
@@ -165,8 +169,8 @@ public:
 
 	int  size()const { return dataList.size();}
 
-	ITDataEntryList  find(const miutil::miTime &from);
-	CITDataEntryList find(const miutil::miTime &from)const;
+	ITDataEntryList  find(const boost::posix_time::ptime &from);
+	CITDataEntryList find(const boost::posix_time::ptime &from)const;
 
 	ITDataEntryList  begin(){ return dataList.begin();}
 	CITDataEntryList begin()const{ return dataList.begin();}

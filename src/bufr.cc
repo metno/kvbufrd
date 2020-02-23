@@ -32,8 +32,9 @@
 #include <algorithm>
 #include <math.h>
 #include <float.h>
-#include <milog/milog.h>
-#include <decodeutility/decodeutility.h>
+#include "milog/milog.h"
+#include "miutil/timeconvert.h"
+#include "decodeutility/decodeutility.h"
 #include "bufr.h"
 
 /*CHANGES
@@ -108,6 +109,8 @@
 
 using namespace std;
 
+namespace pt=boost::posix_time;
+
 namespace {
 
    float c2kelvin( float t ) {
@@ -133,7 +136,7 @@ doBufr( StationInfoPtr  info,
         DataElementList &bufrData,
         BufrData        &bufr )
 {
-   if( bufrData.firstTime().undef() && bufrData.size() == 0 )
+   if( bufrData.firstTime().is_special() && bufrData.size() == 0 )
       return false;
 
    bufr = BufrData(bufrData[bufrData.firstTime()]);
@@ -176,12 +179,6 @@ doBufr( StationInfoPtr  info,
 
    return BufrDataPtr( bufr );
 }
-
-
-
-
-
-
 
 void 
 Bufr::
@@ -375,7 +372,7 @@ minMaxTemperature(const DataElementList &sd, BufrData &res )
    res.tTAN_N = INT_MAX;
    res.tTAX_N = INT_MAX;
 
-   if( sd[0].time().hour() == 6 || sd[0].time().hour() == 18 ) {
+   if( sd[0].time().time_of_day().hours() == 6 || sd[0].time().time_of_day().hours() == 18 ) {
       if(sd[0].TAN_12 != FLT_MAX)
          res.TAN_N = sd[0].TAN_12;
 
@@ -515,7 +512,7 @@ maxWindGust( const DataElementList &data, BufrData &res )
     res.FG_010 = data[0].FG_010;
     res.DG_010 = data[0].DG_010;
 
-    if( ( data[0].time().hour() ) % 6 != 0 ) {
+    if( ( data[0].time().time_of_day().hours() ) % 6 != 0 ) {
        if( data[0].FG_1 != FLT_MAX && data[0].FG_1 >=0 ) {
           res.FgMax.ff = data[0].FG_1;
           res.FgMax.dd = data[0].DG_1;
@@ -533,8 +530,8 @@ maxWindGust( const DataElementList &data, BufrData &res )
 
     if(nTimeStr<6){
        CIDataElementList it = data.begin();
-       miutil::miTime prevTime=it->time();
-       prevTime.addHour( -6 );
+       pt::ptime prevTime=it->time();
+       prevTime -= pt::hours(6);
 
        if( it->FG == FLT_MAX || it->FG<0)
      		return;
@@ -589,7 +586,7 @@ maxWindMax(  const DataElementList &data, BufrData &res )
    nNeedTimes=3;
    fMax=-1.0;
 
-   if(( data[0].time().hour())%3 != 0) {
+   if(( data[0].time().time_of_day().hours())%3 != 0) {
       if( data[0].FX_1 != FLT_MAX ) {
          res.FxMax.ff = data[0].FX_1;
          res.FxMax.t  = -60;
@@ -598,7 +595,7 @@ maxWindMax(  const DataElementList &data, BufrData &res )
       return;
    }
 
-   if((data[0].time().hour())%6 == 0)
+   if((data[0].time().time_of_day().hours())%6 == 0)
       nNeedTimes=6;
 
    if( nNeedTimes == 3 && data[0].FX_3 != FLT_MAX && data[0].FX_3 >= 0 ) {
@@ -614,8 +611,8 @@ maxWindMax(  const DataElementList &data, BufrData &res )
    }
 
    if(nTimeStr < nNeedTimes && data[0].FX != FLT_MAX && data[0].FX >= 0 ){
-      miutil::miTime prevTime=data[0].time();
-      prevTime.addHour( -1*nNeedTimes );
+      pt::ptime prevTime=data[0].time();
+      prevTime -= pt::hours( nNeedTimes );
       CIDataElementList it=data.find(prevTime);
 
       if( it!=data.end() &&
@@ -942,7 +939,7 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
 	}
 
 	if( pastWeather ) {
-	   miutil::miTime prevWeather;
+	   pt::ptime prevWeather;
 	   CIDataElementList it = data.begin();
 	   ++it;
 
@@ -953,8 +950,8 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
 	      }
 	   }
 
-	   if( prevWeather.undef() ) {
-	      int h = data[0].time().hour();
+	   if( prevWeather.is_special() ) {
+	      int h = data[0].time().time_of_day().hours();
 
 	      if( h%6 == 0 )
 	         res.tWeatherPeriod = -6;
@@ -965,7 +962,7 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
 	         res.W2 = FLT_MAX;
 	      }
 	   } else {
-	      int d = miutil::miTime::hourDiff( prevWeather, data[0].time()  );
+	      int d = (prevWeather- data[0].time()).hours();
 	      res.tWeatherPeriod = d;
 	   }
 	}
@@ -1008,12 +1005,12 @@ void
 Bufr::
 doEsss( const DataElementList &data, BufrData &res  )
 {
-   miutil::miTime time = data[0].time();
+   pt::ptime time = data[0].time();
    res.EM = FLT_MAX;
    res.EE = FLT_MAX;
    res.SA = FLT_MAX;
 
-   if( time.hour() != 6 )
+   if( time.time_of_day().hours() != 6 )
       return;
 
    int iSA = (data[0].SA == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SA) + 0.5 )));
@@ -1059,10 +1056,10 @@ void
 Bufr::
 doSaFromSD( const DataElementList &data, BufrData &res )
 {
-    miutil::miTime time = data[0].time();
+    pt::ptime time = data[0].time();
     res.SA = FLT_MAX;
 
-    if( time.hour() != 6 )
+    if( time.time_of_day().hours() != 6 )
        return;
 
     int iSA = (data[0].SA == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SA) + 0.5 )));
@@ -1117,7 +1114,7 @@ soilTemp( const DataElementList &data, BufrData &res )
    if( nTimeStr == 0 )
       return;
 
-   if(data[0].time().hour() != 6)
+   if(data[0].time().time_of_day().hours() != 6)
       return;
 
    if( data[0].TGN_12 != FLT_MAX )
@@ -1165,7 +1162,7 @@ precip( BufrData &bufr,
         float    h_tr,
         float    fRR24 )
 {
-   int time = bufr.time().hour();
+   int time = bufr.time().time_of_day().hours();
 
    if( time==6 ){
       if( fRR24 != FLT_MAX &&  fRR24 < 1000.0 ) {
@@ -1241,7 +1238,7 @@ Bufr::doPrecip( StationInfoPtr     info,
   	   return;
 
 
-  	ost << "doPrecip: sisteTid: " << bufrData[0].time() << endl;;
+  	ost << "doPrecip: sisteTid: " << pt::to_kvalobs_string(bufrData[0].time()) << endl;;
 
   	if(precipitationParam==PrecipitationRA){
     	h_tr = precipFromRA( RR1, nedboerTotal, fRR24, bufrData );
@@ -1319,8 +1316,8 @@ precipFromRA( float &RR1,
               const DataElementList &sd )
 {
    int   nTimes;
-   miutil::miTime t = sd.begin()->time();
-   int   time = t.hour();
+   pt::ptime t = sd.begin()->time();
+   int   time = t.time_of_day().hours();
 
    RR1 = FLT_MAX;
 
@@ -1360,19 +1357,19 @@ precipFromRA( float &RR1,
 
 float
 Bufr::
-precipFromRA( int hours, const DataElementList &sd, const miutil::miTime &from )
+precipFromRA( int hours, const DataElementList &sd, const pt::ptime &from )
 {
 
    const float limit = 0.19;
    const float bucketFlush = -10.0;
-   miutil::miTime t;
-   miutil::miTime t2;
+   pt::ptime t;
+   pt::ptime t2;
    DataElement d1;
    DataElement d2;
    CIDataElementList it;
    float precip = FLT_MAX;
 
-   if( from.undef() ) {
+   if( from.is_special() ) {
       d1=*sd.begin();
    } else {
       it = sd.find( from );
@@ -1383,7 +1380,7 @@ precipFromRA( int hours, const DataElementList &sd, const miutil::miTime &from )
    }
    t = d1.time();
    t2 =t;
-   t2.addHour( -1*hours );
+   t2 -= pt::hours( hours );
 
    it=sd.find( t2 );
 
@@ -1413,7 +1410,7 @@ precipFromRA_6( int hours, const DataElementList &sd )
    float sum = 0.0;
    float rr;
    int hoursComputed=0;
-   miutil::miTime from = sd.begin()->time();
+   pt::ptime from = sd.begin()->time();
 
    while( hoursComputed < hours ){
       rr = precipFromRA( 6, sd, from );
@@ -1422,7 +1419,7 @@ precipFromRA_6( int hours, const DataElementList &sd )
 
       sum += rr;
       hoursComputed += 6;
-      from.addHour( -6 );
+      from -= pt::hours( 6 );
    }
 
    return sum;
@@ -1442,7 +1439,7 @@ precipFromRrN( float &RR1,
                const DataElementList &sd)
 {
    float h_tr = FLT_MAX;
-   int t = sd.begin()->time().hour();
+   int t = sd.begin()->time().time_of_day().hours();
 
    RR1 = FLT_MAX;
 
@@ -1500,9 +1497,9 @@ precipFromRrN( float &RR1,
 
    if(t==6 && fRR24==FLT_MAX && sd.size()>1){
       CIDataElementList it = sd.begin();
-      miutil::miTime tt = it->time();
+      pt::ptime tt = it->time();
 
-      tt.addHour(-12);
+      tt -= pt::hours(12);
 
       CIDataElementList it2=sd.find(tt);
 
@@ -1572,11 +1569,11 @@ precipFromRRRtr( float &nedbor,
 	nedbor=FLT_MAX;
   	fRR24 =FLT_MAX;
 
-  	if( sd.begin()->time().hour() == 6 ) {
+  	if( sd.begin()->time().time_of_day().hours() == 6 ) {
   		CIDataElementList it=sd.begin();
-    	miutil::miTime tt=it->time();
+    	pt::ptime tt=it->time();
 	
-    	tt.addHour( -12 );
+    	tt -=pt::hours( 12 );
     
     	CIDataElementList it2=sd.find(tt);
     	
@@ -1647,10 +1644,10 @@ precipFromRRRtr( float &nedbor,
   	      return FLT_MAX;
   	   }
 
-  	   if( (sd.begin()->time().hour() % 6) != 0 ) {
+  	   if( (sd.begin()->time().time_of_day().hours() % 6) != 0 ) {
   	      nedbor = FLT_MAX;
   	      return FLT_MAX;
-  	   } else if( sd.begin()->time().hour() == 12 || sd.begin()->time().hour() == 18 )
+  	   } else if( sd.begin()->time().time_of_day().hours() == 12 || sd.begin()->time().time_of_day().hours() == 18 )
   	      return -6;
   	   else
   	      return -12;
@@ -1760,7 +1757,7 @@ precipFromRR(  float &RR1, float &nedbor, float &fRR24, const DataElementList &s
 {
   	const float limit=0.049;
   	int   nTimeStr=sd.nContinuesTimes();
-  	int   time=sd.begin()->time().hour();
+  	int   time=sd.begin()->time().time_of_day().hours();
   	int   nTimes;
   	float sum=0;
 

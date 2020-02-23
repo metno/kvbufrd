@@ -33,10 +33,9 @@
 
 #include <string>
 #include <list>
-#include <dnmithread/CommandQue.h>
-#include <kvalobs/kvDbGate.h>
+#include "dnmithread/CommandQue.h"
+#include "kvalobs/kvDbGate.h"
 #include "kvDbGateProxyThread.h"
-#include "defines.h"
 /* Created by met.no/FoU/PU: j.schulze@met.no
    at Wed Aug 28 13:49:02 2002 */
 

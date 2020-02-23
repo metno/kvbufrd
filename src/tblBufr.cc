@@ -34,9 +34,10 @@
 #include <boost/lexical_cast.hpp>
 #include "tblBufr.h"
 #include <milog/milog.h>
+#include "miutil/timeconvert.h"
 
+namespace pt=boost::posix_time;
 using namespace std;
-using namespace miutil;
 using namespace dnmi;
 
 void 
@@ -46,7 +47,7 @@ createSortIndex()
    using namespace boost;
    sortBy_=lexical_cast<string>(wmono_)+lexical_cast<string>(id_)
          + callsign_ + code_
-         + obstime_.isoTime()+createtime_.isoTime()
+         + pt::to_kvalobs_string(obstime_)+pt::to_kvalobs_string(createtime_)
          + lexical_cast<string>(ccx_);
 }
 
@@ -58,8 +59,8 @@ clean()
    id_         = 0;
    callsign_.erase();
    code_.erase();
-   obstime_    = miTime::nowTime();
-   createtime_ = miTime::nowTime();
+   obstime_    = pt::second_clock::universal_time();
+   createtime_ = obstime_;
    crc_        = 0;
    ccx_        = 0;
    data_.erase();
@@ -91,9 +92,9 @@ set(const dnmi::db::DRow &r_)
          }else if( *it=="code" ) {
             code_ = buf;
          }else if(*it=="obstime"){
-            obstime_=miTime(buf);
+            obstime_=pt::time_from_string(buf);
          }else if(*it=="createtime"){
-            createtime_=miTime(buf);
+            createtime_=pt::time_from_string(buf);
          }else if(*it=="crc"){
             crc_=atoi(buf.c_str());
          }else if(*it=="ccx"){
@@ -142,8 +143,8 @@ set(int                  wmono,
     int                  id,
     const std::string    &callsign,
     const std::string    &code,
-    const miutil::miTime &obtime,    
-    const miutil::miTime &createtime,    
+    const pt::ptime &obtime,
+    const pt::ptime &createtime,
     int                  crc,
     int                  ccx,
     const std::string    &data,
@@ -165,11 +166,7 @@ set(int                  wmono,
    return true;
 }
 
-#ifdef __WITH_PUTOOLS__
-miutil::miString 
-#else
 std::string
-#endif
 TblBufr::
 toSend() const
 {
@@ -180,22 +177,19 @@ toSend() const
          << id_                << ","
          << quoted( callsign_) << ","
          << quoted( code_) << ","
-         << quoted( obstime_.isoTime() )    << ","
-         << quoted( createtime_.isoTime() ) << ","
+         << quoted(pt::to_kvalobs_string(obstime_))    << ","
+         << quoted(pt::to_kvalobs_string(createtime_)) << ","
          << crc_               << ","
          << ccx_               << ","
          << quoted(data_)      << ","
-         << quoted( bufrBase64_ )
+         << quoted( bufrBase64_ ) << ","
+         << quoted( pt::to_kvalobs_string( pt::second_clock::universal_time() ) )
          << ")";
 
    return ost.str();
 }
 
-#ifdef __WITH_PUTOOLS__
-miutil::miString 
-#else
 std::string
-#endif
 TblBufr::
 uniqueKey()const
 {
@@ -205,23 +199,18 @@ uniqueKey()const
        << "       id=" << id_ << " AND "
        << "       callsign=" << quoted( callsign_ ) << " AND "
        << "       code=" << quoted( code_ ) << " AND "
-       << "       obstime=" << quoted(obstime_.isoTime());
+       << "       obstime=" << quoted(pt::to_kvalobs_string(obstime_));
 
    return ost.str();
 }
 
-
-#ifdef __WITH_PUTOOLS__
-miutil::miString 
-#else
 std::string
-#endif
 TblBufr::
 toUpdate()const
 {
    ostringstream ost;
 
-   ost << "SET createtime=" << quoted( createtime_.isoTime() ) << ","
+   ost << "SET createtime=" << quoted( pt::to_kvalobs_string(createtime_)) << ","
        <<            "crc=" << crc_                << ","
        <<            "ccx=" << ccx_                << ","
        <<           "data=" << quoted(data_)       << ","
@@ -230,7 +219,8 @@ toUpdate()const
        << "            id=" << id_ << " AND "
        << "      callsign=" << quoted( callsign_ ) << " AND "
        << "          code=" << quoted( code_ ) << " AND "
-       << "       obstime=" << quoted(obstime_.isoTime());
+       << "       obstime=" << quoted( pt::to_kvalobs_string( obstime_ ) ) << " AND "
+       << "        tbtime=" << quoted( pt::to_kvalobs_string( pt::second_clock::universal_time() ) );
 
    return ost.str();
 }

@@ -32,11 +32,15 @@
 #include <limits.h>
 #include <sstream>
 #include <stdlib.h>
-#include <milog/milog.h>
+#include "milog/milog.h"
+#include "miutil/timeconvert.h"
 #include "tblStInfoSysNetworkStation.h"
 
 using namespace std;
 using namespace dnmi;
+
+using boost::posix_time::to_kvalobs_string;
+using boost::posix_time::time_from_string_nothrow;
 
 void
 TblStInfoSysNetworkStation::
@@ -75,9 +79,9 @@ set( const dnmi::db::DRow &r_)
             comment_=buf;
          }else if( *it=="totime") {
             if( ! buf.empty() )
-               toTime_ = miutil::miTime( buf );
+               toTime_ = time_from_string_nothrow( buf );
          }else if( *it=="fromtime") {
-            fromTime_ = miutil::miTime( buf );
+            fromTime_ = time_from_string_nothrow( buf );
          }
       }
       catch(...){
@@ -85,6 +89,9 @@ set( const dnmi::db::DRow &r_)
          error = true;
       }
    }
+
+   if(fromTime_.is_special())
+     error=true;
 
    createSortIndex();
    return !error;
@@ -112,15 +119,10 @@ clean()
    name_.erase();
    externalStationcode_.erase();
    comment_.erase();
-   toTime_ = miutil::miTime();
-   fromTime_ = miutil::miTime();
+   toTime_ = pt::ptime();
+   fromTime_ = pt::ptime();
 }
-
-#ifdef __WITH_PUTOOLS__
-miutil::miString
-#else
 std::string
-#endif
 TblStInfoSysNetworkStation::
 uniqueKey() const
 {
@@ -128,7 +130,7 @@ uniqueKey() const
 
    ost << " WHERE stationid=" << stationid_
        <<   " AND networkid=" << networkid_
-       <<   " AND fromtime=" << quoted( fromTime_.isoTime() );
+       <<   " AND fromtime=" << quoted( to_kvalobs_string(fromTime_) );
    return ost.str();
 }
 
@@ -137,8 +139,8 @@ operator<<( std::ostream &o, const TblStInfoSysNetworkStation &nt)
 {
   o << "[" << nt.stationid_ << ","<< nt.networkid_<< "," << nt.name_ << ","
     << nt.externalStationcode_ << ",'" << nt.comment_ << "',"
-    << (nt.fromTime_.undef()?"(NULL)":nt.fromTime_.isoTime()) << ","
-    << (nt.toTime_.undef()?"(NULL)":nt.toTime_.isoTime()) << "]";
+    << (nt.fromTime_.is_special()?"(NULL)":to_kvalobs_string(nt.fromTime_)) << ","
+    << (nt.toTime_.is_special()?"(NULL)":to_kvalobs_string(nt.toTime_)) << "]";
 
    return o;
 }

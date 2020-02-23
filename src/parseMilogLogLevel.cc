@@ -29,32 +29,33 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <strings.h>
 #include "parseMilogLogLevel.h"
 
 milog::LogLevel
 parseMilogLogLevel(const std::string &logLevel)
 {
-   if( logLevel == "FATAL" ){
+   if( strcasecmp(logLevel.c_str(),"FATAL") == 0 ){
       return milog::FATAL;
-   }else if( logLevel == "ERROR" ){
+   }else if( strcasecmp(logLevel.c_str(),"ERROR") == 0 ){
       return milog::ERROR;
-   }else if( logLevel == "WARN" ){
+   }else if( strcasecmp(logLevel.c_str(),"WARN") == 0 ){
       return milog::WARN;
-   }else if( logLevel == "DEBUG" ){
+   }else if( strcasecmp(logLevel.c_str(),"DEBUG") == 0 ){
       return milog::DEBUG;
-   }else if( logLevel == "DEBUG1" ){
+   }else if( strcasecmp(logLevel.c_str(),"DEBUG1") == 0 ){
       return milog::DEBUG1;
-   }else if( logLevel == "DEBUG2" ){
+   }else if( strcasecmp(logLevel.c_str(),"DEBUG2") == 0 ){
       return milog::DEBUG2;
-   }else if( logLevel == "DEBUG3" ){
+   }else if( strcasecmp(logLevel.c_str(),"DEBUG3") == 0 ){
       return milog::DEBUG3;
-   }else if( logLevel == "DEBUG4" ){
+   }else if( strcasecmp(logLevel.c_str(),"DEBUG4") == 0 ){
       return milog::DEBUG4;
-   }else if( logLevel == "DEBUG5" ){
+   }else if( strcasecmp(logLevel.c_str(),"DEBUG5") == 0 ){
       return milog::DEBUG5;
-   }else if( logLevel == "DEBUG6" ){
+   }else if( strcasecmp(logLevel.c_str(),"DEBUG6") == 0 ){
       return milog::DEBUG6;
-   }else if( logLevel == "INFO" ){
+   }else if( strcasecmp(logLevel.c_str(),"INFO") == 0 ){
       return milog::INFO;
    }else if( logLevel == "0" ){
       return milog::FATAL;

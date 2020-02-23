@@ -31,9 +31,10 @@
 #ifndef __BufrWorker_h__
 #define __BufrWorker_h__
 
+#include <memory>
 #include <sstream>
 #include "App.h"
-#include <kvcpp/kvevents.h>
+#include "kvevents.h"
 #include "bufr/EncodeBufrManager.h"
 #include "DataList.h"
 #include "BufrData.h"
@@ -53,8 +54,7 @@ class BufrWorker {
 		 RdERROR} EReadData; 
   
   App                      &app;
-  dnmi::thread::CommandQue &que;  
-  dnmi::thread::CommandQue &replayQue;  
+  std::shared_ptr<dnmi::thread::CommandQue> que;
   std::ostringstream       &swmsg;
   boost::shared_ptr<EncodeBufrManager> encodeBufrManager;
   BufrParamValidaterPtr bufrParamValidater;
@@ -95,7 +95,7 @@ class BufrWorker {
    */
   bool checkTypes( const DataEntryList &data,
                    StationInfoPtr      stInfo,
-                   const miutil::miTime obstime,
+                   const boost::posix_time::ptime &obstime,
                    bool  &mustHaveTypes )const;
 
 
@@ -136,8 +136,7 @@ class BufrWorker {
 
  public:
   BufrWorker( App &app,
-              dnmi::thread::CommandQue &que,
-              dnmi::thread::CommandQue &replayQue);
+              std::shared_ptr<dnmi::thread::CommandQue> que);
 
 
   void newObs(ObsEvent &event);

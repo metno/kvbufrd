@@ -34,9 +34,11 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
-#include <decodeutility/decodeutility.h>
+#include "decodeutility/decodeutility.h"
+#include "miutil/timeconvert.h"
 #include "DataElementList.h"
 
+namespace pt=boost::posix_time;
 
 namespace {
    template <class T>
@@ -136,7 +138,7 @@ DataElement():
     Es(params, "Es", 101),
     ERs(params, "ERs", 139),
     XIS(params,"XIS", 11),
-	Ci(params,"Ci", 4),   //Sea ice concentration.
+    Ci(params,"Ci", 4),   //Sea ice concentration.
   	Bi(params,"Bi", 2),   //Amount and type of ice.
   	Zi(params,"Zi", 21),   //Ice situation.
   	Si(params,"Si", 20),   //Ice development
@@ -192,7 +194,7 @@ DataElement( const DataElement &p):
    typeidList( p.typeidList )
 {
    if( params.size() != p.params.size() ) {
-      cerr << "FATAL BUG: Something nasty have happend.  DataElement copy CTOR  size differ!" << params.size() << " " << p.params.size() << endl;
+      cerr << "FATAL BUG CTOR: Something nasty have happend.  DataElement copy CTOR  size differ!" << params.size() << " " << p.params.size() << endl;
       abort();
    }
 
@@ -299,7 +301,7 @@ writeTo( std::ostream &header, std::ostream &data, bool withId )const
 
    if( it != params.end()  ) {
       header << "obstime";
-      data << time().isoTime( true, true );
+      data << pt::to_kvalobs_string(time());
       ++it;
    }
 
@@ -348,14 +350,14 @@ DataElementList::
 {
 }  
 
-miutil::miTime
+pt::ptime
 DataElementList::
 firstTime() const
 {
    CIDataElementList it=dataList.begin();
 
     if( it == dataList.end() )
-      return miutil::miTime();
+      return pt::ptime();
 
     return it->time();
 
@@ -365,7 +367,7 @@ firstTime() const
 */
 const DataElementList::DataElementProxy
 DataElementList::
-operator[](const miutil::miTime &t)const
+operator[](const pt::ptime &t)const
 {
   //std::cerr << "const [miTime] operator\n";
   
@@ -374,7 +376,7 @@ operator[](const miutil::miTime &t)const
 
 DataElementList::DataElementProxy
 DataElementList::
-operator[](const miutil::miTime &t)
+operator[](const pt::ptime &t)
 {
   //std::cerr << "[miTime] operator\n";
   
@@ -429,8 +431,8 @@ DataElementList::
 nContinuesTimes()const
 {
   CIDataElementList it=dataList.begin();
-  miutil::miTime  prevT;
-  miutil::miTime  testT;
+  pt::ptime prevT;
+  pt::ptime testT;
   int             n;
   
   if(it==dataList.end())
@@ -442,7 +444,7 @@ nContinuesTimes()const
 
   for(;it!=dataList.end(); it++){
     testT=it->time();
-    testT.addHour(1);
+    testT += pt::hours(1);
 
     if(testT!=prevT){
       break;
@@ -458,9 +460,9 @@ nContinuesTimes()const
   
 bool      
 DataElementList::
-insert(const miutil::miTime &timeIndex,
-       const DataElement            &sd,
-       bool                 replace)
+insert(const pt::ptime &timeIndex,
+       const DataElement &sd,
+       bool replace)
 {
   IDataElementList it=dataList.begin();
 
@@ -491,11 +493,11 @@ insert(const miutil::miTime &timeIndex,
 
 IDataElementList
 DataElementList::
-find(const miutil::miTime &from)
+find(const pt::ptime &from)
 {
   IDataElementList it=dataList.begin();
 
-  if(from.undef())
+  if(from.is_special())
     return dataList.end();
 
   for(;it!=dataList.end(); it++){
@@ -509,11 +511,11 @@ find(const miutil::miTime &from)
 
 CIDataElementList
 DataElementList::
-find(const miutil::miTime &from)const
+find(const pt::ptime &from)const
 {
   CIDataElementList it=dataList.begin();
 
-  if(from.undef())
+  if(from.is_special())
     return dataList.end();
 
   for(;it!=dataList.end(); it++){
@@ -526,11 +528,11 @@ find(const miutil::miTime &from)const
 
 DataElementList
 DataElementList::
-subData( const miutil::miTime &from, const miutil::miTime &to ) const
+subData( const pt::ptime &from, const pt::ptime &to ) const
 {
    DataElementList retList;
 
-   for( CIDataElementList it = find( from ); it != end() || ( !to.undef() && to>=it->time()); ++it )
+   for( CIDataElementList it = find( from ); it != end() || ( !to.is_special() && to>=it->time()); ++it )
       retList.dataList.push_back( *it );
 
    return retList;
@@ -598,17 +600,21 @@ operator DataElement()const //rvalue use
 
 void
 DataElementList::
-writeTo( std::ostream &o, bool withId )const
+writeTo( std::ostream &o, bool withId, bool debug )const
 {
-   ostringstream header, data;
-   TDataElementList::const_reverse_iterator it=dataList.rbegin();
+  if( ! debug ) {
+    return;
+  }
 
-   if( it != dataList.rend() ) {
-      it->writeTo( header, data, withId );
-      o << header.str() << endl;
-      o << data.str() << endl;
-      ++it;
-   }
+  ostringstream header, data;
+  TDataElementList::const_reverse_iterator it=dataList.rbegin();
+
+  if( it != dataList.rend() ) {
+    it->writeTo( header, data, withId );
+    o << header.str() << endl;
+    o << data.str() << endl;
+    ++it;
+  }
 
    for( ; it != dataList.rend(); ++it ) {
       header.str("");
@@ -622,10 +628,10 @@ std::ostream&
 operator<<(std::ostream& ost, const DataElement& sd)
 {
   using namespace std;
-  if(sd.time_.undef())
+  if(sd.time_.is_special())
     ost << "obsTime                    : " << "(UNDEFINED)" <<  endl;
   else
-    ost << "obsTime                    : " << sd.time_ <<  endl;
+    ost << "obsTime                    : " << pt::to_kvalobs_string(sd.time_) <<  endl;
   
   ost << "tempNaa                (TA): " << sd.TA       << endl
       << "tempMid               (TAM): " << sd.TAM      << endl

@@ -1,33 +1,34 @@
 /*
-  Kvalobs - Free Quality Control Software for Meteorological Observations 
+ Kvalobs - Free Quality Control Software for Meteorological Observations
 
-  $Id: App.cc,v 1.19.2.14 2007/09/27 09:02:22 paule Exp $                                                       
+ $Id: App.cc,v 1.19.2.14 2007/09/27 09:02:22 paule Exp $
 
-  Copyright (C) 2007 met.no
+ Copyright (C) 2007 met.no
 
-  Contact information:
-  Norwegian Meteorological Institute
-  Box 43 Blindern
-  0313 OSLO
-  NORWAY
-  email: kvalobs-dev@met.no
+ Contact information:
+ Norwegian Meteorological Institute
+ Box 43 Blindern
+ 0313 OSLO
+ NORWAY
+ email: kvalobs-dev@met.no
 
-  This file is part of KVALOBS
+ This file is part of KVALOBS
 
-  KVALOBS is free software; you can redistribute it and/or
-  modify it under the terms of the GNU General Public License as 
-  published by the Free Software Foundation; either version 2 
-  of the License, or (at your option) any later version.
+ KVALOBS is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License as
+ published by the Free Software Foundation; either version 2
+ of the License, or (at your option) any later version.
 
-  KVALOBS is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
+ KVALOBS is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ General Public License for more details.
 
-  You should have received a copy of the GNU General Public License along 
-  with KVALOBS; if not, write to the Free Software Foundation Inc., 
-  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ You should have received a copy of the GNU General Public License along
+ with KVALOBS; if not, write to the Free Software Foundation Inc.,
+ 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+#include <signal.h>
 #include <unistd.h>
 #include <getopt.h>
 #include <fstream>
@@ -35,14 +36,16 @@
 #include <list>
 #include <string>
 #include <sstream>
-#include <boost/version.hpp>
-#include <boost/filesystem.hpp>
-#include <milog/milog.h>
-#include <fileutil/pidfileutil.h>
-#include <kvalobs/kvPath.h>
+#include <thread>
+#include <chrono>
+#include "boost/version.hpp"
+#include "boost/filesystem.hpp"
+#include "milog/milog.h"
+#include "fileutil/pidfileutil.h"
+#include "kvalobs/kvPath.h"
+#include "miutil/timeconvert.h"
 #include "kvDbGateProxy.h"
 #include "obsevent.h"
-//#include "ValidData.h"
 #include "tblWaiting.h"
 #include "Data.h"
 #include "App.h"
@@ -50,1317 +53,1074 @@
 #include "tblKeyVal.h"
 #include "getDataReceiver.h"
 #include "GetDataThread.h"
-#include <kvalobs/kvPath.h>
 #include "parseMilogLogLevel.h"
+#include "KvDataConsumer.h"
+#include "parseMilogLogLevel.h"
+#include "cachedb.h"
 
 using namespace std;
 using namespace miutil;
 using namespace kvalobs;
 using namespace milog;
 using namespace miutil::conf;
-using boost::mutex;
 using namespace kvservice;
+using dnmi::db::ConnectionPool;
 namespace fs = boost::filesystem;
-
+namespace pt = boost::posix_time;
+namespace b = boost;
 
 namespace {
 
-void createDirectory( const fs::path &path ) {
-   try {
-      if( ! fs::exists( path  ) ) {
-         fs::create_directories( path );
-      } else if ( ! fs::is_directory( path )  ) {
-         LOGFATAL( "The path <" << path << "> exist, but is NOT a directory.");
-         cerr << "The path <" << path << "> exist, but is NOT a directory.";
-         exit( 1 );
-      }
-   }
-   catch( const fs::filesystem_error &ex ) {
-      LOGFATAL( "The path <" << path << "> does not exist and cant be created." <<
-                "Reason: " << ex.what());
-      cerr << "The path <" << path << "> does not exist and cant be created."
-           <<  "Reason: " << ex.what() << endl;
-      exit( 1 );
-   }
+void createDirectory(const fs::path &path) {
+  try {
+    if (!fs::exists(path)) {
+      fs::create_directories(path);
+    } else if (!fs::is_directory(path)) {
+      LOGFATAL("The path <" << path << "> exist, but is NOT a directory.");
+      cerr << "The path <" << path << "> exist, but is NOT a directory.";
+      exit(1);
+    }
+  } catch (const fs::filesystem_error &ex) {
+    LOGFATAL("The path <" << path << "> does not exist and cant be created." << "Reason: " << ex.what());
+    cerr << "The path <" << path << "> does not exist and cant be created." << "Reason: " << ex.what() << endl;
+    exit(1);
+  }
 
 }
 
-class MyConnectionFactory : public kvalobs::ConnectionFactory
-{
-   App *app;
+class MyConnectionFactory : public kvalobs::ConnectionFactory {
+  App *app;
 
-public:
-   MyConnectionFactory( App *app_ )
-      : app( app_ )
-   {
-   }
+ public:
+  MyConnectionFactory(App *app_)
+      : app(app_) {
+  }
 
-   virtual dnmi::db::Connection* newConnection()
-      {
-         return app->createDbConnection();
-      }
+  virtual dnmi::db::Connection* newConnection() {
+    return app->createDbConnection();
+  }
 
-   virtual void releaseConnection(dnmi::db::Connection *con )
-      {
-         app->releaseDbConnection( con );
-      }
+  virtual void releaseConnection(dnmi::db::Connection *con) {
+    app->releaseDbConnection(con);
+  }
 };
+
+string getValue(const miconf::ConfSection *conf, const std::string &key) {
+  string val = conf->getValue(key).valAsString("");
+  if (val.empty())
+    throw std::runtime_error("No '" + key + "' configured.");
+  return val;
 }
 
-bool
-App::
-createGlobalLogger(const std::string &id, milog::LogLevel ll)
-{
-   try{
-
-      if( ll == milog::NOTSET )
-         ll = defaultLogLevel;
-
-      /*FIXME: Remove the comments when the needed functionality is
-       * in effect on an operational machin.
-       *
-       *if( LogManager::hasLogger(id) )
-       *  return true;
-       */
-      FLogStream *logs=new FLogStream(2, 204800); //200k
-      std::ostringstream ost;
-      fs::path logpath = fs::path(kvPath("logdir")) / options.progname / (id + ".log");
-
-      if(logs->open( logpath.string()) ){
-         logs->loglevel( ll );
-         if(!LogManager::createLogger(id, logs)){
-            delete logs;
-            return false;
-         }
-
-         return true;
-      }else{
-         LOGERROR("Cant open the logfile <" << logpath << ">!");
-         delete logs;
-         return false;
-      }
-   }
-   catch(...){
-      LOGERROR("Cant create a logstream for LOGID " << id);
-      return false;
-   }
+std::string getKafkaDomain(const miconf::ConfSection *conf) {
+  return getValue(conf, "kafka.domain");
 }
 
-App::
-App(int argn, char **argv,   
-    const std::string &confFile_, miutil::conf::ConfSection *conf):
-    kvservice::corba::CorbaKvApp(argn, argv, conf),
-    startTime_(miutil::miTime::nowTime()),
-    confFile(confFile_),
-    hasStationWaitingOnCacheReload(false),
-    acceptAllTimes_(false),
-    defaultLogLevel( milog::INFO )
-{
-   ValElementList valElem;
-   string         val;
-   string         bufr_tables( DATADIR );
-   bool           bufr_tables_names( false );
+std::string getKafkaBrokers(const miconf::ConfSection *conf) {
+  return getValue(conf, "kafka.brokers");
+}
 
-   LogContext context("ApplicationInit");
+void sig_term(int signal) {
+  App::AppShutdown = true;
+}
 
-   createDirectory( fs::path(kvPath("logdir")) / options.progname );
+void setSigHandlers() {
+  sigset_t oldmask;
+  struct sigaction act, oldact;
 
-   valElem=conf->getValue("loglevel");
+  act.sa_handler = sig_term;
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = 0;
 
-   if( !valElem.empty() ) {
-      std::string slevel=valElem[0].valAsString();
-      milog::LogLevel ll = parseMilogLogLevel( slevel );
+  if (sigaction(SIGTERM, &act, &oldact) < 0) {
+    LOGFATAL("ERROR: Can't install signal handler for SIGTERM\n");
+    exit(1);
+  }
 
-      if( ll != milog::NOTSET )
-         defaultLogLevel = ll;
-   }
+  act.sa_handler = sig_term;
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = 0;
 
-   milog::LogManager *manager = milog::LogManager::instance();
+  if (sigaction(SIGINT, &act, &oldact) < 0) {
+    LOGFATAL("ERROR: Can't install signal handler for SIGTERM\n");
+    exit(1);
+  }
+}
 
-   if( manager ) {
-      manager->loglevel( defaultLogLevel );
-      milog::Logger &logger=milog::Logger::logger();
-      logger.logLevel( defaultLogLevel );
-   }
+}  // namespace
 
-   createGlobalLogger("GetData");
-   createGlobalLogger("DelayCtl");
-   createGlobalLogger("main");
-   createGlobalLogger("uinfo0");
+App* App::kvApp = nullptr;
 
+volatile std::atomic_bool App::AppShutdown(false);
 
-   //If a station is set up with this types delay them if
-   //they has not at least 4 hours with data.
-   continuesTypeID_.push_back( 311 );
-   continuesTypeID_.push_back( 310 );
-   continuesTypeID_.push_back( 3 );
-   continuesTypeID_.push_back( 330 );
+bool App::createGlobalLogger(const std::string &id, milog::LogLevel ll) {
+  try {
 
-   valElem=conf->getValue("bufr_tables");
+    if (ll == milog::NOTSET)
+      ll = defaultLogLevel;
 
-   if( !valElem.empty() )
-      bufr_tables=valElem[0].valAsString();
+    if( LogManager::hasLogger(id) )
+       return true;
 
-   if( ! bufr_tables.empty() ) {
-      if( bufr_tables[0] != '/' ) {
-         LOGERROR( "bufr_tables must be an absolute path '" << bufr_tables << "'.");
+    FLogStream *logs = new FLogStream(2, 204800);  //200k
+    std::ostringstream ost;
+    fs::path logpath = fs::path(kvPath("logdir")) / options.progname / (id + ".log");
+
+    if (logs->open(logpath.string())) {
+      logs->loglevel(ll);
+      if (!LogManager::createLogger(id, logs)) {
+        delete logs;
+        return false;
       }
 
-      if( *bufr_tables.rbegin() != '/')
-         bufr_tables += '/';
-   }
-
-   valElem=conf->getValue("bufr_tables_names");
-
-   if( !valElem.empty() ) {
-      string t=valElem[0].valAsString();
-
-      if(!t.empty() && (t[0]=='t' || t[0]=='T'))
-         bufr_tables_names = true;
-   }
-
-
-   IDLOGINFO("main", "BUFR_TABLES=" << bufr_tables );
-
-   setenv( "BUFR_TABLES", bufr_tables.c_str(), 1 );
-
-   if( getenv( "BUFR_TABLES" ) ) {
-      LOGINFO("BUFR_TABLES='" << getenv( "BUFR_TABLES") << "'." );
-   } else {
-      LOGINFO("Failed to set BUFR_TABLES.");
-   }
-
-   if( bufr_tables_names ) {
-      IDLOGINFO("main", "BUFR_TABLE_NAMES=true" );
-      setenv( "PRINT_TABLE_NAMES", "true", 1 );
-   } else {
-      IDLOGINFO("main", "BUFR_TABLE_NAMES=false" );
-      setenv( "PRINT_TABLE_NAMES", "false", 1 );
-   }
-
-   valElem=conf->getValue("accept_all_obstimes");
-
-   if(!valElem.empty()){
-      string t=valElem[0].valAsString();
-
-      if(!t.empty() && (t[0]=='t' || t[0]=='T'))
-         acceptAllTimes_=true;
-   }
-
-   if(acceptAllTimes_){
-      IDLOGINFO("main", "Accepting all obstimes.");
-   }else{
-      IDLOGINFO("main", "Rejecting obstimes that is too old or to early.");
-   }
-
-   valElem=conf->getValue("database.driver");
-
-   if( valElem.empty() ) {
-      LOGFATAL("No <database.driver> in the configurationfile!");
-      exit(1);
-   }
-
-   dbDriver=valElem[0].valAsString();
-
-   LOGINFO("Loading driver for database engine <" << dbDriver << ">!\n");
-
-   if(!dbMgr.loadDriver(dbDriver, dbDriverId)){
-      LOGFATAL("Can't load driver <" << dbDriver << endl
-               << dbMgr.getErr() << endl
-               << "Check if the driver is in the directory $KVALOBS/lib/db???");
-
-      exit(1);
-   }
-
-   valElem=conf->getValue("database.dbconnect");
-
-   if(valElem.empty()){
-      LOGFATAL("No <database.dbconnect> in the configurationfile!");
-      exit(1);
-   }
-
-   dbConnect=valElem[0].valAsString();
-
-   LOGINFO("Connect string <" << dbConnect << ">!\n");
-
-   valElem=conf->getValue("corba.kvpath");
-
-   if(valElem.empty() || valElem[0].valAsString().empty() ){
-      mypathInCorbaNS=nameserverpath;
-   }else{
-      mypathInCorbaNS=valElem[0].valAsString();
-   }
-
-   LOGINFO("My path in the CORBA nameserver: " << mypathInCorbaNS );
-
-   if(!mypathInCorbaNS.empty() ) {
-      if( *mypathInCorbaNS.rbegin() != '/')
-         mypathInCorbaNS+='/';
-      if( *mypathInCorbaNS.begin() == '/')
-         mypathInCorbaNS.erase(0,1);
-   }
-
-   if(!readStationInfo(conf)){
-      LOGFATAL("Exit! No configuration!");
-      exit(1);
-   }
-
-   dbThread = boost::shared_ptr<KvDbGateProxyThread>( new KvDbGateProxyThread( boost::shared_ptr<MyConnectionFactory>( new MyConnectionFactory( this ) ) ));
-   dbThread->start();
-
-   readWaitingElementsFromDb();
-
-   //We dont need conf any more.
-   delete conf;
-}
-
-App::
-~App()
-{
-}
-
-
-bool
-App::
-initKvBufrInterface(  dnmi::thread::CommandQue &newObsQue )
-{
-   kvBufrdImpl *bufrdImpl;
-
-   try{
-      bufrdImpl=new kvBufrdImpl( *this, newObsQue);
-      PortableServer::ObjectId_var id = getPoa()->activate_object(bufrdImpl);
-
-      bufrRef = bufrdImpl->_this();
-      IDLOGINFO( "main", "CORBAREF: " << corbaRef(bufrRef) );
-      std::string nsname = "/" + mypathInCorbaNameserver();
-      nsname += options.progname;
-      IDLOGINFO( "main", "CORBA NAMESERVER (register as): " << nsname );
-      putObjInNS(bufrRef, nsname);
-   }
-   catch( const std::bad_alloc &ex ) {
-      LOGFATAL("NOMEM: cant initialize the aplication!");
+      return true;
+    } else {
+      LOGERROR("Cant open the logfile <" << logpath << ">!");
+      delete logs;
       return false;
-   }
-   catch(...){
-      IDLOGFATAL("main","CORBA: cant initialize the aplication!");
-      return false;
-   }
+    }
+  } catch (...) {
+    LOGERROR("Cant create a logstream for LOGID " << id);
+    return false;
+  }
+}
 
-   return true;
+void App::readDatabaseConf(miutil::conf::ConfSection *conf){
+  dbDriver = conf->getValue("database.cache.driver").valAsString("");
+  dbConnect = conf->getValue("database.cache.connect").valAsString("");
+
+  if (dbDriver.empty() || dbConnect.empty()) {
+    LOGFATAL("No <database.cache.driver> or <database.cache.connect> in the configurationfile!");
+    exit(1);
+  }
+
+  kvDbDriver = conf->getValue("database.kvalobs.driver").valAsString("");
+  kvDbConnect = conf->getValue("database.kvalobs.connect").valAsString("");
+
+  if (kvDbDriver.empty() || kvDbConnect.empty()) {
+    LOGFATAL("No <database.kvalobs.driver> or <database.kvalobs.connect> in the configurationfile!");
+    exit(1);
+  }
+
+  LOGINFO("Loading driver for database engine <" << dbDriver << ">!\n");
+
+  if (!dnmi::db::DriverManager::loadDriver(dbDriver, dbDriverId)) {
+    LOGFATAL("Can't load driver <" << dbDriver << endl << dnmi::db::DriverManager::getErr() << endl << "Check if the driver is in the directory $KVALOBS/lib/db???");
+
+    exit(1);
+  }
+
+  LOGINFO("Loading driver for database engine <" << kvDbDriver << ">!\n");
+
+  if (!dnmi::db::DriverManager::loadDriver(kvDbDriver, kvDbDriverId)) {
+    LOGFATAL("Can't load driver <" << dbDriver << endl << dnmi::db::DriverManager::getErr() << endl << "Check if the driver is in the directory $KVALOBS/lib/db???");
+
+    exit(1);
+  }
+}
+
+App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::ConfSection *conf)
+    : kvDbPool([this]() {return createKvDbConnection();}, [this](dnmi::db::Connection *con) {releaseKvDbConnection(con);} ),
+      DbQuery([this]() {return kvDbPool.get();}),
+      startTime_(pt::second_clock::universal_time()),
+      confFile(confFile_),
+      hasStationWaitingOnCacheReload(false),
+      acceptAllTimes_(false),
+      defaultLogLevel(milog::INFO) {
+  ValElementList valElem;
+  string val;
+  string bufr_tables(DATADIR);
+  string logdir = kvPath("logdir");
+  bool bufr_tables_names( false);
+
+  kvApp = this;
+  LogContext context("ApplicationInit");
+  kafkaDomain = getKafkaDomain(conf);
+  kafkaBrokers = getKafkaBrokers(conf);
+
+  createDirectory(fs::path(kvPath("logdir")) / options.progname);
+
+  valElem = conf->getValue("loglevel");
+
+  if (!valElem.empty()) {
+    std::string slevel = valElem[0].valAsString();
+    milog::LogLevel ll = parseMilogLogLevel(slevel);
+
+    if (ll != milog::NOTSET)
+      defaultLogLevel = ll;
+  }
+
+  milog::LogManager *manager = milog::LogManager::instance();
+
+  if (manager) {
+    manager->loglevel(defaultLogLevel);
+    milog::Logger &logger = milog::Logger::logger();
+    logger.logLevel(defaultLogLevel);
+  }
+
+  createGlobalLogger("GetData");
+  createGlobalLogger("DelayCtl");
+  createGlobalLogger("main");
+  createGlobalLogger("uinfo0");
+  createGlobalLogger("kafka");
+  milog::createGlobalLogger(logdir, options.progname, "observation", milog::DEBUG, 200, 1, new milog::StdLayout1());
+  milog::createGlobalLogger(logdir, options.progname, "cachedb", milog::DEBUG, 500, 2, new milog::StdLayout1());
+ 
+  readDatabaseConf(conf);
+
+  //If a station is set up with this types delay them if
+  //they has not at least 4 hours with data.
+  continuesTypeID_.push_back(311);
+  continuesTypeID_.push_back(310);
+  continuesTypeID_.push_back(3);
+  continuesTypeID_.push_back(330);
+
+  valElem = conf->getValue("bufr_tables");
+
+  if (!valElem.empty())
+    bufr_tables = valElem[0].valAsString();
+
+  if (!bufr_tables.empty()) {
+    if (bufr_tables[0] != '/') {
+      LOGERROR("bufr_tables must be an absolute path '" << bufr_tables << "'.");
+    }
+
+    if (*bufr_tables.rbegin() != '/')
+      bufr_tables += '/';
+  }
+
+  valElem = conf->getValue("bufr_tables_names");
+
+  if (!valElem.empty()) {
+    string t = valElem[0].valAsString();
+
+    if (!t.empty() && (t[0] == 't' || t[0] == 'T'))
+      bufr_tables_names = true;
+  }
+
+  IDLOGINFO("main", "BUFR_TABLES=" << bufr_tables);
+
+  setenv("BUFR_TABLES", bufr_tables.c_str(), 1);
+
+  if (getenv("BUFR_TABLES")) {
+    LOGINFO("BUFR_TABLES='" << getenv( "BUFR_TABLES") << "'.");
+  } else {
+    LOGINFO("Failed to set BUFR_TABLES.");
+  }
+
+  if (bufr_tables_names) {
+    IDLOGINFO("main", "BUFR_TABLE_NAMES=true");
+    setenv("PRINT_TABLE_NAMES", "true", 1);
+  } else {
+    IDLOGINFO("main", "BUFR_TABLE_NAMES=false");
+    setenv("PRINT_TABLE_NAMES", "false", 1);
+  }
+
+  valElem = conf->getValue("accept_all_obstimes");
+
+  if (!valElem.empty()) {
+    string t = valElem[0].valAsString();
+
+    if (!t.empty() && (t[0] == 't' || t[0] == 'T'))
+      acceptAllTimes_ = true;
+  }
+
+  if (acceptAllTimes_) {
+    IDLOGINFO("main", "Accepting all obstimes.");
+  } else {
+    IDLOGINFO("main", "Rejecting obstimes that is too old or to early.");
+  }
+
+
+
+  if (!readStationInfo(conf)) {
+    LOGFATAL("Exit! No configuration!");
+    exit(1);
+  }
+
+  //Create cacheDB if it does not exist.
+  checkAndInitCacheDB(getCacheDbFile());
+
+  dbThread = boost::shared_ptr<KvDbGateProxyThread>(new KvDbGateProxyThread(boost::shared_ptr<MyConnectionFactory>(new MyConnectionFactory(this))));
+  dbThread->start();
+
+  readWaitingElementsFromDb();
+
+  //We dont need conf any more.
+  delete conf;
+}
+
+App::~App() {
 }
 
 
-void 
-App::
-readWaitingElementsFromDb()
-{
-   list<TblWaiting> data;
-   list<TblWaiting>::iterator it;
+std::string App::getCacheDbFile()const {
+  return dbConnect;
+}
 
+void App::readWaitingElementsFromDb() {
+  list<TblWaiting> data;
+  list<TblWaiting>::iterator it;
 
-   kvDbGateProxy gate( dbThread->dbQue );
-   gate.busytimeout(120);
+  kvDbGateProxy gate(dbThread->dbQue);
+  gate.busytimeout(120);
 
-   if(gate.select(data, " order by delaytime")){
-      for(it=data.begin(); it!=data.end(); it++){
-         StationInfoList info=findStationInfoWmono( it->wmono() );
+  if (gate.select(data, " order by delaytime")) {
+    for (it = data.begin(); it != data.end(); it++) {
+      StationInfoList info = findStationInfoWmono(it->wmono());
 
-         if( info.empty() ) {
-            gate.remove(*it);
-            continue;
-         }
-
-         for( StationInfoList::iterator itInfo = info.begin();
-               itInfo != info.end(); ++itInfo ) {
-            try{
-               waitingList.push_back(WaitingPtr(new Waiting(it->delaytime(),
-                                                            it->obstime(),
-                                                            *itInfo)));
-            }
-            catch(...){
-               LOGFATAL("NOMEM: while reading 'waiting' from database!");
-               exit(1);
-            }
-         }
+      if (info.empty()) {
+        gate.remove(*it);
+        continue;
       }
-   }else{
-      LOGERROR("ERROR (Init): While reading 'waiting' from database!" << endl
-               << gate.getErrorStr());
-   }
-}  
 
-void           
-App::
-continuesTypeID(const std::list<int> &continuesTimes)
-{
-   mutex::scoped_lock lock(mutex);
-   continuesTypeID_=continuesTimes;
+      for (StationInfoList::iterator itInfo = info.begin(); itInfo != info.end(); ++itInfo) {
+        try {
+          waitingList.push_back(WaitingPtr(new Waiting(it->delaytime(), it->obstime(), *itInfo)));
+        } catch (...) {
+          LOGFATAL("NOMEM: while reading 'waiting' from database!");
+          exit(1);
+        }
+      }
+    }
+  } else {
+    LOGERROR("ERROR (Init): While reading 'waiting' from database!" << endl << gate.getErrorStr());
+  }
 }
 
-std::list<int> 
-App::
-continuesTypeID()
-{ 
-   mutex::scoped_lock lock(mutex);
-
-   return continuesTypeID_;
+void App::continuesTypeID(const std::list<int> &continuesTimes) {
+  Lock lock(mutex);
+  continuesTypeID_ = continuesTimes;
 }
 
+std::list<int> App::continuesTypeID() {
+  Lock lock(mutex);
+
+  return continuesTypeID_;
+}
 
 /**
-* Return true if the station has only typeid that is NOT in the list
-* continuesTypeID.
-*/
-bool           
-App::
-onlyNoContinuesTypeID(StationInfoPtr st)
-{
-   mutex::scoped_lock lock(mutex);
+ * Return true if the station has only typeid that is NOT in the list
+ * continuesTypeID.
+ */
+bool App::onlyNoContinuesTypeID(StationInfoPtr st) {
+  Lock lock(mutex);
 
-   StationInfo::TLongList tp=st->typepriority();
-   StationInfo::ITLongList itp;
+  StationInfo::TLongList tp = st->typepriority();
+  StationInfo::ITLongList itp;
 
-   for(list<int>::iterator it=continuesTypeID_.begin();
-         it!=continuesTypeID_.end(); it++){
+  for (list<int>::iterator it = continuesTypeID_.begin(); it != continuesTypeID_.end(); it++) {
 
-      for(itp=tp.begin(); itp!=tp.end(); itp++){
-         if(*it==*itp)
-            return false;
-      }
-   }
+    for (itp = tp.begin(); itp != tp.end(); itp++) {
+      if (*it == *itp)
+        return false;
+    }
+  }
 
-   return true;
+  return true;
 }
 
+bool App::isContinuesType(int typeID) {
+  Lock lock(mutex);
 
-bool 
-App::
-isContinuesType(int typeID)
-{
-   mutex::scoped_lock lock(mutex);
+  for (list<int>::iterator it = continuesTypeID_.begin(); it != continuesTypeID_.end(); it++) {
 
-   for(list<int>::iterator it=continuesTypeID_.begin();
-         it!=continuesTypeID_.end(); it++){
+    if (*it == typeID) {
+      return true;
+    }
+  }
 
-      if(*it==typeID){
-         return true;
-      }
-   }
-
-   return false;
+  return false;
 }
 
-bool
-App::
-readStationInfo( miconf::ConfSection *conf)
-{
-   StationInfoParse theParser;
-   StationList tmpList;
+bool App::readStationInfo(miconf::ConfSection *conf) {
+  StationInfoParse theParser;
+  StationList tmpList;
 
-   if(!theParser.parse(conf, tmpList)){
-      LOGFATAL("Cant parse the SYNOP configuration.");
-      return false;
-   }
+  if (!theParser.parse(conf, tmpList)) {
+    LOGFATAL("Cant parse the SYNOP configuration.");
+    return false;
+  }
 
-   mutex::scoped_lock lock(mutex);
-   stationList=tmpList;
+  Lock lock(mutex);
+  stationList = tmpList;
 
-   return true;
+  return true;
 }
 
-bool
-App::
-readStationInfo(std::list<StationInfoPtr> &stList)const
-{
-   StationInfoParse theParser;
+bool App::readStationInfo(std::list<StationInfoPtr> &stList) const {
+  StationInfoParse theParser;
 
-   LOGDEBUG2("Reading conf from file!" << endl <<
-             "<"<<confFile<<">" <<endl);
+  LOGDEBUG2("Reading conf from file!" << endl << "<"<<confFile<<">" <<endl);
 
-   miutil::conf::ConfSection *conf=miutil::conf::ConfParser::parse( confFile );
+  miutil::conf::ConfSection *conf = miutil::conf::ConfParser::parse(confFile);
 
-   if(!conf)
-      return false;
+  if (!conf)
+    return false;
 
-   stList.clear();
+  stList.clear();
 
-   bool ret=true;
+  bool ret = true;
 
-   if(!theParser.parse(conf, stList)){
-      LOGWARN("Cant parse the BUFFER configuration!" << endl
-              << "File: <" << confFile << ">" << endl );
-      ret = false;
-   }
+  if (!theParser.parse(conf, stList)) {
+    LOGWARN("Cant parse the BUFFER configuration!" << endl << "File: <" << confFile << ">" << endl);
+    ret = false;
+  }
 
-   delete conf;
+  delete conf;
 
-   return ret;
+  return ret;
 }
 
-StationList
-App::
-getStationList()const
-{
-   mutex::scoped_lock lock(mutex);
+StationList App::getStationList() const {
+  Lock lock(mutex);
 
-   return stationList;
-}
-
-bool
-App::
-listStations(kvbufrd::StationInfoList &list)
-{
-   ostringstream ost;
-
-   mutex::scoped_lock lock(mutex);
-
-   list.length(stationList.size());
-
-   IStationList it=stationList.begin();
-
-   for(CORBA::Long i=0; it!=stationList.end(); it++, i++){
-      list[i].wmono=(*it)->wmono();
-      list[i].id = (*it)->stationID();
-
-      StationInfo::TLongList stid=(*it)->definedStationID();
-      StationInfo::ITLongList itl=stid.begin();
-      list[i].stationIDList.length(stid.size());
-
-      for(int j=0; itl!=stid.end(); itl++, j++){
-         list[i].stationIDList[j]=*itl;
-      }
-
-      ost.str("");
-      ost << **it;
-
-      list[i].info=CORBA::string_dup(ost.str().c_str());
-   }
-
-   return true;
+  return stationList;
 }
 
 dnmi::db::Connection*
-App::
-createDbConnection()
-{
-	mutex::scoped_lock lock(mutexDbDriverManager);
-   dnmi::db::Connection *con;
+App::createKvDbConnection() {
+  dnmi::db::Connection *con;
 
-   con=dbMgr.connect(dbDriverId, dbConnect);
+  con = dnmi::db::DriverManager::connect(kvDbDriverId, kvDbConnect);
 
-   if(!con){
-      LOGERROR("Can't create a database connection  ("
-            << dbDriverId << ")" << endl << "Connect string: <" << dbConnect << ">!");
-      return 0;
-   }
+  if (!con) {
+    LOGERROR("Can't create a database connection  (" << kvDbDriverId << ")" << endl << "Connect string: <" << kvDbConnect << ">!");
+    return 0;
+  }
 
-   LOGDEBUG3("New database connection (" << dbDriverId
-           << ") created!");
-   return con;
+  LOGDEBUG("New database connection (" << kvDbDriverId << ") created!");
+  return con;
 }
 
-void                  
-App::
-releaseDbConnection(dnmi::db::Connection *con)
-{
-	mutex::scoped_lock lock(mutexDbDriverManager);
-   LOGDEBUG3("Database connection released.");
-   dbMgr.releaseConnection( con );
-}
-
-
-StationInfoList
-App::
-findStationInfo(long stationid)
-{
-   mutex::scoped_lock lock(mutex);
-
-   return stationList.findStation( stationid );
-}
-
-
-StationInfoList
-App::
-findStationInfoWmono(int wmono)
-{
-   mutex::scoped_lock lock(mutex);
-   return stationList.findStationByWmono( wmono );
+void App::releaseKvDbConnection(dnmi::db::Connection *con) {
+  LOGDEBUG("Database connection released (" << kvDbDriverId << ").");
+  dnmi::db::DriverManager::releaseConnection(con);
 }
 
 
 
+dnmi::db::Connection*
+App::createDbConnection() {
+  dnmi::db::Connection *con;
 
-WaitingPtr
-App::
-addWaiting( WaitingPtr w, bool replace )
-{
-   IWaitingList it;
+  con = dnmi::db::DriverManager::connect(dbDriverId, dbConnect);
 
-   mutex::scoped_lock lock(mutex);
+  if (!con) {
+    LOGERROR("Can't create a database connection  (" << dbDriverId << ")" << endl << "Connect string: <" << dbConnect << ">!");
+    return 0;
+  }
 
-   for(it=waitingList.begin(); it!=waitingList.end(); it++){
-      if( *w->info() == *(*it)->info() &&
-         w->obstime()==(*it)->obstime()){
+  LOGDEBUG3("New database connection (" << dbDriverId << ") created!");
+  return con;
+}
 
-         if(replace){
-            if(w->delay()!=(*it)->delay()){
-               LOGINFO("Replace delay element for: " << w->info()->toIdentString()
-                       << " obstime: "  << w->obstime() << " delay to: "
-                       << w->delay());
-               *it=w;
-               if( ! w->addToDb() ) {
-                  LOGERROR("DBERROR while replaceing delay element for: " << w->info()->toIdentString()
-                           << " obstime: "  << w->obstime() << " delay to: "
-                           << w->delay());
-               }
-            }
-         }
-         return *it;
+void App::releaseDbConnection(dnmi::db::Connection *con) {
+  LOGDEBUG3("Database connection released.");
+  dnmi::db::DriverManager::releaseConnection(con);
+}
+
+StationInfoList App::findStationInfo(long stationid, long typeId, const boost::posix_time::ptime &obstime) {
+  Lock lock(mutex);
+
+  return stationList.findStation(stationid, typeId, obstime);
+}
+
+StationInfoList App::findStationInfoWmono(int wmono) {
+  Lock lock(mutex);
+  return stationList.findStationByWmono(wmono);
+}
+
+WaitingPtr App::addWaiting(WaitingPtr w, bool replace) {
+  Lock lock(mutex);
+  IWaitingList it;
+  for (it = waitingList.begin(); it != waitingList.end(); it++) {
+    if (*w->info() == *(*it)->info() && w->obstime() == (*it)->obstime()) {
+
+      if (replace) {
+        if (w->delay() != (*it)->delay()) {
+          LOGINFO("Replace delay element for: " << w->info()->toIdentString() << " obstime: " << w->obstime() << " delay to: " << w->delay());
+          *it = w;
+          if (!w->addToDb()) {
+            LOGERROR(
+                "DBERROR while replaceing delay element for: " << w->info()->toIdentString() << " obstime: " << w->obstime() << " delay to: " << w->delay());
+          }
+        }
       }
-   }
+      return *it;
+    }
+  }
 
-   LOGINFO("Add delay element for: " << w->info()->toIdentString()
-           << " obstime: "  << w->obstime() << " delay to: "
-           << w->delay());
+  LOGINFO("Add delay element for: " << w->info()->toIdentString() << " obstime: " << w->obstime() << " delay to: " << w->delay());
 
-   if( !w->addToDb() ) {
-      LOGERROR("DBERROR while adding delay element for: " << w->info()->toIdentString()
-                 << " obstime: "  << w->obstime() << " delay to: "
-                 << w->delay());
-   }
-   //We have now record for this station and obstime in the waitingList.
+  if (!w->addToDb()) {
+    LOGERROR("DBERROR while adding delay element for: " << w->info()->toIdentString() << " obstime: " << w->obstime() << " delay to: " << w->delay());
+  }
+  //We have no record for this station and obstime in the waitingList.
 
-   if(waitingList.empty()){
-      waitingList.push_back(w);
-      return WaitingPtr();
-   }
+  if (waitingList.empty()) {
+    waitingList.push_back(w);
+    return WaitingPtr();
+  }
 
-   for(it=waitingList.begin(); it!=waitingList.end(); it++){
-      if(w->delay()<=(*it)->delay()){
-         break;
-      }
-   }
+  for (it = waitingList.begin(); it != waitingList.end(); it++) {
+    if (w->delay() <= (*it)->delay()) {
+      break;
+    }
+  }
 
-   waitingList.insert(it, w);
+  waitingList.insert(it, w);
 
-   return WaitingPtr();
+  return WaitingPtr();
 }
 
-WaitingPtr 
-App::    
-getWaiting( const miutil::miTime &obstime,
-            StationInfoPtr info )
-{
-   mutex::scoped_lock lock(mutex);
-   IWaitingList it;
+WaitingPtr App::getWaiting(const pt::ptime &obstime, StationInfoPtr info) {
+  Lock lock(mutex);
+  IWaitingList it;
 
-   for(it=waitingList.begin(); it!=waitingList.end(); it++){
-      if( *(*it)->info() == *info &&
-         (*it)->obstime()==obstime) {
-         (*it)->removeFrom();
-         WaitingPtr w=*it;
-         waitingList.erase(it);
-
-         return w;
-      }
-   }
-
-   return WaitingPtr();
-}
-
-
-
-WaitingList    
-App::
-getExpired()
-{
-   WaitingList  wl;
-   IWaitingList it;
-   IWaitingList itTmp;
-   miTime       now;
-   ostringstream ost;
-   bool          msg=false;
-
-   mutex::scoped_lock lock(mutex);
-
-   milog::LogContext context("Delay");
-
-   now=miTime::nowTime();
-   it=waitingList.begin();
-
-   while( it != waitingList.end() && (*it)->delay() <= now){
-      LOGDEBUG("getExpired: loop");
-      if(!msg){
-         ost << "Expired delay for stations at time: " << now << endl;
-         msg=true;
-      }
-      ost << "-- " << (*it)->info()->toIdentString() << " obstime: " << (*it)->obstime()
-	       << " delay to: " << (*it)->delay() << endl;
-      wl.push_back(*it);
+  for (it = waitingList.begin(); it != waitingList.end(); it++) {
+    if (*(*it)->info() == *info && (*it)->obstime() == obstime) {
+      (*it)->removeFrom();
+      WaitingPtr w = *it;
       waitingList.erase(it);
-      it=waitingList.begin();
-   }
 
-   if(msg){
-      LOGINFO(ost.str());
-   }
+      return w;
+    }
+  }
 
-   if(!wl.empty()){
-      for(it=wl.begin(); it!=wl.end(); it++){
-         (*it)->removeFrom();
+  return WaitingPtr();
+}
+
+WaitingList App::getExpired() {
+  WaitingList wl;
+  IWaitingList it;
+  IWaitingList itTmp;
+  pt::ptime now;
+  ostringstream ost;
+  bool msg = false;
+
+  Lock lock(mutex);
+
+  milog::LogContext context("Delay");
+
+  now = pt::second_clock::universal_time();
+  it = waitingList.begin();
+
+  while (it != waitingList.end() && (*it)->delay() <= now) {
+    LOGDEBUG("getExpired: loop");
+    if (!msg) {
+      ost << "Expired delay for stations at time: " << now << endl;
+      msg = true;
+    }
+    ost << "-- " << (*it)->info()->toIdentString() << " obstime: " << pt::to_kvalobs_string((*it)->obstime()) << " delay to: " << pt::to_kvalobs_string((*it)->delay()) << endl;
+    wl.push_back(*it);
+    waitingList.erase(it);
+    it = waitingList.begin();
+  }
+
+  if (msg) {
+    LOGINFO(ost.str());
+  }
+
+  if (!wl.empty()) {
+    for (it = wl.begin(); it != wl.end(); it++) {
+      (*it)->removeFrom();
+    }
+  }
+
+  return wl;
+}
+
+
+void App::removeWaiting(StationInfoPtr info, const pt::ptime &obstime) {
+  IWaitingList it;
+
+  Lock lock(mutex);
+
+  for (it = waitingList.begin(); it != waitingList.end(); it++) {
+    if (*info == *(*it)->info() && obstime == (*it)->obstime()) {
+
+      if (!(*it)->removeFrom()) {
+        LOGWARN("Cant remove waiting element from database:  " << (*it)->info()->toIdentString() << " obstime: " << obstime);
+
       }
-   }
 
-   return wl;
-}
+      LOGINFO("Removed waiting element: " << (*it)->info()->toIdentString() << " obstime: " << obstime << endl << " with delay: " << (*it)->delay());
 
-kvbufrd::DelayList*
-App::
-getDelayList(miutil::miTime &nowTime)
-{
-   kvbufrd::DelayList *dl;
+      waitingList.erase(it);
 
-   mutex::scoped_lock lock(mutex);
-
-   nowTime=miTime::nowTime();
-
-   try{
-      dl=new kvbufrd::DelayList();
-   }
-   catch(...){
-      return 0;
-   }
-
-   if(waitingList.empty())
-      return dl;
-
-   dl->length(waitingList.size());
-   IWaitingList it=waitingList.begin();
-   CORBA::Long  i;
-
-   for(it=waitingList.begin(), i=0;
-         it!=waitingList.end();
-         it++, i++){
-
-      try{
-         (*dl)[i].wmono=(*it)->info()->wmono();
-         (*dl)[i].id=(*it)->info()->stationID();
-         (*dl)[i].obstime=(*it)->obstime().isoTime().c_str();
-         (*dl)[i].delay=(*it)->delay().isoTime().c_str();
-      }
-      catch(...){
-         break;
-      }
-   }
-
-   return dl;
-}
-
-
-void           
-App::
-removeWaiting( StationInfoPtr info,
-               const miutil::miTime &obstime )
-{
-   IWaitingList it;
-
-   mutex::scoped_lock lock(mutex);
-
-   for(it=waitingList.begin(); it!=waitingList.end(); it++){
-      if( *info == *(*it)->info() &&
-          obstime==(*it)->obstime()){
-
-         if(!(*it)->removeFrom()){
-            LOGWARN("Cant remove waiting element from database:  "
-                  << (*it)->info()->toIdentString() << " obstime: " << obstime);
-
-         }
-
-         LOGINFO("Removed waiting element: "
-               << (*it)->info()->toIdentString() << " obstime: " << obstime << endl
-               << " with delay: " << (*it)->delay());
-
-         waitingList.erase(it);
-
-         return;
-      }
-   }
-}
-
-void           
-App::
-removeWaiting( WaitingPtr w )
-{
-   LOGINFO("remove: " << w->info()->toIdentString() << " obstime: " << w->obstime()
-           << " delay to: " << w->delay() << " from database!");
-
-   w->removeFrom();
-}
-
-miutil::miTime 
-App::
-checkpoint()
-{
-   list<TblKeyVal> data;
-   list<TblKeyVal>::iterator it;
-
-   kvDbGateProxy gate( dbThread->dbQue );
-
-   gate.busytimeout(120);
-
-   if(!gate.select(data, "WHERE key=\'checkpoint\'")){
-      LOGERROR("DBERROR: cant obtain checkpoint!");
-      return miTime();
-   }
-
-   if(data.empty()){
-      LOGINFO("No checkpont!");
-      return miTime();
-   }
-
-   return miTime(data.front().val());
-}
-
-void           
-App::
-createCheckpoint( const miutil::miTime &cpoint )
-{
-   if( cpoint.undef() ){
-      LOGERROR("Checkpoint: undef checkpont time!");
       return;
-   }
-
-   kvDbGateProxy gate( dbThread->dbQue );
-   gate.busytimeout(120);
-
-   if(cpoint.undef()){
-      LOGERROR("Checkpoint: undef checkpont time!");
-      return;
-   }
-
-   if(!gate.insert(TblKeyVal("checkpoint", cpoint.isoTime()), true)){
-      LOGERROR("Failed to create checkpoint! (" <<cpoint <<")");
-   }else{
-      LOGINFO("Checkpoint created at: " << cpoint);
-   }
+    }
+  }
 }
 
+void App::removeWaiting(WaitingPtr w) {
+  LOGINFO("remove: " << w->info()->toIdentString() << " obstime: " << pt::to_kvalobs_string(w->obstime()) << " delay to: " << pt::to_kvalobs_string(w->delay()) << " from database!");
 
-StationInfoPtr 
-App::
-replaceStationInfo(StationInfoPtr newInfoPtr)
-{
-   mutex::scoped_lock lock(mutex);
-
-   IStationList it=stationList.begin();
-
-   for(;it!=stationList.end(); it++){
-      if( *(*it) == *newInfoPtr ){
-
-         //Set the cacheReload of the new StationInfo to the same as
-         //reload.
-         newInfoPtr->cacheReloaded48((*it)->cacheReloaded48());
-         StationInfoPtr info=*it;
-         *it=newInfoPtr;
-         return info;
-      }
-   }
-
-   return StationInfoPtr();
+  w->removeFrom();
 }
 
-bool
-App:: 
-addStationInfo(StationInfoPtr newInfoPtr)
-{
+pt::ptime App::checkpoint() {
+  list<TblKeyVal> data;
+  list<TblKeyVal>::iterator it;
 
-   mutex::scoped_lock lock(mutex);
-   IStationList it=stationList.begin();
+  kvDbGateProxy gate(dbThread->dbQue);
 
-   for(;it!=stationList.end(); it++){
-      if( *(*it) == *newInfoPtr ){
-         return false;
-      }
-   }
+  gate.busytimeout(120);
 
-   stationList.push_back(newInfoPtr);
+  if (!gate.select(data, "WHERE key=\'checkpoint\'")) {
+    LOGERROR("DBERROR: cant obtain checkpoint!");
+    return pt::ptime();
+  }
 
-   return true;
+  if (data.empty()) {
+    LOGINFO("No checkpont!");
+    return pt::ptime();
+  }
+
+  return pt::time_from_string(data.front().val());
+}
+
+void App::createCheckpoint(const pt::ptime &cpoint) {
+  if (cpoint.is_special()) {
+    LOGERROR("Checkpoint: undef checkpont time!");
+    return;
+  }
+
+  kvDbGateProxy gate(dbThread->dbQue);
+  gate.busytimeout(120);
+
+  if (cpoint.is_special()) {
+    LOGERROR("Checkpoint: undef checkpont time!");
+    return;
+  }
+
+  if (!gate.insert(TblKeyVal("checkpoint", pt::to_kvalobs_string(cpoint)), true)) {
+    LOGERROR("Failed to create checkpoint! (" <<pt::to_kvalobs_string(cpoint) <<") \nReason: " << gate.getErrorStr());
+  } else {
+    LOGINFO("Checkpoint created at: " << pt::to_kvalobs_string(cpoint));
+  }
+}
+
+StationInfoPtr App::replaceStationInfo(StationInfoPtr newInfoPtr) {
+  Lock lock(mutex);
+
+  IStationList it = stationList.begin();
+
+  for (; it != stationList.end(); it++) {
+    if (*(*it) == *newInfoPtr) {
+
+      //Set the cacheReload of the new StationInfo to the same as
+      //reload.
+      newInfoPtr->cacheReloaded48((*it)->cacheReloaded48());
+      StationInfoPtr info = *it;
+      *it = newInfoPtr;
+      return info;
+    }
+  }
+
+  return StationInfoPtr();
+}
+
+bool App::addStationInfo(StationInfoPtr newInfoPtr) {
+
+  Lock lock(mutex);
+  IStationList it = stationList.begin();
+
+  for (; it != stationList.end(); it++) {
+    if (*(*it) == *newInfoPtr) {
+      return false;
+    }
+  }
+
+  stationList.push_back(newInfoPtr);
+
+  return true;
 }
 
 /**
-* Replace the current configuration with the new one.
-* @param newConf The new configuration to replace the old.
-*/
-void
-App::
-replaceStationConf(const StationList &newConf )
-{
-   mutex::scoped_lock lock(mutex);
+ * Replace the current configuration with the new one.
+ * @param newConf The new configuration to replace the old.
+ */
+void App::replaceStationConf(const StationList &newConf) {
+  Lock lock(mutex);
 
-   stationList = newConf;
+  stationList = newConf;
+}
+
+bool App::getSavedBufrData(StationInfoPtr info, const pt::ptime &obstime, std::list<TblBufr> &tblBufr) {
+  kvDbGateProxy gate(dbThread->dbQue);
+  ostringstream ost;
+
+  gate.busytimeout(120);
+
+  ost << "WHERE wmono=" << info->wmono() << " AND id=" << info->stationID() << " AND callsign='" << info->callsign() << "'" << " AND obstime='" << pt::to_kvalobs_string(obstime)
+      << "'";
+
+  if (!gate.select(tblBufr, ost.str())) {
+    LOGERROR("DBERROR: getSavedBufrData: " << gate.getErrorStr());
+    return false;
+  }
+
+  return true;
+}
+
+bool App::saveBufrData(const TblBufr &tblBufr) {
+  kvDbGateProxy gate(dbThread->dbQue);
+
+  gate.busytimeout(120);
+
+  if (!gate.insert(tblBufr, true)) {
+    LOGERROR("DBERROR: saveBufrData: " << gate.getErrorStr());
+    return false;
+  }
+
+  return true;
+}
+
+bool App::getDataFrom(const pt::ptime &t, int wmono, int hours, std::shared_ptr<dnmi::thread::CommandQue> que) {
+  LogContext lContext("getDataFrom");
+
+  LOGINFO("Get data from server, start time: " << t);
+
+  GetData *getData;
+
+  try {
+    getData = new GetData(*this, t, wmono, hours, que);
+  } catch (...) {
+    LOGERROR("NO MEM!");
+    return false;
+  }
+
+  try {
+    //Create and start a background thread to receive the
+    //data from kvalobs.
+    getData->setThread(new boost::thread(*getData));
+  } catch (...) {
+    LOGERROR("NO MEM!");
+    delete getData;
+    return false;
+  }
+
+  Lock lock(mutex);
+
+  getDataThreads.push_back(getData);
+
+  return true;
+}
+
+bool App::joinGetDataThreads(bool waitToAllIsJoined, const std::string &logid) {
+  Lock lock(mutex);
+  std::list<GetData*>::iterator it = getDataThreads.begin();
+  bool joined = false;
+
+  IDLOGDEBUG(logid, "# " << getDataThreads.size() << " getDataThreads!");
+
+  for (; it != getDataThreads.end(); it++) {
+    if (waitToAllIsJoined) {
+      (*it)->join();
+      delete *it;
+      it = getDataThreads.erase(it);
+      joined = true;
+    } else {
+      if ((*it)->joinable()) {
+        (*it)->join();
+        delete *it;
+        it = getDataThreads.erase(it);
+        joined = true;
+      }
+    }
+  }
+
+  return joined;
+}
+
+void App::cacheReloaded(StationInfoPtr info) {
+  Lock lock(mutex);
+  info->cacheReloaded48(true);
+}
+
+void App::cacheReload(StationInfoPtr station){
+  Lock lock(mutex);
+  station->cacheReloaded48(false);
+}
+
+StationList App::reloadCache(int wmono, int id) {
+  Lock lock(mutex);
+  StationList myStationList;
+
+  IStationList it = stationList.begin();
+
+  if (wmono < 0) {
+    for (; it != stationList.end(); it++) {
+      (*it)->cacheReloaded48(false);
+      myStationList.push_back(*it);
+    }
+  } else {
+    for (; it != stationList.end(); it++) {
+      if ((*it)->wmono() == wmono && (*it)->stationID() == id) {
+        (*it)->cacheReloaded48(false);
+        myStationList.push_back(*it);
+        break;
+      }
+    }
+  }
+
+  if (!myStationList.empty()) {
+    hasStationWaitingOnCacheReload = true;
+  }
+
+  return myStationList;
 }
 
 
-bool
-App:: 
-getSavedBufrData( StationInfoPtr info,
-                  const miutil::miTime &obstime,
-                  std::list<TblBufr> &tblBufr )
-{
-   kvDbGateProxy gate( dbThread->dbQue );
-   ostringstream  ost;
+void App::addObsEvent(ObsEvent *event, dnmi::thread::CommandQue &que) {
+  Lock lock(mutex);
 
-   gate.busytimeout(120);
+  if (!hasStationWaitingOnCacheReload) {
+    try {
+      que.postAndBrodcast(event);
+    } catch (...) {
+      delete event;
+    }
 
-   ost << "WHERE wmono=" << info->wmono()
-       << " AND id=" << info->stationID()
-       << " AND callsign='" << info->callsign() << "'"
-       << " AND obstime=\'" << obstime << "\'";
+    return;
+  }
 
-   if(!gate.select(tblBufr, ost.str())){
-      LOGERROR("DBERROR: getSavedBufrData: " << gate.getErrorStr());
-      return false;
-   }
-
-   return true;
-}
-
-
-bool 
-App::
-saveBufrData( const TblBufr &tblBufr )
-{
-   kvDbGateProxy gate( dbThread->dbQue );
-
-   gate.busytimeout(120);
-
-   if(!gate.insert(tblBufr, true)){
-      LOGERROR("DBERROR: saveBufrData: " << gate.getErrorStr());
-      return false;
-   }
-
-   return true;
-}
-
-
-bool 
-App::          
-getDataFrom(const miutil::miTime &t,
-            int                  wmono,
-            dnmi::thread::CommandQue &que)
-{
-   LogContext lContext("getDataFrom");
-
-   LOGINFO("Get data from server, start time: " << t );
-
-   GetData *getData;
-
-   try{
-      getData=new GetData(*this, t, wmono, que);
-   }
-   catch(...){
-      LOGERROR("NO MEM!");
-      return false;
-   }
-
-   try{
-      //Create and start a background thread to receive the
-      //data from kvalobs.
-      getData->setThread(new boost::thread(*getData));
-   }
-   catch(...){
-      LOGERROR("NO MEM!");
-      delete getData;
-      return false;
-   }
-
-   mutex::scoped_lock lock(mutex);
-
-   getDataThreads.push_back(getData);
-
-   return true;
-}
-
-
-bool
-App::
-joinGetDataThreads(bool waitToAllIsJoined, const std::string &logid)
-{
-   mutex::scoped_lock lock(mutex);
-   std::list<GetData*>::iterator it=getDataThreads.begin();
-   bool   joined=false;
-
-   IDLOGDEBUG(logid, "# " << getDataThreads.size() << " getDataThreads!");
-
-   for(;it!=getDataThreads.end(); it++){
-      if(waitToAllIsJoined){
-         (*it)->join();
-         delete *it;
-         it=getDataThreads.erase(it);
-         joined=true;
-      }else{
-         if((*it)->joinable()){
-            (*it)->join();
-            delete *it;
-            it=getDataThreads.erase(it);
-            joined=true;
-         }
+  for (IStationList it = stationList.begin(); it != stationList.end(); it++) {
+    if (*event->stationInfo() == **it) {
+      if ((*it)->cacheReloaded48()) {
+        //The cache for the station is reloaded post the event to
+        //the event que and return.
+        try {
+          que.postAndBrodcast(event);
+        } catch (...) {
+          delete event;
+        }
+        return;
+      } else {
+        //Break out of the loop and add the event to
+        //the obsEventWaitingOnCacheReload.
+        break;
       }
-   }
+    }
+  }
 
-   return joined;
-}
-
-
-void 
-App::
-cacheReloaded( StationInfoPtr info)
-{
-   mutex::scoped_lock lock(mutex);
-
-   IStationList it=stationList.begin();
-
-   for(;it!=stationList.end(); it++){
-      if( *(*it) == *info ){
-         (*it)->cacheReloaded48(true);
-         return;
-      }
-   }
-}
-
-StationList
-App::
-reloadCache(int wmono, int id)
-{
-   mutex::scoped_lock lock(mutex);
-   StationList myStationList;
-
-   IStationList it=stationList.begin();
-
-   if(wmono < 0 ){
-      for(;it!=stationList.end(); it++){
-         (*it)->cacheReloaded48(false);
-         myStationList.push_back(*it);
-      }
-   }else{
-      for(;it!=stationList.end(); it++){
-         if((*it)->wmono()==wmono &&
-            (*it)->stationID() == id ){
-            (*it)->cacheReloaded48(false);
-            myStationList.push_back(*it);
-            break;
-         }
-      }
-   }
-
-   if(!myStationList.empty()){
-      hasStationWaitingOnCacheReload=true;
-   }
-
-   return myStationList;
-}
-
-kvbufrd::ReloadList*
-App::
-listCacheReload()
-{
-   mutex::scoped_lock lock(mutex);
-   kvbufrd::ReloadList *retlist;
-
-   StationList myStationList;
-
-   try{
-      retlist=new kvbufrd::ReloadList();
-   }
-   catch(...){
-      return 0;
-   }
-
-   IStationList it=stationList.begin();
-
-   for(;it!=stationList.end(); it++){
-      if(!(*it)->cacheReloaded48()){
-         myStationList.push_back(*it);
-      }
-   }
-
-   if(!myStationList.empty()){
-      int  count;
-      retlist->length(myStationList.size());
-
-      it=myStationList.begin();
-
-      for(CORBA::Long i=0; it!=myStationList.end(); it++, i++){
-         count=0;
-
-         for(list<ObsEvent*>::iterator eit=obsEventWaitingOnCacheReload.begin();
-               eit!=obsEventWaitingOnCacheReload.end();
-               eit++){
-            if( *(*eit)->stationInfo() == **it )
-               count++;
-         }
-
-         (*retlist)[i].wmono=(*it)->wmono();
-         (*retlist)[i].id=(*it)->stationID();
-         (*retlist)[i].eventsWaiting=count;
-      }
-   }
-
-   return retlist;
-}
-
-
-void 
-App::
-addObsEvent(ObsEvent *event,
-            dnmi::thread::CommandQue &que)
-{
-   mutex::scoped_lock lock(mutex);
-
-   if(!hasStationWaitingOnCacheReload){
-      try{
-         que.postAndBrodcast(event);
-      }
-      catch(...){
-         delete event;
-      }
-
+  for (std::list<ObsEvent*>::iterator it = obsEventWaitingOnCacheReload.begin(); it != obsEventWaitingOnCacheReload.end(); it++) {
+    if ((*it)->obstime() == event->obstime() && *(*it)->stationInfo() == *event->stationInfo()) {
+      delete *it;
+      *it = event;
       return;
-   }
+    }
+  }
 
-   for(IStationList it=stationList.begin();
-         it!=stationList.end();
-         it++){
-      if( *event->stationInfo() == **it ){
-         if((*it)->cacheReloaded48()){
-            //The cache for the station is reloaded post the event to
-            //the event que and return.
-            try{
-               que.postAndBrodcast(event);
-            }
-            catch(...){
-               delete event;
-            }
-            return;
-         }else{
-            //Break out of the loop and add the event to
-            //the obsEventWaitingOnCacheReload.
-            break;
-         }
-      }
-   }
-
-   for(std::list<ObsEvent*>::iterator it=obsEventWaitingOnCacheReload.begin();
-         it!=obsEventWaitingOnCacheReload.end();
-         it++){
-      if( (*it)->obstime()==event->obstime() &&
-         *(*it)->stationInfo() == *event->stationInfo() ){
-         delete *it;
-         *it=event;
-         return;
-      }
-   }
-
-   obsEventWaitingOnCacheReload.push_back(event);
+  obsEventWaitingOnCacheReload.push_back(event);
 }
 
+bool App::checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que, const std::string &logid) {
+  Lock lock(mutex);
 
-void 
-App::
-checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que,
-                                  const std::string &logid)
-{
-   mutex::scoped_lock lock(mutex);
+  IDLOGDEBUG(logid, "CheckObsEventWaitingOnCacheReload called!");
 
-   IDLOGDEBUG(logid, "CheckObsEventWaitingOnCacheReload called!");
+  if (!hasStationWaitingOnCacheReload) {
+    IDLOGDEBUG(logid, "No Station waiting on reload!!");
+    return false;
+  }
 
-   if(!hasStationWaitingOnCacheReload){
-      IDLOGDEBUG(logid, "No Station waiting on reload!!");
-      return;
-   }
+  for (std::list<ObsEvent*>::iterator it = obsEventWaitingOnCacheReload.begin(); it != obsEventWaitingOnCacheReload.end(); it++) {
 
-   for(std::list<ObsEvent*>::iterator it=obsEventWaitingOnCacheReload.begin();
-         it!=obsEventWaitingOnCacheReload.end();
-         it++){
+    for (IStationList sit = stationList.begin(); sit != stationList.end(); sit++) {
+      if (*(*it)->stationInfo() == **sit) {
+        if ((*sit)->cacheReloaded48()) {
+          IDLOGINFO(logid, "The cache is reloaded for station: " << (*sit)->toIdentString() << " obstime: " << (*it)->obstime());
 
-      for(IStationList sit=stationList.begin();
-            sit!=stationList.end();
-            sit++){
-         if( *(*it)->stationInfo() == **sit ){
-            if((*sit)->cacheReloaded48()){
-               IDLOGINFO(logid,"The cache is reloaded for station: " <<
-                         (*sit)->toIdentString() << " obstime: "  << (*it)->obstime());
+          ObsEvent *event = *it;
+          it = obsEventWaitingOnCacheReload.erase(it);
+          //The cache for the station is reloaded post the event to
+          //the event que.
+          try {
+            que.postAndBrodcast(event);
+          } catch (...) {
+            LOGERROR("Cant post event to the eventque for the station: " << (*sit)->toIdentString());
+            IDLOGERROR(logid, "Cant post event to the eventque for the station: " << (*sit)->toIdentString());
 
+            delete event;
+          }
+        }
 
-               ObsEvent *event=*it;
-               it=obsEventWaitingOnCacheReload.erase(it);
-               //The cache for the station is reloaded post the event to
-               //the event que.
-               try{
-                  que.postAndBrodcast(event);
-               }
-               catch(...){
-                  LOGERROR("Cant post event to the eventque for the station: " <<
-                           (*sit)->toIdentString());
-                  IDLOGERROR(logid,
-                             "Cant post event to the eventque for the station: " <<
-                             (*sit)->toIdentString());
-
-                  delete event;
-               }
-            }
-
-            //Break out of the loop.
-            break;
-         }
+        //Break out of the loop.
+        break;
       }
-   }
+    }
+  }
 
-   //If the list obsEventWaitingOnCacheReload is empty
-   //check the stationList to see if all stations is reloaded. If so
-   //set hasStationWaitingOnCacheReload to false.
-   if(obsEventWaitingOnCacheReload.empty()){
-      bool allReloaded=true;
-      ostringstream ost;
+  //If the list obsEventWaitingOnCacheReload is empty
+  //check the stationList to see if all stations is reloaded. If so
+  //set hasStationWaitingOnCacheReload to false.
+  if (obsEventWaitingOnCacheReload.empty()) {
+    bool allReloaded = true;
+    ostringstream ost;
 
-      for(IStationList it=stationList.begin();
-            it!=stationList.end();
-            it++){
-         if(!(*it)->cacheReloaded48()){
-            ost << (*it)->toIdentString() << " ";
-            allReloaded=false;
-         }
+    for (IStationList it = stationList.begin(); it != stationList.end(); it++) {
+      if (!(*it)->cacheReloaded48()) {
+        ost << (*it)->toIdentString() << " ";
+        allReloaded = false;
       }
+    }
 
-      if(!allReloaded){
-         IDLOGDEBUG(logid, "This stations is not reloaded with new data:" << endl
-                    << ost.str());
-      }else{
-         IDLOGINFO(logid, "All stations reloaded with data from kvalobs.");
-         hasStationWaitingOnCacheReload=false;
-      }
-   }
+    if (!allReloaded) {
+      IDLOGDEBUG(logid, "This stations is not reloaded with new data:" << endl << ost.str());
+    } else {
+      IDLOGINFO(logid, "All stations reloaded with data from kvalobs.");
+      hasStationWaitingOnCacheReload = false;
+    }
+  }
+
+  return hasStationWaitingOnCacheReload;
 }
 
+bool App::shutdown() {
+  return AppShutdown;
+}
 
+void App::run(std::shared_ptr<dnmi::thread::CommandQue> newDataQue) {
+  int idleCheck=0;
+  std::unique_ptr<KvDataConsumer> consumer;
 
-void
-decodeArgs( int argn, char **argv, Opt &opt )
-{
-   struct option long_options[]=
-   {{"config-file", 1, 0, 'c'},
-    {"pidfile", 1, 0, 'p'},
-    {"fromtime", 1, 0, 'f'},
-    {"help", 0, 0, 'h'},
-    {0,0,0,0} };
+  if( !options.diasableDataReceiver )
+    consumer.reset(new KvDataConsumer(kafkaDomain, kafkaBrokers, newDataQue));
 
-   opt.progname = getProgNameFromArgv0( argv[0] );
+  while (!shutdown()){
+    if( consumer )
+      consumer->runOnce(1000);
+    else
+      std::this_thread::sleep_for(std::chrono::seconds(1));
 
-   int c;
-   int index;
+    idleCheck = (idleCheck+1)%60;
+    if( idleCheck==0)
+      kvDbPool.releaseIdleConnections();
+  }
 
-   while(true){
-      c=getopt_long(argn, argv, "hp:c:", long_options, &index);
+  if( consumer )
+    consumer->stopAll();
+}
 
-      if(c==-1)
-         break;
+void decodeArgs(int argn, char **argv, Opt &opt) {
+  struct option long_options[] =
+    {
+        { "config-file", 1, 0, 'c' },
+        { "pidfile", 1, 0, 'p' },
+        { "fromtime", 1, 0, 'f' },
+        { "help", 0, 0, 'h' },
+        { "disable-data-receiver", 0, 0, 'd'},
+        { "loglevel", 1, 0, 'l'},
+        { 0, 0, 0, 0 }
+    };
 
-      switch(c){
-         case 'h':
-            usage( opt.progname, 1 );
-            break;
-         case 'p':
-            opt.pidfile = optarg;
-            break;
-         case 'c':
-            opt.conffile = optarg;
-            break;
-         case 'f': {
-            string tmp(optarg);
-            miTime fromTime;
+  opt.progname = getProgNameFromArgv0(argv[0]);
+  opt.diasableDataReceiver=false;
 
-            if( tmp.find_first_of("-:") == string::npos ) {
-               int n = atoi( optarg );
-               if( n > 0 ) {
-                  fromTime = miTime::nowTime();
-                  fromTime.addHour(-1 * n );
-               }
-            } else {
-               fromTime = miTime( optarg );
-            }
+  int c;
+  int index;
 
-            if( fromTime.undef() ) {
-               cerr << "Invalid from time '" << optarg << "'. "
-                     << "Format YYYY-MM-DD hh:mm:ss or hours" << endl;
-               usage( opt.progname, 1 );
-            } else {
-               opt.fromTime = fromTime;
-            }
-         }
-         break;
-         case '?':
-            cout <<"Unknown option : <" << (char)optopt << ">!" << endl;
-            cout << opt.progname << " -h for help.\n\n";
-            usage( opt.progname, 1 );
-            break;
-         case ':':
-            cout << optopt << " missing argument!" << endl;
-            usage( opt.progname, 1 );
-            break;
-         default:
-            cout << "?? option caharcter: <" << (char)optopt << "> unknown!" << endl;
-            usage( opt.progname, 1 );
-            break;
+  while (true) {
+    c = getopt_long(argn, argv, "hp:cd:l:", long_options, &index);
+
+    if (c == -1)
+      break;
+
+    switch (c) {
+      case 'h':
+        usage(opt.progname, 1);
+        break;
+      case 'd':
+        opt.diasableDataReceiver=true;
+        break;
+      case 'p':
+        opt.pidfile = optarg;
+        break;
+      case 'c':
+        opt.conffile = optarg;
+        break;
+      case 'l':
+        opt.loglevel = parseMilogLogLevel(optarg);
+        break;
+      case 'f': {
+        string tmp(optarg);
+        pt::ptime fromTime;
+
+        if (tmp.find_first_of("-:") == string::npos) {
+          int n = atoi(optarg);
+          if (n > 0) {
+            fromTime = pt::second_clock::universal_time();
+            fromTime -= pt::hours(n);
+          }
+        } else {
+          fromTime = pt::time_from_string(optarg);
+        }
+
+        if (fromTime.is_special()) {
+          cerr << "Invalid from time '" << optarg << "'. " << "Format YYYY-MM-DD hh:mm:ss or hours" << endl;
+          usage(opt.progname, 1);
+        } else {
+          opt.fromTime = fromTime;
+        }
       }
-   }
+        break;
+      case '?':
+        cout << "Unknown option : <" << (char) optopt << ">!" << endl;
+        cout << opt.progname << " -h for help.\n\n";
+        usage(opt.progname, 1);
+        break;
+      case ':':
+        cout << optopt << " missing argument!" << endl;
+        usage(opt.progname, 1);
+        break;
+      default:
+        cout << "?? option caharcter: <" << (char) optopt << "> unknown!" << endl;
+        usage(opt.progname, 1);
+        break;
+    }
+  }
 
-   if( opt.conffile.empty() ) {
-      opt.conffile = kvPath("sysconfdir")+"/"+opt.progname +".conf";
-   } else if( *opt.conffile.begin() != '/' ){
-      opt.conffile = kvPath("sysconfdir")+"/"+opt.conffile;
-   }
+  if (opt.conffile.empty()) {
+    opt.conffile = kvPath("sysconfdir") + "/" + opt.progname + ".conf";
+  } else if (*opt.conffile.begin() != '/') {
+    opt.conffile = kvPath("sysconfdir") + "/" + opt.conffile;
+  }
 
-   if( opt.pidfile.empty() ) {
-      opt.pidfile = dnmi::file::createPidFileName( kvPath("rundir"),
-                                                   opt.progname );
-   } else if( *opt.pidfile.begin() != '/') {
-      opt.pidfile = kvPath("rundir") + "/" + opt.pidfile;
-   }
+  if (opt.pidfile.empty()) {
+    opt.pidfile = dnmi::file::createPidFileName(kvPath("rundir"), opt.progname);
+  } else if (*opt.pidfile.begin() != '/') {
+    opt.pidfile = kvPath("rundir") + "/" + opt.pidfile;
+  }
 
 }
 
-
-void usage( const std::string &progname, int exitCode )
-{
-   cout << "\n " << progname << " is a program that creates BUFR message from kvalobs."
-         << "\n\nUSAGE "
-         << "\n" << progname << " [[--config-file|-c] conffile] [[--pidfile|-p] pidfile]"
-         << "\n\t   [[--fromtime|-f] 'YYYY-MM-DD hh:mm:ss' or hours back"
-         << "\n\n\t [--config-file|-c] configfile Use the configfile. If the name is not"
-         << "\n\t       an absolute path the file is looked up relative to " << kvPath("sysconfdir")
-         << "\n\t       Default value is set to " << kvPath("sysconfdir") << "/" << progname << ".conf"
-         << "\n\t [--pidfile|-p] pidfile Use this as the pid file. "
-         << "\n\t       Default value " << kvPath("rundir") << "/" << progname <<"-node.pid"
-         << "\n\t       Where node is determined by the hostname."
-         << "\n\n";
-   exit(  exitCode );
+void usage(const std::string &progname, int exitCode) {
+  cout << "\n " << progname << " is a program that creates BUFR message from kvalobs."
+       << "\n\nUSAGE " << "\n"
+       << progname << " [[--config-file|-c] conffile] [[--pidfile|-p] pidfile]"
+       << "\n\t   [[--fromtime|-f] 'YYYY-MM-DD hh:mm:ss' or hours back"
+       << "\n\t   [--disable-data-receiver|-d]\n"
+       << "\n\t [--disable-data-receiver|-d] disable receiving of data from kvalobs."
+       << "\n\t      This option is mostly used for debugging."
+       << "\n\t [--config-file|-c] configfile Use the configfile. If the name is not"
+       << "\n\t      an absolute path the file is looked up relative to " << kvPath("sysconfdir")
+       << "\n\t      Default value is set to " << kvPath("sysconfdir") << "/" << progname << ".conf"
+       << "\n\t [--pidfile|-p] pidfile Use this as the pid file. "
+       << "\n\t      Default value " << kvPath("rundir") << "/" << progname << "-node.pid"
+       << "\n\t      Where node is determined by the hostname." << "\n\n";
+  exit(exitCode);
 }
 
-
-string
-getProgNameFromArgv0( const std::string &cmd )
-{
-   fs::path myname( cmd );
+string getProgNameFromArgv0(const std::string &cmd) {
+  fs::path myname(cmd);
 
 #if BOOST_VERSION < 104500
-   return  myname.leaf();
+  return myname.leaf();
 #else
-   return  myname.filename().string();
+  return myname.filename().string();
 #endif
 }
-
-
-
-
 

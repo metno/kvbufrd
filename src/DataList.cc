@@ -28,7 +28,10 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+#include "miutil/timeconvert.h"
 #include "DataList.h"
+
+namespace pt=boost::posix_time;
 
 
 DataListEntry& 
@@ -77,6 +80,44 @@ size(int typeID)const
    return 0;
 }
 
+std::set<long> 
+DataListEntry::
+stationIds(int typeID)const
+{
+   std::set<long> sids;
+
+   CITTypeList it=dataList.find(typeID);
+
+   if(it==dataList.end())
+      return sids;
+
+   for( auto &e : it->second) {
+      sids.insert(e.stationID());
+   }
+   return std::move(sids);
+}
+
+
+boost::posix_time::ptime 
+DataListEntry::
+maxTbTime(long stationid, int typeID)const
+{
+   boost::posix_time::ptime rt(pt::special_values::min_date_time);
+
+   CITTypeList it=dataList.find(typeID);
+
+   if(it==dataList.end())
+      return rt;
+
+   for( auto &e : it->second) {
+      if( e.stationID() == stationid && e.tbtime() > rt) {
+         rt = e.tbtime();
+      }
+   }
+   return rt;
+}
+
+
 
 int 
 DataListEntry::
@@ -112,7 +153,7 @@ add(const Data &d)
    ITTypeList it;
    ITDataList dit;
 
-   if(obsTime_.undef()){
+   if(obsTime_.is_special()){
       obsTime_=d.obstime();
    }else if(obsTime_!=d.obstime()){
       throw TimeError();
@@ -144,7 +185,7 @@ add(const Data &d)
 std::ostream& 
 operator<<(std::ostream& ost, const DataListEntry& dl)
 {
-   ost << "[" << dl.obstime() << ":";
+   ost << "[" << pt::to_kvalobs_string(dl.obstime()) << ":";
 
    for(DataListEntry::CITTypeList it=dl.dataList.begin();
          it!=dl.dataList.end();
@@ -221,11 +262,11 @@ insert(const Data &d)
 
 DataEntryList::ITDataEntryList  
 DataEntryList::
-find(const miutil::miTime &from)
+find(const pt::ptime &from)
 {
    ITDataEntryList it=dataList.begin();
 
-   if(from.undef())
+   if(from.is_special())
       return dataList.end();
 
    for(;it!=dataList.end(); it++){
@@ -238,11 +279,11 @@ find(const miutil::miTime &from)
 
 DataEntryList::CITDataEntryList 
 DataEntryList::
-find(const miutil::miTime &from)const
+find(const pt::ptime &from)const
 {
    CITDataEntryList it=dataList.begin();
 
-   if(from.undef())
+   if(from.is_special())
       return dataList.end();
 
    for(;it!=dataList.end(); it++){
@@ -258,9 +299,9 @@ DataEntryList::
 nContinuesTimes()const
 {
    CITDataEntryList it=dataList.begin();
-   miutil::miTime  prevT;
-   miutil::miTime  testT;
-   int             n;
+   pt::ptime prevT;
+   pt::ptime testT;
+   int n;
 
    if(it==dataList.end())
       return 0;
@@ -271,7 +312,7 @@ nContinuesTimes()const
 
    for(;it!=dataList.end(); it++){
       testT=it->obstime();
-      testT.addHour(1);
+      testT += pt::hours(1);
 
       if(testT!=prevT){
          break;
@@ -290,8 +331,8 @@ DataEntryList::
 hasContinuesTimes(const std::list<int> &ctList, int hours)const
 {
    CITDataEntryList it=dataList.begin();
-   miutil::miTime  prevT;
-   miutil::miTime  testT;
+   pt::ptime prevT;
+   pt::ptime testT;
    int             n;
 
    if(it==dataList.end())
@@ -303,10 +344,10 @@ hasContinuesTimes(const std::list<int> &ctList, int hours)const
 
    for(;it!=dataList.end(); it++){
       testT=it->obstime();
-      testT.addHour(1);
+      testT += pt::hours(1);
 
       if(testT != prevT ){
-         if( abs( miutil::miTime::secDiff(testT, prevT ) ) > 3600 )
+         if( abs( (testT- prevT).total_seconds() ) > 3600 )
             break;
       }else{
          std::list<int>::const_iterator ctit=ctList.begin();

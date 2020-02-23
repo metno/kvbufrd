@@ -38,9 +38,9 @@
 #include <sstream>
 #include <fstream>
 #include <new>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <milog/milog.h>
+#include "boost/filesystem.hpp"
+#include "boost/filesystem/fstream.hpp"
+#include "milog/milog.h"
 #include "../bufrencodehelper.h"
 #include "../base64.h"
 #include "../SemiUniqueName.h"
@@ -52,6 +52,7 @@
 
 
 namespace fs = boost::filesystem;
+namespace pt = boost::posix_time;
 
 using namespace std;
 
@@ -111,8 +112,9 @@ BufrHelper( BufrParamValidaterPtr paramValidater_,
      ikdata( 0 ), iValue( 0 ), values( 0 ), iCvals( 0 ),
      ktdlen( 0 ),
      kbuflen( MAX_BUFLEN /4 ),
-     kbuff( 0 ), ccx( 0 ), test( false ), bufrBase( 0 ),
-     validBufr_( true )
+     kbuff( 0 ), ccx( 0 ), test( false ), validBufr_( true ),
+     bufrBase( 0 )
+
 {
    try {
       values = new Values( KVALS, paramValidater );
@@ -220,15 +222,17 @@ setSequenceNumber( int ccx )
 
 void
 BufrHelper::
-setObsTime( const miutil::miTime &obstime_ )
+setObsTime( const pt::ptime &obstime_ )
 {
    obstime = obstime_;
-   ksec1[ 8] = obstime.year();
-   ksec1[ 9] = obstime.month();
-   ksec1[10] = obstime.day();
-   ksec1[11] = obstime.hour();
-   ksec1[12] = obstime.min();
-   ksec1[17] = obstime.sec();
+   boost::gregorian::date d=obstime.date();
+   pt::time_duration t=obstime.time_of_day();
+   ksec1[ 8] = d.year();
+   ksec1[ 9] = d.month();
+   ksec1[10] = d.day();
+   ksec1[11] = t.hours();
+   ksec1[12] = t.minutes();
+   ksec1[17] = t.seconds();
 }
 
 void
@@ -257,7 +261,7 @@ addDescriptorList( const BufrTemplateList &templateList )
 void
 BufrHelper::
 addDelayedReplicationFactor( int paramid, int value,
-                             const std::string &name )
+                             const std::string &name)
 {
    kdata[ikdata++] = value;
    (*values)[iValue++].insert( paramid, value, name );
@@ -266,9 +270,12 @@ addDelayedReplicationFactor( int paramid, int value,
 void
 BufrHelper::
 addValue( int bufrParamId, float value,
-          const std::string &name, bool countAsData )
+          const std::string &name, bool countAsData, const std::string &testId )
 {
    if( (*values)[iValue++].insert( bufrParamId, value, name ) ) {
+      if ( test && !testId.empty()) {
+         testHelper.setF(value, testId);
+      }
 	   if( countAsData ) {
 		   bufrBase->setHasValidValue();
 	   }
@@ -278,11 +285,14 @@ addValue( int bufrParamId, float value,
 void
 BufrHelper::
 addValue( int bufrParamId, int value,
-          const std::string &name, bool countAsData )
+          const std::string &name, bool countAsData, const std::string &testId )
 {
    try {
 
       if( (*values)[iValue++].insert( bufrParamId, value, name ) ) {
+        if ( test && !testId.empty()) {
+            testHelper.setI(value, testId);
+        }
     	  if( countAsData )
     		  bufrBase->setHasValidValue();
       }
@@ -304,7 +314,7 @@ addValue( int bufrParamId, int value,
 void
 BufrHelper::
 addValue( int bufrParamId, const std::string &value,
-          const std::string &name, bool countAsData )
+          const std::string &name, bool countAsData, const std::string &testId )
 {
    string val( value );
 
@@ -322,8 +332,12 @@ addValue( int bufrParamId, const std::string &value,
     	   else
     		   strncpy(cvals[iCvals++], val.c_str(), val.length() );
 
-           if( countAsData )
-               bufrBase->setHasValidValue();
+         if ( test && !testId.empty()) {
+            testHelper.setS(value, testId);
+         }
+
+         if( countAsData )
+            bufrBase->setHasValidValue();
        }
    }
    catch( const std::exception  &ex ) {
@@ -404,9 +418,9 @@ writeToStream( std::ostream &o )
 
    ostringstream ost;
 
-   ost << setw(2) << setfill( '0') << obstime.day()
-       << setw(2) << setfill( '0') << obstime.hour()
-       << setw(2) << setfill( '0') << obstime.min();
+   ost << setw(2) << setfill( '0') << obstime.date().day()
+       << setw(2) << setfill( '0') << obstime.time_of_day().hours()
+       << setw(2) << setfill( '0') << obstime.time_of_day().minutes();
 
    if( ccx > 0 ) {
       ost << " ";
@@ -436,9 +450,9 @@ filePrefix( )const
 
    ost << stationInfo->toIdentString();
    ost << "-"
-       << setfill('0') << setw(2) << obstime.day()
-       << setfill('0') << setw(2) << obstime.hour()
-       << setfill('0') << setw(2) << obstime.min();
+       << setfill('0') << setw(2) << obstime.date().day()
+       << setfill('0') << setw(2) << obstime.time_of_day().hours()
+       << setfill('0') << setw(2) << obstime.time_of_day().minutes();
 
    if( !encoderName.empty() )
       ost << "-C" << encoderName;

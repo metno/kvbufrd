@@ -2,21 +2,11 @@ SUBDIRS = gtest bufr
 
 AM_CPPFLAGS = \
    -D_REENTRANT \
-	$(kvcpp_CFLAGS) \
+   $(kvsubscribe_CFLAGS) \
+	-I${KVINCLUDEDIR}/kvalobs/kvskel \
 	$(putools_CFLAGS) \
    $(BOOST_CPPFLAGS) \
    $(omniORB4_CFLAGS)  
-
-
-nodist_idl_sources=kvbufrd.idl 
-
-
-CLEANFILES = $(nodist_idl_sources:.idl=SK.cc) $(nodist_idl_sources:.idl=.hh) 
-
-
-%SK.cc %.hh: %.idl
-#	$(IDL) -bcxx -Wbinline -I$(KVIDLDIR) $<
-	$(IDL) -bcxx -I$(KVIDLDIR) $<
 
 clean-local:
 	if [ -d bufrtables ]; then\
@@ -25,12 +15,15 @@ clean-local:
 
 noinst_PROGRAMS = base64Test
 
-bin_PROGRAMS = kvbufrd kvbufrclt kvbufrdbclt kvbufrdparse
+bin_PROGRAMS = kvbufrd kvbufrdbclt  kvbufrdparse
 
 kvbufrd_SOURCES = \
-	kvbufrd.hh kvbufrdSK.cc \
-   defines.h \
-	kvbufrd.cc \
+   kvevents.h \
+   KvDataConsumer.h KvDataConsumer.cc \
+   KvObsData.h KvObsData.cc \
+   DbQuery.h DbQuery.cc \
+	 cachedbcleaner.h cachedbcleaner.cc \
+   kvbufrd.cc \
    App.cc App.h \
    DataReceiver.cc DataReceiver.h \
    Data.cc Data.h \
@@ -42,8 +35,6 @@ kvbufrd_SOURCES = \
    StationInfo.cc StationInfo.h \
    StationInfoParse.cc StationInfoParse.h \
    tblBufr.cc tblBufr.h \
-   kvbufrdImpl.cc kvbufrdImpl.h \
-   Replay.cc Replay.h \
    bufr.cc bufr.h \
    Validate.cc Validate.h \
    tblWaiting.cc tblWaiting.h \
@@ -57,7 +48,7 @@ kvbufrd_SOURCES = \
    kvDbGateProxy.cc kvDbGateProxy.h \
    getDataReceiver.cc getDataReceiver.h \
    GetDataThread.cc GetDataThread.h \
-   kvbufrdImpl.h obsevent.h \
+   obsevent.h \
    LoadBufrData.h LoadBufrData.cc \
    encodebufr.h encodebufr.cc \
    base64.cc base64.h \
@@ -65,39 +56,51 @@ kvbufrd_SOURCES = \
    SemiUniqueName.cc SemiUniqueName.h \
    Strerror.cc Strerror.h \
    isDirWithWritePermission.cc isDirWithWritePermission.h \
-   dbhelper.cc dbhelper.h
-                  
+   dbhelper.cc dbhelper.h \
+	 cachedb.h cachedb.cc \
+	 utils.h utils.cc
  
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
 if KVSTATIC
-kvbufrd_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
+kvbufrd_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" \
+	-DCACHEDIR="\""$(localstatedir)/lib/kvbufrd"\""
 kvbufrd_LDADD = \
 	$(top_builddir)/src/bufr/libbufr.la \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_corbahelper.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miconfparser.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
-	$(putools_LIBS) \
+	$(KVLIBDIR)/${KVLIBPREFIX}_decoderbase.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvsubscribe.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_decodeutility.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_decoderbase.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
+	-lxml++-2.6 \
+	-lglibmm-2.4 \
+	-lrdkafka++ \
+	-lrdkafka \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
-   $(BOOST_FILESYSTEM_LIB) \
-   $(BOOST_DATE_TIME_LIB) \
-   $(BOOST_SYSTEM_LIB) \
-   $(top_builddir)/ecmwf/libbufr.a \
-   -lgfortran -lm -ldl
+        $(BOOST_FILESYSTEM_LIB) \
+        $(BOOST_DATE_TIME_LIB) \
+        $(BOOST_SYSTEM_LIB) \
+        $(top_builddir)/ecmwf/libbufr.a \
+        -lgfortran -lm -ldl
 else
-kvbufrd_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\""
+kvbufrd_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" \
+	-DCACHEDIR="\""$(localstatedir)/lib/kvbufrd"\""
 kvbufrd_LDADD = \
-   	$(top_builddir)/src/bufr/libbufr.la \
-	$(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
+    $(top_builddir)/src/bufr/libbufr.la \
+    $(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) \
     $(BOOST_FILESYSTEM_LIB) \
     $(BOOST_DATE_TIME_LIB) \
     $(BOOST_SYSTEM_LIB) \
@@ -108,45 +111,6 @@ endif
 
 EXTRA_DIST = kvbufrd_schema.sql 
 
- 
-kvbufrclt_SOURCES = kvbufrclt.cc \
-                     kvbufrCltBufrcbImp.cc kvbufrCltBufrcbImp.h \
-                     kvbufrCltApp.cc  kvbufrCltApp.h \
-                     kvbufrCorbaThread.cc kvbufrCorbaThread.h \
-                     kvbufrd.hh kvbufrdSK.cc
-kvbufrclt_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
-
-if KVSTATIC
-kvbufrclt_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrclt_LDADD = \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_corbahelper.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_miconfparser.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
-	$(putools_LIBS) \
-	$(omniORB4_LIBS) \
-	$(BOOST_THREAD_LIB) \
-	$(BOOST_FILESYSTEM_LIB) \
-	$(BOOST_DATE_TIME_LIB) \
-	$(BOOST_SYSTEM_LIB) \
-    -lm
-
-else
-kvbufrclt_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrclt_LDADD = $(kvcpp_LIBS) $(BOOST_THREAD_LIB) \
-				  $(BOOST_FILESYSTEM_LIB) \
-				  $(BOOST_DATE_TIME_LIB) \
-				  $(BOOST_SYSTEM_LIB) \
-                  -lm
-endif  
-                   
 kvbufrdbclt_SOURCES = kvbufrdbclt.cc \
                        tblBufr.cc tblBufr.h
 kvbufrdbclt_LDFLAGS = -pthread $(BOOST_LDFLAGS)
@@ -163,6 +127,7 @@ kvbufrdbclt_LDADD = \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
 	$(putools_LIBS) \
@@ -174,11 +139,11 @@ kvbufrdbclt_LDADD = \
 else
 kvbufrdbclt_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
 kvbufrdbclt_LDADD = \
-   $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
+   $(kvsubscribe_LIBS) $(putools_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
    $(BOOST_SYSTEM_LIB) \
    -lm -ldl
 endif                     
-                     
+
 kvbufrdparse_SOURCES = kvbufrdparse.cc \
                         StationInfo.cc StationInfo.h \
                         parseMilogLogLevel.cc parseMilogLogLevel.h \
@@ -197,6 +162,7 @@ kvbufrdparse_LDADD = \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
 	$(putools_LIBS) \
@@ -204,12 +170,12 @@ kvbufrdparse_LDADD = \
 	$(BOOST_THREAD_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
 	$(BOOST_SYSTEM_LIB) \
-    -lm
+  -lm
 
 else
 kvbufrdparse_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
 kvbufrdparse_LDADD = \
-   $(kvcpp_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
+   $(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
    $(BOOST_SYSTEM_LIB) \
    -lm
 endif                     
@@ -239,7 +205,7 @@ kvBufrEncodeTest_SOURCES= \
 	DataElementList.cc DataElementList.h \
 	BufrData.cc BufrData.h \
 	StationInfo.cc StationInfo.h \
-    StationInfoParse.cc StationInfoParse.h \
+        StationInfoParse.cc StationInfoParse.h \
 	bufr.cc bufr.h \
 	Validate.cc Validate.h \
 	InitLogger.cc InitLogger.h \
@@ -250,7 +216,7 @@ kvBufrEncodeTest_SOURCES= \
 	scanstring.cc scanstring.h \
 	SemiUniqueName.cc SemiUniqueName.h \
 	Strerror.cc Strerror.h \
-   isDirWithWritePermission.cc isDirWithWritePermission.h
+        isDirWithWritePermission.cc isDirWithWritePermission.h
 
 kvBufrEncodeTest_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 
@@ -262,7 +228,7 @@ kvBufrEncodeTest_CPPFLAGS = \
 	$(gtest_CFLAGS) \
 	-DTESTDATADIR="\""$(top_srcdir)/src/test"\""\
 	-DBUFRTBLDIR="\""$(BUFRTABLES)"\""
-	
+
 #    -DBUFRTBLDIR="\""$(top_builddir)/src/bufrtables"\""
 #-DBUFRTBLDIR="\""$(top_srcdir)/share/bufrtables"\""
 
@@ -296,20 +262,31 @@ kvBufrEncodeTest_CPPFLAGS = \
 	$(gtest_CFLAGS) \
 	-DTESTDATADIR="\""$(top_srcdir)/src/test"\""\
 	-DBUFRTBLDIR="\""$(BUFRTABLES)"\""
-	
+
 #	 -DBUFRTBLDIR="\""$(top_builddir)/src/bufrtables"\""
 #    -DBUFRTBLDIR="\""$(top_srcdir)/share/bufrtables"\""
 
 kvBufrEncodeTest_LDADD =   \
-	$(top_builddir)/src/bufr/libbufr.la \
-	$(kvcpp_LIBS) \
-	-L$(HOME)/lib \
 	$(gtest_LIBS) \
-	$(BOOST_FILESYSTEM_LIB) \
-	$(BOOST_DATE_TIME_LIB) \
-	$(BOOST_SYSTEM_LIB) \
+	$(top_builddir)/src/bufr/libbufr.la \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_corbahelper.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_miconfparser.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
 	$(top_builddir)/ecmwf/libbufr.a \
-	-lgfortran \
-	-lm
+	$(putools_LIBS) \
+	$(omniORB4_LIBS) \
+	$(BOOST_THREAD_LIB) \
+	$(BOOST_DATE_TIME_LIB) \
+	$(BOOST_FILESYSTEM_LIB) \
+	$(BOOST_SYSTEM_LIB) \
+    -lgfortran -lm -ldl
 endif			
 endif			

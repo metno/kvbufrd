@@ -34,15 +34,16 @@
 #include <math.h>
 #include <iostream>
 #include <fstream>
-#include <boost/assign/list_inserter.hpp>
-#include <miconfparser/miconfparser.h>
-#include <miutil/trimstr.h>
-#include <kvalobs/kvPath.h>
+#include "boost/assign/list_inserter.hpp"
+#include "boost/algorithm/string.hpp"
+#include "miconfparser/miconfparser.h"
+#include "miutil/trimstr.h"
+#include "kvalobs/kvPath.h"
 #include "Indent.h"
 #include "ConfMaker.h"
 #include "StationInfo.h"
 #include "splitstr.h"
-#include <StationInfoParse.h>
+#include "../StationInfoParse.h"
 
 using namespace std;
 using namespace kvalobs;
@@ -146,7 +147,7 @@ ConfMaker::
 findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const
 {
    for( StInfoSysSensorInfoList::const_iterator it=sensors.begin(); it != sensors.end(); ++it ) {
-      if( it->paramid() == paramid && it->sensor() == 0 && it->hlevel()==0 && it->operational() ) {
+      if( it->paramgroupid() == paramid && it->sensor() == 0 && it->hlevel()==0 && it->operational() ) {
          sensor = *it;
          return true;
       }

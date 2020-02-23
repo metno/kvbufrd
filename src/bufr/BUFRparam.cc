@@ -390,7 +390,7 @@ loadTable( const std::string &filepath_ )
 
    //The position and with is found from the file btable.F
    //from the bufr software from ECMWF.
-   //Negative with represent right justified.
+   //Negative width represent right justified.
    boost::assign::push_back( elems )
       ( 1, 6 )(8, 64)(73, 24)(100,-3)(113,-12)(117,-3);
 

@@ -1,3 +1,78 @@
+kvbufrd (3.0.4~rc3-1) xenial; urgency=low
+  * bionic fixes.
+  * debian package fixes
+    
+ -- Kvalobs <kvalobs@met.no>  Tue, 18 Feb 2020 11:00:00 +0100
+
+kvbufrd (3.0.4~rc2-1) xenial; urgency=low
+  * Observation log: Log received stationids and typeids, not expected.
+    
+ -- Kvalobs <kvalobs@met.no>  Wed, 11 Feb 2020 13:30:00 +0100
+
+kvbufrd (3.0.4~rc1-1) xenial; urgency=low
+  * Observation log: Log delayed observation.
+    
+ -- Kvalobs <kvalobs@met.no>  Sat, 8 Feb 2020 08:00:00 +0100
+
+kvbufrd (3.0.3-1) xenial; urgency=low
+  * New Release.
+    
+ -- Kvalobs <kvalobs@met.no>  Tue, 4 Feb 2020 09:15:00 +0100
+
+kvbufrd (3.0.3~rc3-1) lucid; urgency=low
+  * Log changes.
+    
+ -- Kvalobs <kvalobs@met.no>  Fri, 24 Jan 2021 11:15:00 +0100
+
+
+kvbufrd (3.0.3~rc2-1) lucid; urgency=low
+  * Log the duration it takes to generate BUFR.
+    
+ -- Kvalobs <kvalobs@met.no>  Fri, 24 Jan 2021 07:30:00 +0100
+
+kvbufrd (3.0.3~rc1-1) lucid; urgency=low
+  * Create cachedb from code.
+  * Rebuild against kvalobs 5.
+  
+ -- Kvalobs <kvalobs@met.no>  Thu, 23 Jan 2021 07:00:00 +0100
+
+kvbufrd (3.0.2-1) lucid; urgency=low
+  * Fix kvbufrdbadmin.
+  
+ -- Kvalobs <kvalobs@met.no>  Tue, 10 Oct 2017 10:00:00 +0200
+
+kvbufrd (3.0.1-1) lucid; urgency=low
+  * Rebuild.
+  
+ -- Kvalobs <kvalobs@met.no>  Tue, 20 Dec 2016 08:17:00 +0100
+
+kvbufrd (3.0.0-2) lucid; urgency=low
+  * Recompile against kvalobs 3.0.1.
+  
+ -- Kvalobs <kvalobs@met.no>  Fri, 15 Apr 2016 12:30:00 +0100
+
+kvbufrd (3.0.0-1) lucid; urgency=low
+  * Recompile against kvalobs 3.0.
+  
+ -- Kvalobs <kvalobs@met.no>  Fri, 15 Apr 2016 12:30:00 +0100
+
+
+kvbufrd (2.9.2-1) lucid; urgency=low
+  * Recompile without dependency on libkvservice0.
+  
+ -- Kvalobs <kvalobs@met.no>  Tue, 15 Mar 2016 14:00:00 +0200
+
+kvbufrd (2.9.1-1) lucid; urgency=low
+  * Updated to the new DriverManager
+  
+ -- Kvalobs <kvalobs@met.no>  Thu, 10 Mar 2016 08:00:00 +0200
+
+kvbufrd (2.9.0-1) lucid; urgency=low
+  * No CORBA. Use kafka to receive observations.
+  * Connect directly to the kvalobsdb to read observation.
+  
+ -- Kvalobs <kvalobs@met.no>  Tue, 7 Mar 2016 08:00:00 +0200
+
 kvbufrd (2.5.17-1) lucid; urgency=low
   * Allow to regenerat BUFR at least 7 days back in time.
   
@@ -8,6 +83,12 @@ kvbufrd (2.5.16-1) lucid; urgency=low
   * Set owner to "NEDB" for typeid 305.
   
  -- Kvalobs <kvalobs@met.no>  Wed, 2 Mar 2016 06:30:00 +0200
+
+kvbufrd (2.5.16~kafka1-1) lucid; urgency=low
+  * No CORBA. Use kafka to receive observations.
+  * Connect directly to the kvalobsdb to read observation.
+  
+ -- Kvalobs <kvalobs@met.no>  Tue,  Mar 2016 08:00:00 +0200
 
 kvbufrd (2.5.15-2) lucid; urgency=low
   * Add typeid 305 to precip.

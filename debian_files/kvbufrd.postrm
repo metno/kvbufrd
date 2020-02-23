@@ -35,8 +35,8 @@ DIRS="/usr/share/kvbufrd
       /var/lib/kvbufrd
       /var/lib/kvbufrd/bufr2norcom
       /var/lib/kvbufrd/bufr2norcom/tmp
-      /var/log/kvalobs/kvbufr/debug
-      /var/log/kvalobs/kvbufr"     
+      /var/log/kvalobs/kvbufrd/debug
+      /var/log/kvalobs/kvbufrd"     
 
 SQLLITE_DB="/var/lib/kvbufrd/kvbufrd.sqlite"
 
@@ -55,21 +55,21 @@ case "$1" in
   
   purge)
     for i in $BIN; do
-        dpkg-statoverride --remove $BINDIR/$i
+        dpkg-statoverride --remove $BINDIR/$i || true
      done
 
      for i in $DIRS; do
-        dpkg-statoverride --remove $i
+        dpkg-statoverride --remove $i || true
      done
 
      #Remove the cache databases.
      for i in $SQLLITE_DB; do
-        dpkg-statoverride --remove $i
+        dpkg-statoverride --remove $i || true
         rm -f $i 
      done
      
      for i in $ETC_FILES; do
-	 	dpkg-statoverride --remove /etc/kvalobs/$i
+	 	dpkg-statoverride --remove /etc/kvalobs/$i || true
      done
                
      #Delete my debconf entries in the database.

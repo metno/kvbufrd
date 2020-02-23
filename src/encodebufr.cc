@@ -38,8 +38,9 @@
 #include <stdlib.h>
 #include <sstream>
 #include <fstream>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include "boost/filesystem.hpp"
+#include "boost/filesystem/fstream.hpp"
+#include "miutil/timeconvert.h"
 #include "bufrencodehelper.h"
 #include "base64.h"
 #include "SemiUniqueName.h"
@@ -47,6 +48,7 @@
 #include "bufr/BufrValueHelper.h"
 
 namespace fs = boost::filesystem;
+namespace pt = boost::posix_time;
 
 using namespace std;
 
@@ -187,9 +189,11 @@ wmoHeader()const
    int  ccx_=ccx;
 
    if( ! test ) {
-      sprintf( dateTime,"%02d%02d", obstime.day(), obstime.hour() );
+     int day=obstime.date().day();
+     int hour=obstime.time_of_day().hours();
+      sprintf( dateTime,"%02d%02d", day, hour );
       header="\r\r\nZCZC\r\r\n";
-      switch( obstime.hour() ){
+      switch( hour ){
       case 0:
       case 6:
       case 12:
@@ -256,8 +260,8 @@ filePrefix()const
     }
 
     ost << "-"
-        << setfill('0') << setw(2) << obstime.day()
-        << setfill('0') << setw(2) << obstime.hour();
+        << setfill('0') << setw(2) << obstime.date().day()
+        << setfill('0') << setw(2) << obstime.time_of_day().hours();
 
 
     if( ccx > 0 ){
@@ -355,9 +359,9 @@ set_sec0134( const StationInfoPtr station,
              int *ksec0, int *ksec1, int *ksec3, int *ksec4)
 {
   int year, month, day, hour, minute, second; /* Termin time */ 
-  miutil::miTime obsTime=data.time();
+  pt::ptime obsTime=data.time();
 
-  if( obsTime.undef() )
+  if( obsTime.is_special() )
      return false;
 
   /* Section 0 */
@@ -374,17 +378,17 @@ set_sec0134( const StationInfoPtr station,
   ksec1[ 5] = 0;       /* BUFR message type */
   ksec1[ 6] = 0;       /* BUFR message subtype */
   ksec1[ 7] = 0;       /* Version number of local table used */
-  ksec1[ 8] = obsTime.year();
-  ksec1[ 9] = obsTime.month();
-  ksec1[10] = obsTime.day();
-  ksec1[11] = obsTime.hour();
-  ksec1[12] = obsTime.min();
+  ksec1[ 8] = obsTime.date().year();
+  ksec1[ 9] = obsTime.date().month();
+  ksec1[10] = obsTime.date().day();
+  ksec1[11] = obsTime.time_of_day().hours();
+  ksec1[12] = obsTime.time_of_day().minutes();
   ksec1[13] = 0;       /* BUFR master table */
   ksec1[14] = 14;      /* Version number of master table used */
   ksec1[15] = 0;       /* Originating sub-centre */
 
   /* International sub-category (see common table C-13) */
-  switch( obsTime.hour() ){
+  switch( obsTime.time_of_day().hours() ){
   case 0:
   case 6:
   case 12:
@@ -402,7 +406,7 @@ set_sec0134( const StationInfoPtr station,
      break;
   }
 
-  ksec1[17] = obsTime.sec();
+  ksec1[17] = obsTime.time_of_day().seconds();
 
   /*Section 3*/
   ksec3[0] = 0;        /* Length of section 3 (bytes), will be set by bufren */ 
@@ -423,11 +427,11 @@ void set_values(const StationInfoPtr station,
    int iDelay=0;
 
    float t_ww;          /* Present and past weather */
-   miutil::miTime obstime = data.time();
+   pt::ptime obstime = data.time();
 
-   if( (obstime.hour()%6) == 0 )
+   if( (obstime.time_of_day().hours()%6) == 0 )
       t_ww = -6;
-   else if( (obstime.hour()%3) == 0 )
+   else if( (obstime.time_of_day().hours()%3) == 0 )
       t_ww = -3;
    else
       t_ww = FLT_MAX;
@@ -437,11 +441,11 @@ void set_values(const StationInfoPtr station,
    values[1].toBufr( "iii", static_cast<int>( station->wmono()%1000 ) );        /* 001002 WMO station number  iii*/
    values[2] = 1020;      /* Pointer to cvals (001015 Station or site name) */
    values[3].toBufr( "ix", data.IX );       /* 002001 Type of station ix*/
-   values[4].toBufr( "Year", obstime.year() );      /* 004001 Year */
-   values[5].toBufr( "Month", obstime.month() );     /* 004002 Month */
-   values[6].toBufr( "YY", obstime.day() );        /* 004003 Day */
-   values[7].toBufr( "GG", obstime.hour() );        /* 004004 Hour */
-   values[8].toBufr( "gg", obstime.min() );;        /* 004005 Minute */
+   values[4].toBufr( "Year", obstime.date().year() );      /* 004001 Year */
+   values[5].toBufr( "Month", obstime.date().month() );     /* 004002 Month */
+   values[6].toBufr( "YY", obstime.date().day() );        /* 004003 Day */
+   values[7].toBufr( "GG", static_cast<int>(obstime.time_of_day().hours()) );        /* 004004 Hour */
+   values[8].toBufr( "gg", static_cast<int>(obstime.time_of_day().minutes()) );;        /* 004005 Minute */
    values[9].toBufr( "Latitude", station->latitude() );       /* 005001 Latitude (high accuracy) */
    values[10].toBufr( "Longitude", station->longitude() );      /* 006001 Longitude (high accuracy) */
    values[11].toBufr( "Station height", station->height() );       /* 007030 Height of station ground above mean sea level */

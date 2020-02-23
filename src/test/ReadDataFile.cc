@@ -31,6 +31,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <boost/algorithm/string.hpp>
 #include <test/ReadDataFile.h>
 #include <miutil/commastring.h>
 #include <miutil/trimstr.h>
@@ -39,12 +40,12 @@
 using namespace std;
 
 bool
-readDataFile( const std::string &filename, DataEntryList &data, const miutil::miTime &fromtime )
+readDataFile( const std::string &filename, DataEntryList &data, const boost::posix_time::ptime &fromtime )
 {
 	string file=string(TESTDATADIR) + "/" + filename;
 	ifstream fin;
 	string line;
-	miutil::miTime obstime;
+	boost::posix_time::ptime obstime;
 
 	data.clear();
 
@@ -60,30 +61,34 @@ readDataFile( const std::string &filename, DataEntryList &data, const miutil::mi
 		if( i != string::npos )
 			line.erase( i );
 
-		miutil::trimstr( line );
+		boost::trim(line);
 
 		if( line.empty() )
 			continue;
 
 
-		miutil::CommaString dataValues( line, '|' );
+		std::vector<std::string> dataValues;
+		boost::split(dataValues, line, boost::is_any_of("|"));
+
+		for(std::vector<std::string>::size_type i=0; i<dataValues.size(); ++i) {
+			dataValues[i]=boost::trim_copy(dataValues[i]);
+		}
 
 		if( dataValues.size() != 12 ) {
 		   cerr << "readDataFile: to few elements ("<< dataValues.size() << ") expecting 12\n";
 		   continue;
 		}
 
+		obstime = boost::posix_time::time_from_string( dataValues[1] );
 
-		obstime = miutil::miTime( dataValues[1] );
-
-		if( ! fromtime.undef() && obstime > fromtime )
+		if( ! fromtime.is_not_a_date_time() && obstime > fromtime )
 			continue;
 
 		Data d( atoi( dataValues[0].c_str() ), obstime,
 				dataValues[2], atoi( dataValues[3].c_str() ) ,
 				atoi( dataValues[5].c_str() ), atoi( dataValues[6].c_str() ),
 				atoi( dataValues[7].c_str() ), dataValues[9], dataValues[10] );
-
+	
 		//cerr << "readDataFile: insert( " << d << ")\n";
  		data.insert( d );
 	}
@@ -107,7 +112,7 @@ loadBufrDataFromFile( const std::string &filename,
 					   StationInfoPtr      info,
 					   DataElementList       &sd,
 					   kvdatacheck::Validate &validate ,
-					   const miutil::miTime &fromtime )
+					   const boost::posix_time::ptime &fromtime )
 {
 	DataEntryList rawdata;
 
@@ -122,7 +127,6 @@ loadBufrDataFromFile( const std::string &filename,
 		cerr << "Failed to read datafile <" << filename << ">." << endl;
 		return false;
 	}
-
 	loadBufrData( rawdata, sd, info, validate );
 //	cerr << "---- START ---\n";
 //	for( CIDataElementList it=sd.begin(); it != sd.end(); ++it ) {

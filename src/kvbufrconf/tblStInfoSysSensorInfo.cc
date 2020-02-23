@@ -41,7 +41,7 @@ using namespace dnmi;
 
 /*class TblStInfoSysSensorInfo : public kvalobs::kvDbBase {
    int  equipmentid_;
-   int  paramid_;
+   int  paramgroupid_;
    int  stationid_;
    int  sensor_;
    int  hlevel_;
@@ -55,7 +55,7 @@ createSortIndex()
 {
    ostringstream ost;
 
-   ost << equipmentid_ <<  paramid_<< stationid_
+   ost << equipmentid_ <<  paramgroupid_<< stationid_
        << sensor_<<   hlevel_ ;
    sortBy_ = ost.str();
 
@@ -78,8 +78,8 @@ set(const dnmi::db::DRow &r_)
 
          if(*it=="equipmentid"){
             equipmentid_ = dbhelper::toInt( buf );
-         }else if(*it=="paramid"){
-            paramid_ = dbhelper::toInt( buf );
+         }else if(*it=="paramgroupid"){
+            paramgroupid_ = dbhelper::toInt( buf );
          }else if(*it=="stationid"){
             stationid_ = dbhelper::toInt( buf );
          }else if(*it=="sensor"){
@@ -109,7 +109,7 @@ set(const dnmi::db::DRow &r_)
  set(const TblStInfoSysSensorInfo &info )
  {
     equipmentid_ = info.equipmentid_;
-    paramid_ = info.paramid_;
+    paramgroupid_ = info.paramgroupid_;
     stationid_ = info.stationid_;
     sensor_ = info.sensor_;
     hlevel_ = info.hlevel_;
@@ -125,7 +125,7 @@ set(const dnmi::db::DRow &r_)
  clean()
  {
     equipmentid_ = INT_NULL;
-    paramid_ = INT_NULL;
+    paramgroupid_ = INT_NULL;
     stationid_ = INT_NULL;
     sensor_ = INT_NULL;
     hlevel_ = INT_NULL;
@@ -144,7 +144,7 @@ set(const dnmi::db::DRow &r_)
  {
     ostringstream ost;
 
-    ost << " WHERE paramid=" << paramid_
+    ost << " WHERE paramgroupid=" << paramgroupid_
         << " AND equipmentid=" << equipmentid_
         << " AND stationid=" << stationid_
         << " AND sensor=" << sensor_

@@ -69,11 +69,11 @@ encode( )
    bufr->addValue( 1012, data->MDIR, "Direction of motion of moving ship/platform", false);
    bufr->addValue( 1013, data->MSPEED, "Speed of motion of moving ship/platform", false);
    bufr->addValue( 2001, data->IX.valAsInt(), "ix", false );
-   bufr->addValue( 4001, data->time().year(), "Year", false);
-   bufr->addValue( 4002, data->time().month(), "Month", false);
-   bufr->addValue( 4003, data->time().day(), "Day", false);
-   bufr->addValue( 4004, data->time().hour(), "Hour", false);
-   bufr->addValue( 4005, data->time().min(), "Minute", false);
+   bufr->addValue( 4001, data->time().date().year(), "Year", false);
+   bufr->addValue( 4002, data->time().date().month(), "Month", false);
+   bufr->addValue( 4003, data->time().date().day(), "Day", false);
+   bufr->addValue( 4004, static_cast<int>(data->time().time_of_day().hours()), "Hour", false);
+   bufr->addValue( 4005, static_cast<int>(data->time().time_of_day().minutes()), "Minute", false);
 
    if( data->MLAT.valid() && data->MLON.valid() ) {
 	   bufr->addValue( 5002, data->MLAT, "Latitude", false);

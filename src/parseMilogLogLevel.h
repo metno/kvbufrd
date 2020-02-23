@@ -32,9 +32,13 @@
 #ifndef __parseMilogLogLevel_h__
 #define __parseMilogLogLevel_h__
 
+#include <iostream>
 #include <string>
 #include <milog/milog.h>
 
 milog::LogLevel parseMilogLogLevel(const std::string &logLevel);
+
+
+
 
 #endif

@@ -34,6 +34,7 @@
 
 #include <stdexcept>
 #include <string>
+#include "boost/date_time/posix_time/ptime.hpp"
 #include "bufrdefs.h"
 #include "bufrexceptions.h"
 #include "BUFRparam.h"
@@ -45,6 +46,35 @@ typedef std::list<int> BufrTemplateList;
 class Values;
 class EncodeBufrBase;
 
+class TestHelper {
+   public:
+   struct Value {
+      typedef enum{ F, I, S, U} VT;
+      VT vt;
+      float fv;
+      int iv;
+      std::string sv;
+
+      Value():vt(U){}
+      Value(float v): vt(F), fv(v){} 
+      Value(int v): vt(I), iv(v){} 
+      Value(const std::string &v): vt(S), sv(v){} 
+
+      float getF()const { return vt==F?fv:FLT_MAX;}
+      int   getI()const { return vt==I?iv:INT_MAX;}
+      std::string   getS()const { return vt==S?sv:"";}
+   };
+   
+   
+   public:
+   void setF(float v, const std::string &id) { tests[id]=Value(v);}
+   void setI(int v, const std::string &id) { tests[id]=Value(v);}
+   void setS(const std::string &v, const std::string &id) { tests[id]=Value(v);}
+   Value get(const std::string &id) { return tests[id];}
+   private:
+   std::map<std::string, Value> tests;
+};
+
 class BufrHelper {
    BufrHelper( );
    BufrHelper( const BufrHelper & );
@@ -53,6 +83,8 @@ class BufrHelper {
    BufrParamValidaterPtr paramValidater;
    StationInfoPtr stationInfo;
    BufrDataPtr data;
+
+   TestHelper testHelper;
 
    /* bufren variables */
    int kelem;
@@ -72,7 +104,7 @@ class BufrHelper {
 
    int kbuflen;
    int *kbuff; /* integer array containing bufr message */
-   miutil::miTime obstime;
+   boost::posix_time::ptime obstime;
    int ccx;
    bool test;
    std::string gtsHeader;
@@ -98,7 +130,7 @@ public:
    BufrDataPtr getData()const;
    BufrParamValidaterPtr getParamValidater()const;
    int getCCX()const { return ccx; }
-   miutil::miTime getObstime()const{ return obstime;}
+   boost::posix_time::ptime getObstime()const{ return obstime;}
    void setGTSHeader( const std::string &TT,
                       const std::string &AA );
    void setTest( bool f ) { test=f; }
@@ -106,7 +138,7 @@ public:
    //Section 1
    void setDataAndInternationalSubDataCategory( int dataCategory, int subCategory );
    void setSequenceNumber( int ccx );
-   void setObsTime( const miutil::miTime &obstime );
+   void setObsTime( const boost::posix_time::ptime &obstime );
    void setOriginatingCentreAndSubCentre( int originatingCenter,
                                           int subCenter=0 );
    /**
@@ -121,9 +153,9 @@ public:
 
    //Section 4
    void addDelayedReplicationFactor( int paramid, int value, const std::string &name="" );
-   void addValue( int bufrParamId, float value, const std::string &name="", bool countAsData=true );
-   void addValue( int bufrParamId, int value, const std::string &name="", bool countAsData=true );
-   void addValue( int bufrParamId, const std::string &value, const std::string &name="", bool countAsData=true );
+   void addValue( int bufrParamId, float value, const std::string &name="", bool countAsData=true, const std::string &testId="" );
+   void addValue( int bufrParamId, int value, const std::string &name="", bool countAsData=true, const std::string &testId="" );
+   void addValue( int bufrParamId, const std::string &value, const std::string &name="", bool countAsData=true, const std::string &testId="" );
 
    //throw EncodeException
    void encodeBufr();
@@ -156,6 +188,11 @@ public:
    bool validBufr()const;
    void addErrorMessage( const std::string &error );
    std::string getErrorMessage()const;
+
+   //Only for Test
+   TestHelper::Value getTestValue(const std::string &testId) {
+      return testHelper.get(testId);
+   }
 
 };
 

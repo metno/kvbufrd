@@ -1,7 +1,7 @@
 /*
   Kvalobs - Free Quality Control Software for Meteorological Observations 
 
-  $Id: kvbufrCltBufrcbImp.h,v 1.1.6.2 2007/09/27 09:02:23 paule Exp $
+  $Id: delaycontrol.h,v 1.1.6.3 2007/09/27 09:02:23 paule Exp $                                                       
 
   Copyright (C) 2007 met.no
 
@@ -28,26 +28,23 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef __kvbufrCltBufrcbImpl_h__
-#define __kvbufrCltBufrcbImpl_h__
+/* $Header: /var/lib/cvs/kvalobs/src/kvsynopd/delaycontrol.h,v 1.1.6.3 2007/09/27 09:02:23 paule Exp $ */
 
-#include "kvbufrd.hh"
-#include "kvbufrCltApp.h"
-//
-// Example class implementing IDL interface kvbufrd::bufrcb
-//
-class BufrcbImpl: public POA_kvbufrd::bufrcb,
-		   public PortableServer::RefCountServantBase 
-{
-  BufrCltApp &app;
+#ifndef __CacheDbCleaner_h__
+#define __CacheDbCleaner_h__
 
-public:
-  BufrcbImpl(BufrCltApp &app_): app(app_){};
-  virtual ~BufrcbImpl();
+#include <memory>
+#include "App.h"
+
+class CacheDbCleaner {
+  App                      &app;
+  bool cleanCache();
+
+ public:
+  CacheDbCleaner(App &app);
+  void operator()();
+}; 
 
 
-  void bufr(const kvbufrd::BufrData& data);
-
-};
 
 #endif

@@ -33,6 +33,7 @@
 #define __ENCODE_BUFR__
 
 #include <stdexcept>
+#include "boost/date_time/posix_time/ptime.hpp"
 #include "BufrData.h"
 #include "StationInfo.h"
 
@@ -48,7 +49,7 @@ class BufrEncoder {
    StationInfoPtr station;
    int kbuflen;
    int *kbuff; /* integer array containing bufr message */
-   miutil::miTime obstime;
+   boost::posix_time::ptime obstime;
    int ccx;
    bool test;
 

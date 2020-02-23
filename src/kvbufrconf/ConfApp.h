@@ -54,7 +54,6 @@ typedef std::list<TblStInfoSysObsPgmH> StInfoSysObsObsPgmHList;
 
 class ConfApp
 {
-   dnmi::db::DriverManager dbMgr;
    std::string             dbDriver;
    std::string             dbConnect;
    std::string             dbDriverId;
