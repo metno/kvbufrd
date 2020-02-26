@@ -145,7 +145,7 @@ void DataReceiver::newData(kvalobs::KvObsDataPtr data) {
   //data, er en liste av lister <KvData> til observasjoner
   //med samme stationid, typeid og obstime.
 
-  gate.busytimeout(120);
+  gate.busytimeout(300);
   milog::LogContext context("newdata");
 
   toTime = pt::second_clock::universal_time();
@@ -369,7 +369,7 @@ bool DataReceiver::typeidReceived(ObsEvent &event) {
   ostringstream ost;
 
   kvDbGateProxy gate(app.dbThread->dbQue);
-  gate.busytimeout(120);
+  gate.busytimeout(300);
 
   if (it == stations.end())
     return false;

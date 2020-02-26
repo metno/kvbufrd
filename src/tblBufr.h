@@ -47,6 +47,7 @@ private:
    int              ccx_;
    std::string      data_;
    std::string      bufrBase64_;
+   mutable boost::posix_time::ptime tbtime_;
 
    void createSortIndex();
 
@@ -63,8 +64,9 @@ public:
            int                  crc,
            int                  ccx,
            const std::string    &data,
-           const std::string    &bufrBase64 )
-   { set( wmono, id, callsign, code, obtime, createtime, crc, ccx, data, bufrBase64 );}
+           const std::string    &bufrBase64,
+           const boost::posix_time::ptime &tbtime=boost::posix_time::second_clock::universal_time() )
+   { set( wmono, id, callsign, code, obtime, createtime, crc, ccx, data, bufrBase64, tbtime );}
 
    bool set(int                  wmono,
             int                  id,
@@ -75,7 +77,8 @@ public:
             int                  crc,
             int                  ccx,
             const std::string    &data,
-            const std::string    &bufrBase64
+            const std::string    &bufrBase64,
+            const boost::posix_time::ptime &tbtime=boost::posix_time::second_clock::universal_time()
    );
 
    bool set(const dnmi::db::DRow&);
@@ -105,6 +108,7 @@ public:
    int              ccx()        const { return ccx_; }
    std::string      data()       const { return data_; }
    std::string      bufrBase64() const { return bufrBase64_; }
+   boost::posix_time::ptime tbtime() const { return tbtime_;}
 
    void createtime(const boost::posix_time::ptime &t){ createtime_=t;}
    void crc(int c)                         { crc_=c; }

@@ -123,14 +123,25 @@ main(int argn, char **argv)
       }
    }
 
-   
-
    boost::thread bufrWorkerThread(bufrWorker);
    IDLOGDEBUG("main","Started <BufrWorkerThread>!");
 
    if(startTime.is_special()){
      startTime=pt::second_clock::universal_time();
      startTime -= pt::hours(6);
+   }
+
+   auto notOlderThan=pt::second_clock::universal_time()-pt::hours(24);
+
+   if( startTime < notOlderThan ) {
+      auto newStartTime=pt::second_clock::universal_time() - pt::hours(6);
+      IDLOGINFO("main", "checkpoint to old: " << pt::to_kvalobs_string(startTime) << " setting it to " <<
+         pt::to_kvalobs_string(newStartTime));
+      LOGINFO("checkpoint to old: " << pt::to_kvalobs_string(startTime) << " setting it to " <<
+         pt::to_kvalobs_string(newStartTime));
+      std::cerr << "checkpoint to old: " << pt::to_kvalobs_string(startTime) << " setting it to " <<
+         pt::to_kvalobs_string(newStartTime) << endl << endl;
+      startTime=newStartTime;
    }
 
    IDLOGINFO("main","Getting data from kvalobs from time: " << pt::to_kvalobs_string(startTime));

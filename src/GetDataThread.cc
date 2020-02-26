@@ -74,7 +74,7 @@ void GetData::operator()() {
       "fromTime: " << pt::to_kvalobs_string(fromTime) << " hours: " << hours << " wmono: " << wmono << endl << " bufferFromTime: " << pt::to_kvalobs_string(bufferFromTime));
 
   kvalobs::kvDbGateProxy gate(app.dbThread->dbQue);
-  gate.busytimeout(120);
+  gate.busytimeout(300);
 
   if (wmono < 0) {
     reloadAll(gate, bufferFromTime);

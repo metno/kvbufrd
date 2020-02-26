@@ -75,6 +75,13 @@ const char* cacheSchema[] = {
   "PRAGMA user_version = 1;",
   0
 };
+
+const char *truncateTbls[] = {
+  "data",
+  "bufr",
+  "waiting",
+  0
+};
 }
 
 namespace pt = boost::posix_time;
@@ -116,6 +123,58 @@ loadCacheDriver()
     std::cerr << "NOMATCH: driverIds: '" << driverId << "'\n";
   }
 }
+
+
+
+void
+truncateCacheDB(const std::string &cachedb)
+{
+  db::Connection* con = connect(cacheDbDriverId, cachedb);
+
+  if (!con) {
+    IDLOGFATAL("cachedb", "Failed to create connection to cacheDB '" << cachedb
+                                          << "'. Error: " << getErr());
+    LOGFATAL("Failed to create connection to cacheDB '" << cachedb
+                                          << "'. Error: " << getErr());
+   cerr << "Failed to create connection to cacheDB '" << cachedb << "'. Error: " << getErr() << endl << endl;
+   exit(2);
+  }
+
+
+  string tbl;
+  try {
+    for (int i = 0; truncateTbls[i]; ++i) {
+      std::ostringstream q;
+      tbl = truncateTbls[i];
+      q << "DELETE " << tbl << ";";
+      con->exec(q.str());
+      IDLOGINFO("cachedb", "Truncated table '" <<tbl << "' cacheDB '" << cachedb << "'");
+
+      try {
+        con->exec("VACUUM;");
+      }
+      catch (const exception& ex ) {
+        IDLOGFATAL("cachedb", "VACUUM failed cacheDB '" << cachedb << "'. "  << ex.what());
+        LOGFATAL("VACUUM failed cacheDB '" << cachedb << "'. "   << ex.what());
+        cerr << "VACUUM failed cacheDB '" << cachedb << "'. " << ex.what() << endl << endl;
+        exit(2);
+      }
+    }
+    releaseConnection(con);
+  } catch (const exception& ex) {
+    IDLOGFATAL("cachedb", "Failed to trucate tables. Failed table '" << tbl << "' cacheDB schema '" << cachedb
+      << "'. Error: " << ex.what());
+    LOGFATAL("Failed to trucate tables. Failed table '" << tbl << "' cacheDB schema '" << cachedb
+      << "'. Error: " << ex.what());
+    cerr << "Failed to trucate tables. Failed table '" << tbl << "' cacheDB schema '" << cachedb
+      << "'. Error: " << ex.what();
+    releaseConnection(con);
+    unlink(cachedb.c_str());
+    exit(2);
+  }
+}
+
+
 
 void
 createCacheDB(const std::string &cachedb)
@@ -231,6 +290,17 @@ checkAndInitCacheDB(const std::string &cachedb_)
         cerr << "The cachedb directory path '" << cachedb <<"' exist, but is not a regular file."<< endl << endl;
         exit(2);
       }
+
+      pt::ptime mt = pt::from_time_t( fs::last_write_time(cachedb) );
+      pt::ptime now=pt::second_clock::universal_time()-pt::hours(48);
+      if ( mt > now ) {
+        return;
+      }
+      LOGINFO("The cachedb file '" << cachedb <<"' exist, but is not touched in 48 hours. Deleting and start with a fresh cache.")
+      cerr << "The cachedb file '" << cachedb <<"' exist, but is not touched in 48 hours. Deleting and start with a fresh cache."<< endl << endl;
+      ost.str("");
+      ost << "Failed to delete cachedb '" << cachedb << "'.";
+      truncateCacheDB(cachedb.string());
       return;
     } 
     ost.str("");

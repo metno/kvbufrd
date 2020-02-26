@@ -194,6 +194,22 @@ void App::readDatabaseConf(miutil::conf::ConfSection *conf){
     exit(1);
   }
 
+  auto cachedbdir = fs::absolute(fs::path(dbConnect).parent_path());
+  if ( setenv("SQLITE_TMPDIR", fs::absolute(cachedbdir).c_str(), 0) == -1 ) {
+     LOGFATAL("Failed to set SQLITE_TMPDIR '" << cachedbdir);
+     exit(1);
+  } else {
+    char *e = getenv("SQLITE_TMPDIR");
+
+    if ( !e ) {
+      LOGFATAL("No enviroment variable SQLITE_TMPDIR");
+      exit(1);
+    }
+    LOGINFO("SQLITE_TMPDIR: '" << e << "'.");
+    IDLOGINFO("main","SQLITE_TMPDIR: '" << e << "'.");
+    cerr << "SQLITE_TMPDIR: '" << e << "'." << endl << endl;
+  }
+  
   kvDbDriver = conf->getValue("database.kvalobs.driver").valAsString("");
   kvDbConnect = conf->getValue("database.kvalobs.connect").valAsString("");
 
@@ -363,7 +379,7 @@ void App::readWaitingElementsFromDb() {
   list<TblWaiting>::iterator it;
 
   kvDbGateProxy gate(dbThread->dbQue);
-  gate.busytimeout(120);
+  gate.busytimeout(300);
 
   if (gate.select(data, " order by delaytime")) {
     for (it = data.begin(); it != data.end(); it++) {
@@ -666,7 +682,7 @@ pt::ptime App::checkpoint() {
 
   kvDbGateProxy gate(dbThread->dbQue);
 
-  gate.busytimeout(120);
+  gate.busytimeout(300);
 
   if (!gate.select(data, "WHERE key=\'checkpoint\'")) {
     LOGERROR("DBERROR: cant obtain checkpoint!");
@@ -688,7 +704,7 @@ void App::createCheckpoint(const pt::ptime &cpoint) {
   }
 
   kvDbGateProxy gate(dbThread->dbQue);
-  gate.busytimeout(120);
+  gate.busytimeout(300);
 
   if (cpoint.is_special()) {
     LOGERROR("Checkpoint: undef checkpont time!");
@@ -752,7 +768,7 @@ bool App::getSavedBufrData(StationInfoPtr info, const pt::ptime &obstime, std::l
   kvDbGateProxy gate(dbThread->dbQue);
   ostringstream ost;
 
-  gate.busytimeout(120);
+  gate.busytimeout(300);
 
   ost << "WHERE wmono=" << info->wmono() << " AND id=" << info->stationID() << " AND callsign='" << info->callsign() << "'" << " AND obstime='" << pt::to_kvalobs_string(obstime)
       << "'";
@@ -768,7 +784,7 @@ bool App::getSavedBufrData(StationInfoPtr info, const pt::ptime &obstime, std::l
 bool App::saveBufrData(const TblBufr &tblBufr) {
   kvDbGateProxy gate(dbThread->dbQue);
 
-  gate.busytimeout(120);
+  gate.busytimeout(300);
 
   if (!gate.insert(tblBufr, true)) {
     LOGERROR("DBERROR: saveBufrData: " << gate.getErrorStr());

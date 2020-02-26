@@ -140,12 +140,12 @@ std::string compactTime(const pt::ptime &t) {
   char b[32];
   auto d = t.date();
   auto tm = t.time_of_day();
-  auto Y = d.year();
-  auto M = d.month();
-  auto D = d.day();
-  auto h=tm.hours();
-  auto m = tm.minutes();
-  auto s=tm.seconds();
+  int Y = d.year();
+  int M = d.month();
+  int D = d.day();
+  int h=tm.hours();
+  int m = tm.minutes();
+  int s=tm.seconds();
   snprintf(b, 32, "%4d%02d%02dT%02d%02d%02d", Y, M, D, h, m, s);
   b[31]='\0';
   return std::string(b);
@@ -720,7 +720,7 @@ BufrWorker::readData(ObsEvent& event, DataEntryList& data) const
   if (!station)
     return RdERROR;
 
-  gate.busytimeout(120);
+  gate.busytimeout(300);
 
   from -= pt::hours(24);
 

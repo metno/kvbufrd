@@ -65,6 +65,7 @@ clean()
    ccx_        = 0;
    data_.erase();
    bufrBase64_.erase();
+   tbtime_=obstime_;
 
    createSortIndex();
 }
@@ -103,8 +104,10 @@ set(const dnmi::db::DRow &r_)
             data_=buf;
          }else if(*it=="bufrBase64"){
             bufrBase64_=buf;
+         }if(*it=="tbtime"){
+            tbtime_=pt::time_from_string(buf);
          }else{
-            LOGWARN("TblBufr::set .. unknown entry:" << *it << std::endl);
+            LOGWARN("TblBufr::set .. unknown entry: " << *it << std::endl);
          }
       }
       catch(...){
@@ -130,6 +133,8 @@ set(const TblBufr &s)
    ccx_        = s.ccx_;
    data_       = s.data_;
    bufrBase64_ = s.bufrBase64_;
+   tbtime_     = s.tbtime_;
+
    createSortIndex();
 
    return true;
@@ -148,7 +153,8 @@ set(int                  wmono,
     int                  crc,
     int                  ccx,
     const std::string    &data,
-    const std::string    &bufrBase64)
+    const std::string    &bufrBase64,
+    const boost::posix_time::ptime &tbtime)
 {
    wmono_      = wmono;
    id_         = id;
@@ -160,6 +166,7 @@ set(int                  wmono,
    ccx_        = ccx;
    data_       = data;
    bufrBase64_ = bufrBase64;
+   tbtime_     = tbtime;
 
    createSortIndex();
 
@@ -171,7 +178,9 @@ TblBufr::
 toSend() const
 {
    ostringstream ost;
-
+   
+   tbtime_=pt::second_clock::universal_time();
+   
    ost << "("
          << wmono_             << ","
          << id_                << ","
@@ -183,7 +192,7 @@ toSend() const
          << ccx_               << ","
          << quoted(data_)      << ","
          << quoted( bufrBase64_ ) << ","
-         << quoted( pt::to_kvalobs_string( pt::second_clock::universal_time() ) )
+         << quoted( pt::to_kvalobs_string( tbtime_ ) )
          << ")";
 
    return ost.str();
@@ -209,6 +218,7 @@ TblBufr::
 toUpdate()const
 {
    ostringstream ost;
+   tbtime_ = pt::second_clock::universal_time();
 
    ost << "SET createtime=" << quoted( pt::to_kvalobs_string(createtime_)) << ","
        <<            "crc=" << crc_                << ","
@@ -220,7 +230,7 @@ toUpdate()const
        << "      callsign=" << quoted( callsign_ ) << " AND "
        << "          code=" << quoted( code_ ) << " AND "
        << "       obstime=" << quoted( pt::to_kvalobs_string( obstime_ ) ) << " AND "
-       << "        tbtime=" << quoted( pt::to_kvalobs_string( pt::second_clock::universal_time() ) );
+       << "        tbtime=" << quoted( pt::to_kvalobs_string(tbtime_ ));
 
    return ost.str();
 }

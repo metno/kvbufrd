@@ -47,6 +47,7 @@ namespace {
   const char* cleanSql[] = {
     "delete from data where tbtime<date('now', '-8 day');",
     "delete from bufr where tbtime<date('now', '-31 day');",
+    "VACUUM;",
     0 
   };
 }
@@ -56,7 +57,7 @@ bool CacheDbCleaner::cleanCache() {
   ostringstream ost;
   kvDbGateProxy gate( app.dbThread->dbQue );
      
-  gate.busytimeout(120);
+  gate.busytimeout(300);
   int errCnt=0;
 
   for ( int i=0; cleanSql[i]; i++) {
@@ -99,7 +100,7 @@ CacheDbCleaner::operator()()
 
       if(nextTime>tNow){
          sleep(1);
-         continue;
+         continue;    
       }
 
       IDLOGINFO("cachedb","Start cleaning cachedb.");

@@ -50,7 +50,7 @@ addToDb()
   TblWaiting data(info_->wmono(), info_->stationID(),
                   info_->callsign(), info_->codeToString(),obstime_, delay_);
  
-  gate.busytimeout(120);
+  gate.busytimeout(300);
   
   if(!gate.replace(data)){
     LOGERROR("Waiting::addToDb: " << gate.getErrorStr());
@@ -68,7 +68,7 @@ removeFrom()
   TblWaiting data(info_->wmono(), info_->stationID(), info_->callsign(),
                   info_->codeToString(), obstime_, delay_);
   
-  gate.busytimeout(120);
+  gate.busytimeout(300);
   
   if(!gate.remove(data)){
     LOGERROR("Waiting::removeFrom: " << gate.getErrorStr());
@@ -86,7 +86,7 @@ inDb()
   list<TblWaiting> data;
   ostringstream o;
 
-  gate.busytimeout(120);
+  gate.busytimeout(300);
 
   o << "WHERE wmono=" << info_->wmono()
     << " AND id=" << info_->stationID()
