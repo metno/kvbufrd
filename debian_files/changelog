@@ -1,3 +1,16 @@
+kvbufrd (3.0.4-1) xenial; urgency=low
+  * New release.
+  * Logging.
+  * Cachedb cleaning.
+  * Startup logic changed. If 'chekcpoint' is to old. Truncate cachedb
+    and load the latest 12 hours of data from kvalobs.  
+  * debian package fixes.
+  * Build fixes for bionic.
+  * Metric.
+    
+ -- Kvalobs <kvalobs@met.no>  Thu, 27 Feb 2020 08:00:00 +0100
+
+
 kvbufrd (3.0.4~rc3-1) xenial; urgency=low
   * bionic fixes.
   * debian package fixes
