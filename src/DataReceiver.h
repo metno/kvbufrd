@@ -37,7 +37,6 @@
 #include "App.h"
 #include "kvevents.h"
 #include "KvObsData.h"
-#include "obsevent.h"
 
 class DataReceiver {
   App                      &app;
@@ -59,8 +58,9 @@ class DataReceiver {
    * Save the data to the cache. After the data is saved the cache is
    * looked up to retrive all stations/typeid it is received data for,
    * before an event is sent to BufrWorker.
+   * Do not 
    */
-  void newData(kvalobs::KvObsDataPtr data);
+  void newData(const DataEvent &event);
   void prepareToProcessAnyBufrBasedOnThisObs(const boost::posix_time::ptime &obstime,
 					      StationInfoPtr station);
   bool typeidReceived(ObsEvent &event);

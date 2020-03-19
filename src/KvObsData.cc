@@ -28,11 +28,13 @@
 */
 #include <algorithm>
 #include "KvObsData.h"
+#include <miutil/timeconvert.h>
 
 using std::make_tuple;
 using std::for_each;
 using kvalobs::kvData;
 using kvalobs::kvTextData;
+namespace pt=boost::posix_time;
 
 namespace kvalobs {
 
@@ -99,7 +101,7 @@ void KvObsDataMap::add(const std::list<kvalobs::kvTextData> &data){
 }
 
 
-KvObsDataMap::IndexList KvObsDataMap::getAll()const{
+KvObsDataMap::IndexList KvObsDataMap::getAllIndex()const{
   IndexList indexs;
 
   for( auto &stationid: *this )
@@ -112,6 +114,34 @@ KvObsDataMap::IndexList KvObsDataMap::getAll()const{
 ObsDataElement& KvObsDataMap::get(const Index &index)
 {
   return (*this)[std::get<0>(index)][std::get<2>(index)][std::get<1>(index)];
+}
+
+KvObsDataPtr KvObsDataMap::getAt(const Index &index) {
+  using std::get;
+  KvObsDataPtr res;
+  auto sid = get<0>(index);
+  auto tid = get<1>(index);
+  auto obstime = get<2>(index);
+
+  auto sit=find(sid);
+  if( sit == end() ) {
+    return res;
+  }
+
+  auto obtit=sit->second.find(obstime);
+  if( obtit==sit->second.end() ) {
+    return res;
+  }
+
+  auto tit=obtit->second.find(tid);
+  if(tit == obtit->second.end()) {
+    return res;
+  }
+
+  res.reset(new KvObsData());
+  //(*p)[sid]=std::make_tuple(get<0>(tit->second), get<1>(tit->second));
+  (*res)[sid]=tit->second;
+  return res;
 }
 
 
@@ -140,6 +170,28 @@ void sortObsDataElementByObstime(ObsDataElement *data){
 void sortKvObsDataByObstime(KvObsData *data){
   for_each(data->begin(), data->end(),
            [](KvObsData::value_type &v){sortObsDataElementByObstime(&v.second);});
+}
+
+
+std::ostream &operator<<(std::ostream &o, const KvObsDataMap::Index &i) {
+  using std::get;
+  o << "Index(" << get<0>(i) << ", " << get<1>(i) << ", " << pt::to_kvalobs_string(get<2>(i)) << ")";
+  return o;
+}
+
+
+std::ostream &operator<<(std::ostream &o, const KvObsData &od) {
+  int i=0;
+  for( auto &ode: od) {
+    for( auto &d : std::get<0>(ode.second)) {
+      o << i << " d: " << ode.first << " -> " << d << "\n"; 
+    }
+    for( auto &d : std::get<1>(ode.second)) {
+      o << i << " t: " << ode.first << " -> " << d << "\n"; 
+    }
+    i++;
+  }
+  return o;
 }
 
 }

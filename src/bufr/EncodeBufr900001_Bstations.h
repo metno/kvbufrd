@@ -29,51 +29,35 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <boost/assign.hpp>
-#include "EncodeBufr301004.h"
+#ifndef __ENCODE_BUFR_900001_Bstations__
+#define __ENCODE_BUFR_900001_Bstations__
 
-EncodeBufr301004::
-EncodeBufr301004()
-{
+#include "EncodeBufrBase.h"
 
-}
-std::string
-EncodeBufr301004::
-logIdentifier() const
-{
-   return "301004";
-}
+/**
+ * Encode B stations, no wmono, data.
+ *
+ * BUFR descriptors:
+ * WMO number is set to 0.
+ * Vi add section 301089 and 1019 for identification 
+ * by nationalid an stations name.
+ * 
+ * 301089 1019 307079 4025 11042
+ */
 
-std::list<int>
-EncodeBufr301004::
-encodeIds()const
-{
-   std::list<int> ids;
-   boost::assign::push_back( ids )(301004);
+class EncodeBufr900001 :
+   public EncodeBufrBase {
 
-   return ids;
-}
+protected:
+   virtual void encode(  );
+  
+public:
+   EncodeBufr900001();
+   ~EncodeBufr900001();
 
+   virtual std::string logIdentifier() const;
+   virtual std::list<int> encodeIds()const;
 
+};
 
-void
-EncodeBufr301004::
-encode( )
-{
-   int defWmoNo=stationInfo->wmono();
-   int blockNumber=INT_MAX;
-   int wmoNo=INT_MAX;
-
-   if ( defWmoNo!=0 && defWmoNo!=INT_MAX && defWmoNo!=INT_MIN ){
-      blockNumber=static_cast<int>(defWmoNo/1000);
-      wmoNo=static_cast<int>( defWmoNo%1000 );
-   }
-
-   //WMO block number  II
-   bufr->addValue( 1001, static_cast<int>( blockNumber ), "II", false );
-   //WMO station number  iii*
-   bufr->addValue(1002, static_cast<int>( wmoNo), "iii", false);
-   bufr->addValue(1015, stationInfo->name(), "Site name", false);
-   bufr->addValue(2001, data->IX.valAsInt(), "ix", false );
-}
-
+#endif

@@ -91,6 +91,7 @@ encode(  )
     */
    bufr->addDelayedReplicationFactor( 31000, 0, "Delayed replication");
 
+   // State of ground, snow depth, ground minimum temperature
    encodeTemplate( 302037 );
 
 

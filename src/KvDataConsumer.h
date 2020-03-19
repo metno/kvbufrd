@@ -30,23 +30,32 @@
 #ifndef SRC_KVDATACONSUMER_H_
 #define SRC_KVDATACONSUMER_H_
 
-#include <string>
+#include <decodeutility/kvalobsdataserializer.h>
+#include "App.h"
 #include "decodeutility/kvalobsdata.h"
+#include "dnmithread/CommandQue.h"
 #include "kvsubscribe/DataSubscriber.h"
 #include "miconfparser/miconfparser.h"
-#include "dnmithread/CommandQue.h"
-#include "App.h"
+#include <string>
 
-class KvDataConsumer : public kvalobs::subscribe::DataSubscriber {
-  KvDataConsumer()=delete;
-  KvDataConsumer(const KvDataConsumer &)=delete;
-  KvDataConsumer& operator=(const KvDataConsumer &)=delete;
+class KvDataConsumer : public kvalobs::subscribe::DataSubscriber
+{
+  KvDataConsumer() = delete;
+  KvDataConsumer(const KvDataConsumer&) = delete;
+  KvDataConsumer& operator=(const KvDataConsumer&) = delete;
 
- public:
-  KvDataConsumer( const std::string &domain, const std::string &brokers, std::shared_ptr<dnmi::thread::CommandQue> newDataQue );
-  void newData(const kvalobs::serialize::KvalobsData &data);
+public:
+  KvDataConsumer(const std::string& domain,
+                 const std::string& brokers,
+                 std::shared_ptr<dnmi::thread::CommandQue> newDataQue);
+  void newData(const kvalobs::serialize::KvalobsData& data, const std::string &msg);
 
- private:
+  static void debugMsgWriter(const std::string &message, const kvalobs::serialize::KvalobsData &d);
+protected:
+  virtual void data(const char * msg, unsigned length);
+  virtual void error(int code, const std::string& msg);
+
+private:
   std::shared_ptr<dnmi::thread::CommandQue> que;
 };
 

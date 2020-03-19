@@ -73,7 +73,7 @@
 #include "EncodeBufr307079.h"
 #include "EncodeBufr308009.h"
 #include "EncodeBufr900000_SYNOP.h"
-#include "EncodeBufr900001_SVV.h"
+#include "EncodeBufr900001_Bstations.h"
 #include "EncodeBufr900002_PRECIP_AND_SNOW.h"
 #include "EncodeBufr900003_SHIP.h"
 #include "GuessBufrTemplate.h"

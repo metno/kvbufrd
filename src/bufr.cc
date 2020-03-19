@@ -748,8 +748,6 @@ float
 Bufr::
 pressure( float pressure )
 {
-   double dTrykk;
-
    if( pressure == FLT_MAX)
       return FLT_MAX;
 
@@ -764,7 +762,7 @@ void
 Bufr::
 doPressureTrend( const DataElementList &data, DataElement &res )
 {
-   bool ok = pressureTrend( data[0], res );
+   bool ok = pressureTrend( data, res );
 
    if( ok )
       return;
@@ -796,28 +794,17 @@ computePressureTrend( const DataElementList &data,
    float trykk3 = data[1].PO;
    float trykk4 = data[0].PO;
 
+   if(trykk1==FLT_MAX || trykk2==FLT_MAX || trykk3==FLT_MAX || trykk4==FLT_MAX){
+      return;
+   }
+
    a      = 4;
    dP1    = trykk2 - trykk1;
    dP3    = trykk4 - trykk3;
    PD3    = trykk4 - trykk1;
    t1     =    dP3 - dP1;
    lim    = 0.01;
-
-   /* Ved ulovlege verdiar */
-   if( trykk1==FLT_MAX ||
-       trykk2==FLT_MAX ||
-       trykk3==FLT_MAX ||
-       trykk4==FLT_MAX){
-      /* Bxrge Moe
-       * 5.8.2002
-       *
-       * Endret return 'kode' til en tom streng n�r verdiene
-       * er ugyldig.
-       */
-      //kode=" 5////";
-      return;
-   }
-
+   
    if(PD3 > lim){
       if(t1 < (-1*lim)){
          if(dP3 < (-1*lim)) /*27.01.98 Bxrge Moe*/
@@ -851,7 +838,7 @@ computePressureTrend( const DataElementList &data,
       a = 4;
 
    res.AA = a;
-   res.PP = pressure( PD3 );
+   res.PP = PD3 * 100;
 } /* Tendens_Kode */
 
 /* 13.03.98
@@ -866,24 +853,23 @@ computePressureTrend( const DataElementList &data,
  */
 bool
 Bufr::
-pressureTrend( const DataElement &data, DataElement &res)
+pressureTrend( const DataElementList &data, DataElement &res)
 {
-   float PP = data.PP;
+   float PP = data[0].PP;
+   float AA = data[0].AA;
 
    res.AA = FLT_MAX;
    res.PP = FLT_MAX;
 
-   if( PP == FLT_MAX )
+   if( PP == FLT_MAX || AA == FLT_MAX)
       return false;
 
-   if( data.AA != FLT_MAX ) {
-      int iAA = static_cast<int>( data.AA );
-      res.AA = data.AA;
+   int iAA = static_cast<int>( AA );
+   res.AA = AA;
 
-      //Adjust the sign of PP according to AA.
-      if( ( iAA <= 3 && PP < 0 ) || ( iAA >= 5 && PP > 0 ) )
-         PP *= -1;
-   }
+   //Adjust the sign of PP according to AA.
+   if( ( iAA <= 3 && PP < 0 ) || ( iAA >= 5 && PP > 0 ) )
+      PP *= -1;
 
    res.PP = PP * 100;
   	return true;
@@ -1010,20 +996,20 @@ doEsss( const DataElementList &data, BufrData &res  )
    res.EE = FLT_MAX;
    res.SA = FLT_MAX;
 
-   if( time.time_of_day().hours() != 6 )
+   if( (time.time_of_day().hours() % 6) != 0 )
       return;
 
    int iSA = (data[0].SA == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SA) + 0.5 )));
    int iSD = (data[0].SD == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SD) + 0.5 )));
 
    if( data[0].EM == FLT_MAX && data[0].EE == FLT_MAX && iSA == INT_MAX && iSD == INT_MAX)
-         return;
+      return;
 
    if( (data[0].EM == FLT_MAX && data[0].EE == FLT_MAX) && iSA != INT_MAX && iSD != INT_MAX )
-         return doSaFromSD( data, res );
+      return doSaFromSD( data, res );
 
    if( data[0].EM == FLT_MAX && data[0].EE == FLT_MAX && iSA == INT_MAX )
-       return;
+      return;
 
    if( data[0].EE != FLT_MAX && data[0].EE >= 0 && data[0].EE < 31 ) {
       res.EE = floor( static_cast<double>( data[0].EE ) + 0.5 );
@@ -1059,7 +1045,7 @@ doSaFromSD( const DataElementList &data, BufrData &res )
     pt::ptime time = data[0].time();
     res.SA = FLT_MAX;
 
-    if( time.time_of_day().hours() != 6 )
+    if( (time.time_of_day().hours() % 6) != 0 )
        return;
 
     int iSA = (data[0].SA == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SA) + 0.5 )));
@@ -1114,7 +1100,7 @@ soilTemp( const DataElementList &data, BufrData &res )
    if( nTimeStr == 0 )
       return;
 
-   if(data[0].time().time_of_day().hours() != 6)
+   if( (data[0].time().time_of_day().hours() % 6) != 0 )
       return;
 
    if( data[0].TGN_12 != FLT_MAX )

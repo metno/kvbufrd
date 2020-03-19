@@ -139,23 +139,55 @@ class KvDbGateCommand : public dnmi::thread::CommandBase
 {
 protected:
    kvDbGate *gate;
-   dnmi::thread::CommandQue &retQue;
+   dnmi::thread::CommandQue *retQue;
    dnmi::db::Connection *con;
-
-public:
-   KvDbGateCommand( dnmi::thread::CommandQue &retQue_, kvDbGate &gate )
-      : gate( &gate ), retQue( retQue_ ), con( 0 )
+   friend class kvDbGateProxy;
+   
+   KvDbGateCommand():gate(0), retQue(0), con(0){};
+   KvDbGateCommand( dnmi::thread::CommandQue *retQue_, kvDbGate *gate )
+      : gate( gate ), retQue( retQue_ ), con( 0 )
    {}
-   KvDbGateCommand( dnmi::thread::CommandQue &retQue_ )
+   KvDbGateCommand( dnmi::thread::CommandQue *retQue_ )
          : gate( 0 ), retQue( retQue_ ), con( 0 )
       {}
+
+public:
+   
    virtual ~KvDbGateCommand() {}
 
+   virtual std::string name()const;
 
    void setConnection( dnmi::db::Connection *con );
    dnmi::db::Connection *getConnection(){ return con; }
 
 };
+
+
+class KvDbGateDoExecCommand : public KvDbGateCommand
+{
+private:
+   KvDbGateDoExecCommand(const KvDbGateDoExecCommand&) = delete;
+   KvDbGateDoExecCommand(const KvDbGateDoExecCommand&&) = delete;
+
+   bool ret;
+   friend class kvDbGateProxy;
+protected:
+   std::ostringstream err;
+
+public:
+   KvDbGateDoExecCommand();
+   virtual ~KvDbGateDoExecCommand();
+   
+   virtual std::string name()const override {
+      return "KvDbGateDoExecCommand";
+   }
+
+   virtual bool doExec( dnmi::db::Connection *con)=0;
+
+   //Do not use.
+   virtual bool executeImpl();
+};
+
 
 
 class KvDbGateExecResult : public KvDbGateCommand
@@ -169,7 +201,7 @@ public:
    KvDbGateResult &result;
    bool returnStatus;
 
-   KvDbGateExecResult( dnmi::thread::CommandQue &retQue_,
+   KvDbGateExecResult( dnmi::thread::CommandQue *retQue_,
                        KvDbGateResult &res, const std::string &query, int timeout   )
       : KvDbGateCommand( retQue_ ), query( query), timeout( timeout ), result( res )
    {
@@ -185,7 +217,7 @@ class KvDbGateInsert : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateInsert( dnmi::thread::CommandQue &retQue_, kvDbGate &gate,
+   KvDbGateInsert( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
                    const kvalobs::kvDbBase &elem,
                    const std::string &tblName,
                    bool replace)
@@ -194,7 +226,7 @@ public:
    }
    virtual bool   executeImpl() {
       result = gate->insert( elem, tableName, replace );
-      retQue.postAndBrodcast( this );
+      retQue->postAndBrodcast( this );
       return true;
    }
 };
@@ -206,7 +238,7 @@ class KvDbGateUpdate : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateUpdate( dnmi::thread::CommandQue &retQue_, kvDbGate &gate,
+   KvDbGateUpdate( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
                    const kvalobs::kvDbBase &elem,
                    const std::string &tblName )
       : KvDbGateCommand( retQue_, gate ), elem( elem ),  tableName( tblName )
@@ -214,7 +246,7 @@ public:
    }
    virtual bool   executeImpl() {
       result = gate->update( elem, tableName );
-      retQue.postAndBrodcast( this );
+      retQue->postAndBrodcast( this );
       return true;
    }
 };
@@ -226,7 +258,7 @@ class KvDbGateReplace : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateReplace( dnmi::thread::CommandQue &retQue_, kvDbGate &gate,
+   KvDbGateReplace( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
                    const kvalobs::kvDbBase &elem,
                    const std::string &tblName )
       : KvDbGateCommand( retQue_, gate ), elem( elem ),  tableName( tblName )
@@ -235,7 +267,7 @@ public:
 
    virtual bool   executeImpl() {
       result = gate->replace( elem, tableName );
-      retQue.postAndBrodcast( this );
+      retQue->postAndBrodcast( this );
       return true;
    }
 };
@@ -248,14 +280,14 @@ class KvDbGateRemove : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateRemove( dnmi::thread::CommandQue &retQue_, kvDbGate &gate,
+   KvDbGateRemove( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
                    const kvalobs::kvDbBase &elem,
                    const std::string &tblName )
       : KvDbGateCommand( retQue_, gate ), elem( &elem ),  tableName( tblName )
    {
    }
 
-   KvDbGateRemove( dnmi::thread::CommandQue &retQue_, kvDbGate &gate,
+   KvDbGateRemove( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
                    const std::string &query )
       : KvDbGateCommand( retQue_, gate ), elem( 0 ), query( query )
    {
@@ -267,7 +299,7 @@ public:
       else
          result = gate->remove( query );
 
-      retQue.postAndBrodcast( this );
+      retQue->postAndBrodcast( this );
       return true;
    }
 };
@@ -279,7 +311,7 @@ class KvDbGateExec : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateExec( dnmi::thread::CommandQue &retQue_, kvDbGate &gate,
+   KvDbGateExec( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
                    const std::string &query)
       : KvDbGateCommand( retQue_, gate ), query( query )
    {
@@ -287,7 +319,7 @@ public:
 
    virtual bool   executeImpl() {
       result = gate->exec( query );
-      retQue.postAndBrodcast( this );
+      retQue->postAndBrodcast( this );
       return true;
    }
 };
@@ -301,14 +333,14 @@ class KvDbGateInsertList : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateInsertList( dnmi::thread::CommandQue &retQue_, kvDbGate &gate, const std::list<T>& li , bool replace=false,
+   KvDbGateInsertList( dnmi::thread::CommandQue *retQue_, kvDbGate *gate, const std::list<T>& li , bool replace=false,
                        const std::string &tblName="")
       : KvDbGateCommand( retQue_, gate ), data( li ), replace( replace ), tableName( tblName )
    {
    }
    virtual bool   executeImpl() {
       result = gate->insert( data, replace, tableName );
-      retQue.postAndBrodcast( this );
+      retQue->postAndBrodcast( this );
       return true;
    }
 };
@@ -322,7 +354,7 @@ class KvDbGateSelect : public KvDbGateCommand
 public:
    typename std::list<T> data;
    bool result;
-   KvDbGateSelect( dnmi::thread::CommandQue &retQue_, kvDbGate &gate,
+   KvDbGateSelect( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
                    const std::string &q="",
                    const std::string &tblName="" )
       : KvDbGateCommand( retQue_, gate ), query( q ), tableName( tblName )
@@ -330,7 +362,7 @@ public:
    }
    virtual bool   executeImpl() {
       result = gate->select( data, query, tableName );
-      retQue.postAndBrodcast( this );
+      retQue->postAndBrodcast( this );
       return true;
    }
 };
@@ -341,6 +373,7 @@ public:
    virtual ~ConnectionFactory(){}
    virtual dnmi::db::Connection* newConnection()=0;
    virtual void releaseConnection( dnmi::db::Connection *con )=0;
+   virtual int openCount()=0;
 };
 
 

@@ -93,7 +93,7 @@ void DataReceiver::operator()() {
     }
 
     try {
-      newData(event->data());
+      newData(*event);
     } catch (const std::exception &ex) {
       LOGERROR("newData: Exception: " << ex.what() << "\nabort()");
       terminate();
@@ -134,18 +134,32 @@ void DataReceiver::doCheckReceivedData(ObsEvent *obsevent) {
   Logger::resetDefaultLogger();
 }
 
-void DataReceiver::newData(kvalobs::KvObsDataPtr data) {
+namespace {
+void logObservation( ){
+} 
+std::ostream& 
+print(std::ostream &o, const kvalobs::kvData &d) {
+  o << d.stationID() <<", " << d.typeID() << ", " << pt::to_kvalobs_string(d.obstime()) << ", " << d.paramID() 
+    << ", " << d.original() << ", " << d.sensor() << ", " << d.level() << ", " << d.controlinfo().flagstring() 
+    << ", " << d.useinfo().flagstring() << ", " << pt::to_kvalobs_string(d.tbtime());
+
+  return o;
+} 
+}
+
+void DataReceiver::newData(const DataEvent &event) {
   kvalobs::kvDbGateProxy gate(app.dbThread->dbQue);
   StationInfoList stations;
   pt::ptime toTime;
   pt::ptime fromTime;
   DataKeySet dataInserted;
+  auto data = event.data();
 
 
   //data, er en liste av lister <KvData> til observasjoner
   //med samme stationid, typeid og obstime.
 
-  gate.busytimeout(300);
+  gate.busytimeout(600);
   milog::LogContext context("newdata");
 
   toTime = pt::second_clock::universal_time();
@@ -157,12 +171,17 @@ void DataReceiver::newData(kvalobs::KvObsDataPtr data) {
 
   LOGINFO("Accepting data in the time interval: " << pt::to_kvalobs_string(fromTime)<< " - " << pt::to_kvalobs_string(toTime));
 
-  for (auto &it : *data) {
+  
 
-    list<kvData>::iterator dit = get<0>(it.second).begin();
+  for (auto &index : data->getAllIndex()) {
+    auto &it = data->get(index);    
+    
+    list<kvData>::iterator dit = get<0>(it).begin();
 
-    if (dit == get<0>(it.second).end()) {
+    if (dit == get<0>(it).end()) {
       LOGWARN("Data received from kvalobs: Unexpected, NO Data!");
+      IDLOGERROR("DataReceiver", "Data received from kvalobs: Unexpected, NO Data!\nDataReceived\n----- BEGIN -----\n"<<
+        event.inCommingMessage()<<"\n----- END -----");
       continue;
     }
 
@@ -175,12 +194,17 @@ void DataReceiver::newData(kvalobs::KvObsDataPtr data) {
 
     for (StationList::iterator itStation = stations.begin(); itStation != stations.end(); ++itStation) {
       std::list<Data> dataList;
+      dit = get<0>(it).begin();
       LOGINFO(
-          "Data received from kvalobs: stationID: " << it.first << " (" << (*itStation)->toIdentString() << ")" << endl << "       obstime: " << pt::to_kvalobs_string(dit->obstime()) << endl << "        typeid: " << dit->typeID() << endl << "   #parameters: " << get<0>(it.second).size() << endl);
+          "Data received from kvalobs: stationID: " << dit->stationID() << " (" << (*itStation)->toIdentString() << ")" << endl 
+          << "       obstime: " << pt::to_kvalobs_string(dit->obstime()) << endl 
+          << "        typeid: " << dit->typeID() << endl 
+          << "   #parameters: " << get<0>(it).size() );
 
       if (!app.acceptAllTimes() && (dit->obstime() < fromTime || dit->obstime() > toTime)) {
         LOGWARN(
-            "obstime to old or to early: " << pt::to_kvalobs_string(dit->obstime()) << endl << "-- Valid interval: " << pt::to_kvalobs_string(fromTime) << " - " << pt::to_kvalobs_string(toTime));
+            "obstime to old or to early: " << pt::to_kvalobs_string(dit->obstime()) << endl 
+            << "-- Valid interval: " << pt::to_kvalobs_string(fromTime) << " - " << pt::to_kvalobs_string(toTime));
 
         //No 'continue' here! We reevaluate after we have set up to log
         //to a station specific file and write the message to the logfile
@@ -190,7 +214,7 @@ void DataReceiver::newData(kvalobs::KvObsDataPtr data) {
       }
 
       if (!(*itStation)->hasTypeId(dit->typeID())) {
-        LOGWARN("StationInfo: typeid: " <<dit->typeID() << " not used!");
+        LOGWARN("StationInfo: typeid: " << dit->typeID() << " not used!");
 
         //No 'continue' here! We reevaluate after we have set up to log
         //to a station specific file and write the message to the logfile
@@ -202,19 +226,34 @@ void DataReceiver::newData(kvalobs::KvObsDataPtr data) {
       setDefaultLogger(*itStation);
 
       //This is repeated here to get it out on the log file for the wmono.
-      LOGINFO(
-          "Data received from kvalobs: stationID: " << it.first<< endl << " (" << (*itStation)->toIdentString() << ")" << endl << "       obstime: " << dit->obstime() << endl << "        typeid: " << dit->typeID() << endl << "   #parameters: " << get<0>(it.second).size() << endl << "Accepting data in time interval: " << pt::to_kvalobs_string(fromTime) << " - " << pt::to_kvalobs_string(toTime));
+      std::ostringstream o;
+      for(auto &d: get<0>(it)) {
+        print(o,d) << endl;
+      }
 
+      LOGINFO(
+          "Data received from kvalobs: stationID: " << dit->stationID() << endl
+           << " (" << (*itStation)->toIdentString() << ")" << endl 
+           << "       obstime: " << dit->obstime() << endl 
+           << "        typeid: " << dit->typeID() << endl 
+           << "   #parameters: " << get<0>(it).size() << endl
+           << "Accepting data in time interval: " << pt::to_kvalobs_string(fromTime) << " - " << pt::to_kvalobs_string(toTime) << endl
+           << "Data: " << endl
+           << o.str());
+      
       //**1**
       if (!app.acceptAllTimes() && (dit->obstime() < fromTime || dit->obstime() > toTime)) {
         LOGWARN(
-            "obstime to old or to early: " << pt::to_kvalobs_string(dit->obstime()) << endl << "-- Valid interval: " << pt::to_kvalobs_string(fromTime) << " - " << pt::to_kvalobs_string(toTime));
+            "obstime to old or to early: " << pt::to_kvalobs_string(dit->obstime()) << endl 
+            << "-- Valid interval: " << pt::to_kvalobs_string(fromTime) << " - " << pt::to_kvalobs_string(toTime));
         Logger::resetDefaultLogger();
         LOGWARN(
-            "obstime to old or to early: " << pt::to_kvalobs_string(dit->obstime()) << endl << "-- Valid interval: " << pt::to_kvalobs_string(fromTime) << " - " << pt::to_kvalobs_string(toTime));
+            "obstime to old or to early: " << pt::to_kvalobs_string(dit->obstime()) << endl 
+            << "-- Valid interval: " << pt::to_kvalobs_string(fromTime) << " - " << pt::to_kvalobs_string(toTime));
         continue;
       }
 
+      auto st=*itStation;
       //**2**
       if (!(*itStation)->hasTypeId(dit->typeID())) {
         LOGWARN("StationInfo: typeid: " <<dit->typeID() << " not used!");
@@ -223,23 +262,31 @@ void DataReceiver::newData(kvalobs::KvObsDataPtr data) {
         continue;
       }
 
-      for (dit = get<0>(it.second).begin(); dit != get<0>(it.second).end(); dit++) {
+      dataList.clear();
+      for (dit = get<0>(it).begin(); dit != get<0>(it).end(); dit++) {
         if (dataInserted.add(DataKey(*dit)))
           dataList.push_back(Data(*dit));
       }
 
-      dit = get<0>(it.second).begin();
+      dit = get<0>(it).begin();
 
-      if (dataList.size() == 0 && dataInserted.size() == 0) {
+      if (dataList.size() == 0 ) {
         LOGDEBUG(
-            "No new data to insert in database:" << endl << "  stationid: " << dit->stationID() << " obstime: " << pt::to_kvalobs_string(dit->obstime()) << " typeid: " << dit->typeID() << endl);
+            "No new data to insert into the database:" << endl << "  stationid: " << dit->stationID() << " obstime: " << pt::to_kvalobs_string(dit->obstime()) << " typeid: " << dit->typeID() << endl);
         Logger::resetDefaultLogger();
         LOGDEBUG(
             "No new data to insert in database:" << endl << "  stationid: " << dit->stationID() << " obstime: " << pt::to_kvalobs_string(dit->obstime()) << " typeid: " << dit->typeID() << endl);
         continue;
       }
 
-      if (!dataList.empty() && !gate.insert(dataList, true)) {
+      o.str("");
+      for( auto &d: dataList) {
+        o << d << endl;
+      }
+      LOGINFO("Data to insert/update" << endl << o.str());
+
+      DataInsertCommand toInsert(dataList, "datareceiver_saved");
+      if (!gate.doExec(&toInsert)) {
         LOGERROR(
             "Cant insert data: \n  stationid: " << dit->stationID() << " obstime: " << pt::to_kvalobs_string(dit->obstime()) << "  reason: " << gate.getErrorStr() << endl);
         Logger::resetDefaultLogger();
@@ -253,7 +300,7 @@ void DataReceiver::newData(kvalobs::KvObsDataPtr data) {
 
       if (!dataList.empty()) {
         auto dataIt = dataList.begin();
-        errs << "Inserted data # " << dataList.size() << " :" << endl << "  stationid: " << dataIt->stationID() << " obstime: "
+        errs << "Inserted/Updated data # " << dataList.size() << " :" << endl << "  stationid: " << dataIt->stationID() << " obstime: "
              << pt::to_kvalobs_string(dataIt->obstime()) << " typeid: " << dataIt->typeID() << endl;
 
         LOGINFO(errs.str());

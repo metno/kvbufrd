@@ -146,8 +146,6 @@ namespace kvalobs {
 		bool replace=false);
 
 
-
-
     template<class T>
     bool insert( const std::list<T>& li , bool replace=false,
                  const std::string &tblName="")
@@ -156,7 +154,7 @@ namespace kvalobs {
        errorFromExecResult = false;
        bool retStatus=false;
 
-       KvDbGateInsertList<T> *command= new KvDbGateInsertList<T>( retQue, gate, li, replace, tblName );
+       KvDbGateInsertList<T> *command= new KvDbGateInsertList<T>( &retQue, &gate, li, replace, tblName );
 
        try {
           dbQue->postAndBrodcast( command );
@@ -171,6 +169,8 @@ namespace kvalobs {
        return retStatus;
     }
       
+    
+
 
     /**
      * \brief replace an element in the database if it exist,
@@ -338,6 +338,8 @@ namespace kvalobs {
     bool exec( KvDbGateResult &result, const std::string &query );
 
 
+    bool doExec(KvDbGateDoExecCommand *cmd);
+
     /**
      * \brief selects rows from a table or view in the database.
      *
@@ -384,7 +386,7 @@ namespace kvalobs {
     {
        dnmi::thread::CommandQue retQue;
        errorFromExecResult = false;
-       KvDbGateSelect<T> *command = new KvDbGateSelect<T>( retQue, gate, q, tblName );
+       KvDbGateSelect<T> *command = new KvDbGateSelect<T>( &retQue, &gate, q, tblName );
        bool retStatus=false;
 
        try {

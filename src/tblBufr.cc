@@ -104,10 +104,10 @@ set(const dnmi::db::DRow &r_)
             data_=buf;
          }else if(*it=="bufrBase64"){
             bufrBase64_=buf;
-         }if(*it=="tbtime"){
+         }else if(*it=="tbtime"){
             tbtime_=pt::time_from_string(buf);
          }else{
-            LOGWARN("TblBufr::set .. unknown entry: " << *it << std::endl);
+            LOGWARN("TblBufr::set .. unknown entry: '" << *it << "'" << std::endl);
          }
       }
       catch(...){

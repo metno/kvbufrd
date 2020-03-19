@@ -38,6 +38,7 @@
 #include <sstream>
 #include <thread>
 #include <chrono>
+#include <mutex>
 #include "boost/version.hpp"
 #include "boost/filesystem.hpp"
 #include "milog/milog.h"
@@ -45,7 +46,6 @@
 #include "kvalobs/kvPath.h"
 #include "miutil/timeconvert.h"
 #include "kvDbGateProxy.h"
-#include "obsevent.h"
 #include "tblWaiting.h"
 #include "Data.h"
 #include "App.h"
@@ -89,20 +89,33 @@ void createDirectory(const fs::path &path) {
 }
 
 class MyConnectionFactory : public kvalobs::ConnectionFactory {
+
   App *app;
+  int count_;
+  std::mutex m_;
 
  public:
   MyConnectionFactory(App *app_)
-      : app(app_) {
+      : app(app_), count_(0) {
   }
 
   virtual dnmi::db::Connection* newConnection() {
+    std::lock_guard<std::mutex> l(m_);
+    count_++;
     return app->createDbConnection();
   }
 
   virtual void releaseConnection(dnmi::db::Connection *con) {
+    std::lock_guard<std::mutex>  l(m_);
+    count_--;
     app->releaseDbConnection(con);
   }
+
+  virtual int openCount()override {
+    std::lock_guard<std::mutex>  l(m_);
+    return count_;
+  }
+
 };
 
 string getValue(const miconf::ConfSection *conf, const std::string &key) {
@@ -162,7 +175,7 @@ bool App::createGlobalLogger(const std::string &id, milog::LogLevel ll) {
     if( LogManager::hasLogger(id) )
        return true;
 
-    FLogStream *logs = new FLogStream(2, 204800);  //200k
+    FLogStream *logs = new FLogStream(4, 524288);  //512k
     std::ostringstream ost;
     fs::path logpath = fs::path(kvPath("logdir")) / options.progname / (id + ".log");
 
@@ -279,7 +292,10 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   createGlobalLogger("main");
   createGlobalLogger("uinfo0");
   createGlobalLogger("kafka");
-  milog::createGlobalLogger(logdir, options.progname, "observation", milog::DEBUG, 200, 1, new milog::StdLayout1());
+  createGlobalLogger("DataReceiver");
+  milog::createGlobalLogger(logdir, options.progname, "kafka_received", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
+  milog::createGlobalLogger(logdir, options.progname, "datareceiver_saved", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
+  milog::createGlobalLogger(logdir, options.progname, "observation", milog::DEBUG, 1024, 1, new milog::StdLayout1());
   milog::createGlobalLogger(logdir, options.progname, "cachedb", milog::DEBUG, 500, 2, new milog::StdLayout1());
  
   readDatabaseConf(conf);

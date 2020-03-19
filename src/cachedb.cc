@@ -51,7 +51,7 @@ const std::string sqliteDriver("sqlite3driver");
 //std::string cachedb(std::string(CACHEDIR) + "/kvbufrd.sqlite");
 std::mutex mu;
 bool driverLoaded = false;
-
+//CREATE TABLE data (stationid integer, obstime timestamp, tbtime timestamp   DEFAULT CURRENT_TIMESTAMP, original text, paramid integer, typeid integer, sensor integer, level integer, controlinfo text, useinfo text,  UNIQUE(stationid, obstime, paramid, typeid, level, sensor))
 const char* cacheSchema[] = {
   "CREATE TABLE data (stationid integer, obstime timestamp, tbtime timestamp "
   "  DEFAULT CURRENT_TIMESTAMP, original text, paramid integer, typeid integer, "

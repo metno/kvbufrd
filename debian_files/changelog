@@ -1,3 +1,12 @@
+kvbufrd (3.0.5~rc1-1) xenial; urgency=low
+  * Changed encoding for B stations.
+  * Encode state of ground, snow depth and soil temperature for each main termin, ie 00, 06, 12 and 18.
+  * Discard PP and AA if one of them are discarded. Instead compute them from PO if availabel.
+  * Bugfix. In some instances when a message contained data from multiple ids we would loose data 
+    resulting in incomplete BUFR.
+
+ -- Kvalobs <kvalobs@met.no>  Wed, 19 Mar 2020 10:30:00 +0100
+
 kvbufrd (3.0.4-1) xenial; urgency=low
   * New release.
   * Logging.

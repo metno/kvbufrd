@@ -38,6 +38,7 @@
 #include "kvalobs/kvData.h"
 #include "kvalobs/kvDataFlag.h"
 #include "kvalobs/kvDbBase.h"
+#include "kvDbGateProxyThread.h"
 
 
 class Data : public kvalobs::kvDbBase {
@@ -107,6 +108,25 @@ public:
 									 const Data& data );
 };
 
+
+class DataInsertCommand: public kvalobs::KvDbGateDoExecCommand {
+	public:
+		DataInsertCommand(const std::list<Data> &dl, const std::string &logid="");
+		std::string getError()const;
+
+		virtual std::string name()const override {
+    	return "DataInsertCommand";
+   	}
+
+
+		virtual bool doExec( dnmi::db::Connection *con) override;
+	private:
+		std::list<Data> dl_;
+		std::string logid_;
+		std::ostringstream err_;
+};
+
+
 std::list<Data> kvDataToData( const std::list<kvalobs::kvData> &data);
 
 struct DataKey {
@@ -131,4 +151,8 @@ struct DataKeySet
 
 std::ostream& operator<<( std::ostream& ost,
 						  const Data& data );
+
+std::ostream& operator<<( std::ostream& ost,
+						  const std::list<Data>& dl );
+
 #endif

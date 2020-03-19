@@ -125,7 +125,7 @@ class Bufr
     void doPressureTrend( const DataElementList &data, DataElement &res );
     void computePressureTrend( const DataElementList &data,
                                DataElement &res);
-    bool pressureTrend( const DataElement &data, DataElement &res );
+    bool pressureTrend( const DataElementList &data, DataElement &res );
     void doGeneralWeather( const DataElementList &data, BufrData &res );
     static void doEsss( const DataElementList &data, BufrData &res );
     static void doSaFromSD( const DataElementList &data, BufrData &res );
@@ -144,23 +144,6 @@ class Bufr
     std::string getErrorMsg()const { return errorMsg;}
     void        setDebug(){ debug=true;}
     void        setTest( bool flag ) { test = flag; }
-
-#if 0
-    /**
-     * doBufr,
-     *
-     * \param create_CCA_template, angir at vi skal lage en template
-     *        p� formen 'CCCXXX'  som senere skal skiftes
-     *        ut med aktuell CCA verdi.
-     */
-    bool    doBufr( int                  bufrno,
-                    const std::string    &usteder,
-                    int                  listenummer,
-                    std::string          &bufr,
-                    StationInfoPtr       info,
-                    DataElementList         &bufrData,
-                    bool                 create_CCA_template=false);
-#endif
 
     bool doBufr( StationInfoPtr       info,
                  DataElementList         &bufrData,

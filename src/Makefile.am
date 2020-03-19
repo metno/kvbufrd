@@ -13,7 +13,7 @@ clean-local:
 		rm -rf bufrtables ;\
 	fi
 
-noinst_PROGRAMS = base64Test
+noinst_PROGRAMS = base64Test kvxmltest
 
 bin_PROGRAMS = kvbufrd kvbufrdbclt  kvbufrdparse
 
@@ -48,7 +48,6 @@ kvbufrd_SOURCES = \
    kvDbGateProxy.cc kvDbGateProxy.h \
    getDataReceiver.cc getDataReceiver.h \
    GetDataThread.cc GetDataThread.h \
-   obsevent.h \
    LoadBufrData.h LoadBufrData.cc \
    encodebufr.h encodebufr.cc \
    base64.cc base64.h \
@@ -61,6 +60,29 @@ kvbufrd_SOURCES = \
 	 utils.h utils.cc
  
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
+
+kvxmltest_SOURCES = \
+	kvxml_test.cc \
+	kvxml_test_data.cc \
+	Data.cc Data.h\
+	KvObsData.cc KvObsData.h \
+	kvDbGateProxyThread.cc kvDbGateProxyThread.h \
+	StationInfoParse.cc StationInfoParse.h \
+	StationInfo.cc StationInfo.h \
+	parseMilogLogLevel.cc parseMilogLogLevel.h
+
+kvxmltest_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
+
+kvxmltest_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" \
+	-DCACHEDIR="\""$(localstatedir)/lib/kvbufrd"\""
+
+kvxmltest_LDADD = \
+    $(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) \
+    $(BOOST_FILESYSTEM_LIB) \
+    $(BOOST_DATE_TIME_LIB) \
+    $(BOOST_SYSTEM_LIB) \
+    -lm -ldl
+
 
 if KVSTATIC
 kvbufrd_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" \
@@ -205,7 +227,7 @@ kvBufrEncodeTest_SOURCES= \
 	DataElementList.cc DataElementList.h \
 	BufrData.cc BufrData.h \
 	StationInfo.cc StationInfo.h \
-        StationInfoParse.cc StationInfoParse.h \
+  StationInfoParse.cc StationInfoParse.h \
 	bufr.cc bufr.h \
 	Validate.cc Validate.h \
 	InitLogger.cc InitLogger.h \
@@ -216,7 +238,7 @@ kvBufrEncodeTest_SOURCES= \
 	scanstring.cc scanstring.h \
 	SemiUniqueName.cc SemiUniqueName.h \
 	Strerror.cc Strerror.h \
-        isDirWithWritePermission.cc isDirWithWritePermission.h
+  isDirWithWritePermission.cc isDirWithWritePermission.h
 
 kvBufrEncodeTest_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 

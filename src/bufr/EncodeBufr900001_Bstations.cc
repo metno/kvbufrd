@@ -28,52 +28,65 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
 #include <boost/assign.hpp>
-#include "EncodeBufr301004.h"
+#include <boost/assign.hpp>
+#include "AreaDesignator.h"
+#include "EncodeBufr900001_Bstations.h"
 
-EncodeBufr301004::
-EncodeBufr301004()
+namespace b=boost;
+using namespace std;
+
+
+EncodeBufr900001::
+EncodeBufr900001()
 {
-
 }
+EncodeBufr900001::
+~EncodeBufr900001()
+{
+}
+
+
 std::string
-EncodeBufr301004::
+EncodeBufr900001::
 logIdentifier() const
 {
-   return "301004";
+   return "900001";
 }
 
 std::list<int>
-EncodeBufr301004::
+EncodeBufr900001::
 encodeIds()const
 {
-   std::list<int> ids;
-   boost::assign::push_back( ids )(301004);
+   list<int> ids;
+   b::assign::push_back( ids )(900001);
 
    return ids;
 }
 
-
-
 void
-EncodeBufr301004::
-encode( )
+EncodeBufr900001::
+encode()
 {
-   int defWmoNo=stationInfo->wmono();
-   int blockNumber=INT_MAX;
-   int wmoNo=INT_MAX;
+   BufrTemplateList templateList;
 
-   if ( defWmoNo!=0 && defWmoNo!=INT_MAX && defWmoNo!=INT_MIN ){
-      blockNumber=static_cast<int>(defWmoNo/1000);
-      wmoNo=static_cast<int>( defWmoNo%1000 );
-   }
 
-   //WMO block number  II
-   bufr->addValue( 1001, static_cast<int>( blockNumber ), "II", false );
-   //WMO station number  iii*
-   bufr->addValue(1002, static_cast<int>( wmoNo), "iii", false);
-   bufr->addValue(1015, stationInfo->name(), "Site name", false);
-   bufr->addValue(2001, data->IX.valAsInt(), "ix", false );
+   boost::assign::push_back( templateList )
+     (301089)(307079)(4025)(11042);
+
+   bufr->addDescriptorList( templateList );
+
+   bufr->setObsTime( obstime );
+
+   encodeTemplate( 301089 );
+   encodeTemplate( 307079 );
+
+   //Data elements only used by met.no.
+   bufr->addValue(  4025, data->FxMax.t,  "Time when max wind occured." );
+   bufr->addValue( 11042, data->FxMax.ff, "Max wind." );
+
+   bufr->setDataAndInternationalSubDataCategory( 0, 0 );
+   bufr->setLocalDataSubCategory( 20 );
+   bufr->setGTSHeader("IS", "XD" );
 }
 

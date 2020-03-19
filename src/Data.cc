@@ -184,12 +184,129 @@ kvalobs::kvUseInfo Data::useinfo() const {
   return kvalobs::kvUseInfo(useinfo_);
 }
 
+
+DataInsertCommand::DataInsertCommand(const std::list<Data> &dl, const std::string &logid)
+  : dl_(dl),logid_(logid) {
+}
+
+std::string DataInsertCommand::getError()const {
+  return err_.str();
+}
+
+//CREATE TABLE data (stationid integer, obstime timestamp, tbtime timestamp 
+//  DEFAULT CURRENT_TIMESTAMP, original text, paramid integer, typeid integer, 
+//  sensor integer, level integer, controlinfo text, useinfo text, 
+// UNIQUE(stationid, obstime, paramid, typeid, level, sensor)
+//)
+
+// INSERT INTO data 
+// (stationid, obstime, tbtime,original, paramid, typeid, sensor, level, controlinfo, useinfo ) 
+// VALUES(18269, '2020-03-11 16:00:00', '2020-03-11 16:37:46', '7.60', 211, 504, 0, 0, '0111100000100010', '7000000000000000') 
+// ON CONFLICT(stationid, obstime, paramid, typeid, level, sensor) 
+// DO UPDATE SET original=excluded.original, tbtime='2020-03-11 16:37:46' WHERE original<>excluded.original;
+
+
+
+// (" << stationid_ << "," 
+// << quoted(pt::to_kvalobs_string(obstime_)) << "," << quoted(pt::to_kvalobs_string(now)) 
+// << "," << quoted(original_) << "," << paramid_ << "," << typeid_
+// << "," << sensor_ << "," << level_ << "," << quoted(controlinfo_) << "," << quoted(useinfo_) << ")";
+
+namespace {
+  std::string Q(const pt::ptime &t) {
+    return "'" + pt::to_kvalobs_string(t) + "'";
+  }
+  std::string Q(const std::string &s) {
+    return "'" + s + "'";
+  }
+}
+
+
+bool DataInsertCommand::doExec( dnmi::db::Connection *con) {
+  if( ! con ) {
+    std::cerr << "DataInsertCommand::doExec: No connection\n";
+    err_<< "DataInsertCommand::doExec: No connection";
+    LOGERROR("DataInsertCommand::doExec: No connection");
+    if( !logid_.empty()) {
+      IDLOGERROR(logid_,"NO CONNECTION.");
+    }
+    return false;
+  }
+
+  bool ok=true;
+  ostringstream q;
+  pt::ptime now=pt::second_clock::universal_time();
+  ostringstream log;
+  for( const auto &d : dl_ ) {
+    q.str("");
+    q <<"INSERT INTO data (stationid, obstime, tbtime,original, paramid, typeid, sensor, level, controlinfo, useinfo ) VALUES("
+      << d.stationID() << ", " << Q(d.obstime()) << ", " << Q(now) << ", " << Q(d.original()) << ", " 
+      << d.paramID() << ", " << d.typeID()<< ", " << d.sensor() << ", " << d.level() << ", " 
+      << Q(d.controlinfo().flagstring()) << ", " << Q(d.useinfo().flagstring())<<")"
+      << " ON CONFLICT(stationid, obstime, paramid, typeid, level, sensor) DO"
+      << " UPDATE SET original=excluded.original, controlinfo=excluded.controlinfo, useinfo=excluded.useinfo, tbtime=" << Q(now)
+      << " WHERE original<>excluded.original OR controlinfo<>excluded.controlinfo OR useinfo<>excluded.useinfo;";
+
+    try {
+      unique_ptr<dnmi::db::Result> r(con->execQuery(q.str()));
+      log << d << endl;
+      if( r.get() ) {
+        ostringstream o;
+        while( r->hasNext() ) {
+          o.str("");
+          auto v=r->next();
+          auto n=v.fields();
+          for( int i=0; i<n; ++i) {
+            o << v.fieldName(i) <<"(" << v[i]<< "), ";
+          }
+          cerr << "doExec: res: "<<o.str() << "\n";
+          LOGINFO("doExec: " << o.str());
+          if(!logid_.empty()) {
+            IDLOGINFO(logid_, "doExec: " << o.str());
+          }
+        }
+      }
+    }
+    catch( const std::exception &e) {
+      ok=false;
+      err_ << e.what() << "\n";
+      cerr << "doExec: exception: " << e.what() << "\n" << "  Q: '" << q.str() << "'\n";
+      LOGERROR("doExec: exception: " << e.what());
+      if(!logid_.empty()) {
+        IDLOGINFO(logid_, "doExec: Exception: " << e.what());
+      }
+    } 
+    catch ( ... ) {
+      cerr << "doExec: UNKNOWN exception\n" << "  Q: '" << q.str() << "'\n";
+      LOGERROR("doExec: UNKOWN exception." );
+      if(!logid_.empty()) {
+        IDLOGINFO(logid_, "doExec: UNKNOWN Exception.");
+      }
+    }
+  }
+
+  if(!logid_.empty()) {
+    IDLOGINFO(logid_, "doExec: inserted/updated data:" << endl << log.str() );
+  }
+  return ok;
+}
+
+
 std::ostream&
 operator<<(std::ostream& ost, const Data& data) {
-  ost << "[" << data.stationid_ << ", " << pt::to_kvalobs_string(data.obstime_) << ", " << pt::to_kvalobs_string(data.tbtime_) << ", " << data.original_ << ", " << data.paramid_ << ", " << data.typeid_
-      << ", " << data.sensor_ << ", " << data.level_ << ", " << data.controlinfo_ << ", " << data.useinfo_ << "]";
+  ost << "[" << data.stationid_ << ", " << data.typeid_ << ", " << pt::to_kvalobs_string(data.obstime_) << ", " << data.paramid_ <<  ", " << data.original_ 
+      << ", " << data.sensor_ << ", " << data.level_ << ", " << data.controlinfo_ << ", " << data.useinfo_ << ", " << pt::to_kvalobs_string(data.tbtime_) << "]";
   return ost;
 }
+
+std::ostream& operator<<( std::ostream& ost,
+						  const std::list<Data>& dl ) {
+  for( auto &e : dl) {
+    ost << e << std::endl;
+  }
+  return ost;
+}
+
 
 DataKey::DataKey(const kvalobs::kvData &data)
     : stationid_(data.stationID()),
@@ -202,7 +319,8 @@ DataKey::DataKey(const kvalobs::kvData &data)
 }
 
 bool DataKey::operator<(const DataKey &rhs) const {
-  return (stationid_ < rhs.stationid_) || (stationid_ == rhs.stationid_ && typeid_ < rhs.typeid_)
+  return (stationid_ < rhs.stationid_) 
+      || (stationid_ == rhs.stationid_ && typeid_ < rhs.typeid_)
       || (stationid_ == rhs.stationid_ && typeid_ == rhs.typeid_ && paramid_ < rhs.paramid_)
       || (stationid_ == rhs.stationid_ && typeid_ == rhs.typeid_ && paramid_ == rhs.paramid_ && sensor_ < rhs.sensor_)
       || (stationid_ == rhs.stationid_ && typeid_ == rhs.typeid_ && paramid_ == rhs.paramid_ && sensor_ == rhs.sensor_ && level_ < rhs.level_)

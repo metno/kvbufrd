@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <sstream>
+#include <stdlib.h>
 #include <milog/milog.h>
 #include <kvalobs/kvPath.h>
 #include "kvDbGateProxyThread.h"
@@ -265,6 +266,30 @@ setConnection( dnmi::db::Connection *con_ )
       gate->set( con_ );
 }
 
+std::string KvDbGateCommand::name()const{
+   return "";
+}
+
+
+
+KvDbGateDoExecCommand::KvDbGateDoExecCommand(){
+
+}
+
+KvDbGateDoExecCommand::~KvDbGateDoExecCommand(){
+}
+
+bool KvDbGateDoExecCommand::executeImpl() {
+   try {
+      ret = doExec(getConnection());
+   } catch(const std::exception &e) {
+      err << "KvDbGateDoExecCommand::executeImpl: Exception: " << e.what();  
+   }
+
+   retQue->postAndBrodcast( this );
+   return true;
+}
+
 bool
 KvDbGateExecResult::
 executeImpl()
@@ -274,7 +299,7 @@ executeImpl()
    if( ! con ) {
       error = kvDbGate::NotConnected;
       errorString = "No connection.";
-      retQue.postAndBrodcast( this );
+      retQue->postAndBrodcast( this );
       return false;
    }
 
@@ -303,21 +328,21 @@ executeImpl()
          delete rs;
          error=kvDbGate::NotConnected;
          errorString = ex.what();
-         retQue.postAndBrodcast( this );
+         retQue->postAndBrodcast( this );
          return false;
       }
       catch(dnmi::db::SQLException & ex) {
          delete rs;
          error = kvDbGate::Error;
          errorString = ex.what();
-         retQue.postAndBrodcast( this );
+         retQue->postAndBrodcast( this );
          return false;
       }
       catch(...) {
          delete rs;
          error =kvDbGate::UnknownError;
          errorString = "Unknown error! (UNEXPECTED EXCEPTION)";
-         retQue.postAndBrodcast( this );
+         retQue->postAndBrodcast( this );
          return false;
       }
    }
@@ -325,7 +350,7 @@ executeImpl()
    if(!rs) {
       error = kvDbGate::NoError;
       errorString = "The result from the DB query is NULL.";
-      retQue.postAndBrodcast( this );
+      retQue->postAndBrodcast( this );
       return false;
    }
 
@@ -386,7 +411,7 @@ executeImpl()
          error = kvDbGate::NotConnected;
          errorString=ex.what();
          returnStatus = false;
-         retQue.postAndBrodcast( this );
+         retQue->postAndBrodcast( this );
          return false;
       }
       catch(dnmi::db::SQLBusy &ex){
@@ -400,14 +425,14 @@ executeImpl()
          delete rs;
          error = kvDbGate::Error;
          errorString = ex.what();
-         retQue.postAndBrodcast( this );
+         retQue->postAndBrodcast( this );
          return false;
       }
       catch(...) {
          delete rs;
          error = kvDbGate::UnknownError;
          errorString ="Unknown error! (UNEXPECTED EXCEPTION)";
-         retQue.postAndBrodcast( this );
+         retQue->postAndBrodcast( this );
          return false;
       }
    }
@@ -415,7 +440,7 @@ executeImpl()
    returnStatus = true;
    error = kvDbGate::NoError;
    errorString = "";
-   retQue.postAndBrodcast( this );
+   retQue->postAndBrodcast( this );
    return true;
 }
 
@@ -442,6 +467,8 @@ operator()()
    time_t printQueSize; //Print the quesize every 15'th minute and quesize is greater than 10.
    time_t now;
    int queSize;
+   int debugCnt=0;
+   int debugOther=0;
    dnmi::db::Connection *con;
 
    createGlobalLogger( logid );
@@ -477,11 +504,26 @@ operator()()
             continue;
          }
 
+         // DEBUG
+         if( gateCommand->name() == "DataInsertCommand") {
+            cerr << " @@@@@@@ KvDbGateProxyThread: name: " << gateCommand->name() << "\n";
+            debugCnt++;
+         } else {
+            debugOther++;
+            cerr << " @@@@@@@ KvDbGateProxyThread: name: " << gateCommand->name() << "\n";
+         }
+
          con = connectionFactory->newConnection();
 
          if( ! con ) {
+            cerr << " @@@@@@@ KvDbGateProxyThread: No connection. debugCnt: "  << debugCnt 
+            <<" otherCnt: " << debugOther << " dnCnt: "  << connectionFactory->openCount() << "\n";
             LOGFATAL( "KvDbGateProxyThread: No connection." );
+            exit(128);
          }
+
+         cerr << " @@@@@@@ KvDbGateProxyThread: debugCnt: "  << debugCnt 
+            <<" otherCnt: " << debugOther << " dnCnt: "  << connectionFactory->openCount() << "\n";
 
          gateCommand->setConnection( con );
          gateCommand->execute();

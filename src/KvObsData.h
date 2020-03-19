@@ -43,7 +43,6 @@ namespace kvalobs {
 
 typedef std::tuple<std::list<kvalobs::kvData>,std::list<kvalobs::kvTextData>> ObsDataElement;
 typedef std::map<int, ObsDataElement> KvObsData;
-typedef std::map<int, ObsDataElement> KvObsData;
 typedef std::shared_ptr<KvObsData> KvObsDataPtr;
 
 class KvObsDataMap : public std::map<long, std::map<boost::posix_time::ptime, std::map<long, ObsDataElement>>>
@@ -72,10 +71,18 @@ class KvObsDataMap : public std::map<long, std::map<boost::posix_time::ptime, st
    * in increasing order, ie lowest stationid and obstime first.
    */
   std::list<KvObsDataPtr> getKvObsData();
-  IndexList getAll()const;
+  IndexList getAllIndex()const;
+  KvObsDataPtr getAt(const Index &index);
   ObsDataElement& get(const Index &index);
+
+  friend std::ostream &operator<<(std::ostream &o, const KvObsDataMap::Index &i);  
 };
 
+typedef std::shared_ptr<KvObsDataMap> KvObsDataMapPtr;
+
+std::ostream &operator<<(std::ostream &o, const KvObsDataMap::Index &i);
+
+std::ostream &operator<<(std::ostream &o, const KvObsData &od);
 
 void sortObsDataElementByObstime(ObsDataElement *data);
 void sortKvObsDataByObstime(KvObsData *data);

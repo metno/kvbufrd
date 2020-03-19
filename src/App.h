@@ -48,7 +48,7 @@
 #include "StationInfoParse.h"
 #include "Waiting.h"
 #include "tblBufr.h"
-#include "obsevent.h"
+#include "kvevents.h"
 #include "kvDbGateProxyThread.h"
 #include "DbQuery.h"
 

@@ -38,7 +38,6 @@
 #include "bufr/EncodeBufrManager.h"
 #include "DataList.h"
 #include "BufrData.h"
-#include "obsevent.h"
 #include "StationInfo.h"
 
 

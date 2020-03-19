@@ -57,9 +57,11 @@ libbufr_la_SOURCES = \
     EncodeBufr307079.cc EncodeBufr307079.h \
     EncodeBufr308009.cc EncodeBufr308009.h \
     EncodeBufr900000_SYNOP.cc EncodeBufr900000_SYNOP.h \
-    EncodeBufr900001_SVV.cc EncodeBufr900001_SVV.h \
+    EncodeBufr900001_Bstations.cc EncodeBufr900001_Bstations.h \
     EncodeBufr900002_PRECIP_AND_SNOW.cc EncodeBufr900002_PRECIP_AND_SNOW.h \
-    EncodeBufr900003_SHIP.cc EncodeBufr900003_SHIP.h 
+    EncodeBufr900003_SHIP.cc EncodeBufr900003_SHIP.h
+
+#EncodeBufr900001_SVV.cc EncodeBufr900001_SVV.h 
 
 libbufr_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" \

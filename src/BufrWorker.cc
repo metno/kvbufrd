@@ -44,7 +44,6 @@
 #include "kvalobs/kvPath.h"
 #include "milog/milog.h"
 #include "miutil/timeconvert.h"
-#include "obsevent.h"
 #include "utils.h"
 #include <errno.h>
 #include <fstream>
@@ -917,7 +916,6 @@ BufrWorker::saveTo(StationInfoPtr info,
                                           << " obstime: "
                                           << pt::to_kvalobs_string(bufr->time())
                                           << ". Reason: " << ex.what());
-    return false;
   }
   return false;
 }
