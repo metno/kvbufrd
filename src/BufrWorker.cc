@@ -458,7 +458,7 @@ BufrWorker::newObs(ObsEvent& event)
   BufrDataPtr bufr;
   StationInfoPtr info;
   ostringstream ost;
-  boost::uint16_t oldcrc = 0;
+  boost::uint32_t oldcrc = 0;
   int ccx = 0;
   list<TblBufr> tblBufrList;
   pt::ptime start = pt::microsec_clock::universal_time();
@@ -648,8 +648,12 @@ BufrWorker::newObs(ObsEvent& event)
              << "> obstime: " << pt::to_kvalobs_string(event.obstime()));
     swmsg << "Cant create a BUFR!" << endl;
   } else {
-    boost::uint16_t crc = bufr->crc();
+    string dataUsedToGenerateCRC;
+    boost::uint32_t crc = bufr->crc(&dataUsedToGenerateCRC);
     string base64;
+
+    LOGINFO("Data used to generate BUFR CRC, crc: " << crc << " (" << oldcrc << ") \n" 
+      << dataUsedToGenerateCRC); 
 
     bool newBufr(crc != oldcrc);
 

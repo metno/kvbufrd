@@ -119,6 +119,38 @@ BufrData( const BufrData &bd ):
 {
 }
 
+void BufrData::crcHelper(std::ostream &o)const {
+   using std::endl;
+   DataElement::crcHelper(o);
+
+   if( tWeatherPeriod !=  FLT_MAX ) 
+      o << "tWeatherPeriod: " << tWeatherPeriod << endl;
+
+   if(vsci!=INT_MAX)
+      o << "vsci: " << vsci << endl;
+
+   if(  tTAX_N != INT_MAX )
+      o << "tTAX_N: " << tTAX_N << endl;
+
+   if(    tTAN_N!= INT_MAX)
+      o << "tTAN_N: " << tTAN_N << endl;
+
+   if(TAX_N!= FLT_MAX )
+      o << "TAX_N: "  << TAX_N << endl;
+   
+   if(TAN_N!= FLT_MAX )
+      o << "TAN_N: " << TAN_N << endl;
+
+   FgMax.crcHelper( o, "FgMax");
+   FxMax.crcHelper( o, "FxMax");
+   precip24.crcHelper( o, "precip24");
+   precipRegional.crcHelper(o, "precipRegional");
+   precipNational.crcHelper(o, "precipNational");
+   cloudExtra.crcHelper(o, "cloudExtra");
+
+}
+
+
 BufrData&
 BufrData::
 operator=( const BufrData &rhs )

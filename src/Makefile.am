@@ -1,7 +1,7 @@
 SUBDIRS = gtest bufr
 
 AM_CPPFLAGS = \
-   -D_REENTRANT \
+	-D_REENTRANT \
    $(kvsubscribe_CFLAGS) \
 	-I${KVINCLUDEDIR}/kvalobs/kvskel \
 	$(putools_CFLAGS) \
@@ -13,9 +13,9 @@ clean-local:
 		rm -rf bufrtables ;\
 	fi
 
-noinst_PROGRAMS = base64Test kvxmltest
+noinst_PROGRAMS = base64Test kvxmltest kvmd5sum
 
-bin_PROGRAMS = kvbufrd kvbufrdbclt  kvbufrdparse
+bin_PROGRAMS = kvbufrd kvbufrdbclt  kvbufrdparse kvbase64 
 
 kvbufrd_SOURCES = \
    kvevents.h \
@@ -83,6 +83,13 @@ kvxmltest_LDADD = \
     $(BOOST_SYSTEM_LIB) \
     -lm -ldl
 
+kvbase64_SOURCES = \
+	kvbase64.cc \
+  base64.cc base64.h 
+
+kvmd5sum_SOURCES = \
+	kvmd5sum.cc \
+  md5.cc md5.h 
 
 if KVSTATIC
 kvbufrd_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" \

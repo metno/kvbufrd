@@ -198,9 +198,10 @@ private:
   	boost::posix_time::ptime time()const{ return time_;}
 
   	bool undef()const{ return time_.is_special() || nSet == 0;}
-  	boost::uint16_t crc() const;
+  	boost::uint32_t crc(std::string *theDataUsed) const;
 
   	void writeTo( std::ostream &header, std::ostream &data, bool withId=true  )const;
+		virtual void crcHelper(std::ostream &o)const;
   	int numberOfValidParams() const{ return params.numberOfValidParams(); }
   	friend std::ostream& operator<<(std::ostream& ost,
 									  const DataElement& sd);

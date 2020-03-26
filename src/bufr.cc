@@ -1100,7 +1100,8 @@ soilTemp( const DataElementList &data, BufrData &res )
    if( nTimeStr == 0 )
       return;
 
-   if( (data[0].time().time_of_day().hours() % 6) != 0 )
+   if( (data[0].time().time_of_day().hours() != 6) && 
+      (data[0].time().time_of_day().hours() != 18) )
       return;
 
    if( data[0].TGN_12 != FLT_MAX )

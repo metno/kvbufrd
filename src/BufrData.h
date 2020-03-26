@@ -36,6 +36,8 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include "DataElementList.h"
+#include <iostream>
+#include <sstream>
 
 /**
  * BufrData add some special elements to use in coding of buffers.
@@ -60,6 +62,19 @@ public:
          }
          return *this;
       }
+      void crcHelper(std::ostream &o, const std::string &which )const {
+         using std::endl;
+         if( ff != FLT_MAX ) {
+            o << which << "::ff: " << ff << endl;
+         }
+         if( dd != FLT_MAX ) {
+            o << which << "::dd: " << dd << endl;
+         }
+
+         if( t != FLT_MAX ) {
+            o << which << "::t: " << t << endl;
+         }
+      }
       friend std::ostream &operator<<(std::ostream &o, const Wind &wind );
    };
 
@@ -77,6 +92,18 @@ public:
          }
          return *this;
       }
+
+      void crcHelper(std::ostream &o, const std::string &which )const {
+         using std::endl;
+         if( RR != FLT_MAX ) {
+            o << which << "::RR: " << RR << endl;
+         }
+         if( hTr != FLT_MAX ) {
+            o << which << "::hTr: " <<  hTr << endl;
+         }
+
+      }
+
       friend std::ostream &operator<<(std::ostream &o, const Precip &precip );
    };
 
@@ -104,6 +131,23 @@ public:
          return *this;
       }
 
+      void crcHelper(std::ostream &o, const std::string &which )const {
+         using std::endl;
+         if( vsci != INT_MAX ) {
+            o << which << "::vsci: " << vsci<< endl;
+         }
+         if( Ns != INT_MAX ) {
+            o << which << "::Ns: " <<  Ns << endl;
+         }
+         if( C != INT_MAX ) {
+            o << which << "::C: " <<  C << endl;
+         }
+         if( hshs != FLT_MAX ) {
+            o << which << "::hshs: " <<  hshs << endl;
+         }
+
+      }
+
       friend std::ostream &operator<<(std::ostream &o, const CloudDataExtra &cd );
    };
 
@@ -125,6 +169,17 @@ public:
        * @throw std::range_error
        */
       void add( const CloudDataExtra &cd, int index=-1 );
+
+      void crcHelper(std::ostream &o, const std::string &which )const {
+         using std::endl;
+         std::ostringstream s;
+         for( int i=0; i<nElements_; ++i) {
+            s.str("");
+            s << which <<"[" << i << "]";
+            cloudData[i].crcHelper(o, s.str());
+         }   
+      }
+
 
       /**
        *
@@ -152,7 +207,10 @@ public:
    BufrData( const BufrData &bd );
    BufrData( const DataElement &de );
 
+   virtual void crcHelper(std::ostream &o)const override;
+
    BufrData& operator=( const BufrData &rhs );
+   
 };
 
 typedef boost::shared_ptr<BufrData> BufrDataPtr;

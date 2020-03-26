@@ -306,28 +306,50 @@ writeTo( std::ostream &header, std::ostream &data, bool withId )const
    }
 
    for( ; it != params.end(); ++it ) {
+     if( **it == FLT_MAX )
+         continue;
+
       header << "," << (*it)->name();
 
       if( withId )
          header << ":" << (*it)->id();
 
-      data << ",";
-
-      if( **it != FLT_MAX )
-         data << **it;
+      data << "," << **it;
    }
 }
 
-boost::uint16_t
+void 
 DataElement::
-crc() const
+crcHelper(std::ostream &o)const
 {
-   boost::crc_ccitt_type crcChecker;
-   string msg;
-   ostringstream header, data;
+   KvParamList::const_iterator it = params.begin();
 
-   writeTo( header, data );
-   msg = header.str()+"\n"+data.str()+"\n";
+   if( it != params.end()  ) {
+      o << "obstime: " <<   pt::to_kvalobs_string(time()) << endl;
+      ++it;
+   }
+
+   for( ; it != params.end(); ++it ) {
+     if( **it == FLT_MAX )
+         continue;
+     o << (*it)->name() << ": " << **it << std::endl;
+   }
+}
+
+boost::uint32_t
+DataElement::
+crc(std::string *theDataUsed) const
+{
+   boost::crc_32_type crcChecker;
+   string msg;
+   ostringstream data;
+
+   crcHelper( data );
+   msg = data.str();
+
+   if( theDataUsed)
+    *theDataUsed=msg;
+
    crcChecker.process_bytes( msg.c_str(),  msg.length() );
    return crcChecker.checksum();
 }

@@ -80,6 +80,11 @@ kvdatacheck::
 Validate::
 operator()( const Data &data )
 {
+   if( data.paramID() == 0 ) {
+      //Ignore and reject paramid==0.
+      return false;
+   }
+
    return (this->*validate)( data );
 }
 
@@ -104,7 +109,7 @@ validDataUseOnlyControlInfo( const Data &data )
 {
    kvUseInfo     uinfo=data.useinfo();
    kvControlInfo info=data.controlinfo();
-
+   
    if(!check_useinfo1(uinfo, data.paramID())){
       log <<"REJECTED: stationid: " << data.stationID()
                    << " typeid: " << data.typeID()

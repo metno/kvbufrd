@@ -110,7 +110,7 @@ class StationInfoParse;
 *                   delay=("+HH:00", "HH:17"), the first spec "+HH:00" specifies
 *                   that we shall only use data on a hole hour, the second spec, "HH:17",
 *                   specifies that we shall delay the BUFR generation to 17 over each hour
-*                   if we have not data for all types we expect data for.
+*                   if we have no data for all types we expect data for.
 *
 *                NOTE It can be only one elements with +/- in front
 *                in the list of delays. This elements do NOT specify delays
@@ -125,8 +125,8 @@ class StationInfoParse;
 *                     delay=("6:10", "SS:03", "HH:01")
 *                     This means that we shall delay all termins with 1
 *                     minute, except for bufrtimes (except the 6 termin
-*                     that shal be delayed with 6 minutes) that shall delay
-*                     with  minutes.
+*                     that shall be delayed with 10 minutes) that shall delay
+*                     with 3 minutes.
 *
 *                     delay=("fS:03")
 *                     if the station is to receive data for multiple typeid's

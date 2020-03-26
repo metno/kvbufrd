@@ -97,7 +97,7 @@ set(const dnmi::db::DRow &r_)
          }else if(*it=="createtime"){
             createtime_=pt::time_from_string(buf);
          }else if(*it=="crc"){
-            crc_=atoi(buf.c_str());
+            crc_=atol(buf.c_str());
          }else if(*it=="ccx"){
             ccx_=atoi(buf.c_str());
          }else if(*it=="data"){
@@ -150,7 +150,7 @@ set(int                  wmono,
     const std::string    &code,
     const pt::ptime &obtime,
     const pt::ptime &createtime,
-    int                  crc,
+    long                  crc,
     int                  ccx,
     const std::string    &data,
     const std::string    &bufrBase64,

@@ -43,7 +43,7 @@ private:
    std::string      code_;
    boost::posix_time::ptime obstime_;
    boost::posix_time::ptime createtime_;
-   int              crc_;
+   long              crc_;
    int              ccx_;
    std::string      data_;
    std::string      bufrBase64_;
@@ -61,7 +61,7 @@ public:
            const std::string    &code,
            const boost::posix_time::ptime &obtime,
            const boost::posix_time::ptime &createtime,
-           int                  crc,
+           long                 crc,
            int                  ccx,
            const std::string    &data,
            const std::string    &bufrBase64,
@@ -74,7 +74,7 @@ public:
             const std::string    &code,
             const boost::posix_time::ptime &obtime,
             const boost::posix_time::ptime &createtime,
-            int                  crc,
+            long                 crc,
             int                  ccx,
             const std::string    &data,
             const std::string    &bufrBase64,
@@ -104,14 +104,14 @@ public:
    std::string      code()       const { return code_; }
    boost::posix_time::ptime obstime()    const { return obstime_; }
    boost::posix_time::ptime createtime() const { return createtime_;}
-   int              crc()        const { return crc_; }
+   long             crc()        const { return crc_; }
    int              ccx()        const { return ccx_; }
    std::string      data()       const { return data_; }
    std::string      bufrBase64() const { return bufrBase64_; }
    boost::posix_time::ptime tbtime() const { return tbtime_;}
 
    void createtime(const boost::posix_time::ptime &t){ createtime_=t;}
-   void crc(int c)                         { crc_=c; }
+   void crc(long c)                         { crc_=c; }
    void incCcx()                           { ccx_++; }
    void ccx(int c)                         { ccx_=c; }
    void data(const std::string &s)         { data_=s;}
