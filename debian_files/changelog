@@ -1,11 +1,28 @@
+kvbufrd (3.0.5-1) xenial; urgency=low
+  * Changed encoding for B stations.
+  * Encode state of ground, snow depth for each main termin, ie 00, 06, 12 and 18.
+  * Encode soil temperature (TGN_12) at termin 06 and 18.
+  * Discard PP and AA if one of them are discarded. Instead compute them from PO if availabel.
+  * Bugfix. In some instances when a message contained data from multiple ids we would loose data 
+    resulting in incomplete BUFR.
+  * Bugfix. When a stationid/typeid combination was in multiple BUFR sepecification. 
+  * Bugfix. Ignore logging of paramid==0. This is only noise.
+  * Use 32 bits for crc and compute CRC for the hole data set used.
+  
+ -- Kvalobs <kvalobs@met.no>  Thu, 26 Mar 2020 12:30:00 +0100
+
 kvbufrd (3.0.5~rc1-1) xenial; urgency=low
   * Changed encoding for B stations.
   * Encode state of ground, snow depth and soil temperature for each main termin, ie 00, 06, 12 and 18.
   * Discard PP and AA if one of them are discarded. Instead compute them from PO if availabel.
   * Bugfix. In some instances when a message contained data from multiple ids we would loose data 
     resulting in incomplete BUFR.
+  * Bugfix. When a stationid/typeid combination was in multiple BUFR sepecification. 
+  * Bugfix. Ignore logging of paramid==0. This is only noise.
+  * Use 32 bits for crc and compute CRC for the hole data set used.
+  * Encode TGN_12 only at 06 and 18 termins.
 
- -- Kvalobs <kvalobs@met.no>  Wed, 19 Mar 2020 10:30:00 +0100
+ -- Kvalobs <kvalobs@met.no>  Thu, 20 Mar 2020 13:45:00 +0100
 
 kvbufrd (3.0.4-1) xenial; urgency=low
   * New release.
