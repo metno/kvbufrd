@@ -203,7 +203,7 @@ validDataUseOnlyUseInfo( const Data &data )
    /*
    LOGDEBUG2("Validate: stationid: " << data.stationID() << " typeid: " << data.typeID()
              << " obstime: " << data.obstime()
-             << " paramid: " << data.paramID()
+             << " paramid/sensor/level: " << data.paramID() << "/" << data.sensor() << "/" << data.level()
              << " original: " << data.original()
              << " cflags: " << data.controlinfo()
              << " uflags: " << data.useinfo() << " u0: " << uinfo_0 << " u2: " << uinfo_2 << " u3: " << uinfo_3 << " cmis: "<< cinfo_mis );
@@ -223,8 +223,8 @@ validDataUseOnlyUseInfo( const Data &data )
       log << "REJECTED: stationid: " << data.stationID() << " typeid: " << data.typeID()
                           << " obstime: " << data.obstime()
                           << " paramid: " << data.paramID()
-                          << " original: " << data.original()
-                          << " (-32767 (missing))"
+                          << " original: " << data.original() << " (-32767 (missing))"
+                          << " sensor/level: " << data.sensor() << "/" << data.level()
                           << endl;
 
       return false;
@@ -235,8 +235,9 @@ validDataUseOnlyUseInfo( const Data &data )
       log << "REJECTED:"
             << " stationid: " << data.stationID()  << " typeid: " << data.typeID()
             << " obstime: " << data.obstime()
-            << " paramid: " << data.paramID()
+            << " paramid/sensor/level: " << data.paramID() << "/"  << data.sensor() << "/" << data.level()
             << " original: " << data.original()
+            
             << " useinfo(1)=" << uinfo.flag( 1 )
             << endl;
       return false;
@@ -247,7 +248,7 @@ validDataUseOnlyUseInfo( const Data &data )
             << " stationid: " << data.stationID()
             << " typeid: " << data.typeID()
             << " obstime: " << data.obstime()
-            << " paramid: " << data.paramID()
+            << " paramid/sensor/level: " << data.paramID() << "/" << data.sensor() << "/" << data.level()
             << " original: " << data.original()
             << " fmis=" << cinfo.flag(f_fmis)
             << endl;
@@ -259,7 +260,7 @@ validDataUseOnlyUseInfo( const Data &data )
             << " stationid: " << data.stationID()
             << " typeid: " << data.typeID()
             << " obstime: " << data.obstime()
-            << " paramid: " << data.paramID()
+            << " paramid/sensor/level: " << data.paramID() << "/" << data.sensor() << "/" << data.level()
             << " original: " << data.original()
             << " useinfo(3)=" << uinfo_3 << endl;
 
@@ -270,7 +271,7 @@ validDataUseOnlyUseInfo( const Data &data )
             << " stationid: " << data.stationID()
             << " typeid: " << data.typeID()
             << " obstime: " << data.obstime()
-            << " paramid: " << data.paramID()
+            << " paramid/sensor/level: " << data.paramID() << "/" << data.sensor() << "/" << data.level()
             << " original: " << data.original()
             << " useinfo(2)="<< uinfo_2
             << endl;

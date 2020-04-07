@@ -29,6 +29,7 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <math.h>
 #include "KvParam.h"
 #include "DataElementList.h"
 
@@ -50,8 +51,22 @@ numberOfValidParams() const
    return n;
 }
 
+void
+KvParam::Sensor::set(float value, int level) {
+   levels[level]=value;
+}
+
+float 
+KvParam::Sensor::getLevel(int level)const {
+   auto it = levels.find(level);
+   if( it == levels.end() )
+      return FLT_MAX;
+   return it->second;
+}
+
+
 KvParam::KvParam()
-   : id_(INT_MAX), value_(FLT_MAX )
+   : id_(INT_MAX), levelScale_(1)
 {
    KvParamList *params = DataElement::pParams.get();
 
@@ -60,9 +75,9 @@ KvParam::KvParam()
 }
 
 KvParam::
-KvParam( KvParamList &paramList, const char *name, int id )
-   : value_( FLT_MAX )
+KvParam( KvParamList &paramList, const char *name, int id, int levelScale )
 {
+   levelScale_= powf(static_cast<float>(10), static_cast<float>(levelScale));
    name_=name;
    id_ = id;
    paramList.params.push_back( this );
@@ -70,7 +85,7 @@ KvParam( KvParamList &paramList, const char *name, int id )
 
 KvParam::
 KvParam( KvParamList &paramList, const KvParam &param )
-   : name_( param.name_ ), id_( param.id_ ), value_( param.value_ )
+   : name_( param.name_ ), levelScale_(param.levelScale_), id_( param.id_ ), sensors_(param.sensors_)
 {
    paramList.params.push_back( this );
 }
@@ -81,8 +96,9 @@ operator=( const KvParam &rhs )
 {
    if( this != &rhs ) {
       name_ = rhs.name_;
+      levelScale_ = rhs.levelScale_;
       id_ = rhs.id_;
-      value_ = rhs.value_;
+      sensors_=rhs.sensors_;
    }
    return *this;
 }
@@ -91,29 +107,85 @@ KvParam&
 KvParam::
 operator=( float rhs )
 {
-   value_=rhs;
+   value(rhs, 0 , 0);
+   return *this;
 }
 
-/*
-KvParam&
-KvParam::
-operator=( int rhs )
-{
-   value_=rhs;
+KvParam::operator float()const{ 
+   return value(0,0);
 }
-*/
+
+
+KvParam::Sensor* KvParam::sensorRef(int sensor, bool addIfNotFound)
+{
+   auto it = sensors_.find(sensor);
+   if( it == sensors_.end() ) {
+      if(addIfNotFound) {
+         sensors_[sensor]=Sensor(sensor);
+      } else {
+         return nullptr;
+      }
+   }
+   return &sensors_[sensor];
+}
+
+
+bool 
+KvParam::
+valid(int sensor, int level )const 
+{ 
+   return value(sensor, level)!=FLT_MAX;
+}
+
 
 void
 KvParam::
-value( float val )
+value( float val, int sensor, int level )
 {
-   value_ = val;
+   auto s = sensorRef(sensor, true);
+   auto l=level*levelScale_;
+   s->set(val, l);
+}
+
+
+float 
+KvParam::
+value( int sensor, int level)const 
+{ 
+   auto s = const_cast<KvParam*>(this)->sensorRef( sensor, false);
+   if( !s )
+      return FLT_MAX;
+   return s->getLevel(level); 
 }
 
 int
 KvParam::
-valAsInt()const
+valAsInt(int sensor, int level )const
 {
-   return static_cast<int>( value_ + 0.5 );
+   auto v=value(sensor, level);
+   if( v==FLT_MAX)
+      return INT_MAX;
+   return static_cast<int>( v + 0.5 );
 }
 
+
+std::vector<int> 
+KvParam::sensors()const
+{
+   auto v = std::vector<int>(sensors_.size());
+   int i=0;
+   for( auto &s : sensors_){
+      v[i]=s.second.num;
+      i++;
+   }
+   return std::move(v);
+}
+
+KvParam::Sensor 
+KvParam::getSensor(int sensor)const
+{
+   auto it=sensors_.find(sensor);
+   if(it == sensors_.end())
+      return Sensor(sensor);
+   return it->second;
+}

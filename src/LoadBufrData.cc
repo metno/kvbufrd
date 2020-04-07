@@ -73,11 +73,11 @@ loadBufrData( const DataEntryList   &dl,
             //This may be to restrective. Shuold this be a configuration option for
             //the parameters we wish to overide this behavior for.
 
-            if(itd->sensor()==0 && itd->level()==0){
-               if( validate( *itd ) ) {
-                  //cerr << "LoadBufrData: '" << itd->obstime() << "' " << itd->paramID() << ", " << itd->typeID() << ", " << itd->original() << endl;
-                  bufrData.setData( itd->paramID(), itd->typeID(), itd->original() );
-               }
+
+            if( validate( *itd ) ) {
+              //cerr << "LoadBufrData: '" << itd->obstime() << "' " << itd->paramID() << ", " << itd->typeID() << ", " << itd->original() << endl;
+              bufrData.setData( itd->paramID(), itd->typeID(), 
+              itd->sensor(), itd->level(), itd->original() );
             }else{
                log << "NOT USED. sid: " << itd->stationID()
                        << " tid: " << itd->typeID()

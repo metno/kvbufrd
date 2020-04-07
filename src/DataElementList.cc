@@ -269,27 +269,30 @@ bool
 DataElement::
 setData( int  param,
          int typeid_,
+         int  sensor,
+				 int level,
          const std::string &data_)
 {
-    float       fData;
+  float       fData;
 
-    if(data_.empty())
-      return true;
+  if(data_.empty())
+    return true;
 
-    if(sscanf(data_.c_str(),"%f", &fData)!=1){
-      fData=FLT_MAX;
-      return false;
-    }
+  if(sscanf(data_.c_str(),"%f", &fData)!=1){
+    fData=FLT_MAX;
+    return false;
+  }
 
     
-    KvParamList::iterator pit = params.begin();
+  KvParamList::iterator pit = params.begin();
 
-    for( ; pit != params.end(); ++pit ) {
-    	if( (*pit)->id() == param ) {
-    		**pit = fData;
-    		break;
-    	}
-    }
+  for( ; pit != params.end(); ++pit ) {
+  	if( (*pit)->id() == param ) {
+   		//**pit = fData;
+      (*pit)->value(fData, sensor, level); 
+   		break;
+   	}
+  }
 
 	if( pit == params.end() ) 
 		return false;

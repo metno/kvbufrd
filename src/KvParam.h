@@ -34,37 +34,62 @@
 #include <float.h>
 #include <string>
 #include <list>
+#include <map>
+#include <vector>
+
 
 class KvParamList;
 
 class KvParam {
+public:
+   struct Sensor {
+      int num;
+      std::map<int, float> levels;
+      float getLevel(int level)const;
 
+      Sensor():num(-1){}
+      Sensor( int sensor):num(sensor){}
+      
+      Sensor( const Sensor &s):num(s.num), levels(s.levels){}
+   private:
+      friend class KvParam;
+      void set(float value, int level);
+   };
+
+private:
    std::string name_;
+   int         levelScale_;
    int         id_;
-   float       value_;
+   std::map<int, Sensor>  sensors_;
+
+   Sensor* sensorRef(int sensor, bool addIfNotFound);
 
 public:
    KvParam();
    KvParam( const KvParam &param)
-      : name_( param.name_ ), id_( param.id_ ), value_(param.value_){};
+      : name_( param.name_ ), levelScale_(param.levelScale_), id_( param.id_ ), sensors_(param.sensors_){};
 
-   KvParam( KvParamList &paramList, const char *name, int id );
+   KvParam( KvParamList &paramList, const char *name, int id, int levelScale=0 );
    KvParam( KvParamList &paramList, const KvParam &param );
 
-   operator float()const{ return value_;}
+   operator float()const;
    //operator double()const{ return static_cast<double>(value_);}
 
    KvParam& operator=( const KvParam &rhs );
    KvParam& operator=( float rhs );
+
    //KvParam& operator=( int rhs );
 
    std::string name()const { return name_; }
+
    int id()const{ return id_;}
 
-   bool valid()const { return value_ != FLT_MAX; }
-   void value( float val );
-   float value()const { return value_; }
-   int valAsInt()const;
+   bool valid(int sensor=0, int level=0 )const;
+   void value( float val, int sensor=0, int level=0 );
+   float value( int sensor=0, int level=0 )const;
+   int valAsInt(int sensor=0, int level=0)const;
+   std::vector<int> sensors()const;
+   Sensor getSensor(int sensor)const; 
 };
 
 

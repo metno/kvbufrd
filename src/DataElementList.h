@@ -206,6 +206,8 @@ private:
 
   	bool setData( int  param,
   	              int  typeid_,
+									int  sensor,
+									int level,
 				     const std::string &data_ );
 
   	/**
