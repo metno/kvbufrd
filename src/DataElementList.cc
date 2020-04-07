@@ -176,7 +176,25 @@ DataElement():
     WTZ( params, "WTZ", 160 ),
     Pwa( params, "Pwa", 154 ),
     Pw( params, "Pw", 151 ),
-    WHM0( params, "WHM0", 136),
+    CD(params, "CD",290),
+		CV(params, "CV", 291),   //Havstrøm, fart
+		CSW(params, "CSW", 295),  //Elektrisk konduktivitet i sjøvann
+    SSW(params, "SSW", 296),  //Saltholdighet i sjøvann 
+    WDHF(params,"WDHF",10633), //Bølgeretning høyfrekvente bølger
+		WDLF(params,"WDLF", 10637), //Bølgeretning lavfrekvente bølger 
+		WHM0(params,"WHM0", 136), //Signifikant bølgehøyde
+		WHM0HF(params,"WHM0HF",10609), //høyfrekvent signifikant bølgehøyde
+		WHM0LF(params,"WHM0LF",10610), //lavfrekvent signifikant bølgehøyde
+		WHMAX(params,"WHMAX", 135),  //Høyde på den høyeste individuelle bølgen
+		WSPRTP(params,"WSPRTP",10621), //Spredning ved spektral peak periode
+		WTHHF(params,"WTHHF", 10623),  //midlere høyfrekvente bølgeretning
+		WTHMAX(params,"WTHMAX",155), //Perioden til den høyeste bølgen
+		WTHTP(params,"WTHTP",10625), //Midlere bølgeretning ved maks i spekteret, tilhører WTP
+		WTM01(params,"WTM01",166), //Bølgeperiode tilsvarende midlere frekvens i spekteret
+	  WTM02(params,"WTM02",10627), //bølgeperiode
+	  WTM02HF(params,"WTM02HF",10632), //Høyfrekvent bølgeperiode
+    WTM02LF(params,"WTM02LF",10631), //Lavfrekvent bølgeperiode
+    WTP(params,"WTP", 157),    //Perioden som svarer til maksimum i spektret
     Hwa( params, "Hwa", 134 ),
     Hw( params, "Hw", 131 ),
     nSet( 0 ),

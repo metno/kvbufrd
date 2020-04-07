@@ -103,6 +103,9 @@ public:
          }
 
       }
+      bool valid()const {
+         return RR!=FLT_MAX && hTr != FLT_MAX;
+      }
 
       friend std::ostream &operator<<(std::ostream &o, const Precip &precip );
    };
@@ -131,6 +134,10 @@ public:
          return *this;
       }
 
+      bool valid() const {
+         return vsci != INT_MAX || Ns != INT_MAX || C != INT_MAX || hshs!=FLT_MAX;
+      }
+      
       void crcHelper(std::ostream &o, const std::string &which )const {
          using std::endl;
          if( vsci != INT_MAX ) {

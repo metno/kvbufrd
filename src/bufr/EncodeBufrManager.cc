@@ -42,6 +42,7 @@
 #include "EncodeBufr301089.h"
 #include "EncodeBufr301090.h"
 #include "EncodeBufr301093.h"
+#include "EncodeBufr301126.h"
 #include "EncodeBufr302001.h"
 #include "EncodeBufr302004.h"
 #include "EncodeBufr302005.h"
@@ -70,12 +71,22 @@
 #include "EncodeBufr302058.h"
 #include "EncodeBufr302059.h"
 #include "EncodeBufr302060.h"
+#include "EncodeBufr302082.h"
+#include "EncodeBufr302091.h"
+#include "EncodeBufr306004.h"
+#include "EncodeBufr306005.h"
+#include "EncodeBufr306038.h"
+#include "EncodeBufr306039.h"
+#include "EncodeBufr306040.h"
+#include "EncodeBufr306041.h"
 #include "EncodeBufr307079.h"
 #include "EncodeBufr308009.h"
 #include "EncodeBufr900000_SYNOP.h"
 #include "EncodeBufr900001_Bstations.h"
 #include "EncodeBufr900002_PRECIP_AND_SNOW.h"
 #include "EncodeBufr900003_SHIP.h"
+#include "EncodeBufr900004_SVV.h"
+#include "EncodeBufr900005_MOORED_BUOY.h"
 #include "GuessBufrTemplate.h"
 
 
@@ -92,6 +103,7 @@ EncodeBufrManager()
    addEncoder( new EncodeBufr301089() );
    addEncoder( new EncodeBufr301090() );
    addEncoder( new EncodeBufr301093() );
+   addEncoder( new EncodeBufr301126() );
    addEncoder( new EncodeBufr302001() );
    addEncoder( new EncodeBufr302004() );
    addEncoder( new EncodeBufr302005() );
@@ -120,12 +132,22 @@ EncodeBufrManager()
    addEncoder( new EncodeBufr302058() );
    addEncoder( new EncodeBufr302059() );
    addEncoder( new EncodeBufr302060() );
+   addEncoder( new EncodeBufr302082() );
+   addEncoder( new EncodeBufr302091() );
+   addEncoder( new EncodeBufr306004() );
+   addEncoder( new EncodeBufr306005() );
+   addEncoder( new EncodeBufr306038() );
+   addEncoder( new EncodeBufr306039() );
+   addEncoder( new EncodeBufr306040() );
+   addEncoder( new EncodeBufr306041() );
    addEncoder( new EncodeBufr307079() );
    addEncoder( new EncodeBufr308009() );
    addEncoder( new EncodeBufr900000() );
    addEncoder( new EncodeBufr900001() );
    addEncoder( new EncodeBufr900002() );
    addEncoder( new EncodeBufr900003() );
+   addEncoder( new EncodeBufr900004() );
+   addEncoder( new EncodeBufr900005() );
 }
 
 bool

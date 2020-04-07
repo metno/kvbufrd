@@ -26,6 +26,7 @@ libbufr_la_SOURCES = \
     EncodeBufr301089.cc EncodeBufr301089.h \
     EncodeBufr301090.cc EncodeBufr301090.h \
     EncodeBufr301093.cc EncodeBufr301093.h \
+    EncodeBufr301126.cc EncodeBufr301126.h \
     EncodeBufr302001.cc EncodeBufr302001.h \
     EncodeBufr302004.cc EncodeBufr302004.h \
     EncodeBufr302005.cc EncodeBufr302005.h \
@@ -54,14 +55,25 @@ libbufr_la_SOURCES = \
     EncodeBufr302058.cc EncodeBufr302058.h \
     EncodeBufr302059.cc EncodeBufr302059.h \
     EncodeBufr302060.cc EncodeBufr302060.h \
+    EncodeBufr302082.cc EncodeBufr302082.h \
+    EncodeBufr302091.cc EncodeBufr302091.h \
+    EncodeBufr306004.cc EncodeBufr306004.h \
+    EncodeBufr306005.cc EncodeBufr306005.h \
+    EncodeBufr306038.cc EncodeBufr306038.h \
+    EncodeBufr306039.cc EncodeBufr306039.h \
+    EncodeBufr306040.cc EncodeBufr306040.h \
+    EncodeBufr306041.cc EncodeBufr306041.h \
     EncodeBufr307079.cc EncodeBufr307079.h \
     EncodeBufr308009.cc EncodeBufr308009.h \
+    EncodeBufr315008.cc EncodeBufr315008.h \
     EncodeBufr900000_SYNOP.cc EncodeBufr900000_SYNOP.h \
     EncodeBufr900001_Bstations.cc EncodeBufr900001_Bstations.h \
     EncodeBufr900002_PRECIP_AND_SNOW.cc EncodeBufr900002_PRECIP_AND_SNOW.h \
-    EncodeBufr900003_SHIP.cc EncodeBufr900003_SHIP.h
+    EncodeBufr900003_SHIP.cc EncodeBufr900003_SHIP.h \
+    EncodeBufr900004_SVV.cc EncodeBufr900004_SVV.h \
+    EncodeBufr900005_MOORED_BUOY.cc EncodeBufr900005_MOORED_BUOY.h
+    
 
-#EncodeBufr900001_SVV.cc EncodeBufr900001_SVV.h 
 
 libbufr_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" \

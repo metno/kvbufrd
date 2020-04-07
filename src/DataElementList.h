@@ -173,7 +173,25 @@ private:
   	KvParam WTZ; //Mean wave period.
   	KvParam Pwa;  //Period of waves.
   	KvParam Pw;   //Period of wind waves.
-  	KvParam WHM0;
+		KvParam CD;   //Havstrøm, retning
+		KvParam CV;   //Havstrøm, fart
+		KvParam CSW;  //Elektrisk konduktivitet i sjøvann
+		KvParam SSW;  //Saltholdighet i sjøvann
+		KvParam WDHF; //Bølgeretning høyfrekvente bølger
+		KvParam WDLF; //Bølgeretning lavfrekvente bølger 
+		KvParam WHM0; //Signifikant bølgehøyde
+		KvParam WHM0HF; //høyfrekvent signifikant bølgehøyde
+		KvParam WHM0LF; //lavfrekvent signifikant bølgehøyde
+		KvParam WHMAX;  //Høyde på den høyeste individuelle bølgen
+		KvParam WSPRTP; //Spredning ved spektral peak periode
+		KvParam WTHHF;  //midlere høyfrekvente bølgeretning
+		KvParam WTHMAX; //Perioden til den høyeste bølgen
+		KvParam WTHTP; //Midlere bølgeretning ved maks i spekteret, tilhører WTP
+		KvParam WTM01; //Bølgeperiode tilsvarende midlere frekvens i spekteret
+	  KvParam WTM02; //bølgeperiode
+	  KvParam WTM02HF; //Høyfrekvent bølgeperiode
+    KvParam WTM02LF; //Lavfrekvent bølgeperiode
+    KvParam WTP;    //Perioden som svarer til maksimum i spektret
   	KvParam Hwa;  //Height of waves.
   	KvParam Hw;   //Height of wind waves.
   	int nSet;

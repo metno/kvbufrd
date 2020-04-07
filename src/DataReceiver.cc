@@ -153,6 +153,7 @@ void DataReceiver::newData(const DataEvent &event) {
   pt::ptime toTime;
   pt::ptime fromTime;
   DataKeySet dataInserted;
+  auto producer = event.producer();
   auto data = event.data();
 
 
@@ -238,6 +239,7 @@ void DataReceiver::newData(const DataEvent &event) {
            << "       obstime: " << dit->obstime() << endl 
            << "        typeid: " << dit->typeID() << endl 
            << "   #parameters: " << get<0>(it).size() << endl
+           <<"       producer: " << producer << endl
            << "Accepting data in time interval: " << pt::to_kvalobs_string(fromTime) << " - " << pt::to_kvalobs_string(toTime) << endl
            << "Data: " << endl
            << o.str());

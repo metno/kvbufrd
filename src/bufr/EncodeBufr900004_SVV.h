@@ -29,8 +29,8 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef __ENCODE_BUFR_900001__
-#define __ENCODE_BUFR_900001__
+#ifndef __ENCODE_BUFR_900004_SVV__
+#define __ENCODE_BUFR_900004_SVV__
 
 #include "EncodeBufrBase.h"
 
@@ -49,15 +49,15 @@
  * is generated at hh:00.
  */
 
-class EncodeBufr900001 :
+class EncodeBufr900004 :
    public EncodeBufrBase {
 
 protected:
    virtual void encode(  );
 
 public:
-   EncodeBufr900001();
-   ~EncodeBufr900001();
+   EncodeBufr900004();
+   ~EncodeBufr900004();
 
    virtual std::string logIdentifier() const;
    virtual std::list<int> encodeIds()const;

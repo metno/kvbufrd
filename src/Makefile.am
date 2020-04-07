@@ -87,6 +87,15 @@ kvbase64_SOURCES = \
 	kvbase64.cc \
   base64.cc base64.h 
 
+kvbase64_LDADD = \
+    $(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) \
+    $(BOOST_FILESYSTEM_LIB) \
+    $(BOOST_DATE_TIME_LIB) \
+    $(BOOST_SYSTEM_LIB) \
+    -lm -ldl
+
+
+
 kvmd5sum_SOURCES = \
 	kvmd5sum.cc \
   md5.cc md5.h 

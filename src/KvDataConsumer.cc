@@ -66,8 +66,14 @@ KvDataConsumer::debugMsgWriter(const std::string &message, const kvalobs::serial
 }
 
 namespace {
-  void logReceived(const std::list<kvalobs::kvData> &data) {
+  void logReceived(const std::list<kvalobs::kvData> &data, const std::string &producer_) {
     using namespace std;
+    string producer(producer_);
+
+    if( producer.empty() ) {
+      producer="<unkown>";
+    }
+
     ostringstream o;
     map<string, int> received;
     for( auto &e : data){
@@ -78,7 +84,7 @@ namespace {
 
     if( received.size()>0) {
       for( auto &e : received) {
-        o << e.first << " #" << e.second << " params";
+        o << e.first << " #" << e.second << " params, producer: " << producer;
         IDLOGINFO("kafka_received", o.str());
         o.str("");
       }
@@ -99,11 +105,11 @@ KvDataConsumer::newData(const kvalobs::serialize::KvalobsData& dataIn, const std
   dataIn.data(textData);
 
   if( data.empty() && textData.empty()) {
-    IDLOGINFO("kafka", "Empty data received");
+    IDLOGINFO("kafka", "Empty data received\nXML [" << msg << "]");
     return;
   }
 
-  logReceived(data);
+  logReceived(data, dataIn.producer());
   
   kvalobs::KvObsDataMapPtr map(new kvalobs::KvObsDataMap());
   map->add(data);

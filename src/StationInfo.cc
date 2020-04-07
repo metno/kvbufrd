@@ -663,6 +663,18 @@ longitude( float lon, bool ifUnset )
       longitude_ = lon;
 }
 
+int  
+StationInfo::
+callsignAsInt()const{
+   std::string::size_type idx;
+   auto i = std::stoi(callsign_, &idx);
+   if( ! callsign_.substr(i).empty()) {
+      return INT_MAX;
+   }
+   return i;
+}
+
+
 void
 StationInfo::
 name( const std::string &n, bool ifUnset )

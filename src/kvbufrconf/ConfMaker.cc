@@ -750,7 +750,7 @@ doSVVConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
    std::list<int> networksids;
 
    boost::assign::push_back( networksids)(33);
-   boost::assign::push_back( codeList )( 1 );//BUFR template for SVV
+   boost::assign::push_back( codeList )( 4 );//BUFR template for SVV
 
    app.loadNetworkStation( networkStations, networksids );
 
@@ -785,7 +785,7 @@ doSVVConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
          nValues++;
       }
 
-      if( decodeProductCoupling( "typepriority=505", pStation  ) )
+      if( decodeProductCoupling( "typepriority=510", pStation  ) )
          nValues++;
 
       //TODO: At the moment we hardcode the 'owner' and 'list'

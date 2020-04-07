@@ -30,40 +30,40 @@
 */
 #include <boost/assign.hpp>
 #include <boost/assign.hpp>
-#include "EncodeBufr900001_SVV.h"
+#include "EncodeBufr900004_SVV.h"
 
 namespace b=boost;
 
 
-EncodeBufr900001::
-EncodeBufr900001()
+EncodeBufr900004::
+EncodeBufr900004()
 {
 }
-EncodeBufr900001::
-~EncodeBufr900001()
+EncodeBufr900004::
+~EncodeBufr900004()
 {
 }
 
 
 std::string
-EncodeBufr900001::
+EncodeBufr900004::
 logIdentifier() const
 {
-   return "900001";
+   return "900004";
 }
 
 std::list<int>
-EncodeBufr900001::
+EncodeBufr900004::
 encodeIds()const
 {
    std::list<int> ids;
-   boost::assign::push_back( ids )(900001);
+   boost::assign::push_back( ids )(900004);
 
    return ids;
 }
 
 void
-EncodeBufr900001::
+EncodeBufr900004::
 encode()
 {
    BufrTemplateList templateList;

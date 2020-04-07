@@ -7,7 +7,6 @@
 
 using namespace std;
 
-
 boost::uint16_t
 crc( const std::string &buf )
 {

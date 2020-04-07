@@ -1231,17 +1231,17 @@ Bufr::doPrecip( StationInfoPtr     info,
     	h_tr = precipFromRA( RR1, nedboerTotal, fRR24, bufrData );
     	ost << "doPrecip: EPrecipitationParam: RA    (Automatisk)" << endl
 			<< "                   RR_24: " << fRR24          << endl
-			<< "                  nedb�r: " << nedboerTotal   << endl
+			<< "                  nedbør: " << nedboerTotal   << endl
 			<< "                    h_tr: " << h_tr             << endl;
   	}else if(precipitationParam==PrecipitationRR){
     	h_tr = precipFromRR( RR1, nedboerTotal, fRR24, bufrData );
     	ost << "doPrecip: EPrecipitationParam: RR    (Automatisk)" << endl
-    	    << "                nedb�r: " << nedboerTotal << endl
+    	    << "                nedbør: " << nedboerTotal << endl
     	    << "                  h_tr: " << h_tr << endl;
   	}else if(precipitationParam==PrecipitationRR_N){
     	ost << "doPrecip: EPrecipitationParam: RR_N, hvor N=1,3,6,12,24" << endl;
     	h_tr = precipFromRrN( RR1, nedboerTotal, fRR24, bufrData );
-    	ost << "                 nedb�r: " << nedboerTotal << endl
+    	ost << "                 nedbør: " << nedboerTotal << endl
     	    << "                   h_tr: " << h_tr << endl;
   	}else if(precipitationParam==PrecipitationRRR){
     	ost << "doPrecip: PrecipitationParam: RRR  (Manuell)" << endl;
@@ -1253,7 +1253,7 @@ Bufr::doPrecip( StationInfoPtr     info,
     	   RR1 = precipFromRA( 1, bufrData );
 
     	ost << "                   RR_24: " << fRR24          << endl
-          << "                  nedb�r: " << nedboerTotal   << endl;
+          << "                  nedbør: " << nedboerTotal   << endl;
   	}else {
     	ost << "PrecipitationParam: UNKNOWN" << endl;
     	return;

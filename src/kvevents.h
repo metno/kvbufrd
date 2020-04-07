@@ -60,23 +60,32 @@ class KvEventBase : public dnmi::thread::CommandBase {
 class DataEvent : public KvEventBase {
   kvalobs::KvObsDataMapPtr data_;
   std::string    inCommingMessage_;
+  std::string    producer_;
 
  public:
-  DataEvent(kvalobs::KvObsDataMapPtr data)
-      : data_(data) {
-  }
+   DataEvent(kvalobs::KvObsDataMapPtr data)
+   : data_(data) {
+   }
 
-  void inCommingMessage( const std::string &m ) {
-    inCommingMessage_=m;
-  }
+   void inCommingMessage( const std::string &m ) {
+      inCommingMessage_=m;
+   }
 
-  std::string inCommingMessage()const {
-    return inCommingMessage_;
-  }
+   std::string inCommingMessage()const {
+      return inCommingMessage_;
+   }
 
-  kvalobs::KvObsDataMapPtr data() const {
-    return data_;
-  }
+   std::string producer() const {
+      return producer_;
+   }
+
+   void producer(const std::string &prod ) {
+      producer_=prod;
+   }
+
+   kvalobs::KvObsDataMapPtr data() const {
+      return data_;
+   }
 };
 
 

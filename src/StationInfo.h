@@ -497,6 +497,12 @@ public:
    float     longitude()const { return longitude_; }
    void      longitude( float lon, bool ifUnset=true );
    int       wmono()const{ return wmono_;}
+
+   /**
+    * return callsign as a number if possible.
+    * return MAX_INT, if it is not a number.
+    */
+   int       callsignAsInt()const;
    std::string callsign()const { return callsign_;}
    std::string name()const{ return name_; }
    void      name( const std::string &n, bool ifUnset=true );
