@@ -54,7 +54,7 @@ public:
    operator float()const{ return value_;}
    //operator double()const{ return static_cast<double>(value_);}
 
-   KvParam& operator=( const KvParam &rhs );
+   //KvParam& operator=( const KvParam &rhs );
    KvParam& operator=( float rhs );
    //KvParam& operator=( int rhs );
 

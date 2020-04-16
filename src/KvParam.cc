@@ -75,6 +75,7 @@ KvParam( KvParamList &paramList, const KvParam &param )
    paramList.params.push_back( this );
 }
 
+/*
 KvParam&
 KvParam::
 operator=( const KvParam &rhs )
@@ -86,6 +87,7 @@ operator=( const KvParam &rhs )
    }
    return *this;
 }
+*/
 
 KvParam&
 KvParam::

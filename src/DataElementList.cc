@@ -34,6 +34,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <set>
 #include "decodeutility/decodeutility.h"
 #include "miutil/timeconvert.h"
 #include "DataElementList.h"
@@ -101,7 +102,7 @@ DataElement():
     DG(params, "DG", 63 ),
     DG_010( params, "DG_010", 77 ),
     DG_1( params, "DG_1", 78 ),
-    DG_6( params, "DG_1", 79 ),
+    DG_6( params, "DG_6", 79 ),
     DX(params, "DX", 67 ),
     DX_3(params, "DX_3", 74 ),
     RA(params, "RA", 104), 
@@ -201,6 +202,20 @@ DataElement():
     onlyTypeid1( true )
 
 {
+  std::set<int> dup1;
+  std::set<string> dup2;
+  for(auto &p : params ) {
+    auto d1 = dup1.insert(p->id());
+    auto d2 = dup2.insert(p->name());
+
+    if( !d1.second ) {
+      cerr << "DataElementList: DTOR duplicate id: " << p->id() << endl;
+    }
+    if( !d2.second ) {
+      cerr << "DataElementList: DTOR duplicate name: " << p->name() << endl;
+    }
+  }
+
 }
 
 DataElement::
@@ -211,17 +226,17 @@ DataElement( const DataElement &p):
    onlyTypeid1( p.onlyTypeid1 ),
    typeidList( p.typeidList )
 {
-   if( params.size() != p.params.size() ) {
-      cerr << "FATAL BUG CTOR: Something nasty have happend.  DataElement copy CTOR  size differ!" << params.size() << " " << p.params.size() << endl;
-      abort();
-   }
+  if( params.size() != p.params.size() ) {
+    cerr << "FATAL BUG CTOR: Something nasty have happend.  DataElement copy CTOR  size differ!" << params.size() << " " << p.params.size() << endl;
+    abort();
+  }
 
-   KvParamList::const_iterator itSource = p.params.begin();
-   KvParamList::iterator itDest = params.begin();
+  KvParamList::const_iterator itSource = p.params.begin();
+  KvParamList::iterator itDest = params.begin();
 
-   for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
-      **itDest = **itSource;
-   }
+  for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
+    **itDest = **itSource;
+  }
 }
 
 DataElement&
@@ -229,30 +244,41 @@ DataElement::
 operator=(const DataElement &p)
 {
 
-   if(this != &p) {
-      if( params.size() != p.params.size() ) {
-         cerr << "FATAL BUG: Something nasty have happend.  DataElement Operator= params size differ!" << params.size() << " " << p.params.size() << endl;
-         abort();
+  if(this != &p) {
+    if( params.size() != p.params.size() ) {
+      cerr << "FATAL BUG: Something nasty have happend.  DataElement Operator= params size differ!" << params.size() << " " << p.params.size() << endl;
+      abort();
+    }
+
+    time_            = p.time_;
+    KvParamList::const_iterator itSource = p.params.begin();
+    KvParamList::iterator itDest = params.begin();
+
+    int i=0;
+    cerr << "Params: \n";
+    for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
+      i++;
+      cerr << i << " : " << (*itSource)->id() << " " << (*itDest)->id() << endl;
+    }
+
+    itSource = p.params.begin();
+    itDest = params.begin();
+    i=0;
+    for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
+      i++;
+      cerr << i << " : " << (*itSource)->id() << " " << (*itDest)->id() << endl;
+      if( (*itSource)->id() != (*itDest)->id() ) {
+        cerr << "FATAL BUG: Something nasty have happend.  DataElement Operator= params id differ!" << (*itDest)->id() << " " << (*itSource)->id() << " i: " << i << endl;
+        cerr << "FATAL BUG: Check that the default CTOR and the copy CTOR have the same KvParams in the same order." << endl;
+        abort();
       }
+      **itDest = **itSource;
+    }
 
-      time_            = p.time_;
-      KvParamList::const_iterator itSource = p.params.begin();
-      KvParamList::iterator itDest = params.begin();
-
-      for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
-         if( (*itSource)->id() != (*itDest)->id() ) {
-            cerr << "FATAL BUG: Something nasty have happend.  DataElement Operator= params id differ!" << (*itDest)->id() << " " << (*itSource)->id() << endl;
-            cerr << "FATAL BUG: Check that the default CTOR and the copy CTOR have the same KvParams in the same order." << endl;
-            abort();
-         }
-         **itDest = **itSource;
-      }
-
-      nSet             = p.nSet;
-      onlyTypeid1      = p.onlyTypeid1;
-      typeidList       = p.typeidList;
-
-   }
+    nSet             = p.nSet;
+    onlyTypeid1      = p.onlyTypeid1;
+    typeidList       = p.typeidList;
+  }
 
    return *this;
 }
@@ -271,44 +297,43 @@ setData( int  param,
          int typeid_,
          const std::string &data_)
 {
-    float       fData;
+  float       fData;
 
-    if(data_.empty())
-      return true;
+  if(data_.empty())
+    return true;
 
-    if(sscanf(data_.c_str(),"%f", &fData)!=1){
-      fData=FLT_MAX;
-      return false;
-    }
-
+  if(sscanf(data_.c_str(),"%f", &fData)!=1){
+    fData=FLT_MAX;
+    return false;
+  }
     
-    KvParamList::iterator pit = params.begin();
+  KvParamList::iterator pit = params.begin();
 
-    for( ; pit != params.end(); ++pit ) {
-    	if( (*pit)->id() == param ) {
-    		**pit = fData;
-    		break;
-    	}
-    }
+  for( ; pit != params.end(); ++pit ) {
+  	if( (*pit)->id() == param ) {
+   		**pit = fData;
+   		break;
+   	}
+  }
 
 	if( pit == params.end() ) 
 		return false;
 
-    nSet++;
+  nSet++;
 
-    if( typeid_ != 1 )
-       onlyTypeid1 = false;
+  if( typeid_ != 1 )
+    onlyTypeid1 = false;
     
-    std::list<int>::iterator it = typeidList.begin();
+  std::list<int>::iterator it = typeidList.begin();
 
-    for( ; it != typeidList.end(); ++it )
-       if( *it == typeid_ )
-          break;
+  for( ; it != typeidList.end(); ++it )
+    if( *it == typeid_ )
+      break;
 
-    if( it == typeidList.end() )
-       typeidList.push_back( typeid_ );
+  if( it == typeidList.end() )
+    typeidList.push_back( typeid_ );
 
-    return true;
+  return true;
 }
 
 void
