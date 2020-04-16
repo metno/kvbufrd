@@ -62,38 +62,28 @@ encode( )
 {
   //Start her
 
-  bufr->addDelayedReplicationFactor(31000, 0);
+  auto CD = data->CD.getSensor(0);
+  auto CV = data->CV.getSensor(0);
 
-
-  // //Pressure data
-  // bufr->addValue( 10004, data->PO, "P0" );
-  // bufr->addValue( 10051, data->PR, "PP" );
+  if( CV.levels.size() == 0) { 
+    bufr->addDelayedReplicationFactor(31000, 0);
+    return;
+  }
   
-   
-  // //temperature 
-  // bufr->addValue( 7033, stationInfo->heightTemperature(), "Height of sensor above water surface" );
-  // bufr->addValue( 12101, data->TA, "TA" );
-  // bufr->addValue( 12103, data->TD, "TD, dew-point temperature" );
-  // bufr->addValue( 13003, data->UU, "UU, relativ humidity" );
+  bufr->addDelayedReplicationFactor(31000, 1);
 
-  // //wind
-  //  bufr->addValue(  7033, stationInfo->heightWind(), "Height of sensor above water surface", false);
-  //  bufr->addValue(  8021, 2, "Time significance (=2: time averaged)", false);
-  //  bufr->addValue(  4025, static_cast<float>(-10), "Time period or displacement (minutes)", false);
-  //  bufr->addValue( 11001, data->DD, "DD, wind direction");
-  //  bufr->addValue( 11002, data->FF, "FF, wind speed");
-  //  bufr->addValue(  8021, INT_MAX, "Time significance", false);
-
-  // //Gust
-  // bufr->addValue(  4025, (data->FG_010.valid()?static_cast<float>(-10):FLT_MAX), "Time period or displacement (minutes)", false, "GUST");
-  // bufr->addValue( 11041, data->FG_010, "FG_010, wind speed (gust)"), true, "GUST";
-
-  // //Sea temperature
-  // bufr->addValue(  4025, FLT_MAX, "Time period or displacement (minutes)", false);
-  // bufr->addValue( 7033, FLT_MAX, "Height of sensor above water surface.", false);
-  // bufr->addValue(2005,FLT_MAX, "Precision of temperature observation (K)", false);
-  // bufr->addValue( 7063, 0.5f, "Sea/water depth of measurement (cm)", false );
-  // bufr->addValue( 22049, data->TW, "Sea/water temperature" );
-  
+  bufr->addValue( 2031, 31, "Duration and time of current measurement (code tbl 31 = missing)", false );
+  bufr->addDelayedReplicationFactor(31001, CV.levels.size());
+  float cd;
+  for ( auto &e : CV.levels ) {
+    bufr->addValue(7062, e.first, "CV");
+    cd = CV.getLevel(e.first);
+    if( cd != FLT_MAX) {
+      bufr->addValue(22004, static_cast<int>(cd + 0.5), "CD");
+    } else {
+      bufr->addValue(22004, INT_MAX, "CD");
+    }
+    bufr->addValue(22031, e.second, "CV");
+  }
 }
 

@@ -1,3 +1,68 @@
+# Usage:
+# GMOCK_DIST_CHECK([compile_location])
+# If gtest and/or gmock headers are found, but not libraries, googletest may be 
+# automatically compiled in the given location - but you need to provide 
+# makefiles/rules for that yourself. The path will be relative to top_builddir 
+
+AC_DEFUN([BUILD_GTEST],
+[
+AC_ARG_WITH([disable-gtest],
+    [AS_HELP_STRING([--disable-gtest], [Do not build the gtest library and disable testing])],
+    [enable_test=false],
+    [enable_test=true])
+
+AS_IF([test "x${enable_test} = xtrue"],
+	[AC_MSG_NOTICE([enable gtest])],
+	[AC_MSG_NOTICE([disable gtest])])
+
+gtest_includes="-I$(pwd)/src/gtest/gtest/googletest/include"
+gmock_includes="-I$(pwd)/src/gtest/gtest/googlemock/include"
+#CPPFLAGS="${gtest_includes} ${gmock_includes} $CPPFLAGS"
+gtest_CFLAGS="${gtest_includes}"
+gmock_CFLAGS="${gtest_includes} ${gmock_includes}"
+gtest_LIBS="-L$(pwd)/src/gtest -lgtest"
+gmock_LIBS="-L$(pwd)/src/gtest -lgmock -lgtest "
+
+
+
+
+
+#Disable testing for the moment, fix this later. Must fix the build in bionic
+AM_CONDITIONAL(ENABLE_GTEST, [test x${enable_test} = xtrue])
+AM_CONDITIONAL(HAVE_GTEST, [test x${enable_test} = xtrue])
+AM_CONDITIONAL(HAVE_GMOCK, [test x${enable_test} = xtrue])
+
+
+#AM_CONDITIONAL(HAVE_GTEST, [test x${have_gtest} = xtrue])
+#AM_CONDITIONAL(HAVE_GMOCK, [test x${have_gmock} = xtrue])
+#AM_CONDITIONAL(MUST_COMPILE_GTEST, [test x${must_compile_gtest} = xtrue -a x${have_gtest} = xtrue])
+#AM_CONDITIONAL(MUST_COMPILE_GMOCK, [test x${must_compile_gmock} = xtrue -a x${have_gmock} = xtrue])
+
+AC_SUBST(gtest_CFLAGS)
+AC_SUBST(gtest_LIBS)
+AC_SUBST(gmock_CFLAGS)
+AC_SUBST(gmock_LIBS)
+])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Usage:
 # GTEST_CHECK([compile_location])

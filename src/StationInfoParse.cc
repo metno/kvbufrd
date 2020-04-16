@@ -435,7 +435,7 @@ parseSection( miconf::ConfSection *stationConf,
 
    //TODO: At the moment we hardcode the BUFR 'code' value to
    //0 (SYNOP) if it is NOT given and we have a wmo number.
-   if( st->wmono() > 0 && st->code().empty() ) {
+   if( st->wmono() > 0 && st->code_.empty() ) {
       st->code_.push_back( 0 );//Default value 0 is SYNOP.
       LOGDEBUG("Missing code for station <" << st->toIdentString()
               <<"> Setting 'code' to: 0 (SYNOP)." );

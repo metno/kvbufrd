@@ -56,44 +56,31 @@ encodeIds()const
 
 
 
+
+
 void
 EncodeBufr306004::
 encode( )
 {
-  //Start her
+  auto ssw = data->SSW.getBySensorsAndLevels();
 
-  bufr->addDelayedReplicationFactor(31000, 0);
-
-
-  // //Pressure data
-  // bufr->addValue( 10004, data->PO, "P0" );
-  // bufr->addValue( 10051, data->PR, "PP" );
+  if ( ssw.size() == 0 ) {
+    bufr->addDelayedReplicationFactor(31000, 0);
+    return;
+  }
   
-   
-  // //temperature 
-  // bufr->addValue( 7033, stationInfo->heightTemperature(), "Height of sensor above water surface" );
-  // bufr->addValue( 12101, data->TA, "TA" );
-  // bufr->addValue( 12103, data->TD, "TD, dew-point temperature" );
-  // bufr->addValue( 13003, data->UU, "UU, relativ humidity" );
+  bufr->addDelayedReplicationFactor(31000, 1);
+  bufr->addValue(2005, FLT_MAX, "Precision of temperature observation.");
 
-  // //wind
-  //  bufr->addValue(  7033, stationInfo->heightWind(), "Height of sensor above water surface", false);
-  //  bufr->addValue(  8021, 2, "Time significance (=2: time averaged)", false);
-  //  bufr->addValue(  4025, static_cast<float>(-10), "Time period or displacement (minutes)", false);
-  //  bufr->addValue( 11001, data->DD, "DD, wind direction");
-  //  bufr->addValue( 11002, data->FF, "FF, wind speed");
-  //  bufr->addValue(  8021, INT_MAX, "Time significance", false);
+  bufr->addValue(2032, 3, "Indicator of digitization (tbl code 3 = missing)");
+  bufr->addValue(2033, 7, "Method of salinity/depth measurement (tbl code 7 = missing)");
 
-  // //Gust
-  // bufr->addValue(  4025, (data->FG_010.valid()?static_cast<float>(-10):FLT_MAX), "Time period or displacement (minutes)", false, "GUST");
-  // bufr->addValue( 11041, data->FG_010, "FG_010, wind speed (gust)"), true, "GUST";
-
-  // //Sea temperature
-  // bufr->addValue(  4025, FLT_MAX, "Time period or displacement (minutes)", false);
-  // bufr->addValue( 7033, FLT_MAX, "Height of sensor above water surface.", false);
-  // bufr->addValue(2005,FLT_MAX, "Precision of temperature observation (K)", false);
-  // bufr->addValue( 7063, 0.5f, "Sea/water depth of measurement (cm)", false );
-  // bufr->addValue( 22049, data->TW, "Sea/water temperature" );
-  
+  bufr->addDelayedReplicationFactor(31001, ssw.size());
+  for( auto &s : ssw) {
+    bufr->addValue(7062, s.first, "SSW.level");
+    auto tw = data->TW.getFirstValueAtLevel(s.first);
+    bufr->addValue(22043, (tw!=FLT_MAX?tw:FLT_MAX), "TW");
+    bufr->addValue(22062, s.second, "SSW");
+  }
 }
 

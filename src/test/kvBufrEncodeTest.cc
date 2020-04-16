@@ -172,7 +172,7 @@ TEST_F( BufrEncodeTest, GustFrom_FG_1_or_FG_010 )
    loadBufrDataFromFile( "data_18700_501_2019051404.dat", stInfo, allData, validData );
    dt=getTime("2019-05-14 06:00:00");
    data=allData.subData( dt );
-
+   
    EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
 

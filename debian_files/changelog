@@ -1,3 +1,9 @@
+kvbufrd (3.0.6~rc1-1) xenial; urgency=low
+  * Log xmls with empty data.
+  * Changed "code" for SVV stations to 4 (900004)
+  
+ -- Kvalobs <kvalobs@met.no> Tue, 31 Mar 2020 09:30:00 +0100
+
 kvbufrd (3.0.5-1) xenial; urgency=low
   * Changed encoding for B stations.
   * Encode state of ground, snow depth for each main termin, ie 00, 06, 12 and 18.

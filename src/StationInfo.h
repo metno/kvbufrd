@@ -137,8 +137,8 @@ class StationInfoParse;
 *                         precipitation. Valid values "RA", "RR_01",
 *                         "RR_1", "RR_3", "RR_6","RR_12" og "RR_24".
 *
-*   typepriority [list]: A list of typeis's that is used to create a
-*                        wmo message.
+*   typepriority [list]: A list of typeid's that is used to create a
+*                        BUFR message.
 * </pre>
 */
 class MsgTime {
@@ -473,7 +473,8 @@ public:
    std::string    owner()const  { return owner_;}
    void           owner(const std::string &o){ owner_=o;}
    milog::LogLevel loglevel()const { return loglevel_;}
-   IntList        code()const { return code_; }
+   //IntList        code()const { return code_; }
+   int        code()const; 
    std::string    codeToString()const;
 
 
@@ -544,10 +545,10 @@ public:
    * \brief A list of \em typeid to use data for when encoding SYNOP.
    * 
    * Typepriority plays two roles. Only data that is in this
-   * list is used to create WMO message. The second use is
+   * list is used to create BUFR message. The second use is
    * to select which Data that shall be used if there is more 
    * than one Data for one parameter. The Data is selected in the
-   * order in the list. A Data with typeid preciding another typeid
+   * order in the list. Data with typeid preciding another typeid
    * in the list is used before the other.
    *
    * \param hour Return the a list of typeid's that is valid for

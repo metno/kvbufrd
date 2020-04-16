@@ -74,6 +74,7 @@ namespace {
 using namespace decodeutility;
 using namespace std;
 
+
 boost::thread_specific_ptr<KvParamList> DataElement::pParams( noFreeCleanUp );
 
 DataElement::
@@ -216,10 +217,17 @@ DataElement( const DataElement &p):
       abort();
    }
 
+   int i=0;
    KvParamList::const_iterator itSource = p.params.begin();
    KvParamList::iterator itDest = params.begin();
 
    for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
+     i++;
+     if( (*itSource)->id() != (*itDest)->id() ) {
+        cerr << "FATAL BUG CTOR: Something nasty have happend.  DataElement Operator= params id differ! " << (*itDest)->id() << " " << (*itSource)->id() <<" i: " << i << endl;
+        cerr << "FATAL BUG CTOR: Check that the default CTOR and the copy CTOR have the same KvParams in the same order." << endl;
+        abort();
+      }
       **itDest = **itSource;
    }
 }
@@ -241,7 +249,7 @@ operator=(const DataElement &p)
 
       for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
          if( (*itSource)->id() != (*itDest)->id() ) {
-            cerr << "FATAL BUG: Something nasty have happend.  DataElement Operator= params id differ!" << (*itDest)->id() << " " << (*itSource)->id() << endl;
+            cerr << "FATAL BUG: Something nasty have happend.  DataElement Operator= params id differ! " << (*itDest)->id() << " " << (*itSource)->id() << endl;
             cerr << "FATAL BUG: Check that the default CTOR and the copy CTOR have the same KvParams in the same order." << endl;
             abort();
          }

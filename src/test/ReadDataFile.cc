@@ -123,11 +123,15 @@ loadBufrDataFromFile( const std::string &filename,
 		return false;
 	}
 
+	cerr << "readdatafile start\n";
 	if( ! readDataFile( filename, rawdata, fromtime ) ) {
 		cerr << "Failed to read datafile <" << filename << ">." << endl;
 		return false;
 	}
+	cerr << "readdatafile end\n";
+	cerr << "loadBufrdata start\n";
 	loadBufrData( rawdata, sd, info, validate );
+	cerr << "loadBufrdata end\n";
 //	cerr << "---- START ---\n";
 //	for( CIDataElementList it=sd.begin(); it != sd.end(); ++it ) {
 //	   cerr << it->time() << " RR_24: " << it->RR_24 << " EM: " << it->EM

@@ -10,7 +10,10 @@ SED_SUBST = sed s,__KVCONFIG__,$(bindir)/kvconfig,g $< > $@
 kvbufrdbadmin: kvbufrdbadmin.sh 
 	$(SED_SUBST)
 	
-EXTRA_DIST = cleanbufrdb.sql kvbufrdbadmin.sh changelog  
+EXTRA_DIST = \
+	cleanbufrdb.sql kvbufrdbadmin.sh changelog \
+	src/gtest/*tar*
+	
 CLEANFILES = kvbufrdbadmin
 
 install-data-hook:

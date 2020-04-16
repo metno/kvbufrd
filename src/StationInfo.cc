@@ -837,21 +837,36 @@ msgForTime( const pt::ptime &t)const
    //return true;
 }
 
+
+int
+StationInfo::code()const {
+   if( code_.empty() ) {
+      if( wmono_>0 ) {
+         return 0;  //SYNOP as default
+      } else {
+         return -1;
+      }
+   }
+
+   return *code_.begin();
+} 
+
 std::string
 StationInfo::
 codeToString()const
 {
    if( code_.empty() )
-      return "";
+      return "0";
 
    ostringstream o;
 
-   IntList::const_iterator it = code_.begin();
-   o << *it;
-   ++it;
+   o << *code_.begin();
+   // IntList::const_iterator it = code_.begin();
+   // o << *it;
+   // ++it;
 
-   for( ; it != code_.end(); ++it )
-      o << " " << *it;
+   // for( ; it != code_.end(); ++it )
+   //    o << " " << *it;
 
    return o.str();
 }
@@ -912,9 +927,14 @@ toIdentString()const
    else
       o << "id_UNKNOWN";
 
+   if (  code_.empty() ) {
+      o << "_0"; //SYNOP is default.
+   } else {
+      o << "_" << *code_.begin();
+   }
    return o.str();
-
 }
+
 bool 
 StationInfo::
 equalTo(const StationInfo &st)

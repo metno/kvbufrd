@@ -786,7 +786,10 @@ bool App::getSavedBufrData(StationInfoPtr info, const pt::ptime &obstime, std::l
 
   gate.busytimeout(300);
 
-  ost << " WHERE wmono=" << info->wmono() << " AND id=" << info->stationID() << " AND callsign='" << info->callsign() << "'" << " AND obstime='" << pt::to_kvalobs_string(obstime)
+  ost << " WHERE wmono=" << info->wmono() << " AND id=" << info->stationID() 
+      << " AND callsign='" << info->callsign() << "'" 
+      << " AND code='" << info->code() << "'"
+      << " AND obstime='" << pt::to_kvalobs_string(obstime)
       << "'";
 
   if (!gate.select(tblBufr, ost.str())) {

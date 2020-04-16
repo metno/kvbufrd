@@ -91,33 +91,51 @@ encode()
 
    encodeTemplate( 315008 );
 
-   string A1;
-   int internationalSubCategory;
+string A1("S");
+//   int internationalSubCategory;
+//
+//   switch( obstime.hour() ){
+//      case 0:
+//      case 6:
+//      case 12:
+//      case 18:
+//         internationalSubCategory = 2;
+//         A1="M";
+//         break;
+//      case 3:
+//      case 9:
+//      case 15:
+//      case 21:
+//         internationalSubCategory = 1;
+//         A1 ="I";
+//         break;
+//      default:
+//         internationalSubCategory = 0;
+//         A1 = "N";
+//         break;
+//   }
 
-   switch( obstime.time_of_day().hours() ){
-      case 0:
-      case 6:
-      case 12:
-      case 18:
-         internationalSubCategory = 2;
-         A1="M";
-         break;
-      case 3:
-      case 9:
-      case 15:
-      case 21:
-         internationalSubCategory = 1;
-         A1 ="I";
-         break;
-      default:
-         internationalSubCategory = 0;
-         A1 = "N";
-         break;
+   float latitude;
+   float longitude;
+   bool  hasValidPos=true;
+
+   if( data->MLAT.valid() && data->MLON.valid() ) {
+	   latitude = data->MLAT;
+	   longitude = data->MLON;
+   } else if( stationInfo->latitude() != FLT_MAX && stationInfo->longitude() != FLT_MAX ){
+	   latitude = stationInfo->latitude();
+	   longitude = stationInfo->longitude();
+   } else {
+       hasValidPos = false;
    }
 
-   string A2 = computeAreaDesignator( stationInfo->longitude(), stationInfo->latitude());
+   if( ! hasValidPos ) {
+       bufr->validBufr( false );
+       bufr->addErrorMessage( "Missing location data (latitude/longitude) for the station/ship.");
+   }
 
-   bufr->setDataAndInternationalSubDataCategory( 0, internationalSubCategory );
-   bufr->setGTSHeader( "IS", A1 + A2 );
+   string A2=computeAreaDesignator( longitude, latitude );
+   bufr->setDataAndInternationalSubDataCategory( 1, 0/*internationalSubCategory*/ );
+   bufr->setGTSHeader( "IS", A1+A2 );
 }
 

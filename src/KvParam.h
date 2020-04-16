@@ -45,12 +45,13 @@ public:
    struct Sensor {
       int num;
       std::map<int, float> levels;
-      float getLevel(int level)const;
-
+      
       Sensor():num(-1){}
       Sensor( int sensor):num(sensor){}
+ 
+      Sensor( const Sensor &s ):num(s.num), levels(s.levels){}
+      float getLevel(int level)const;
       
-      Sensor( const Sensor &s):num(s.num), levels(s.levels){}
    private:
       friend class KvParam;
       void set(float value, int level);
@@ -81,6 +82,17 @@ public:
    //KvParam& operator=( int rhs );
 
    std::string name()const { return name_; }
+
+  /** Get data from all sensors and levels.
+   * Data from sensors with lower sensor number
+   * has priority before data with higher sensor number.
+   */
+   std::map<int, float> getBySensorsAndLevels()const;
+   
+   /**
+    * Return the the value from the first sensor that has data for this level.
+    */
+   float getFirstValueAtLevel(int level)const;
 
    int id()const{ return id_;}
 

@@ -129,6 +129,33 @@ KvParam::Sensor* KvParam::sensorRef(int sensor, bool addIfNotFound)
    return &sensors_[sensor];
 }
 
+std::map<int, float> 
+KvParam::getBySensorsAndLevels()const {
+  std::map<int, float> res;
+  for ( auto s : sensors_) {
+    for( auto &l : s.second.levels ){
+      auto il = res.find(l.first);
+      if( il == res.end()) {
+        res[l.first]=l.second;
+      }
+    }
+  }
+
+  return std::move(res);
+}
+
+float KvParam::getFirstValueAtLevel(int level)const {
+   for ( auto s : sensors_) {
+      for( auto &l : s.second.levels ){
+         if( l.first == level ) {
+            return l.second;
+         }
+      }
+   }
+   return FLT_MAX;
+}
+
+
 
 bool 
 KvParam::

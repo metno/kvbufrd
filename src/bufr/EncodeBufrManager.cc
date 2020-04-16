@@ -213,26 +213,14 @@ void
 EncodeBufrManager::
 encode( BufrHelper &bufrHelper )
 {
-   BufrTemplateList templateList=bufrHelper.getStationInfo()->code();
+   int bufrCode=bufrHelper.getStationInfo()->code();
 
-   for( BufrTemplateList::iterator it = templateList.begin();
-        it != templateList.end(); ++it ) {
-      if( *it < 900000 )
-         *it += 900000;
-   }
-
-   if( templateList.empty() )
-      templateList = guessBufrTemplate( *bufrHelper.getStationInfo() );
-
-   if( templateList.empty() )
-      throw std::logic_error("Missing or cant guess BUFR template to use.");
-
+   if( bufrCode < 900000 )
+         bufrCode += 900000;
+     
    std::ostringstream o;
-   o << "Using BUFR encoder:";
-   for( BufrTemplateList::const_iterator it=templateList.begin();
-         it != templateList.end(); ++it )
-      o << " " << *it;
+   o << "Using BUFR encoder: "  << bufrCode;
 
    LOGINFO( o.str() );
-   encode( templateList, bufrHelper );
+   encode( bufrCode, bufrHelper );
 }

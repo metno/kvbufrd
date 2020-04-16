@@ -254,7 +254,8 @@ kvBufrEncodeTest_SOURCES= \
 	scanstring.cc scanstring.h \
 	SemiUniqueName.cc SemiUniqueName.h \
 	Strerror.cc Strerror.h \
-  isDirWithWritePermission.cc isDirWithWritePermission.h
+  isDirWithWritePermission.cc isDirWithWritePermission.h \
+	kvDbGateProxyThread.cc kvDbGateProxyThread.h
 
 kvBufrEncodeTest_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 
@@ -262,8 +263,8 @@ kvBufrEncodeTest_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 if KVSTATIC
 kvBufrEncodeTest_CPPFLAGS = \
 	-I$(KVINCLUDEDIR) \
-	$(AM_CPPFLAGS) \
 	$(gtest_CFLAGS) \
+	$(AM_CPPFLAGS) \
 	-DTESTDATADIR="\""$(top_srcdir)/src/test"\""\
 	-DBUFRTBLDIR="\""$(BUFRTABLES)"\""
 
@@ -287,17 +288,17 @@ kvBufrEncodeTest_LDADD =   \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
 	-L$(HOME)/lib \
-	$(gtest_LIBS) \
 	$(BOOST_FILESYSTEM_LIB) \
 	$(BOOST_DATE_TIME_LIB) \
 	$(BOOST_SYSTEM_LIB) \
+	$(gtest_LIBS) \
 	$(top_builddir)/ecmwf/libbufr.a \
 	-lgfortran \
 	-lm
 else
 kvBufrEncodeTest_CPPFLAGS = \
-	$(AM_CPPFLAGS) \
 	$(gtest_CFLAGS) \
+	$(AM_CPPFLAGS) \
 	-DTESTDATADIR="\""$(top_srcdir)/src/test"\""\
 	-DBUFRTBLDIR="\""$(BUFRTABLES)"\""
 
@@ -305,7 +306,6 @@ kvBufrEncodeTest_CPPFLAGS = \
 #    -DBUFRTBLDIR="\""$(top_srcdir)/share/bufrtables"\""
 
 kvBufrEncodeTest_LDADD =   \
-	$(gtest_LIBS) \
 	$(top_builddir)/src/bufr/libbufr.la \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
@@ -325,6 +325,7 @@ kvBufrEncodeTest_LDADD =   \
 	$(BOOST_DATE_TIME_LIB) \
 	$(BOOST_FILESYSTEM_LIB) \
 	$(BOOST_SYSTEM_LIB) \
+	$(gtest_LIBS) \
     -lgfortran -lm -ldl
 endif			
 endif			
