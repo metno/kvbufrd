@@ -113,7 +113,7 @@ protected:
 		 //istringstream iconf(testconf);
 		setenv("BUFR_TABLES", bufr_tables.c_str(), 1 );
 		string conffile(string(TESTDATADIR) + "/kvBufrEncodeTest.conf" );
-		string btabl(string(BUFRTBLDIR)+"/B0000000000000019000.TXT");
+		string btabl(string(BUFRTBLDIR)+"/B0000000000000033000.TXT");
 		ifstream iconf( conffile.c_str() );
 		//Turn off almost all logging.
 		milog::Logger::logger().logLevel( milog::ERROR );
@@ -153,6 +153,55 @@ namespace
 }
 
 
+TEST_F(BufrEncodeTest, BUOY_basic) 
+{
+   using namespace miutil;
+   DataElementList allData;
+   DataElementList data;
+   StationInfoPtr  stInfo;
+   boost::posix_time::ptime dt;
+   BufrDataPtr bufr( new BufrData() );
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   string id="6301003";
+   stInfo = findCallsign( id );
+
+   ASSERT_TRUE( stInfo.get() ) << "No station information for callsign " << id;
+
+   loadBufrDataFromFile( "buoy-20925-22-20200417T060000.dat", stInfo, allData, validData );
+   dt=getTime("2020-04-17 06:00:00");
+   data=allData.subData( dt );
+   
+   EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
+
+   EXPECT_TRUE( data.size() != 0 ) << "Expcting at least one hour of data.";
+   
+
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   EncodeBufrManager encoder;
+   BufrTemplateList templateList;
+   b::assign::push_back( templateList )(900005);
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+   }
+   catch ( EncodeException &ex ) {
+      FAIL() << "EXCEPTION (BufrEncodeException): " << ex.what();
+   }
+   catch ( const std::exception &ex ) {
+       FAIL() << "EXCEPTION: " << ex.what();
+   }
+   catch( ... ) {
+      FAIL() << "EXCEPTION: Unknown.";
+   }
+
+   ASSERT_NO_THROW( bufrHelper.saveToFile( ".", true, true ) );
+}
+
+
+#if 0
+
+}
 
 TEST_F( BufrEncodeTest, GustFrom_FG_1_or_FG_010 )
 {
@@ -1727,7 +1776,7 @@ TEST_F( BufrEncodeTest, MsgTimeNoMustHaveTypesTest )
    ASSERT_FALSE( forceDelay );
    ASSERT_FALSE( relativeToFirst );
 }
-
+#endif
 
 int
 main(int argc, char **argv) {

@@ -76,8 +76,8 @@ encode( )
   bufr->addDelayedReplicationFactor(31001, CV.levels.size());
   float cd;
   for ( auto &e : CV.levels ) {
-    bufr->addValue(7062, e.first, "CV");
-    cd = CV.getLevel(e.first);
+    bufr->addValue(7062, e.first, "CV-depth");
+    cd = CD.getLevel(e.first);
     if( cd != FLT_MAX) {
       bufr->addValue(22004, static_cast<int>(cd + 0.5), "CD");
     } else {

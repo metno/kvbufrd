@@ -668,7 +668,7 @@ StationInfo::
 callsignAsInt()const{
    std::string::size_type idx;
    auto i = std::stoi(callsign_, &idx);
-   if( ! callsign_.substr(i).empty()) {
+   if( ! callsign_.substr(idx).empty()) {
       return INT_MAX;
    }
    return i;

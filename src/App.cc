@@ -45,6 +45,7 @@
 #include "fileutil/pidfileutil.h"
 #include "kvalobs/kvPath.h"
 #include "miutil/timeconvert.h"
+#include "bufr/EncodeBufrManager.h"
 #include "kvDbGateProxy.h"
 #include "tblWaiting.h"
 #include "Data.h"
@@ -260,6 +261,7 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   string val;
   string bufr_tables(DATADIR);
   string logdir = kvPath("logdir");
+  
   bool bufr_tables_names( false);
 
   kvApp = this;
@@ -268,6 +270,11 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   kafkaBrokers = getKafkaBrokers(conf);
 
   createDirectory(fs::path(kvPath("logdir")) / options.progname);
+
+  valElem=conf->getValue("bufr_master_table");
+  if( !valElem.empty() ) {
+    EncodeBufrManager::masterBufrTable = valElem.valAsInt(31);
+  }
 
   valElem = conf->getValue("loglevel");
 
@@ -307,6 +314,16 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   continuesTypeID_.push_back(3);
   continuesTypeID_.push_back(330);
 
+  valElem=conf->getValue("bufr_master_table");
+
+  if( !valElem.empty() ) {
+    EncodeBufrManager::masterBufrTable = valElem.valAsInt(31);
+  }
+
+  IDLOGINFO("main", "Using master BUFR table:"  << EncodeBufrManager::masterBufrTable);
+  LOGINFO("Using master BUFR table:"  << EncodeBufrManager::masterBufrTable);
+  cerr << "Using master BUFR table:"  << EncodeBufrManager::masterBufrTable << endl;
+  
   valElem = conf->getValue("bufr_tables");
 
   if (!valElem.empty())

@@ -82,8 +82,21 @@ encode(  )
    //optional radiation measurement
    encodeTemplate( 302082 );
 
-  //Basic wave measurements
+   //Basic wave measurements
    encodeTemplate( 306039 );
+
+   //Sequence for representation of detailed spectral wave measurements
+   encodeTemplate( 306040 );
+
+   //Depth and temperature profile (high accuracy/precision)
+   encodeTemplate( 306041 );
+
+   //Depth, temperature, salinity
+   encodeTemplate( 306004 );
+
+   //Sub-surface current measurements
+   encodeTemplate( 306005 );
+
 
 
    //encodeTemplate( 302001 ); //Pressure data.

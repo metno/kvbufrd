@@ -384,7 +384,8 @@ set_sec0134( const StationInfoPtr station,
   ksec1[11] = obsTime.time_of_day().hours();
   ksec1[12] = obsTime.time_of_day().minutes();
   ksec1[13] = 0;       /* BUFR master table */
-  ksec1[14] = 14;      /* Version number of master table used */
+  //ksec1[14] = 14;      /* Version number of master table used */
+  ksec1[14] = 33;      /* Version number of master table used */
   ksec1[15] = 0;       /* Originating sub-centre */
 
   /* International sub-category (see common table C-13) */

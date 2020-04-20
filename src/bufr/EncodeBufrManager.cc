@@ -81,6 +81,7 @@
 #include "EncodeBufr306041.h"
 #include "EncodeBufr307079.h"
 #include "EncodeBufr308009.h"
+#include "EncodeBufr315008.h"
 #include "EncodeBufr900000_SYNOP.h"
 #include "EncodeBufr900001_Bstations.h"
 #include "EncodeBufr900002_PRECIP_AND_SNOW.h"
@@ -91,6 +92,8 @@
 
 
 namespace b=boost;
+
+int EncodeBufrManager::masterBufrTable = 31;
 
 EncodeBufrManager::
 EncodeBufrManager()
@@ -142,6 +145,7 @@ EncodeBufrManager()
    addEncoder( new EncodeBufr306041() );
    addEncoder( new EncodeBufr307079() );
    addEncoder( new EncodeBufr308009() );
+   addEncoder( new EncodeBufr315008() );
    addEncoder( new EncodeBufr900000() );
    addEncoder( new EncodeBufr900001() );
    addEncoder( new EncodeBufr900002() );

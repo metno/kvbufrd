@@ -212,24 +212,17 @@ DataElement( const DataElement &p):
    onlyTypeid1( p.onlyTypeid1 ),
    typeidList( p.typeidList )
 {
-   if( params.size() != p.params.size() ) {
-      cerr << "FATAL BUG CTOR: Something nasty have happend.  DataElement copy CTOR  size differ!" << params.size() << " " << p.params.size() << endl;
-      abort();
-   }
+  if( params.size() != p.params.size() ) {
+    cerr << "FATAL BUG CTOR: Something nasty have happend.  DataElement copy CTOR  size differ!" << params.size() << " " << p.params.size() << endl;
+    abort();
+  }
+   
+  KvParamList::const_iterator itSource = p.params.begin();
+  KvParamList::iterator itDest = params.begin();
 
-   int i=0;
-   KvParamList::const_iterator itSource = p.params.begin();
-   KvParamList::iterator itDest = params.begin();
-
-   for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
-     i++;
-     if( (*itSource)->id() != (*itDest)->id() ) {
-        cerr << "FATAL BUG CTOR: Something nasty have happend.  DataElement Operator= params id differ! " << (*itDest)->id() << " " << (*itSource)->id() <<" i: " << i << endl;
-        cerr << "FATAL BUG CTOR: Check that the default CTOR and the copy CTOR have the same KvParams in the same order." << endl;
-        abort();
-      }
-      **itDest = **itSource;
-   }
+  for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
+    (*itDest)->copy(**itSource);
+  }
 }
 
 DataElement&
@@ -253,7 +246,7 @@ operator=(const DataElement &p)
             cerr << "FATAL BUG: Check that the default CTOR and the copy CTOR have the same KvParams in the same order." << endl;
             abort();
          }
-         **itDest = **itSource;
+         (*itDest)->copy(**itSource);
       }
 
       nSet             = p.nSet;

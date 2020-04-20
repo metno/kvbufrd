@@ -144,9 +144,9 @@ doBufr( StationInfoPtr  info,
    bufr.TA     = c2kelvin( bufrData[0].TA );
    bufr.PO     = pressure( bufrData[0].PO );
    bufr.PR     = pressure( bufrData[0].PR );
-   bufr.UU     = bufrData[0].UU;
+   bufr.UU     = bufrData[0].UU.value();
    bufr.TW     = c2kelvin( bufrData[0].TW );
-   bufr.SG     = bufrData[0].SG;
+   bufr.SG     = bufrData[0].SG.value();
 
    doIx( info, bufrData, bufr );
    doSeaOrWaterTemperature( bufrData, bufr );
@@ -218,7 +218,7 @@ doIx( StationInfoPtr     info,
    static int mannedTypeid[]={ 312, 308, 302, 0 };
 
    if( bufrData[0].onlyTypeid1 ) {
-      bufr.IX = bufrData[0].IX;
+      bufr.IX = bufrData[0].IX.value();
 
       if( bufr.IX == FLT_MAX || (bufr.IX != 0 && bufr.IX != 1) )
          bufr.IX = 1;
@@ -509,8 +509,8 @@ maxWindGust( const DataElementList &data, BufrData &res )
     if( nTimeStr == 0 )
        return;
     
-    res.FG_010 = data[0].FG_010;
-    res.DG_010 = data[0].DG_010;
+    res.FG_010 = data[0].FG_010.value();
+    res.DG_010 = data[0].DG_010.value();
 
     if( ( data[0].time().time_of_day().hours() ) % 6 != 0 ) {
        if( data[0].FG_1 != FLT_MAX && data[0].FG_1 >=0 ) {
@@ -673,10 +673,10 @@ cloudData( const DataElementList &data, BufrData &res )
 
    N = N < 0 ? INT_MAX:N;
 
-   res.VV = data[0].VV;
+   res.VV = data[0].VV.value();
 
    if( res.VV == FLT_MAX && data[0].Vmor != FLT_MAX )
-      res.VV = data[0].Vmor;
+      res.VV = data[0].Vmor.value();
 
    /*if( CL == INT_MAX && CM == INT_MAX && CH == INT_MAX && N == INT_MAX )
       return; */
@@ -728,11 +728,11 @@ cloudData( const DataElementList &data, BufrData &res )
    else
       res.vsci = 63;
 
-   res.NH = data[0].NH;
-   res.HL = data[0].HL;
+   res.NH = data[0].NH.value();
+   res.HL = data[0].HL.value();
 
    if( res.HL == FLT_MAX && data[0].HLN != FLT_MAX )
-      res.HL = data[0].HLN;
+      res.HL = data[0].HLN.value();
 
 }
 
@@ -905,7 +905,7 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
 
 
 	if( data[0].ww != FLT_MAX ) {
-	   res.ww = data[0].ww;
+	   res.ww = data[0].ww.value();
 	} else if( data[0].WAWA!=FLT_MAX ){
       int i=static_cast<int>(round( data[0].WAWA) );
 
@@ -916,12 +916,12 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
 	
 	if( data[0].W1 != FLT_MAX ) {
 	   pastWeather = true;
-	   res.W1 = data[0].W1;
+	   res.W1 = data[0].W1.value();
 	}
 
 	if( data[0].W2 != FLT_MAX ) {
 	   pastWeather = true;
-	   res.W2 = data[0].W2;
+	   res.W2 = data[0].W2.value();
 	}
 
 	if( pastWeather ) {
@@ -1075,7 +1075,7 @@ doSeaOrWaterTemperature(  const DataElementList &data, BufrData &res )
    res.TW = FLT_MAX;
 
   	if( data[0].TW != FLT_MAX || data[0].TWF != FLT_MAX ) {
-  	   res.TW = data[0].TW!=FLT_MAX?data[0].TW:data[0].TWF;
+  	   res.TW = data[0].TW!=FLT_MAX?data[0].TW.value():data[0].TWF.value();
   	   res.TW = c2kelvin( res.TW );
   	}
 }
@@ -1105,7 +1105,7 @@ soilTemp( const DataElementList &data, BufrData &res )
       return;
 
    if( data[0].TGN_12 != FLT_MAX )
-      res.TGN_12 = data[0].TGN_12;
+      res.TGN_12 = data[0].TGN_12.value();
 
    if( res.TGN_12 == FLT_MAX && nTimeStr >= 12 ) {
       float min = FLT_MAX;

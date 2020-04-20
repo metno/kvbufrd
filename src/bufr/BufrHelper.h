@@ -170,7 +170,7 @@ public:
    std::string filePrefix()const;
 
    void  saveToFile( const std::string &path,
-                     bool overwrite );
+                     bool overwrite, bool isTestRun=false);
 
    /**
     * Check if copyto is set to true in StationInfo, if

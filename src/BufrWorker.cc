@@ -39,6 +39,7 @@
 #include "boost/cstdint.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/filesystem/fstream.hpp"
+#include "bufr/EncodeBufrManager.h"
 #include "bufr.h"
 #include "kvDbGateProxy.h"
 #include "kvalobs/kvPath.h"
@@ -222,8 +223,15 @@ BufrWorker::BufrWorker(App& app_,
   , swmsg(*(new std::ostringstream()))
   , encodeBufrManager(new EncodeBufrManager())
 {
-  string filename = string(DATADIR) + "/B0000000000000019000.TXT";
-  bufrParamValidater = BufrParamValidater::loadTable(filename);
+  ostringstream o;
+  if( EncodeBufrManager::masterBufrTable < 10 || EncodeBufrManager::masterBufrTable>99) {
+    LOGFATAL("Buffer master table must be in the intervall [10,99], it is " << EncodeBufrManager::masterBufrTable );
+    exit(1);
+  }
+
+  o << string(DATADIR) << "/B00000000000000" << EncodeBufrManager::masterBufrTable <<  "000.TXT";
+  //string filename = string(DATADIR) + "/B0000000000000019000.TXT";
+  bufrParamValidater = BufrParamValidater::loadTable(o.str());
 }
 
 void

@@ -64,7 +64,8 @@ private:
    std::map<int, Sensor>  sensors_;
 
    Sensor* sensorRef(int sensor, bool addIfNotFound);
-
+   void copy(const KvParam &src);
+   friend class DataElement;
 public:
    KvParam();
    KvParam( const KvParam &param)
@@ -76,7 +77,7 @@ public:
    operator float()const;
    //operator double()const{ return static_cast<double>(value_);}
 
-   KvParam& operator=( const KvParam &rhs );
+   KvParam& operator=( const KvParam &rhs )=delete;
    KvParam& operator=( float rhs );
 
    //KvParam& operator=( int rhs );

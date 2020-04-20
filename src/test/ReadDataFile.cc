@@ -74,8 +74,8 @@ readDataFile( const std::string &filename, DataEntryList &data, const boost::pos
 			dataValues[i]=boost::trim_copy(dataValues[i]);
 		}
 
-		if( dataValues.size() != 12 ) {
-		   cerr << "readDataFile: to few elements ("<< dataValues.size() << ") expecting 12\n";
+		if( dataValues.size() < 11 ) {
+		   cerr << "readDataFile: to few elements ("<< dataValues.size() << ") expecting 11 or 12 elements\n";
 		   continue;
 		}
 

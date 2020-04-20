@@ -59,7 +59,7 @@ using namespace std;
 
 namespace {
 void
-init_sec0134(  int *ksec0, int *ksec1, int *ksec3, int *ksec4 )
+init_sec0134(  int *ksec0, int *ksec1, int *ksec3, int *ksec4, int masterTabl=14 )
 {
 
   /* Section 0 */
@@ -82,7 +82,7 @@ init_sec0134(  int *ksec0, int *ksec1, int *ksec3, int *ksec4 )
   ksec1[11] = 0;//hour from obstime
   ksec1[12] = 0;//min from obstime
   ksec1[13] = 0;       /* BUFR master table */
-  ksec1[14] = 14;      /* Version number of master table used */
+  ksec1[14] = masterTabl;      /* Version number of master table used */
 //  ksec1[14] = 19;      /* Version number of master table used */
   ksec1[15] = 0;       /* Originating sub-centre */
   ksec1[16] = 0; /* International sub-category (see common table C-13) */
@@ -124,7 +124,7 @@ BufrHelper( BufrParamValidaterPtr paramValidater_,
       throw std::bad_alloc();
    }
 
-   init_sec0134( ksec0, ksec1, ksec3, ksec4 );
+   init_sec0134( ksec0, ksec1, ksec3, ksec4, EncodeBufrManager::masterBufrTable );
 }
 
 
@@ -494,15 +494,14 @@ nValues() const
 void
 BufrHelper::
 saveToFile( const std::string &path,
-            bool overwrite )
+            bool overwrite, bool isTestRun)
 {
    fs::ofstream f;
    string error;
    string tmppath( path +"/tmp" );
-   string filename( SemiUniqueName::uniqueName( filePrefix(), ".bufr" ) );
+   string filename( (isTestRun?(filePrefix()+".bufr"):SemiUniqueName::uniqueName( filePrefix(), ".bufr" )) );
    string tmpfile(tmppath + "/" + filename);
    string dstfile(path + "/" + filename);
-
 
    if( ! isDirWithWritePermission( path, error ) ) {
       ostringstream o;

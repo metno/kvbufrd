@@ -90,6 +90,18 @@ KvParam( KvParamList &paramList, const KvParam &param )
    paramList.params.push_back( this );
 }
 
+void
+KvParam::copy(const KvParam &src) {
+   if( this == &src ) 
+      return;
+  
+   name_ = src.name_;
+   levelScale_ = src.levelScale_;
+   id_ = src.id_;
+   sensors_=src.sensors_;
+}
+
+/*
 KvParam&
 KvParam::
 operator=( const KvParam &rhs )
@@ -102,6 +114,7 @@ operator=( const KvParam &rhs )
    }
    return *this;
 }
+*/
 
 KvParam&
 KvParam::
