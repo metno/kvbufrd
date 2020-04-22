@@ -33,11 +33,17 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include "boost/date_time/posix_time/ptime.hpp"
 #include "BufrData.h"
 #include "StationInfo.h"
+#include "bufr/BufrHelper.h"
 
 #define GROUPSIZE                  6
+
+class EncodeBufrManager;
+
+
 
 /*
  * Quick and dirty fix to let the windspeed be in m/s, ie dont
@@ -67,6 +73,7 @@ class Bufr
     bool           test; //Used for unit testing
     std::string    errorMsg;
     EPrecipitation precipitationParam;
+    std::shared_ptr<EncodeBufrManager> encodeBufrManager;
 
     void windAtObstime( const DataElement &data, DataElement &res );
     
@@ -136,22 +143,45 @@ class Bufr
  public:
     
     
-    Bufr(EPrecipitation precipitation);
-    Bufr();
+   Bufr(EPrecipitation precipitation);
+   Bufr();
 
-    ~Bufr();
+   ~Bufr();
 
-    std::string getErrorMsg()const { return errorMsg;}
-    void        setDebug(){ debug=true;}
-    void        setTest( bool flag ) { test = flag; }
+   std::string getErrorMsg()const { return errorMsg;}
+   void        setDebug(){ debug=true;}
+   void        setTest( bool flag ) { test = flag; }
 
-    bool doBufr( StationInfoPtr       info,
-                 DataElementList         &bufrData,
-                 BufrData             &bufr
-               );
+   /**
+    * doBufr only compute the date used to encode BUFR it does NOT
+    * encode the BUFR
+    */
+   bool doBufr( StationInfoPtr       info,
+                DataElementList         &bufrData,
+                BufrData             &bufr
+              );
 
-    BufrDataPtr doBufr( StationInfoPtr  info,
-                        DataElementList &bufrData );
+   /**
+    * doBufr only compute the date used to encode BUFR it does NOT
+    * encode the BUFR.
+    * This is only a shorthand for 
+    * doBufr StationInfoPtr       info,
+    *            DataElementList         &bufrData,
+    *            BufrData             &bufr
+    *          );
+    */
+   BufrDataPtr doBufr( StationInfoPtr  info,
+                       DataElementList &bufrData );
+
+
+   /**
+    * encodeBufr, call doBufr end endcode the BUFR in one go. It does
+    * not set CCX or write the BUFR to file. 
+    * Returns a pointer to BufrHelper on success or a null ptr on fail.
+    */
+   std::shared_ptr<BufrHelper> encodeBufr(StationInfoPtr  info,
+                        DataElementList &bufrData);
+    
 
 };
 

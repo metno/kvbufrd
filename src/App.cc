@@ -323,7 +323,7 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   IDLOGINFO("main", "Using master BUFR table:"  << EncodeBufrManager::masterBufrTable);
   LOGINFO("Using master BUFR table:"  << EncodeBufrManager::masterBufrTable);
   cerr << "Using master BUFR table:"  << EncodeBufrManager::masterBufrTable << endl;
-  
+
   valElem = conf->getValue("bufr_tables");
 
   if (!valElem.empty())
@@ -363,6 +363,20 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   } else {
     IDLOGINFO("main", "BUFR_TABLE_NAMES=false");
     setenv("PRINT_TABLE_NAMES", "false", 1);
+  }
+
+  string paramTblFile;
+  EncodeBufrManager::paramValidater=BufrParamValidater::loadTable(EncodeBufrManager::masterBufrTable, &paramTblFile);
+
+  if( !EncodeBufrManager::paramValidater ) {
+    IDLOGFATAL("main", "Failed to read BUFR Param table  :"  << paramTblFile);
+    LOGFATAL("Failed to read BUFR Param table  :"  << paramTblFile);
+    cerr << "Failed to read BUFR Param table  :"  << paramTblFile << endl;
+    exit(1);
+  } else {
+    IDLOGINFO("main", "Using BUFR Param table  :"  << paramTblFile);
+    LOGINFO("Using BUFR Param table  :"  << paramTblFile);
+    cerr << "Using BUFR Param table  :"  << paramTblFile << endl;
   }
 
   valElem = conf->getValue("accept_all_obstimes");

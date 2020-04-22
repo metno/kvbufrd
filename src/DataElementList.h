@@ -280,7 +280,7 @@ public:
   	boost::posix_time::ptime firstTime() const;
 
   	/**
-  	 * If used as a lvalue the BufrData record wil be inserted if it don't
+  	 * If used as a lvalue the BufrData record will be inserted if it don't
   	 * exist.  The current record at timeIndex will be replaced if it exist.
   	 * if we use the operator as a rvalue it will throw std::out_of_range
   	 * if there is now BufrData record at timeIndex.

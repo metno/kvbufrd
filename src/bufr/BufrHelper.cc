@@ -49,6 +49,7 @@
 #include "BufrValueHelper.h"
 #include "BufrHelper.h"
 #include "EncodeBufrBase.h"
+#include "boost/crc.hpp"
 
 
 namespace fs = boost::filesystem;
@@ -327,10 +328,14 @@ addValue( int bufrParamId, const std::string &value,
     	   //of 0xFF' to the cvals, this sets all bits in the string to 1s
     	   //(the missing indicator).
 
-    	   if( value.empty() )
+         
+    	   if( value.empty() ) {
+            cvalsLen[iCvals]=0;
     		   memset(cvals[iCvals++], 0xFF, val.length() );
-    	   else
+         }else {
+            cvalsLen[iCvals]=val.length()<value.length()?val.length():value.length();
     		   strncpy(cvals[iCvals++], val.c_str(), val.length() );
+         }
 
          if ( test && !testId.empty()) {
             testHelper.setS(value, testId);
@@ -491,6 +496,34 @@ nValues() const
     return -1;
 }
 
+
+
+std::tuple<bool,std::string> 
+BufrHelper::saveToFile(const std::string &path, int suffix){
+   fs::ofstream f;
+   ostringstream o;
+   o << path<<"/"<<filePrefix()<<"_"<< suffix <<".bufr";
+   string filename=o.str();
+   f.open( filename, ios_base::trunc | ios_base::binary | ios_base::out );
+
+   if( ! f.is_open() ){
+      ostringstream o;
+      o << "failed to create the file '" << filename << "'.";
+      return make_tuple(false, o.str());
+   }
+
+   bool fok = writeToStream( f );
+   f.close();
+
+   if( !fok ) {
+      unlink( filename.c_str() );
+      ostringstream o;
+      o << "failed to write BUFR to: " << filename << ".";
+      return make_tuple(false, o.str());
+   }
+   return make_tuple(true, filename);
+}  
+
 void
 BufrHelper::
 saveToFile( const std::string &path,
@@ -598,3 +631,24 @@ getErrorMessage()const
     return errorMessage.str();
 }
 
+
+boost::uint32_t BufrHelper::computeCRC()const{
+   ostringstream o;
+   for( size_t i=0; i<iValue; i++) {
+      o << (*values)[i] << endl;
+   }
+
+   for(size_t i=0; i<iCvals; ++i) {
+      string s(&cvals[i][0], cvalsLen[i]);
+      o << "'" << s << "'" << endl;
+   }
+
+   boost::crc_32_type crcChecker;
+   string msg=o.str();
+   
+
+   crcChecker.process_bytes( msg.c_str(),  msg.length() );
+
+   cerr << msg;
+   return crcChecker.checksum();
+}

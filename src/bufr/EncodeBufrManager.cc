@@ -89,11 +89,13 @@
 #include "EncodeBufr900004_SVV.h"
 #include "EncodeBufr900005_MOORED_BUOY.h"
 #include "GuessBufrTemplate.h"
+#include "BUFRparam.h"
 
 
 namespace b=boost;
 
 int EncodeBufrManager::masterBufrTable = 31;
+BufrParamValidaterPtr EncodeBufrManager::paramValidater=BufrParamValidater::loadTable(EncodeBufrManager::masterBufrTable, nullptr);
 
 EncodeBufrManager::
 EncodeBufrManager()

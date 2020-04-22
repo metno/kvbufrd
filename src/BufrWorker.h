@@ -130,6 +130,27 @@ class BufrWorker {
 
 
 
+/**
+   * saveTo, use the \e copy and \e copyto from the configuration file 
+   * to save a copy of the \a wmomsg to disk. The \a wmomsg is saved
+   * to the path given by \e copyto if \e copy is true. If \e copy is
+   * false the \a wmomsg is not saved to disk.
+   * 
+   * The file is named: wmono-termin-ccx.bufr, termin: hhDD.
+   *  ex. 1492-0625.bufr, Blindern, kl 06 dag 25.
+   *      1492-0625-A.bufr, same as above, but a CCA message.
+   *
+   * \param bufrHelper A pointer to the BufrHelper.
+   * \param ccx The CC? indicator.
+   * \param base64 If not NULL, return the base64 encoding for the bufr msg.
+   * @return true is the buffer is saved and false otherwise.
+   */
+  bool saveTo(std::shared_ptr<BufrHelper> bufrHelper,
+              int ccx,
+              std::string *base64=0 ) const;
+
+
+
   bool checkContinuesTypes( ObsEvent            &event,
                             const DataEntryList &data)const;
 

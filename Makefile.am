@@ -24,6 +24,6 @@ install-data-hook:
 	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/log/kvalobs/kvbufr
 	$(install_sh) -m 755 -d $(DESTDIR)/$(datadir)/@PACKAGE_NAME@
 	$(install_sh) -m 755 -d $(DESTDIR)/$(pkgdatadir)/bufrtables
-	tar zxpf $(top_srcdir)/share/bufrtables/bufrtables_000400.tar.gz -C $(DESTDIR)/$(pkgdatadir)/bufrtables
+	tar zxpf $(top_srcdir)/share/bufrtables/bufrdc_tables_wmo_v33.tar.gz --strip-components=1 -C $(DESTDIR)/$(pkgdatadir)/bufrtables
 
 include mk/debian.mk

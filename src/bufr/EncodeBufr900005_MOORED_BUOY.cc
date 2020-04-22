@@ -91,7 +91,7 @@ encode()
 
    encodeTemplate( 315008 );
 
-string A1("S");
+string A1("B");
 //   int internationalSubCategory;
 //
 //   switch( obstime.hour() ){
@@ -135,7 +135,7 @@ string A1("S");
    }
 
    string A2=computeAreaDesignator( longitude, latitude );
-   bufr->setDataAndInternationalSubDataCategory( 1, 0/*internationalSubCategory*/ );
-   bufr->setGTSHeader( "IS", A1+A2 );
+   bufr->setDataAndInternationalSubDataCategory( 1, 25/*internationalSubCategory*/ );
+   bufr->setGTSHeader( "IO", A1+A2 );
 }
 

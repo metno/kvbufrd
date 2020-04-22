@@ -52,7 +52,7 @@
 #include "kvBufrEncodeTestConf.h"
 #include "StationInfoParse.h"
 #include "ReadDataFile.h"
-#include "encodebufr.h"
+//#include "encodebufr.h"
 #include "bufr/EncodeBufrBase.h"
 #include "bufr/BUFRparam.h"
 #include "bufr/EncodeBufrManager.h"
@@ -114,7 +114,7 @@ protected:
 		setenv("BUFR_TABLES", bufr_tables.c_str(), 1 );
 		string conffile(string(TESTDATADIR) + "/kvBufrEncodeTest.conf" );
 		string btabl(string(BUFRTBLDIR)+"/B0000000000000033000.TXT");
-		ifstream iconf( conffile.c_str() );
+      ifstream iconf( conffile.c_str() );
 		//Turn off almost all logging.
 		milog::Logger::logger().logLevel( milog::ERROR );
 
@@ -132,7 +132,8 @@ protected:
 		ASSERT_TRUE( stationParser.parse( conf, stationList ) ) << "Cant parse the station information.";
 
 		validater = BufrParamValidater::loadTable( btabl );
-		ASSERT_TRUE( validater.get() ) << "Cant load BUFR B table: " << btabl;
+      ASSERT_TRUE( validater.get() ) << "Cant load BUFR B table: " << btabl;
+      EncodeBufrManager::paramValidater=validater;
 	}
 
 	///Called after each test case.
@@ -172,10 +173,15 @@ TEST_F(BufrEncodeTest, BUOY_basic)
    data=allData.subData( dt );
    
    EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
-   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
-
    EXPECT_TRUE( data.size() != 0 ) << "Expcting at least one hour of data.";
-   
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
+   auto bufrHelperPtr=bufrEncoder.encodeBufr(stInfo, data);
+   EXPECT_TRUE(bufrHelperPtr.get() != nullptr) << "Failed to encode BUFR.";
+   auto crc=bufrHelperPtr->computeCRC();
+   EXPECT_EQ(4179140996, crc) << "Failed to generate crc.";
+
+   bufrHelperPtr->setSequenceNumber(2);
+   bufrHelperPtr->saveToFile(".", 0);
 
    BufrHelper bufrHelper( validater, stInfo, bufr );
    EncodeBufrManager encoder;
@@ -201,7 +207,7 @@ TEST_F(BufrEncodeTest, BUOY_basic)
 
 #if 0
 
-}
+
 
 TEST_F( BufrEncodeTest, GustFrom_FG_1_or_FG_010 )
 {

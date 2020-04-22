@@ -35,6 +35,7 @@
 #include "milog/milog.h"
 #include "miutil/timeconvert.h"
 #include "decodeutility/decodeutility.h"
+#include "bufr/EncodeBufrManager.h"
 #include "bufr.h"
 
 /*CHANGES
@@ -130,6 +131,26 @@ namespace {
 
 #define FEQ(f1, f2, d) ((fabsf((f1)-(f2)))<(d)?true:false)
 
+
+
+Bufr::
+Bufr(EPrecipitation pre)
+  :debug(false), test( false), precipitationParam(pre), encodeBufrManager(new EncodeBufrManager())
+    
+{
+}
+
+Bufr::
+Bufr():debug(false), test( false ), precipitationParam(PrecipitationRA), encodeBufrManager(new EncodeBufrManager())
+{
+}
+
+Bufr::
+~Bufr()
+{
+}
+
+
 bool
 Bufr::
 doBufr( StationInfoPtr  info,
@@ -178,6 +199,35 @@ doBufr( StationInfoPtr  info,
    }
 
    return BufrDataPtr( bufr );
+}
+
+
+std::shared_ptr<BufrHelper> 
+Bufr::encodeBufr(StationInfoPtr  info,
+                 DataElementList &bufrData) {
+   auto bufr = doBufr(info, bufrData);
+
+   if( !bufr ) {
+      cerr << "Failed doBufr. " << getErrorMsg() << endl;;
+      return std::shared_ptr<BufrHelper>();
+   }
+
+   try {
+      std::shared_ptr<BufrHelper> bufrHelper(new BufrHelper(EncodeBufrManager::paramValidater, info, bufr));                 
+      encodeBufrManager->encode(*bufrHelper);
+
+      if (!bufrHelper->validBufr()) {
+         LOGINFO("INVALID BUFR: " << bufrHelper->getErrorMessage());
+         return std::shared_ptr<BufrHelper>();;
+      }
+      return bufrHelper;
+   } catch (const std::exception& ex) {
+      LOGERROR("Failed to encode to BUFR: " << info->toIdentString()
+                                          << " obstime: "
+                                          << pt::to_kvalobs_string(bufr->time())
+                                          << ". Reason: " << ex.what());
+   }
+   return std::shared_ptr<BufrHelper>();
 }
 
 void 
@@ -1796,27 +1846,6 @@ precipFromRR(  float &RR1, float &nedbor, float &fRR24, const DataElementList &s
 
   	return -1*nTimes;
 }
-
-
-
-
-Bufr::
-Bufr(EPrecipitation pre)
-  :debug(false), test( false), precipitationParam(pre)
-    
-{
-}
-
-Bufr::
-Bufr():debug(false), test( false ), precipitationParam(PrecipitationRA)
-{
-}
-
-Bufr::
-~Bufr()
-{
-}
-
 
 
 

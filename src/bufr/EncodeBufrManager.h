@@ -68,6 +68,8 @@ class EncodeBufrManager
 
 public:
    static int masterBufrTable;
+   static BufrParamValidaterPtr paramValidater;
+   
 
    EncodeBufrManager();
 

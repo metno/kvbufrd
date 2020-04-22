@@ -87,6 +87,7 @@ public:
   /** Get data from all sensors and levels.
    * Data from sensors with lower sensor number
    * has priority before data with higher sensor number.
+   * Return map<level, measurement>
    */
    std::map<int, float> getBySensorsAndLevels()const;
    
@@ -101,6 +102,9 @@ public:
    void value( float val, int sensor=0, int level=0 );
    float value( int sensor=0, int level=0 )const;
    int valAsInt(int sensor=0, int level=0)const;
+
+   std::map<int, Sensor>::const_iterator sensorsBegin()const { return sensors_.begin();};
+   std::map<int, Sensor>::const_iterator sensorsEnd()const{ return sensors_.end();};
    std::vector<int> sensors()const;
    Sensor getSensor(int sensor)const; 
 };

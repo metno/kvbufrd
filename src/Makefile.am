@@ -49,7 +49,6 @@ kvbufrd_SOURCES = \
    getDataReceiver.cc getDataReceiver.h \
    GetDataThread.cc GetDataThread.h \
    LoadBufrData.h LoadBufrData.cc \
-   encodebufr.h encodebufr.cc \
    base64.cc base64.h \
    scanstring.cc scanstring.h \
    SemiUniqueName.cc SemiUniqueName.h \
