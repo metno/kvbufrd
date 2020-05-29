@@ -71,6 +71,8 @@ const char* STATUS_NEW = "new";
 const char* STATUS_DUPLICATE = "duplicate";
 const char* STATUS_DELAYED = "delay";
 
+
+
 void
 _logObservation(const char* status,
                 StationInfoPtr info,
@@ -82,6 +84,10 @@ _logObservation(const char* status,
 {
   std::string sDelay;
   std::string sDuration("0");
+  std::string cntxt=milog::Logger::logger().getContextString();
+  
+  BufrWorker::logMetrics->setContext(cntxt);
+  BufrWorker::logMetrics->setLoglevel("INFO");
 
   if (!delayTo.is_special()) {
     sDelay = pt::to_kvalobs_string(delayTo);
@@ -93,12 +99,21 @@ _logObservation(const char* status,
     sDuration = o.str();
   }
 
+  ostringstream o;
+  o << status << ": (" << info->wmono() << "/" << info->stationID() << "/"
+                   << info->callsign() << "/" << info->codeToString() << "/"
+                   << ccx << "/" << pt::to_kvalobs_string(obstime) << "/"
+                   << sDelay << ") " << stationAndTypes
+                   << " duration=" << sDuration << "ms";
+  BufrWorker::logMetrics->log(o.str());
+  /*
   IDLOGINFO("observation",
             status << ": (" << info->wmono() << "/" << info->stationID() << "/"
                    << info->callsign() << "/" << info->codeToString() << "/"
                    << ccx << "/" << pt::to_kvalobs_string(obstime) << "/"
                    << sDelay << ") " << stationAndTypes
                    << " duration=" << sDuration << "ms");
+  */
 }
 
 void
@@ -217,16 +232,28 @@ stationAndType(const DataEntryList& data,
 }
 }
 
+LogAppender *BufrWorker::logMetrics=nullptr;
+
 BufrWorker::BufrWorker(App& app_,
                        std::shared_ptr<dnmi::thread::CommandQue> que_)
   : app(app_)
   , que(que_)
   , swmsg(*(new std::ostringstream()))
   , encodeBufrManager(new EncodeBufrManager())
+   
 {
   ostringstream o;
   if( EncodeBufrManager::masterBufrTable < 10 || EncodeBufrManager::masterBufrTable>99) {
     LOGFATAL("Buffer master table must be in the intervall [10,99], it is " << EncodeBufrManager::masterBufrTable );
+    exit(1);
+  }
+
+  IDLOGINFO("main", "BufrWorker: Logging metrics to '" << app.options.obslogfile<< "'");
+
+  logMetrics = new LogAppender(app.options.obslogfile);
+
+  if ( logMetrics == nullptr ) {
+    LOGFATAL("FAILED to create metric logger. Logfile '" << app.options.obslogfile << "'.");
     exit(1);
   }
 
@@ -274,7 +301,7 @@ BufrWorker::operator()()
       FLogStream* logs = new FLogStream(2, 307200); // 300k
       std::ostringstream ost;
 
-      ost << kvPath("logdir") << "/" << options.progname << "/"
+      ost << kvPath("logdir") << "/" << app.options.progname << "/"
           << event->stationInfo()->toIdentString() << ".log";
 
       if (logs->open(ost.str())) {
@@ -660,8 +687,8 @@ BufrWorker::newObs(ObsEvent& event)
     boost::uint32_t crc = bufrHelper->computeCRC();
     string base64;
 
-    LOGINFO("Data used to generate BUFR CRC, crc: " << crc << " (" << oldcrc << ")"); 
-
+    LOGINFO("Data used to generate BUFR CRC, crc: " << crc << " (" << oldcrc << ")" << endl << *bufrHelper->getData()); 
+    
     bool newBufr(crc != oldcrc);
 
     if (newBufr) {

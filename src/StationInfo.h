@@ -324,6 +324,7 @@ class StationInfo
 {
 public:
 
+
    /**
    * Type is a class to hold information about one typeid
    * and for witch hours it shall be used and if it is a
@@ -431,6 +432,7 @@ private:
    int            heightWindAboveSea_;
    float          latitude_;
    float          longitude_;
+   int            buoyType_;
    int            wmono_;
    std::string    name_;
    int            stationID_;
@@ -449,6 +451,7 @@ private:
    milog::LogLevel loglevel_;
    bool            cacheReloaded48_;
    bool            ignore;
+
 
 
    StationInfo();
@@ -497,6 +500,13 @@ public:
    void      latitude( float lat, bool ifUnset=true );
    float     longitude()const { return longitude_; }
    void      longitude( float lon, bool ifUnset=true );
+   /**
+    * buoyType is a code table value that define the type of buoy.
+    * BUFR code table 0 02 149. Missing value is 63 and the dafault.
+    */
+   void      buoyType(int bt);
+   int       buoyType()const { return buoyType_;}
+   
    int       wmono()const{ return wmono_;}
 
    /**

@@ -162,12 +162,12 @@ doBufr( StationInfoPtr  info,
 
    bufr = BufrData(bufrData[bufrData.firstTime()]);
 
-   bufr.TA     = c2kelvin( bufrData[0].TA );
-   bufr.PO     = pressure( bufrData[0].PO );
-   bufr.PR     = pressure( bufrData[0].PR );
-   bufr.UU     = bufrData[0].UU.value();
-   bufr.TW     = c2kelvin( bufrData[0].TW );
-   bufr.SG     = bufrData[0].SG.value();
+   bufr.TA.copy(bufrData[0].TA).transform(c2kelvin );
+   bufr.PO.copy(bufrData[0].PO).transform(pressure);
+   bufr.PR.copy(bufrData[0].PR).transform(pressure);
+   bufr.UU.copy(bufrData[0].UU);
+   bufr.TW.copy(bufrData[0].TW).transform(c2kelvin);
+   bufr.SG.copy(bufrData[0].SG);
 
    doIx( info, bufrData, bufr );
    doSeaOrWaterTemperature( bufrData, bufr );

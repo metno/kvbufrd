@@ -128,7 +128,7 @@ class Bufr
     void maxWindGust( const DataElementList &sd, BufrData &res  );
     void maxWindMax( const DataElementList &sd, BufrData &res );
     void cloudData( const DataElementList &data, BufrData &res );
-    float pressure( float presure );
+    static float pressure( float presure );
     void doPressureTrend( const DataElementList &data, DataElement &res );
     void computePressureTrend( const DataElementList &data,
                                DataElement &res);

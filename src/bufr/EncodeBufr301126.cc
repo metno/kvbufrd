@@ -68,8 +68,7 @@ encode( )
   bufr->addValue(1087, id, "WMO extended id", false);  
   bufr->addValue(1015, stationInfo->name(), "Site name", false);
 
-  //At the moment, set the BUOY type to 16 (Unspecified moored buoy) 
-  bufr->addValue(2149, 16, "WMO extended id", false);  
+  bufr->addValue(2149, stationInfo->buoyType(), "Type of data buoy", false);  
   encodeTemplate( 301011 );
   encodeTemplate( 301012 );
   encodeTemplate( 301021 );

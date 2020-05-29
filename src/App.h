@@ -56,6 +56,7 @@ struct Opt {
   std::string conffile;
   std::string progname;
   std::string pidfile;
+  std::string obslogfile;
   milog::LogLevel loglevel;
   bool diasableDataReceiver;
   boost::posix_time::ptime fromTime;
@@ -65,7 +66,7 @@ std::string getProgNameFromArgv0(const std::string &cmdname);
 void decodeArgs(int argn, char **argv, Opt &opt);
 void usage(const std::string &progname, int exitCode);
 
-extern Opt options;
+//extern Opt options;
 
 namespace kvbufrd {
 class StationInfoList;
@@ -94,6 +95,7 @@ class App : public kvalobs::sql::DbQuery {
   boost::posix_time::ptime startTime_;
   WaitingList waitingList;
   std::string confFile;
+  std::string obslogFile;
   std::string mypathInCorbaNS;
   std::list<int> continuesTypeID_;
   std::list<ObsEvent*> obsEventWaitingOnCacheReload;
@@ -102,16 +104,20 @@ class App : public kvalobs::sql::DbQuery {
   bool acceptAllTimes_;
   milog::LogLevel defaultLogLevel;
 
+
   mutable Mutex mutex;
 
   void readDatabaseConf(miutil::conf::ConfSection *conf);
+  void setObslogfile(Opt &opt, miutil::conf::ConfSection *conf);
 
  public:
 
   static App *kvApp;
+  Opt options;
+
   boost::shared_ptr<kvalobs::KvDbGateProxyThread> dbThread;
 
-  App(int argn, char **argv, const std::string &confFile_, miutil::conf::ConfSection *conf);
+  App(int argn, char **argv, Opt &opt /* const std::string &confFile_*/, miutil::conf::ConfSection *conf);
   ~App();
 
   void readWaitingElementsFromDb();

@@ -163,21 +163,27 @@ TEST_F(BufrEncodeTest, BUOY_basic)
    boost::posix_time::ptime dt;
    BufrDataPtr bufr( new BufrData() );
    kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
-   string id="6301003";
+   string id="6301001";
    stInfo = findCallsign( id );
 
    ASSERT_TRUE( stInfo.get() ) << "No station information for callsign " << id;
 
-   loadBufrDataFromFile( "buoy-20925-22-20200417T060000.dat", stInfo, allData, validData );
-   dt=getTime("2020-04-17 06:00:00");
+   loadBufrDataFromFile( "bouy_76933_20200426T06.dat", stInfo, allData, validData );
+   dt=getTime("2020-04-26 06:00:00");
+
+   cerr << allData << endl;
+
+
    data=allData.subData( dt );
    
    EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
    EXPECT_TRUE( data.size() != 0 ) << "Expcting at least one hour of data.";
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
    auto bufrHelperPtr=bufrEncoder.encodeBufr(stInfo, data);
-   EXPECT_TRUE(bufrHelperPtr.get() != nullptr) << "Failed to encode BUFR.";
+   EXPECT_TRUE(bufrHelperPtr != nullptr) << "Failed to encode BUFR.";
    auto crc=bufrHelperPtr->computeCRC();
+   cout << "crc '" << crc << "'" << endl;
+   FAIL();
    EXPECT_EQ(4179140996, crc) << "Failed to generate crc.";
 
    bufrHelperPtr->setSequenceNumber(2);

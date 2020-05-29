@@ -56,7 +56,9 @@ kvbufrd_SOURCES = \
    isDirWithWritePermission.cc isDirWithWritePermission.h \
    dbhelper.cc dbhelper.h \
 	 cachedb.h cachedb.cc \
-	 utils.h utils.cc
+	 utils.h utils.cc  \
+	 LogAppender.h LogAppender.cc 
+	 
  
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 

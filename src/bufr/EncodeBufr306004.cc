@@ -29,6 +29,7 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <tuple>
 #include <boost/assign.hpp>
 #include "EncodeBufr306004.h"
 
@@ -57,30 +58,48 @@ encodeIds()const
 
 
 
+namespace {
+  //Get data from all sensor and levels, 
+  //lower sensor numbers has priority before higher numbers.
+  //map< level, tuple<tw, ssw> >
+  std::map<int, std::tuple<float,float> > merge(const KvParam &tw, const KvParam &ssw) {
+    using namespace std;
+    map<int, std::tuple<float,float> > res;
+
+    for(auto t : tw.getBySensorsAndLevels() ) {
+      res[t.first]=make_tuple(t.second, FLT_MAX);
+    }
+
+    for(auto t : ssw.getBySensorsAndLevels() ) {
+      auto it = res.find(t.first);
+
+      if( it == res.end() ) {
+        res[t.first]=make_tuple(FLT_MAX, t.second);
+      } else {
+        res[it->first]=make_tuple(get<0>(it->second), t.second);
+      }
+    }
+
+    return res;
+  }
+}
+
 
 void
 EncodeBufr306004::
 encode( )
 {
-  auto ssw = data->SSW.getBySensorsAndLevels();
-
-  if ( ssw.size() == 0 ) {
-    bufr->addDelayedReplicationFactor(31000, 0);
-    return;
-  }
-  
-  bufr->addDelayedReplicationFactor(31000, 1);
-  bufr->addValue(2005, FLT_MAX, "Precision of temperature observation.");
-
+  using namespace std;
+  auto count=[](float v) {return v!=FLT_MAX;};
+  auto d = merge(data->TW, data->SSW);
   bufr->addValue(2032, 3, "Indicator of digitization (tbl code 3 = missing)");
   bufr->addValue(2033, 7, "Method of salinity/depth measurement (tbl code 7 = missing)");
 
-  bufr->addDelayedReplicationFactor(31001, ssw.size());
-  for( auto &s : ssw) {
+  bufr->addDelayedReplicationFactor(31001, d.size());
+  for( auto &s : d) {
     bufr->addValue(7062, s.first, "SSW.level");
-    auto tw = data->TW.getFirstValueAtLevel(s.first);
-    bufr->addValue(22043, (tw!=FLT_MAX?tw:FLT_MAX), "TW");
-    bufr->addValue(22062, s.second, "SSW");
+    bufr->addValue(22043, get<0>(s.second), "TW", count(get<0>(s.second)));
+    bufr->addValue(22062, get<1>(s.second), "SSW", count(get<1>(s.second)));
   }
 }
 

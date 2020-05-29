@@ -179,6 +179,7 @@ private:
 		KvParam SSW;  //Saltholdighet i sjøvann
 		KvParam WDHF; //Bølgeretning høyfrekvente bølger
 		KvParam WDLF; //Bølgeretning lavfrekvente bølger 
+		KvParam WDP1; //Primærbølgens hovedretning. Tilhører WHM0 og WTP
 		KvParam WHM0; //Signifikant bølgehøyde
 		KvParam WHM0HF; //høyfrekvent signifikant bølgehøyde
 		KvParam WHM0LF; //lavfrekvent signifikant bølgehøyde

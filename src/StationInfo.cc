@@ -470,6 +470,7 @@ heightWind_( INT_MAX ),
 heightWindAboveSea_( INT_MAX ),
 latitude_( FLT_MAX ),
 longitude_( FLT_MAX ),
+buoyType_(63),
 wmono_( 0 ),
 stationID_( 0 ),
 copyIsSet_( false ),
@@ -489,6 +490,7 @@ heightWind_( INT_MAX ),
 heightWindAboveSea_( INT_MAX ),
 latitude_( FLT_MAX ),
 longitude_( FLT_MAX ),
+buoyType_(63),
 wmono_( wmono ),
 stationID_( INT_MIN ),
 copyIsSet_( false ),
@@ -512,6 +514,7 @@ StationInfo(const StationInfo &i)
    heightWindAboveSea_ = i.heightWindAboveSea_;
    latitude_ = i.latitude_;
    longitude_ = i.longitude_;
+   buoyType_  = i.buoyType_;
    wmono_=i.wmono_;
    name_ = i.name_;
    stationID_ = i.stationID_;
@@ -661,6 +664,17 @@ longitude( float lon, bool ifUnset )
 {
    if( !ifUnset || longitude_ == FLT_MAX )
       longitude_ = lon;
+}
+
+
+void 
+StationInfo::
+buoyType(int bt ){ 
+   if( bt < 63) {
+      buoyType_=bt;
+   } else {
+      buoyType_=63; //Missing
+   }
 }
 
 int  

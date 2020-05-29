@@ -39,6 +39,7 @@
 #include "DataList.h"
 #include "BufrData.h"
 #include "StationInfo.h"
+#include "LogAppender.h"
 
 
 class BufrWorker {
@@ -57,7 +58,7 @@ class BufrWorker {
   std::ostringstream       &swmsg;
   boost::shared_ptr<EncodeBufrManager> encodeBufrManager;
   BufrParamValidaterPtr bufrParamValidater;
-
+  
   /**
    * readData loads the data from the datacache. The 
    * data at the head is the newest data.
@@ -158,6 +159,7 @@ class BufrWorker {
   BufrWorker( App &app,
               std::shared_ptr<dnmi::thread::CommandQue> que);
 
+  static LogAppender *logMetrics;
 
   void newObs(ObsEvent &event);
   void operator()();

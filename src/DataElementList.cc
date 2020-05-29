@@ -183,6 +183,7 @@ DataElement():
     SSW(params, "SSW", 296),  //Saltholdighet i sjøvann 
     WDHF(params,"WDHF",10633), //Bølgeretning høyfrekvente bølger
 		WDLF(params,"WDLF", 10637), //Bølgeretning lavfrekvente bølger 
+    WDP1(params,"WDP1",161),    //Primærbølgens hovedretning. Tilhører WHM0 og WTP
 		WHM0(params,"WHM0", 136), //Signifikant bølgehøyde
 		WHM0HF(params,"WHM0HF",10609), //høyfrekvent signifikant bølgehøyde
 		WHM0LF(params,"WHM0LF",10610), //lavfrekvent signifikant bølgehøyde
@@ -221,7 +222,7 @@ DataElement( const DataElement &p):
   KvParamList::iterator itDest = params.begin();
 
   for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
-    (*itDest)->copy(**itSource);
+    (*itDest)->copy(**itSource, false);
   }
 }
 
@@ -246,7 +247,7 @@ operator=(const DataElement &p)
             cerr << "FATAL BUG: Check that the default CTOR and the copy CTOR have the same KvParams in the same order." << endl;
             abort();
          }
-         (*itDest)->copy(**itSource);
+         (*itDest)->copy(**itSource, false);
       }
 
       nSet             = p.nSet;
@@ -677,7 +678,7 @@ operator<<(std::ostream& o, const DataElement& sd)
   KvParamList::const_iterator it = sd.params.begin();
 
   if( it != sd.params.end()  ) {
-    o << "obstime: " <<   pt::to_kvalobs_string(sd.time()) << endl;
+    o << "obstime: " <<   (sd.time().is_special()?"(undefined)":pt::to_kvalobs_string(sd.time())) << endl;
     for( ; it != sd.params.end(); ++it ) {
       for( auto sit = (*it)->sensorsBegin(); sit != (*it)->sensorsEnd(); ++sit ) {
         for( auto lvl : sit->second.levels ) {
@@ -699,8 +700,8 @@ operator<<(std::ostream& ost,
 {
   CIDataElementList it=sd.begin();
 
-  for(;it!=sd.end(); it++){
-    ost << *it << std::endl 
+  for(auto &it : sd ){
+    ost << it << std::endl 
 	      << "-----------------------------------" << std::endl;
   }
   

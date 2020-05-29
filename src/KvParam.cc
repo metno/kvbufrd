@@ -90,15 +90,22 @@ KvParam( KvParamList &paramList, const KvParam &param )
    paramList.params.push_back( this );
 }
 
-void
-KvParam::copy(const KvParam &src) {
+KvParam&
+KvParam::copy(const KvParam &src, bool mustHaveSameId) {
    if( this == &src ) 
-      return;
+      return *this;
   
+   if( mustHaveSameId && id_ != src.id_) {
+      std::ostringstream o;
+      o << "KvParam: Expecting same id for src (" << src.id_ << " and this id (" << id_ << ").";
+      throw std::runtime_error(o.str());
+   }
+
    name_ = src.name_;
    levelScale_ = src.levelScale_;
    id_ = src.id_;
    sensors_=src.sensors_;
+   return *this;
 }
 
 /*
@@ -160,7 +167,7 @@ KvParam::getBySensorsAndLevels()const {
 float KvParam::getFirstValueAtLevel(int level)const {
    for ( auto s : sensors_) {
       for( auto &l : s.second.levels ){
-         if( l.first == level ) {
+         if( l.first == level && l.second != -32767 ) {
             return l.second;
          }
       }
@@ -168,8 +175,18 @@ float KvParam::getFirstValueAtLevel(int level)const {
    return FLT_MAX;
 }
 
-
-
+bool 
+KvParam::hasValidValues()const {
+   for ( auto s : sensors_) {
+      for( auto &l : s.second.levels ){
+         if( l.second != FLT_MAX && l.second!=-32767 ) {
+            return true;
+         }
+      }
+   }
+   return false;
+}
+ 
 bool 
 KvParam::
 valid(int sensor, int level )const 
@@ -182,6 +199,10 @@ void
 KvParam::
 value( float val, int sensor, int level )
 {
+   if( val ==-32767 ) {
+      return;
+   }
+   
    auto s = sensorRef(sensor, true);
    auto l=level*levelScale_;
    s->set(val, l);
@@ -208,6 +229,16 @@ valAsInt(int sensor, int level )const
    return static_cast<int>( v + 0.5 );
 }
 
+KvParam& KvParam::transform(float func (float)) {
+   for ( auto &s : sensors_) {
+      for( auto &l : s.second.levels ){
+         if( l.second != FLT_MAX && l.second!=-32767 ) {
+            l.second = func(l.second);
+         }
+      }
+   }
+   return *this;
+}
 
 std::vector<int> 
 KvParam::sensors()const

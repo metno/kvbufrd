@@ -1,3 +1,8 @@
+kvbufrd (3.0.6~rc2-1) xenial; urgency=low
+  * Fix encoding of TM306041
+    
+ -- Kvalobs <kvalobs@met.no> Fri, 29 May 2020 11:00:00 +0100
+
 kvbufrd (3.0.6~rc1-1) xenial; urgency=low
   * Log xmls with empty data.
   * Changed "code" for SVV stations to 4 (900004)

@@ -65,12 +65,11 @@ void
 EncodeBufr315008::
 encode(  )
 {
+   auto count=[](float v) {return v!=FLT_MAX;};
+   
    bufr->setObsTime( obstime );
 
-   /*
-    * Fixed surface station identification, time,
-    * horizontal and vertical coordinates
-    */
+   //Buoy identification and location
    encodeTemplate( 301126 );
 
    //Standard meteorological data
@@ -88,22 +87,39 @@ encode(  )
    //Sequence for representation of detailed spectral wave measurements
    encodeTemplate( 306040 );
 
+
+   //We code either template 3 06 041 or 3 06 004 depending on the 
+   //present of salinity data. 
+   //If we have salinity data we encode 306004.
+   //Encode 306041, if we have only temperature measurements
+
+
    //Depth and temperature profile (high accuracy/precision)
-   encodeTemplate( 306041 );
+   auto ssw = data->SSW.getBySensorsAndLevels(); //salinity
+   auto tw = data->TW.getBySensorsAndLevels(); //seawater temperature.
+
+   //No saliniy and we have seawater temperature. Encode 3 06 041
+   if ( ssw.size() == 0 && tw.size() > 0) {
+      LOGINFO("Encoding template 3 06 041, sea temperature without salinity.");
+      bufr->addDelayedReplicationFactor(31000, 1);
+      bufr->addValue(2005, FLT_MAX, "Precision of temperature observation."); //Set to missing for now.
+      encodeTemplate( 306041 );
+   } else {
+      bufr->addDelayedReplicationFactor(31000, 0);
+   }
 
    //Depth, temperature, salinity
-   encodeTemplate( 306004 );
+   //We have salinity. Encode 3 06 004
+   if ( ssw.size() > 0 ) {
+      LOGINFO("Encoding template 3 06 004, sea temperature with salinity.");
+      bufr->addDelayedReplicationFactor(31000, 1);
+      bufr->addValue(2005, FLT_MAX, "Precision of temperature observation."); //Set to missing for now.
+      encodeTemplate( 306004 );
+   } else {
+      bufr->addValue(2005, FLT_MAX, "Precision of temperature observation."); //Set to missing for now.
+   }
 
    //Sub-surface current measurements
    encodeTemplate( 306005 );
-
-
-
-   //encodeTemplate( 302001 ); //Pressure data.
-   //encodeTemplate( 302054 ); //SHIP instantaneous data.
-   //bufr->addValue( 8002, INT_MAX, "Vertical significance", false);
-   //encodeTemplate( 302055 ); //Icing and ice.
-   //encodeTemplate( 302057 ); //Ship marine data.
-   //encodeTemplate( 302060 ); //Ship period data.
 }
 

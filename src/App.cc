@@ -249,14 +249,35 @@ void App::readDatabaseConf(miutil::conf::ConfSection *conf){
   }
 }
 
-App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::ConfSection *conf)
+
+void App::setObslogfile(Opt &opt, miutil::conf::ConfSection *conf) {
+  ValElementList valElem=conf->getValue("obslogfile");;
+  fs::path path;
+  
+  if( !opt.obslogfile.empty() ) {
+    path=opt.obslogfile;
+  } else if( !valElem.empty() ) {
+    path=valElem[0].valAsString();
+  } else {
+    path = opt.progname+"_observation.log";
+  }
+  
+  if( path.is_relative() ) {
+    path = fs::path(kvPath(logdir)) / path;
+  }
+
+  opt.obslogfile = path.string();
+}
+
+App::App(int argn, char **argv, Opt &opt, miutil::conf::ConfSection *conf)
     : kvDbPool([this]() {return createKvDbConnection();}, [this](dnmi::db::Connection *con) {releaseKvDbConnection(con);} ),
       DbQuery([this]() {return kvDbPool.get();}),
       startTime_(pt::second_clock::universal_time()),
-      confFile(confFile_),
+      confFile(opt.conffile),
       hasStationWaitingOnCacheReload(false),
       acceptAllTimes_(false),
-      defaultLogLevel(milog::INFO) {
+      defaultLogLevel(milog::INFO),
+      options(opt) {
   ValElementList valElem;
   string val;
   string bufr_tables(DATADIR);
@@ -275,6 +296,8 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   if( !valElem.empty() ) {
     EncodeBufrManager::masterBufrTable = valElem.valAsInt(31);
   }
+
+
 
   valElem = conf->getValue("loglevel");
 
@@ -300,11 +323,14 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   createGlobalLogger("uinfo0");
   createGlobalLogger("kafka");
   createGlobalLogger("DataReceiver");
-  milog::createGlobalLogger(logdir, options.progname, "kafka_received", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
-  milog::createGlobalLogger(logdir, options.progname, "datareceiver_saved", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
-  milog::createGlobalLogger(logdir, options.progname, "observation", milog::DEBUG, 1024, 1, new milog::StdLayout1());
-  milog::createGlobalLogger(logdir, options.progname, "cachedb", milog::DEBUG, 500, 2, new milog::StdLayout1());
+  milog::createGlobalLogger(logdir, opt.progname, "kafka_received", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
+  milog::createGlobalLogger(logdir, opt.progname, "datareceiver_saved", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
+  //milog::createGlobalLogger(logdir, opt.progname, "observation", milog::DEBUG, 1024, 1, new milog::StdLayout1());
+  milog::createGlobalLogger(logdir, opt.progname, "cachedb", milog::DEBUG, 500, 2, new milog::StdLayout1());
  
+  setObslogfile(options, conf);
+  IDLOGINFO("main", "Writing observation (metriccs) to obslogfile: " << options.obslogfile);
+  LOGINFO("Writing observation (metrics) to obslogfile: " << options.obslogfile);
   readDatabaseConf(conf);
 
   //If a station is set up with this types delay them if
@@ -1077,6 +1103,7 @@ void decodeArgs(int argn, char **argv, Opt &opt) {
         { "config-file", 1, 0, 'c' },
         { "pidfile", 1, 0, 'p' },
         { "fromtime", 1, 0, 'f' },
+        { "obs-logfile", 1, 0, 'o'},
         { "help", 0, 0, 'h' },
         { "disable-data-receiver", 0, 0, 'd'},
         { "loglevel", 1, 0, 'l'},
@@ -1104,6 +1131,9 @@ void decodeArgs(int argn, char **argv, Opt &opt) {
         break;
       case 'p':
         opt.pidfile = optarg;
+        break;
+      case 'o':
+        opt.obslogfile = optarg;
         break;
       case 'c':
         opt.conffile = optarg;
@@ -1176,7 +1206,10 @@ void usage(const std::string &progname, int exitCode) {
        << "\n\t      Default value is set to " << kvPath("sysconfdir") << "/" << progname << ".conf"
        << "\n\t [--pidfile|-p] pidfile Use this as the pid file. "
        << "\n\t      Default value " << kvPath("rundir") << "/" << progname << "-node.pid"
+       << "\n\t [--obs-logfile|-o] logfile Write the observation logfile to logfile. "
+       << "\n\t      Default value " << kvPath("logdir") << "/" << progname << "_observation.log"
        << "\n\t      Where node is determined by the hostname." << "\n\n";
+
   exit(exitCode);
 }
 

@@ -487,7 +487,7 @@ void DataReceiver::setDefaultLogger(StationInfoPtr station) {
 
     boost::replace_all(code, " ", "_");
     //miutil::replaceStr( code," ", "_" );
-    ost << kvPath("logdir") << "/" << options.progname << "/dr-" << station->toIdentString() << ".log";
+    ost << kvPath("logdir") << "/" << app.options.progname << "/dr-" << station->toIdentString() << ".log";
 
     if (logs->open(ost.str())) {
       Logger::setDefaultLogger(logs);

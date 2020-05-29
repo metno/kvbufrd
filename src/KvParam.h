@@ -64,7 +64,7 @@ private:
    std::map<int, Sensor>  sensors_;
 
    Sensor* sensorRef(int sensor, bool addIfNotFound);
-   void copy(const KvParam &src);
+   //void copy(const KvParam &src);
    friend class DataElement;
 public:
    KvParam();
@@ -82,6 +82,10 @@ public:
 
    //KvParam& operator=( int rhs );
 
+   //Return reference to this so we can chane 
+   //throw runtime_error if mustHaveSameId is true and they differ.
+   KvParam& copy(const KvParam &src, bool mustHaveSameId=true);
+
    std::string name()const { return name_; }
 
   /** Get data from all sensors and levels.
@@ -98,11 +102,19 @@ public:
 
    int id()const{ return id_;}
 
+   //Is there any valid values in any sensor and levels
+   bool hasValidValues()const;
    bool valid(int sensor=0, int level=0 )const;
    void value( float val, int sensor=0, int level=0 );
    float value( int sensor=0, int level=0 )const;
    int valAsInt(int sensor=0, int level=0)const;
 
+
+   /**
+    * transform converts all values by calling the func. ex to convert celcius to kelvin.
+    * Return referance to this so we can chane calls.
+    */ 
+   KvParam& transform(float func (float));
    std::map<int, Sensor>::const_iterator sensorsBegin()const { return sensors_.begin();};
    std::map<int, Sensor>::const_iterator sensorsEnd()const{ return sensors_.end();};
    std::vector<int> sensors()const;
