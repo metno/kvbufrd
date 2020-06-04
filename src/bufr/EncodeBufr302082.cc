@@ -61,7 +61,7 @@ void
 EncodeBufr302082::
 encode( )
 {
-  //Not implemented
-  bufr->addDelayedReplicationFactor(31000, 0);
+  //Not implemented, Radiation measurements
+  
 }
 

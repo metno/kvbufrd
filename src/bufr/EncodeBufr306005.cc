@@ -60,20 +60,11 @@ void
 EncodeBufr306005::
 encode( )
 {
-  //Start her
-
   auto CD = data->CD.getSensor(0);
   auto CV = data->CV.getSensor(0);
 
-  if( CV.levels.size() == 0) { 
-    bufr->addDelayedReplicationFactor(31000, 0);
-    return;
-  }
-  
-  bufr->addDelayedReplicationFactor(31000, 1);
-
   bufr->addValue( 2031, 31, "Duration and time of current measurement (code tbl 31 = missing)", false );
-  bufr->addDelayedReplicationFactor(31001, CV.levels.size());
+  bufr->addDelayedReplicationFactor(31001, CV.levels.size(), "Number of CV depths");
   float cd;
   for ( auto &e : CV.levels ) {
     bufr->addValue(7062, e.first, "CV-depth");

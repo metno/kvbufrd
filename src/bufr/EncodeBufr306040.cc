@@ -60,6 +60,7 @@ void
 EncodeBufr306040::
 encode( )
 {
-  bufr->addDelayedReplicationFactor(31000, 0);
+  //Not implemented Detailed spectral wave measurements
+  
 }
 

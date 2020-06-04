@@ -60,15 +60,7 @@ void
 EncodeBufr306039::
 encode( )
 {
-  if( data->WHM0.hasValidValues() || data->WHMAX.hasValidValues() || data->WTZ.hasValidValues() 
-    || data->WTP.hasValidValues() || data->WDP1.hasValidValues() || data->WSPRTP.hasValidValues() 
-    || data->WTM02.hasValidValues() ) {
-    bufr->addDelayedReplicationFactor(31000, 1);
-  } else {
-    bufr->addDelayedReplicationFactor(31000, 0);
-    return;
-  }
-
+  
   auto count=[](float v) {return v!=FLT_MAX;};
 
   bufr->addValue(22078, FLT_MAX,"DURATION OF WAVE RECORD [S]", false);

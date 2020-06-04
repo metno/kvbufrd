@@ -62,13 +62,7 @@ EncodeBufr302091::
 encode( )
 {
 
-  if( data->VV.valid() || data->precipRegional.valid() ) {
-    bufr->addDelayedReplicationFactor(31000, 1);
-  } else {
-    bufr->addDelayedReplicationFactor(31000, 0);
-    return;
-  }
-
+  
    /* Precipitation measurement */
    bufr->addValue( 20001, data->VV, "VV, horisental visibility" );
    bufr->addValue(  4024, data->precipRegional.hTr, "hTr, regional", false);

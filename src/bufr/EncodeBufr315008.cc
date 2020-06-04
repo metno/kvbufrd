@@ -76,16 +76,33 @@ encode(  )
    encodeTemplate( 306038 );
 
    //Optional ancillary met data
-   encodeTemplate( 302091 );
+   if( data->VV.valid() || data->precipRegional.valid() ) {
+      bufr->addDelayedReplicationFactor(31000, 1), "Encode TM302091";
+       encodeTemplate( 302091 );
+   } else {
+    bufr->addDelayedReplicationFactor(31000, 0);
+   }
 
+   
    //optional radiation measurement
-   encodeTemplate( 302082 );
+   bufr->addDelayedReplicationFactor(31000, 0, "Encode TM302082");
+   //encodeTemplate( 302082 );
 
    //Basic wave measurements
-   encodeTemplate( 306039 );
+   if( data->WHM0.hasValidValues() || data->WHMAX.hasValidValues() || data->WTZ.hasValidValues() 
+    || data->WTP.hasValidValues() || data->WDP1.hasValidValues() || data->WSPRTP.hasValidValues() 
+    || data->WTM02.hasValidValues() ) {
+    bufr->addDelayedReplicationFactor(31000, 1, "Encode TM306039");
+    encodeTemplate( 306039 );
+  } else {
+    bufr->addDelayedReplicationFactor(31000, 0, "Encode TM306039");
+  }
+
+   
 
    //Sequence for representation of detailed spectral wave measurements
-   encodeTemplate( 306040 );
+   bufr->addDelayedReplicationFactor(31000, 0,"Encode TM306040");
+   //encodeTemplate( 306040 );
 
 
    //We code either template 3 06 041 or 3 06 004 depending on the 
@@ -100,26 +117,32 @@ encode(  )
 
    //No saliniy and we have seawater temperature. Encode 3 06 041
    if ( ssw.size() == 0 && tw.size() > 0) {
-      LOGINFO("Encoding template 3 06 041, sea temperature without salinity.");
-      bufr->addDelayedReplicationFactor(31000, 1);
+      LOGINFO("Encoding template 3 06 041, sea temperature without salinity. Sizes SSW (" << ssw.size() 
+         << ") TW (" << tw.size() << "). \n" << data->TW );
+      bufr->addDelayedReplicationFactor(31000, 1, "Encode TM306041");
       bufr->addValue(2005, FLT_MAX, "Precision of temperature observation."); //Set to missing for now.
       encodeTemplate( 306041 );
    } else {
-      bufr->addDelayedReplicationFactor(31000, 0);
+      bufr->addDelayedReplicationFactor(31000, 0, "Encode TM306041");
    }
 
    //Depth, temperature, salinity
    //We have salinity. Encode 3 06 004
    if ( ssw.size() > 0 ) {
       LOGINFO("Encoding template 3 06 004, sea temperature with salinity.");
-      bufr->addDelayedReplicationFactor(31000, 1);
+      bufr->addDelayedReplicationFactor(31000, 1, "Encode TM306004");
       bufr->addValue(2005, FLT_MAX, "Precision of temperature observation."); //Set to missing for now.
       encodeTemplate( 306004 );
    } else {
-      bufr->addValue(2005, FLT_MAX, "Precision of temperature observation."); //Set to missing for now.
+      bufr->addDelayedReplicationFactor(31000, 0, "Encode TM306004");
    }
 
    //Sub-surface current measurements
-   encodeTemplate( 306005 );
+   if( data->CV.getSensor(0).size() == 0) { 
+      bufr->addDelayedReplicationFactor(31000, 0,"Encode TM306005");
+   } else {
+      bufr->addDelayedReplicationFactor(31000, 1, "Encode TM306005");
+      encodeTemplate( 306005 );
+   }
 }
 
