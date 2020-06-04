@@ -36,6 +36,7 @@
 #include <list>
 #include <map>
 #include <vector>
+#include <tuple>
 
 
 class KvParamList;
@@ -51,9 +52,14 @@ public:
  
       Sensor( const Sensor &s ):num(s.num), levels(s.levels){}
       float getLevel(int level)const;
+      int size()const { return levels.size();}
+
+      //Returns a tuple<value, level>
+      std::tuple<float, int> getFirstValue()const;
       
    private:
       friend class KvParam;
+      void clean();
       void set(float value, int level);
    };
 
@@ -64,6 +70,8 @@ private:
    std::map<int, Sensor>  sensors_;
 
    Sensor* sensorRef(int sensor, bool addIfNotFound);
+
+   
    //void copy(const KvParam &src);
    friend class DataElement;
 public:
@@ -80,9 +88,20 @@ public:
    KvParam& operator=( const KvParam &rhs )=delete;
    KvParam& operator=( float rhs );
 
+   //In the code there is a lot code that sets param values to FLT_MAX. 
+   //This makes a lot of trouble after we introduced sensor and levels.
+   //All functions returns now FLT_MAX or INT_MAX if there is no value for
+   //the parameter for sensor level. The clean method removes all values of 
+   //FLT_MAX.
+   void clean();
+
+   //Return number of values
+   int size()const;
+
+   bool empty() const { return size()==0; }
    //KvParam& operator=( int rhs );
 
-   //Return reference to this so we can chane 
+   //Return reference to this so we can chaine function call.  
    //throw runtime_error if mustHaveSameId is true and they differ.
    KvParam& copy(const KvParam &src, bool mustHaveSameId=true);
 
@@ -100,6 +119,16 @@ public:
     */
    float getFirstValueAtLevel(int level)const;
 
+   /**
+    * Return a tuple<value, level> for the first level that has a value for sensor.
+    */
+  std::tuple<float, int> getFirstValueForSensor(int sensor)const;
+
+   /**
+    * Return a tuple<value, sensor, level> for the first sensor/level that has a value.
+    */
+   std::tuple<float, int, int>  getFirstValue()const;
+
    int id()const{ return id_;}
 
    //Is there any valid values in any sensor and levels
@@ -112,15 +141,20 @@ public:
 
    /**
     * transform converts all values by calling the func. ex to convert celcius to kelvin.
-    * Return referance to this so we can chane calls.
+    * Return referance to this so we can chaine calls.
     */ 
    KvParam& transform(float func (float));
    std::map<int, Sensor>::const_iterator sensorsBegin()const { return sensors_.begin();};
    std::map<int, Sensor>::const_iterator sensorsEnd()const{ return sensors_.end();};
    std::vector<int> sensors()const;
    Sensor getSensor(int sensor)const; 
+
+   std::ostream &print(std::ostream &o, bool printEmpty) const;
+
+   friend std::ostream& operator<<(std::ostream &o, const KvParam &p);
 };
 
+std::ostream& operator<<(std::ostream &o, const KvParam &p);
 
 class KvParamList
 {

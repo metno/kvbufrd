@@ -224,7 +224,16 @@ private:
   	void writeTo( std::ostream &header, std::ostream &data, bool withId=true  )const;
 		virtual void crcHelper(std::ostream &o)const;
   	int numberOfValidParams() const{ return params.numberOfValidParams(); }
-  	friend std::ostream& operator<<(std::ostream& ost,
+  	
+		//In the code there is a lot code that sets param values to FLT_MAX. 
+   	//This makes a lot of trouble after we introduced sensor and levels.
+   	//All functions returns now FLT_MAX or INT_MAX if there is no value for
+   	//the parameter for sensor level. The clean method removes all values of 
+   	//FLT_MAX.
+  
+	 	void clean();
+
+		friend std::ostream& operator<<(std::ostream& ost,
 									  const DataElement& sd);
 };
 
@@ -336,6 +345,9 @@ public:
   	DataElementList& operator=( const DataElementList &rhs );
 
   	void writeTo( std::ostream &o, bool withId=true, bool debug=true )const;
+
+		//Remove all FLT_MAX and missing values (-32767)
+		void clean();
 
   	friend std::ostream& operator<<(std::ostream& ost,
 				 					  const DataElementList& sd);

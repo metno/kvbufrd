@@ -160,6 +160,9 @@ doBufr( StationInfoPtr  info,
    if( bufrData.firstTime().is_special() && bufrData.size() == 0 )
       return false;
 
+   //remove all posobly FLT_MAX and missing values
+   bufrData.clean();
+
    bufr = BufrData(bufrData[bufrData.firstTime()]);
 
    bufr.TA.copy(bufrData[0].TA).transform(c2kelvin );
@@ -182,6 +185,9 @@ doBufr( StationInfoPtr  info,
    doPressureTrend( bufrData, bufr );
    windAtObstime( bufrData[0], bufr );
    dewPoint( bufrData[0], bufr );
+
+   //Remove all, temporary FLT_MAX and missing values.
+   bufr.clean();
 
    return true;
 }
@@ -1122,12 +1128,10 @@ void
 Bufr::
 doSeaOrWaterTemperature(  const DataElementList &data, BufrData &res )
 {
-   res.TW = FLT_MAX;
-
-  	if( data[0].TW != FLT_MAX || data[0].TWF != FLT_MAX ) {
-  	   res.TW = data[0].TW!=FLT_MAX?data[0].TW.value():data[0].TWF.value();
-  	   res.TW = c2kelvin( res.TW );
-  	}
+   //res.TW = FLT_MAX;
+   if( ! data[0].TW.valid() && data[0].TWF.valid() ) {
+      res.TW.copy(data[0].TWF, false).transform(c2kelvin);
+   }
 }
 
 /**

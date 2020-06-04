@@ -379,6 +379,14 @@ crc(std::string *theDataUsed) const
    return crcChecker.checksum();
 }
 
+void 
+DataElement::clean() {
+  for( auto it = params.begin(); it != params.end(); ++it ) {
+    (*it)->clean();
+  }
+}
+
+
 
 DataElementList::
 DataElementList()
@@ -472,6 +480,7 @@ operator[](const int index)
     
   return *it;
 }
+
 
 int 
 DataElementList::
@@ -671,6 +680,15 @@ writeTo( std::ostream &o, bool withId, bool debug )const
    }
 }
 
+void
+DataElementList::clean() {
+  for( auto it=dataList.begin(); it != dataList.end(); ++it) {
+    it->clean();
+  }
+}
+
+
+
 std::ostream& 
 operator<<(std::ostream& o, const DataElement& sd)
 {
@@ -692,6 +710,7 @@ operator<<(std::ostream& o, const DataElement& sd)
 
   return o;
 }
+
 
 
 std::ostream& 
