@@ -35,6 +35,7 @@
 #include "milog/milog.h"
 #include "miutil/timeconvert.h"
 #include "decodeutility/decodeutility.h"
+#include "bufr/EncodeBufrManager.h"
 #include "bufr.h"
 
 /*CHANGES
@@ -130,6 +131,26 @@ namespace {
 
 #define FEQ(f1, f2, d) ((fabsf((f1)-(f2)))<(d)?true:false)
 
+
+
+Bufr::
+Bufr(EPrecipitation pre)
+  :debug(false), test( false), precipitationParam(pre), encodeBufrManager(new EncodeBufrManager())
+    
+{
+}
+
+Bufr::
+Bufr():debug(false), test( false ), precipitationParam(PrecipitationRA), encodeBufrManager(new EncodeBufrManager())
+{
+}
+
+Bufr::
+~Bufr()
+{
+}
+
+
 bool
 Bufr::
 doBufr( StationInfoPtr  info,
@@ -139,14 +160,17 @@ doBufr( StationInfoPtr  info,
    if( bufrData.firstTime().is_special() && bufrData.size() == 0 )
       return false;
 
+   //remove all posobly FLT_MAX and missing values
+   bufrData.clean();
+
    bufr = BufrData(bufrData[bufrData.firstTime()]);
 
-   bufr.TA     = c2kelvin( bufrData[0].TA );
-   bufr.PO     = pressure( bufrData[0].PO );
-   bufr.PR     = pressure( bufrData[0].PR );
-   bufr.UU     = bufrData[0].UU;
-   bufr.TW     = c2kelvin( bufrData[0].TW );
-   bufr.SG     = bufrData[0].SG;
+   bufr.TA.copy(bufrData[0].TA).transform(c2kelvin );
+   bufr.PO.copy(bufrData[0].PO).transform(pressure);
+   bufr.PR.copy(bufrData[0].PR).transform(pressure);
+   bufr.UU.copy(bufrData[0].UU);
+   bufr.TW.copy(bufrData[0].TW).transform(c2kelvin);
+   bufr.SG.copy(bufrData[0].SG);
 
    doIx( info, bufrData, bufr );
    doSeaOrWaterTemperature( bufrData, bufr );
@@ -161,6 +185,9 @@ doBufr( StationInfoPtr  info,
    doPressureTrend( bufrData, bufr );
    windAtObstime( bufrData[0], bufr );
    dewPoint( bufrData[0], bufr );
+
+   //Remove all, temporary FLT_MAX and missing values.
+   bufr.clean();
 
    return true;
 }
@@ -178,6 +205,35 @@ doBufr( StationInfoPtr  info,
    }
 
    return BufrDataPtr( bufr );
+}
+
+
+std::shared_ptr<BufrHelper> 
+Bufr::encodeBufr(StationInfoPtr  info,
+                 DataElementList &bufrData) {
+   auto bufr = doBufr(info, bufrData);
+
+   if( !bufr ) {
+      cerr << "Failed doBufr. " << getErrorMsg() << endl;;
+      return std::shared_ptr<BufrHelper>();
+   }
+
+   try {
+      std::shared_ptr<BufrHelper> bufrHelper(new BufrHelper(EncodeBufrManager::paramValidater, info, bufr));                 
+      encodeBufrManager->encode(*bufrHelper);
+
+      if (!bufrHelper->validBufr()) {
+         LOGINFO("INVALID BUFR: " << bufrHelper->getErrorMessage());
+         return std::shared_ptr<BufrHelper>();;
+      }
+      return bufrHelper;
+   } catch (const std::exception& ex) {
+      LOGERROR("Failed to encode to BUFR: " << info->toIdentString()
+                                          << " obstime: "
+                                          << pt::to_kvalobs_string(bufr->time())
+                                          << ". Reason: " << ex.what());
+   }
+   return std::shared_ptr<BufrHelper>();
 }
 
 void 
@@ -218,7 +274,7 @@ doIx( StationInfoPtr     info,
    static int mannedTypeid[]={ 312, 308, 302, 0 };
 
    if( bufrData[0].onlyTypeid1 ) {
-      bufr.IX = bufrData[0].IX;
+      bufr.IX = bufrData[0].IX.value();
 
       if( bufr.IX == FLT_MAX || (bufr.IX != 0 && bufr.IX != 1) )
          bufr.IX = 1;
@@ -509,8 +565,8 @@ maxWindGust( const DataElementList &data, BufrData &res )
     if( nTimeStr == 0 )
        return;
     
-    res.FG_010 = data[0].FG_010;
-    res.DG_010 = data[0].DG_010;
+    res.FG_010 = data[0].FG_010.value();
+    res.DG_010 = data[0].DG_010.value();
 
     if( ( data[0].time().time_of_day().hours() ) % 6 != 0 ) {
        if( data[0].FG_1 != FLT_MAX && data[0].FG_1 >=0 ) {
@@ -673,10 +729,10 @@ cloudData( const DataElementList &data, BufrData &res )
 
    N = N < 0 ? INT_MAX:N;
 
-   res.VV = data[0].VV;
+   res.VV = data[0].VV.value();
 
    if( res.VV == FLT_MAX && data[0].Vmor != FLT_MAX )
-      res.VV = data[0].Vmor;
+      res.VV = data[0].Vmor.value();
 
    /*if( CL == INT_MAX && CM == INT_MAX && CH == INT_MAX && N == INT_MAX )
       return; */
@@ -728,11 +784,11 @@ cloudData( const DataElementList &data, BufrData &res )
    else
       res.vsci = 63;
 
-   res.NH = data[0].NH;
-   res.HL = data[0].HL;
+   res.NH = data[0].NH.value();
+   res.HL = data[0].HL.value();
 
    if( res.HL == FLT_MAX && data[0].HLN != FLT_MAX )
-      res.HL = data[0].HLN;
+      res.HL = data[0].HLN.value();
 
 }
 
@@ -905,7 +961,7 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
 
 
 	if( data[0].ww != FLT_MAX ) {
-	   res.ww = data[0].ww;
+	   res.ww = data[0].ww.value();
 	} else if( data[0].WAWA!=FLT_MAX ){
       int i=static_cast<int>(round( data[0].WAWA) );
 
@@ -916,12 +972,12 @@ doGeneralWeather( const DataElementList &data, BufrData &res )
 	
 	if( data[0].W1 != FLT_MAX ) {
 	   pastWeather = true;
-	   res.W1 = data[0].W1;
+	   res.W1 = data[0].W1.value();
 	}
 
 	if( data[0].W2 != FLT_MAX ) {
 	   pastWeather = true;
-	   res.W2 = data[0].W2;
+	   res.W2 = data[0].W2.value();
 	}
 
 	if( pastWeather ) {
@@ -1072,12 +1128,10 @@ void
 Bufr::
 doSeaOrWaterTemperature(  const DataElementList &data, BufrData &res )
 {
-   res.TW = FLT_MAX;
-
-  	if( data[0].TW != FLT_MAX || data[0].TWF != FLT_MAX ) {
-  	   res.TW = data[0].TW!=FLT_MAX?data[0].TW:data[0].TWF;
-  	   res.TW = c2kelvin( res.TW );
-  	}
+   //res.TW = FLT_MAX;
+   if( ! data[0].TW.valid() && data[0].TWF.valid() ) {
+      res.TW.copy(data[0].TWF, false).transform(c2kelvin);
+   }
 }
 
 /**
@@ -1105,7 +1159,7 @@ soilTemp( const DataElementList &data, BufrData &res )
       return;
 
    if( data[0].TGN_12 != FLT_MAX )
-      res.TGN_12 = data[0].TGN_12;
+      res.TGN_12 = data[0].TGN_12.value();
 
    if( res.TGN_12 == FLT_MAX && nTimeStr >= 12 ) {
       float min = FLT_MAX;
@@ -1796,27 +1850,6 @@ precipFromRR(  float &RR1, float &nedbor, float &fRR24, const DataElementList &s
 
   	return -1*nTimes;
 }
-
-
-
-
-Bufr::
-Bufr(EPrecipitation pre)
-  :debug(false), test( false), precipitationParam(pre)
-    
-{
-}
-
-Bufr::
-Bufr():debug(false), test( false ), precipitationParam(PrecipitationRA)
-{
-}
-
-Bufr::
-~Bufr()
-{
-}
-
 
 
 

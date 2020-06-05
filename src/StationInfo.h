@@ -137,8 +137,8 @@ class StationInfoParse;
 *                         precipitation. Valid values "RA", "RR_01",
 *                         "RR_1", "RR_3", "RR_6","RR_12" og "RR_24".
 *
-*   typepriority [list]: A list of typeis's that is used to create a
-*                        wmo message.
+*   typepriority [list]: A list of typeid's that is used to create a
+*                        BUFR message.
 * </pre>
 */
 class MsgTime {
@@ -324,6 +324,7 @@ class StationInfo
 {
 public:
 
+
    /**
    * Type is a class to hold information about one typeid
    * and for witch hours it shall be used and if it is a
@@ -431,6 +432,7 @@ private:
    int            heightWindAboveSea_;
    float          latitude_;
    float          longitude_;
+   int            buoyType_;
    int            wmono_;
    std::string    name_;
    int            stationID_;
@@ -449,6 +451,7 @@ private:
    milog::LogLevel loglevel_;
    bool            cacheReloaded48_;
    bool            ignore;
+
 
 
    StationInfo();
@@ -473,7 +476,8 @@ public:
    std::string    owner()const  { return owner_;}
    void           owner(const std::string &o){ owner_=o;}
    milog::LogLevel loglevel()const { return loglevel_;}
-   IntList        code()const { return code_; }
+   //IntList        code()const { return code_; }
+   int        code()const; 
    std::string    codeToString()const;
 
 
@@ -496,6 +500,13 @@ public:
    void      latitude( float lat, bool ifUnset=true );
    float     longitude()const { return longitude_; }
    void      longitude( float lon, bool ifUnset=true );
+   /**
+    * buoyType is a code table value that define the type of buoy.
+    * BUFR code table 0 02 149. Missing value is 63 and the dafault.
+    */
+   void      buoyType(int bt);
+   int       buoyType()const { return buoyType_;}
+   
    int       wmono()const{ return wmono_;}
 
    /**
@@ -544,10 +555,10 @@ public:
    * \brief A list of \em typeid to use data for when encoding SYNOP.
    * 
    * Typepriority plays two roles. Only data that is in this
-   * list is used to create WMO message. The second use is
+   * list is used to create BUFR message. The second use is
    * to select which Data that shall be used if there is more 
    * than one Data for one parameter. The Data is selected in the
-   * order in the list. A Data with typeid preciding another typeid
+   * order in the list. Data with typeid preciding another typeid
    * in the list is used before the other.
    *
    * \param hour Return the a list of typeid's that is valid for

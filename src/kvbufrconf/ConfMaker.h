@@ -47,7 +47,7 @@ class ConfMaker
 
    //StationInfoPtr findStation( int wmono, bool &newStation );
    StationInfoPtr findStation( int wmono, int stationid, const std::string &callsign,
-                               const std::list<int> &codeList, bool &newStation );
+                               int bufrCode, bool &newStation );
    void removeStation(StationInfoPtr station );
 
    bool findSensor( const StInfoSysSensorInfoList &sensors, TblStInfoSysSensorInfo &sensor, int paramid )const;

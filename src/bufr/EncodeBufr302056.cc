@@ -61,31 +61,17 @@ void
 EncodeBufr302056::
 encode( )
 {
-   int nRep=1;
-
-   if( hasReplicator() ) {
-      if( isDelayedReplicator() ) {
-         nRep = (data->TW.valid()?1:0);
-         bufr->addDelayedReplicationFactor( replicator, nRep );
-      } else {
-         nRep = replicator;
-      }
+   if( isDelayedReplicator() ) {
+      int rep = data->TW.valid()?1:0;
+      bufr->addDelayedReplicationFactor( replicator, rep );
+      if( rep == 0 )
+         return;
    }
-
-   if( nRep == 0 )
-      return;
 
    //Sea/water surface temperature, method of measurement, and depth below sea surface
    bufr->addValue( 2038, 14, "Method of sea/water temperature measurement", false );
    bufr->addValue( 7063, 0.5f, "Sea/water depth of measurement", false );
    bufr->addValue( 22043, data->TW, "TW, sea/water temperature" );
    bufr->addValue( 7063, FLT_MAX, "Sea/water depth of measurement", false );
-
-   for( int i=1; i<nRep; ++i ) {
-      bufr->addValue( 2038, INT_MAX, "Method of sea/water temperature measurement", false );
-      bufr->addValue( 7063, FLT_MAX, "Sea/water depth of measurement", false );
-      bufr->addValue( 22043, FLT_MAX, "TW, sea/water temperature" );
-      bufr->addValue( 7063, FLT_MAX, "Sea/water depth of measurement", false );
-   }
 }
 

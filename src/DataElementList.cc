@@ -74,6 +74,7 @@ namespace {
 using namespace decodeutility;
 using namespace std;
 
+
 boost::thread_specific_ptr<KvParamList> DataElement::pParams( noFreeCleanUp );
 
 DataElement::
@@ -182,6 +183,7 @@ DataElement():
     SSW(params, "SSW", 296),  //Saltholdighet i sjøvann 
     WDHF(params,"WDHF",10633), //Bølgeretning høyfrekvente bølger
 		WDLF(params,"WDLF", 10637), //Bølgeretning lavfrekvente bølger 
+    WDP1(params,"WDP1",161),    //Primærbølgens hovedretning. Tilhører WHM0 og WTP
 		WHM0(params,"WHM0", 136), //Signifikant bølgehøyde
 		WHM0HF(params,"WHM0HF",10609), //høyfrekvent signifikant bølgehøyde
 		WHM0LF(params,"WHM0LF",10610), //lavfrekvent signifikant bølgehøyde
@@ -211,17 +213,17 @@ DataElement( const DataElement &p):
    onlyTypeid1( p.onlyTypeid1 ),
    typeidList( p.typeidList )
 {
-   if( params.size() != p.params.size() ) {
-      cerr << "FATAL BUG CTOR: Something nasty have happend.  DataElement copy CTOR  size differ!" << params.size() << " " << p.params.size() << endl;
-      abort();
-   }
+  if( params.size() != p.params.size() ) {
+    cerr << "FATAL BUG CTOR: Something nasty have happend.  DataElement copy CTOR  size differ!" << params.size() << " " << p.params.size() << endl;
+    abort();
+  }
+   
+  KvParamList::const_iterator itSource = p.params.begin();
+  KvParamList::iterator itDest = params.begin();
 
-   KvParamList::const_iterator itSource = p.params.begin();
-   KvParamList::iterator itDest = params.begin();
-
-   for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
-      **itDest = **itSource;
-   }
+  for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
+    (*itDest)->copy(**itSource, false);
+  }
 }
 
 DataElement&
@@ -241,11 +243,11 @@ operator=(const DataElement &p)
 
       for( ; itSource != p.params.end(); ++itSource, ++itDest ) {
          if( (*itSource)->id() != (*itDest)->id() ) {
-            cerr << "FATAL BUG: Something nasty have happend.  DataElement Operator= params id differ!" << (*itDest)->id() << " " << (*itSource)->id() << endl;
+            cerr << "FATAL BUG: Something nasty have happend.  DataElement Operator= params id differ! " << (*itDest)->id() << " " << (*itSource)->id() << endl;
             cerr << "FATAL BUG: Check that the default CTOR and the copy CTOR have the same KvParams in the same order." << endl;
             abort();
          }
-         **itDest = **itSource;
+         (*itDest)->copy(**itSource, false);
       }
 
       nSet             = p.nSet;
@@ -269,27 +271,30 @@ bool
 DataElement::
 setData( int  param,
          int typeid_,
+         int  sensor,
+				 int level,
          const std::string &data_)
 {
-    float       fData;
+  float       fData;
 
-    if(data_.empty())
-      return true;
+  if(data_.empty())
+    return true;
 
-    if(sscanf(data_.c_str(),"%f", &fData)!=1){
-      fData=FLT_MAX;
-      return false;
-    }
+  if(sscanf(data_.c_str(),"%f", &fData)!=1){
+    fData=FLT_MAX;
+    return false;
+  }
 
     
-    KvParamList::iterator pit = params.begin();
+  KvParamList::iterator pit = params.begin();
 
-    for( ; pit != params.end(); ++pit ) {
-    	if( (*pit)->id() == param ) {
-    		**pit = fData;
-    		break;
-    	}
-    }
+  for( ; pit != params.end(); ++pit ) {
+  	if( (*pit)->id() == param ) {
+   		//**pit = fData;
+      (*pit)->value(fData, sensor, level); 
+   		break;
+   	}
+  }
 
 	if( pit == params.end() ) 
 		return false;
@@ -340,18 +345,20 @@ void
 DataElement::
 crcHelper(std::ostream &o)const
 {
-   KvParamList::const_iterator it = params.begin();
+  KvParamList::const_iterator it = params.begin();
 
-   if( it != params.end()  ) {
-      o << "obstime: " <<   pt::to_kvalobs_string(time()) << endl;
-      ++it;
-   }
-
-   for( ; it != params.end(); ++it ) {
-     if( **it == FLT_MAX )
-         continue;
-     o << (*it)->name() << ": " << **it << std::endl;
-   }
+  if( it != params.end()  ) {
+    o << "obstime: " <<   pt::to_kvalobs_string(time()) << endl;
+    for( ; it != params.end(); ++it ) {
+      for( auto sit = (*it)->sensorsBegin(); sit != (*it)->sensorsEnd(); ++sit ) {
+        for( auto lvl : sit->second.levels ) {
+          if( lvl.second == FLT_MAX )
+            continue;
+          o << (*it)->name() << " (" << sit->first <<", " << lvl.first << "): " << lvl.second << std::endl;
+        }
+      }
+    }
+  }
 }
 
 boost::uint32_t
@@ -371,6 +378,14 @@ crc(std::string *theDataUsed) const
    crcChecker.process_bytes( msg.c_str(),  msg.length() );
    return crcChecker.checksum();
 }
+
+void 
+DataElement::clean() {
+  for( auto it = params.begin(); it != params.end(); ++it ) {
+    (*it)->clean();
+  }
+}
+
 
 
 DataElementList::
@@ -465,6 +480,7 @@ operator[](const int index)
     
   return *it;
 }
+
 
 int 
 DataElementList::
@@ -664,91 +680,37 @@ writeTo( std::ostream &o, bool withId, bool debug )const
    }
 }
 
+void
+DataElementList::clean() {
+  for( auto it=dataList.begin(); it != dataList.end(); ++it) {
+    it->clean();
+  }
+}
+
+
+
 std::ostream& 
-operator<<(std::ostream& ost, const DataElement& sd)
+operator<<(std::ostream& o, const DataElement& sd)
 {
   using namespace std;
-  if(sd.time_.is_special())
-    ost << "obsTime                    : " << "(UNDEFINED)" <<  endl;
-  else
-    ost << "obsTime                    : " << pt::to_kvalobs_string(sd.time_) <<  endl;
-  
-  ost << "tempNaa                (TA): " << sd.TA       << endl
-      << "tempMid               (TAM): " << sd.TAM      << endl
-      << "tempMin               (TAN): " << sd.TAN      << endl
-      << "tempMax               (TAX): " << sd.TAX      << endl
-      << "tempMin       (12t)(TAN_12): " << sd.TAN_12   << endl
-      << "tempMax       (12t)(TAX_12): " << sd.TAX_12   << endl
-      << "TD (devpoint temperature)  : " << sd.TD       << endl
-      << "fuktNaa                (UU): " << sd.UU       << endl
-      << "fuktMid                (UM): " << sd.UM       << endl
-      << "vindHastNaa            (FF): " << sd.FF       << endl
-      << "vindHastMid            (FM): " << sd.FM       << endl
-      << "vindHastGust         (FG_1): " << sd.FG_1     << endl
-      << "vindHastGust         (FG_6): " << sd.FG_6     << endl
-      << "vindHastGust        (FG_12): " << sd.FG_12    << endl
-      << "FG_010                     : " << sd.FG_010   << endl
-      << "FG (Since last obs.)       : " << sd.FG       << endl
-      << "vindHastMax          (FX_1): " << sd.FX_1     << endl
-      << "FX_3                       : " << sd.FX_3     << endl
-      << "FX_6                       : " << sd.FX_6     << endl
-      << "FX  (Siden forige obs.)    : " << sd.FX       << endl
-      << "vindRetnNaa            (DD): " << sd.DD       << endl
-      << "vindRetnMid            (DM): " << sd.DM       << endl
-      << "vindRetnGust           (DG): " << sd.DG       << endl
-      << "vindRetnMax            (DX): " << sd.DX       << endl
-      << "DX_3                       : " << sd.DX_3     << endl
-      << "nedboerTot             (RA): " << sd.RA       << endl
-      << "nedboer1Time           (RR): " << sd.RR_1     << endl
-      << "nedboer2Time         (RR_2): " << sd.RR_2     << endl
-      << "nedboer3Time         (RR_3): " << sd.RR_3     << endl
-      << "nedboer6Time         (RR_6): " << sd.RR_6     << endl
-      << "bedboer9Time         (RR_9): " << sd.RR_9     << endl
-      << "nedboer12Time       (RR_12): " << sd.RR_12    << endl
-      << "nedboer15Time       (RR_15): " << sd.RR_15    << endl
-      << "nedboer18Time       (RR_18): " << sd.RR_18    << endl
-      << "nedboer24Time       (RR_24): " << sd.RR_24    << endl
-      << "Nedb�r periode         (Ir): " << sd.IR       << endl
-      << "Verindikator           (Ix): " << sd.IX       << endl
-      << "sj�temperatur          (TW): " << sd.TW       << endl
-      << "TWN                   (TWN): " << sd.TWN      << endl
-      << "TWM                   (TWM): " << sd.TWM      << endl
-      << "TWX                   (TWX): " << sd.TWX      << endl
-      << "nedboerJa (min)      (RT_1): " << sd.RT_1     << endl
-      << "trykkQFENaa            (PO): " << sd.PO       << endl
-      << "trykkQFEMid           (POM): " << sd.POM      << endl
-      << "trykkQFEMin           (PON): " << sd.PON      << endl
-      << "trykkQFEMax           (POX): " << sd.POX      << endl
-      << "trykkQNHNaa            (PH): " << sd.PH       << endl
-      << "trykkQFFNaa            (PR): " << sd.PR       << endl
-      << "trykkTendens           (PP): " << sd.PP       << endl
-      << "trykkKarakter          (AA): " << sd.AA       << endl
-      << "Vmor (automatic VV)  (_hVV): " << sd.Vmor     << endl
-      << "VV (estimated VV)    (_hVV): " << sd.VV       << endl
-      << "HLN                        : " << sd.HLN      << endl
-      << "skydekke               (_N): " << sd.N        << endl
-      << "verGenerelt       (_wwW1W2): " << printOut( "ww", sd.ww )
-      <<                                    printOut( "W1", sd.W1 )
-      <<                                    printOut( "W2", sd.W2 ) << endl
-      << "WAWA    (ww automatisk m�t): " << sd.WAWA                 << endl
-      << "skyer           (_NhClCmCh): " << printOut( "Nh", sd.NH )
-      <<                                    printOut( "Cl", sd.CL )
-      <<                                    printOut( "Cm", sd.CM )
-      <<                                    printOut( "Ch", sd.CH ) << endl
-      << "verTillegg      (_RtWdWdWd): " << printOut( "Wd1", sd.X1WD )
-      <<                                    printOut( "Wd2", sd.X2WD )
-      <<                                    printOut( "Wd3", sd.X3WD ) << endl
-//      << "skyerEkstra1    (_1NsChshs): " << (sd.cloudExtra.size()>0?sd.cloudExtra[0]:DataElement::CloudDataExtra()) << endl
-//      << "skyerEkstra2    (_2NsChshs): " << (sd.cloudExtra.size()>1?sd.cloudExtra[1]:DataElement::CloudDataExtra()) << endl
-//      << "skyerEkstra3    (_3NsChshs): " << (sd.cloudExtra.size()>2?sd.cloudExtra[2]:DataElement::CloudDataExtra()) << endl
-//      << "skyerEkstra4    (_4NsChshs): " << (sd.cloudExtra.size()>3?sd.cloudExtra[3]:DataElement::CloudDataExtra()) << endl
-      << "gressTemp             (TGN): " << sd.TGN               << endl
-      << "gressTemp_12       (TGN_12): " << sd.TGN_12            << endl
-      << "sjoegang               (_S): " << sd.SG                << endl
-      << "Naar intraff FX       (ITZ): " << sd.ITZ               << endl;
-  
-  return ost;
+  KvParamList::const_iterator it = sd.params.begin();
+
+  if( it != sd.params.end()  ) {
+    o << "obstime: " <<   (sd.time().is_special()?"(undefined)":pt::to_kvalobs_string(sd.time())) << endl;
+    for( ; it != sd.params.end(); ++it ) {
+      for( auto sit = (*it)->sensorsBegin(); sit != (*it)->sensorsEnd(); ++sit ) {
+        for( auto lvl : sit->second.levels ) {
+          if( lvl.second == FLT_MAX )
+            continue;
+          o << (*it)->name()<<":" << (*it)->id() << " (" << sit->first <<", " << lvl.first << "): " << lvl.second << std::endl;
+        }
+      }
+    }
+  }
+
+  return o;
 }
+
 
 
 std::ostream& 
@@ -757,8 +719,8 @@ operator<<(std::ostream& ost,
 {
   CIDataElementList it=sd.begin();
 
-  for(;it!=sd.end(); it++){
-    ost << *it << std::endl 
+  for(auto &it : sd ){
+    ost << it << std::endl 
 	      << "-----------------------------------" << std::endl;
   }
   

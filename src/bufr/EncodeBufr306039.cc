@@ -60,40 +60,29 @@ void
 EncodeBufr306039::
 encode( )
 {
-  //Start her
-
-  bufr->addDelayedReplicationFactor(31000, 0);
-
-
-  // //Pressure data
-  // bufr->addValue( 10004, data->PO, "P0" );
-  // bufr->addValue( 10051, data->PR, "PP" );
   
-   
-  // //temperature 
-  // bufr->addValue( 7033, stationInfo->heightTemperature(), "Height of sensor above water surface" );
-  // bufr->addValue( 12101, data->TA, "TA" );
-  // bufr->addValue( 12103, data->TD, "TD, dew-point temperature" );
-  // bufr->addValue( 13003, data->UU, "UU, relativ humidity" );
+  auto count=[](float v) {return v!=FLT_MAX;};
 
-  // //wind
-  //  bufr->addValue(  7033, stationInfo->heightWind(), "Height of sensor above water surface", false);
-  //  bufr->addValue(  8021, 2, "Time significance (=2: time averaged)", false);
-  //  bufr->addValue(  4025, static_cast<float>(-10), "Time period or displacement (minutes)", false);
-  //  bufr->addValue( 11001, data->DD, "DD, wind direction");
-  //  bufr->addValue( 11002, data->FF, "FF, wind speed");
-  //  bufr->addValue(  8021, INT_MAX, "Time significance", false);
+  bufr->addValue(22078, FLT_MAX,"DURATION OF WAVE RECORD [S]", false);
 
-  // //Gust
-  // bufr->addValue(  4025, (data->FG_010.valid()?static_cast<float>(-10):FLT_MAX), "Time period or displacement (minutes)", false, "GUST");
-  // bufr->addValue( 11041, data->FG_010, "FG_010, wind speed (gust)"), true, "GUST";
-
-  // //Sea temperature
-  // bufr->addValue(  4025, FLT_MAX, "Time period or displacement (minutes)", false);
-  // bufr->addValue( 7033, FLT_MAX, "Height of sensor above water surface.", false);
-  // bufr->addValue(2005,FLT_MAX, "Precision of temperature observation (K)", false);
-  // bufr->addValue( 7063, 0.5f, "Sea/water depth of measurement (cm)", false );
-  // bufr->addValue( 22049, data->TW, "Sea/water temperature" );
+  auto v=data->WHM0.getFirstValueAtLevel(0);
+  bufr->addValue(22070, v, "SIGNIFICANT WAVE HEIGHT [M]", count(v));
   
+  v=data->WHMAX.getFirstValueAtLevel(0);
+  bufr->addValue(22073, v, "MAXIMUM WAVE HEIGHT [M]", count(v));
+
+  v=data->WTZ.getFirstValueAtLevel(0);
+  if( v == FLT_MAX ){ 
+    v=data->WTM02.getFirstValueAtLevel(0); 
+  }
+  bufr->addValue(22074, v, "AVERAGE WAVE PERIOD [S]", count(v));
+
+  v=data->WTP.getFirstValueAtLevel(0);
+  bufr->addValue(22071, v, "SPECTRAL PEAK WAVE PERIOD [S]", count(v));
+  
+  v=data->WDP1.getFirstValueAtLevel(0);
+  bufr->addValue(22076, v, "DIRECTION FROM WHICH DOMINANT WAVES ARE COMING [DEG]", count(v));
+ 
+  v=data->WSPRTP.getFirstValueAtLevel(0);
+  bufr->addValue(22077, v, "DIRECTION FROM WHICH DOMINANT WAVES ARE COMING [DEG]", count(v));
 }
-

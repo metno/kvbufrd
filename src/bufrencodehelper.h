@@ -35,7 +35,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include "encodebufr.h"
+//#include "encodebufr.h"
 #include "bufr/bufrdefs.h"
 #include "bufr/BufrValueHelper.h"
 

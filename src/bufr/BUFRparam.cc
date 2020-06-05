@@ -418,6 +418,24 @@ loadTable( const std::string &filepath_ )
    //string filename="/home/borgem/projects/workspace/kvbufrd/share/bufrtables/B0000000000098014001.TXT";
 }
 
+BufrParamValidaterPtr BufrParamValidater::loadTable( int masterTable, std::string *file) {
+   char *tbl=getenv("BUFR_TABLES");
+   ostringstream f;
+
+   if( tbl ) {
+      f << tbl; 
+   } else {
+      f << string(DATADIR);
+   }
+
+   f << "/B00000000000000" << masterTable <<  "000.TXT";
+
+   if( file ) {
+      *file=f.str();
+   }
+   return loadTable(f.str());
+}
+
 
 bool
 BufrParamValidater::

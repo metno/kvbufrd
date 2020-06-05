@@ -1,5 +1,5 @@
 AC_PREREQ([2.59])
-AC_INIT([kvbufrd], [3.0.5], [kvoss@met.no])
+AC_INIT([kvbufrd], [3.0.6], [kvoss@met.no])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 #AM_INIT_AUTOMAKE([foreign]) 
 AC_CONFIG_MACRO_DIR([m4])
@@ -31,7 +31,9 @@ PKG_CHECK_MODULES(sqlite3, sqlite3)
 #GTEST_CHECK
 #GMOCK_CHECK
 AC_PATH_PROG(CMAKE, cmake, false)
-GMOCK_DIST_CHECK([src/gtest])
+
+BUILD_GTEST
+#GMOCK_DIST_CHECK([src/gtest])
 
 AX_BOOST_BASE
 AX_BOOST_THREAD

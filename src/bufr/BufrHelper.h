@@ -34,6 +34,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include "boost/date_time/posix_time/ptime.hpp"
 #include "bufrdefs.h"
 #include "bufrexceptions.h"
@@ -99,6 +100,7 @@ class BufrHelper {
    int  iCvals;
    char cvals[KVALS][80]; /* String values - index to which are extracted
                            * from values array */
+   size_t cvalsLen[KVALS];
    int ktdlen;            /* number of data descriptors in section 3 */
    int ktdlst[KELEM];     /* array containing data descriptors in section 3 */
 
@@ -116,11 +118,15 @@ class BufrHelper {
 public:
    std::string encoderName;
    EncodeBufrBase *bufrBase;
+   
    //std::string gtsHeader;
 
    BufrHelper( BufrParamValidaterPtr paramValidater,
                StationInfoPtr stationInfo_,
                BufrDataPtr bufrData_ );
+
+   BufrHelper( StationInfoPtr stationInfo_,
+               BufrDataPtr bufrData_ );               
    ~BufrHelper();
 
    bool emptyBufr() const;
@@ -167,10 +173,33 @@ public:
    //throw EncodeException
    bool writeToStream( std::ostream &o );
 
+   /**
+    * Save the BUFR to the directory given with path.
+    * The file is owerwriten if it exist. This function exist mainly
+    * for test.
+    * 
+    * Return a tuple. Where the first element is a boolean and the second element
+    * is an string.
+    * 
+    * Return
+    *    Success <true, filenameWithPath>
+    *    Error   <false, errorMessage>
+    */
+   std::tuple<bool,std::string> saveToFile(const std::string &path, int suffix=0);
+
+   /**
+    * Create a string that is composed of stationInfo->->toIdentString() appended
+    * with observation time coded as  '-DDhhmm', where DD is day of month, hh hour and mm minute.
+    */
    std::string filePrefix()const;
 
+   /**
+    * This save the BUFR to a file in the directory given with path.
+    * The file get the name given with filePrefix(). If isTestRun is false
+    * it get added something that make the file unique in the directory.
+    */
    void  saveToFile( const std::string &path,
-                     bool overwrite );
+                     bool overwrite, bool isTestRun=false);
 
    /**
     * Check if copyto is set to true in StationInfo, if
@@ -188,6 +217,8 @@ public:
    bool validBufr()const;
    void addErrorMessage( const std::string &error );
    std::string getErrorMessage()const;
+
+   boost::uint32_t computeCRC()const;
 
    //Only for Test
    TestHelper::Value getTestValue(const std::string &testId) {

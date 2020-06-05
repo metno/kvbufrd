@@ -132,6 +132,13 @@ public:
    double roundToPrec( int bufrParamId, float value );
    BufrParamTypePtr findParamDef( int bufrParamId ) const;
    static BufrParamValidaterPtr loadTable( const std::string &filename );
+   /**
+    * Load ParamTable B*.TXT. Either using enviromnet variable BUFR_TABLES or
+    * hardcoded path decided from compile time config DATADIR. 
+    * On return the 'file' parameter is set to  the file that is used to read the ParamTable from.
+    * Return BufrParamValidaterPtr != null on success.
+    */
+   static BufrParamValidaterPtr loadTable( int masterTable, std::string *file);
 
 };
 

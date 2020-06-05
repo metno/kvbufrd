@@ -470,6 +470,7 @@ heightWind_( INT_MAX ),
 heightWindAboveSea_( INT_MAX ),
 latitude_( FLT_MAX ),
 longitude_( FLT_MAX ),
+buoyType_(63),
 wmono_( 0 ),
 stationID_( 0 ),
 copyIsSet_( false ),
@@ -489,6 +490,7 @@ heightWind_( INT_MAX ),
 heightWindAboveSea_( INT_MAX ),
 latitude_( FLT_MAX ),
 longitude_( FLT_MAX ),
+buoyType_(63),
 wmono_( wmono ),
 stationID_( INT_MIN ),
 copyIsSet_( false ),
@@ -512,6 +514,7 @@ StationInfo(const StationInfo &i)
    heightWindAboveSea_ = i.heightWindAboveSea_;
    latitude_ = i.latitude_;
    longitude_ = i.longitude_;
+   buoyType_  = i.buoyType_;
    wmono_=i.wmono_;
    name_ = i.name_;
    stationID_ = i.stationID_;
@@ -663,12 +666,23 @@ longitude( float lon, bool ifUnset )
       longitude_ = lon;
 }
 
+
+void 
+StationInfo::
+buoyType(int bt ){ 
+   if( bt < 63) {
+      buoyType_=bt;
+   } else {
+      buoyType_=63; //Missing
+   }
+}
+
 int  
 StationInfo::
 callsignAsInt()const{
    std::string::size_type idx;
    auto i = std::stoi(callsign_, &idx);
-   if( ! callsign_.substr(i).empty()) {
+   if( ! callsign_.substr(idx).empty()) {
       return INT_MAX;
    }
    return i;
@@ -837,21 +851,36 @@ msgForTime( const pt::ptime &t)const
    //return true;
 }
 
+
+int
+StationInfo::code()const {
+   if( code_.empty() ) {
+      if( wmono_>0 ) {
+         return 0;  //SYNOP as default
+      } else {
+         return -1;
+      }
+   }
+
+   return *code_.begin();
+} 
+
 std::string
 StationInfo::
 codeToString()const
 {
    if( code_.empty() )
-      return "";
+      return "0";
 
    ostringstream o;
 
-   IntList::const_iterator it = code_.begin();
-   o << *it;
-   ++it;
+   o << *code_.begin();
+   // IntList::const_iterator it = code_.begin();
+   // o << *it;
+   // ++it;
 
-   for( ; it != code_.end(); ++it )
-      o << " " << *it;
+   // for( ; it != code_.end(); ++it )
+   //    o << " " << *it;
 
    return o.str();
 }
@@ -912,9 +941,14 @@ toIdentString()const
    else
       o << "id_UNKNOWN";
 
+   if (  code_.empty() ) {
+      o << "_0"; //SYNOP is default.
+   } else {
+      o << "_" << *code_.begin();
+   }
    return o.str();
-
 }
+
 bool 
 StationInfo::
 equalTo(const StationInfo &st)

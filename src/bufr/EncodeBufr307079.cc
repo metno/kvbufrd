@@ -103,6 +103,7 @@ encode(  )
       bufr->addValue( 20058, FLT_MAX, "Vs, Visibility seawards from a coastal station");
    }
 
+   // Sea/water temperature
    encodeTemplate( 302056, 31000 );
 
    /* 3 02 055 Icing and Ice.

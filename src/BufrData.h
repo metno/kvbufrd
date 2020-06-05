@@ -218,6 +218,7 @@ public:
 
    BufrData& operator=( const BufrData &rhs );
    
+   friend std::ostream &operator<<(std::ostream &o, const BufrData &bd);
 };
 
 typedef boost::shared_ptr<BufrData> BufrDataPtr;
@@ -225,6 +226,7 @@ typedef boost::shared_ptr<BufrData> BufrDataPtr;
 std::ostream &operator<<(std::ostream &o, const BufrData::CloudDataExtra &cd );
 std::ostream &operator<<(std::ostream &o, const BufrData::Wind &wind );
 std::ostream &operator<<(std::ostream &o, const BufrData::Precip &precip );
+std::ostream &operator<<(std::ostream &o, const BufrData &bd);
 
 
 #endif /* BUFRDATA_H_ */

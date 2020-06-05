@@ -74,8 +74,8 @@ readDataFile( const std::string &filename, DataEntryList &data, const boost::pos
 			dataValues[i]=boost::trim_copy(dataValues[i]);
 		}
 
-		if( dataValues.size() != 12 ) {
-		   cerr << "readDataFile: to few elements ("<< dataValues.size() << ") expecting 12\n";
+		if( dataValues.size() < 11 ) {
+		   cerr << "readDataFile: to few elements ("<< dataValues.size() << ") expecting 11 or 12 elements\n";
 		   continue;
 		}
 
@@ -123,11 +123,15 @@ loadBufrDataFromFile( const std::string &filename,
 		return false;
 	}
 
+	cerr << "readdatafile start\n";
 	if( ! readDataFile( filename, rawdata, fromtime ) ) {
 		cerr << "Failed to read datafile <" << filename << ">." << endl;
 		return false;
 	}
+	cerr << "readdatafile end\n";
+	cerr << "loadBufrdata start\n";
 	loadBufrData( rawdata, sd, info, validate );
+	cerr << "loadBufrdata end\n";
 //	cerr << "---- START ---\n";
 //	for( CIDataElementList it=sd.begin(); it != sd.end(); ++it ) {
 //	   cerr << it->time() << " RR_24: " << it->RR_24 << " EM: " << it->EM
