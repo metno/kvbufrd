@@ -1,3 +1,11 @@
+kvbufrd (3.0.6-1) xenial; urgency=low
+  * New release.
+  * Support for MOORED BUOY.
+  * Support for params from sensors and levels other 
+    than sensor 0 and level 0.
+    
+ -- Kvalobs <kvalobs@met.no> Fri, 5 Jun 2020 12:30:00 +0100
+
 kvbufrd (3.0.6~rc2-1) xenial; urgency=low
   * Fix encoding of TM306041
     
