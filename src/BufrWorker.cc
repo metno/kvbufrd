@@ -39,6 +39,7 @@
 #include "boost/cstdint.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/filesystem/fstream.hpp"
+#include "bufr/EncodeBufrManager.h"
 #include "bufr.h"
 #include "kvDbGateProxy.h"
 #include "kvalobs/kvPath.h"
@@ -70,6 +71,8 @@ const char* STATUS_NEW = "new";
 const char* STATUS_DUPLICATE = "duplicate";
 const char* STATUS_DELAYED = "delay";
 
+
+
 void
 _logObservation(const char* status,
                 StationInfoPtr info,
@@ -81,6 +84,10 @@ _logObservation(const char* status,
 {
   std::string sDelay;
   std::string sDuration("0");
+  std::string cntxt=milog::Logger::logger().getContextString();
+  
+  BufrWorker::logMetrics->setContext(cntxt);
+  BufrWorker::logMetrics->setLoglevel("INFO");
 
   if (!delayTo.is_special()) {
     sDelay = pt::to_kvalobs_string(delayTo);
@@ -92,12 +99,21 @@ _logObservation(const char* status,
     sDuration = o.str();
   }
 
+  ostringstream o;
+  o << status << ": (" << info->wmono() << "/" << info->stationID() << "/"
+                   << info->callsign() << "/" << info->codeToString() << "/"
+                   << ccx << "/" << pt::to_kvalobs_string(obstime) << "/"
+                   << sDelay << ") " << stationAndTypes
+                   << " duration=" << sDuration << "ms";
+  BufrWorker::logMetrics->log(o.str());
+  /*
   IDLOGINFO("observation",
             status << ": (" << info->wmono() << "/" << info->stationID() << "/"
                    << info->callsign() << "/" << info->codeToString() << "/"
                    << ccx << "/" << pt::to_kvalobs_string(obstime) << "/"
                    << sDelay << ") " << stationAndTypes
                    << " duration=" << sDuration << "ms");
+  */
 }
 
 void
@@ -108,6 +124,7 @@ logObservation(StationInfoPtr info,
                const pt::time_duration duration)
 {
   const char* status = STATUS_NEW;
+
   if (ccx != 0) {
     status = STATUS_CORRECTION;
   }
@@ -215,15 +232,34 @@ stationAndType(const DataEntryList& data,
 }
 }
 
+LogAppender *BufrWorker::logMetrics=nullptr;
+
 BufrWorker::BufrWorker(App& app_,
                        std::shared_ptr<dnmi::thread::CommandQue> que_)
   : app(app_)
   , que(que_)
   , swmsg(*(new std::ostringstream()))
   , encodeBufrManager(new EncodeBufrManager())
+   
 {
-  string filename = string(DATADIR) + "/B0000000000000019000.TXT";
-  bufrParamValidater = BufrParamValidater::loadTable(filename);
+  ostringstream o;
+  if( EncodeBufrManager::masterBufrTable < 10 || EncodeBufrManager::masterBufrTable>99) {
+    LOGFATAL("Buffer master table must be in the intervall [10,99], it is " << EncodeBufrManager::masterBufrTable );
+    exit(1);
+  }
+
+  IDLOGINFO("main", "BufrWorker: Logging metrics to '" << app.options.obslogfile<< "'");
+
+  logMetrics = new LogAppender(app.options.obslogfile);
+
+  if ( logMetrics == nullptr ) {
+    LOGFATAL("FAILED to create metric logger. Logfile '" << app.options.obslogfile << "'.");
+    exit(1);
+  }
+
+  o << string(DATADIR) << "/B00000000000000" << EncodeBufrManager::masterBufrTable <<  "000.TXT";
+  //string filename = string(DATADIR) + "/B0000000000000019000.TXT";
+  bufrParamValidater = BufrParamValidater::loadTable(o.str());
 }
 
 void
@@ -265,7 +301,7 @@ BufrWorker::operator()()
       FLogStream* logs = new FLogStream(2, 307200); // 300k
       std::ostringstream ost;
 
-      ost << kvPath("logdir") << "/" << options.progname << "/"
+      ost << kvPath("logdir") << "/" << app.options.progname << "/"
           << event->stationInfo()->toIdentString() << ".log";
 
       if (logs->open(ost.str())) {
@@ -455,7 +491,7 @@ BufrWorker::newObs(ObsEvent& event)
   DataEntryList data;
   DataElementList bufrData;
   Bufr bufrEncoder;
-  BufrDataPtr bufr;
+  std::shared_ptr<BufrHelper> bufrHelper;
   StationInfoPtr info;
   ostringstream ost;
   boost::uint32_t oldcrc = 0;
@@ -585,7 +621,7 @@ BufrWorker::newObs(ObsEvent& event)
   LOGDEBUG6(bufrData);
 
   try {
-    bufr = bufrEncoder.doBufr(info, bufrData);
+    bufrHelper = bufrEncoder.encodeBufr(info, bufrData);
   } catch (const IdException& e) {
     LOGWARN("EXCEPTION: Cant resolve for BUFR id: "
             << info->toIdentString() << " obstime: "
@@ -642,19 +678,17 @@ BufrWorker::newObs(ObsEvent& event)
     swmsg << "Cant create a bufr!" << endl;
   }
 
-  if (!bufr) {
+  if (!bufrHelper) {
     LOGERROR("Cant create BUFR for <"
              << info->toIdentString()
              << "> obstime: " << pt::to_kvalobs_string(event.obstime()));
     swmsg << "Cant create a BUFR!" << endl;
   } else {
-    string dataUsedToGenerateCRC;
-    boost::uint32_t crc = bufr->crc(&dataUsedToGenerateCRC);
+    boost::uint32_t crc = bufrHelper->computeCRC();
     string base64;
 
-    LOGINFO("Data used to generate BUFR CRC, crc: " << crc << " (" << oldcrc << ") \n" 
-      << dataUsedToGenerateCRC); 
-
+    LOGINFO("Data used to generate BUFR CRC, crc: " << crc << " (" << oldcrc << ")" << endl << *bufrHelper->getData()); 
+    
     bool newBufr(crc != oldcrc);
 
     if (newBufr) {
@@ -662,7 +696,7 @@ BufrWorker::newObs(ObsEvent& event)
       ostringstream dataOst;
 
       bufrData.writeTo(dataOst, true, debug);
-      if (saveTo(info, bufr, ccx, &base64)) {
+      if (saveTo(bufrHelper, ccx, &base64)) {
         if (app.saveBufrData(TblBufr(info->wmono(),
                                      info->stationID(),
                                      info->callsign(),
@@ -923,6 +957,52 @@ BufrWorker::saveTo(StationInfoPtr info,
   }
   return false;
 }
+
+bool BufrWorker::saveTo(std::shared_ptr<BufrHelper> bufrHelper,
+              int ccx,
+              std::string *base64 ) const {
+  bool doSave = true;
+  int nValues;
+
+  try {
+    if (!bufrHelper->validBufr()) {
+      LOGINFO("INVALID BUFR: " << bufrHelper->getErrorMessage());
+      return false;
+    }
+
+    bufrHelper->setSequenceNumber(ccx);
+    
+
+    doSave = !bufrHelper->emptyBufr();
+    nValues = bufrHelper->nValues();
+
+    if (!doSave) {
+      LOGINFO("No data values was written to the BUFR message, the BUFR "
+              "message is NOT saved.");
+      return false;
+    }
+
+    LOGINFO("BUFR with " << nValues << " real data values is saved.")
+    bufrHelper->saveToFile();
+
+    if (base64) {
+      ostringstream ost;
+      bufrHelper->writeToStream(ost);
+      string buf = ost.str();
+      encode64(buf.data(), buf.size(), *base64);
+    }
+    return true;
+  } catch (const std::exception& ex) {
+    LOGERROR("Failed to encode to BUFR: " << bufrHelper->getStationInfo()->toIdentString()
+                                          << " obstime: "
+                                          << pt::to_kvalobs_string(bufrHelper->getData()->time())
+                                          << ". Reason: " << ex.what());
+  }
+  return false;                
+
+}
+
+
 
 bool
 BufrWorker::checkContinuesTypes(ObsEvent& event,

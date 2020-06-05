@@ -45,6 +45,7 @@
 #include "fileutil/pidfileutil.h"
 #include "kvalobs/kvPath.h"
 #include "miutil/timeconvert.h"
+#include "bufr/EncodeBufrManager.h"
 #include "kvDbGateProxy.h"
 #include "tblWaiting.h"
 #include "Data.h"
@@ -248,18 +249,40 @@ void App::readDatabaseConf(miutil::conf::ConfSection *conf){
   }
 }
 
-App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::ConfSection *conf)
+
+void App::setObslogfile(Opt &opt, miutil::conf::ConfSection *conf) {
+  ValElementList valElem=conf->getValue("obslogfile");;
+  fs::path path;
+  
+  if( !opt.obslogfile.empty() ) {
+    path=opt.obslogfile;
+  } else if( !valElem.empty() ) {
+    path=valElem[0].valAsString();
+  } else {
+    path = opt.progname+"_observation.log";
+  }
+  
+  if( path.is_relative() ) {
+    path = fs::path(kvPath(logdir)) / path;
+  }
+
+  opt.obslogfile = path.string();
+}
+
+App::App(int argn, char **argv, Opt &opt, miutil::conf::ConfSection *conf)
     : kvDbPool([this]() {return createKvDbConnection();}, [this](dnmi::db::Connection *con) {releaseKvDbConnection(con);} ),
       DbQuery([this]() {return kvDbPool.get();}),
       startTime_(pt::second_clock::universal_time()),
-      confFile(confFile_),
+      confFile(opt.conffile),
       hasStationWaitingOnCacheReload(false),
       acceptAllTimes_(false),
-      defaultLogLevel(milog::INFO) {
+      defaultLogLevel(milog::INFO),
+      options(opt) {
   ValElementList valElem;
   string val;
   string bufr_tables(DATADIR);
   string logdir = kvPath("logdir");
+  
   bool bufr_tables_names( false);
 
   kvApp = this;
@@ -268,6 +291,13 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   kafkaBrokers = getKafkaBrokers(conf);
 
   createDirectory(fs::path(kvPath("logdir")) / options.progname);
+
+  valElem=conf->getValue("bufr_master_table");
+  if( !valElem.empty() ) {
+    EncodeBufrManager::masterBufrTable = valElem.valAsInt(31);
+  }
+
+
 
   valElem = conf->getValue("loglevel");
 
@@ -293,11 +323,14 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   createGlobalLogger("uinfo0");
   createGlobalLogger("kafka");
   createGlobalLogger("DataReceiver");
-  milog::createGlobalLogger(logdir, options.progname, "kafka_received", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
-  milog::createGlobalLogger(logdir, options.progname, "datareceiver_saved", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
-  milog::createGlobalLogger(logdir, options.progname, "observation", milog::DEBUG, 1024, 1, new milog::StdLayout1());
-  milog::createGlobalLogger(logdir, options.progname, "cachedb", milog::DEBUG, 500, 2, new milog::StdLayout1());
+  milog::createGlobalLogger(logdir, opt.progname, "kafka_received", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
+  milog::createGlobalLogger(logdir, opt.progname, "datareceiver_saved", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
+  //milog::createGlobalLogger(logdir, opt.progname, "observation", milog::DEBUG, 1024, 1, new milog::StdLayout1());
+  milog::createGlobalLogger(logdir, opt.progname, "cachedb", milog::DEBUG, 500, 2, new milog::StdLayout1());
  
+  setObslogfile(options, conf);
+  IDLOGINFO("main", "Writing observation (metriccs) to obslogfile: " << options.obslogfile);
+  LOGINFO("Writing observation (metrics) to obslogfile: " << options.obslogfile);
   readDatabaseConf(conf);
 
   //If a station is set up with this types delay them if
@@ -306,6 +339,16 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   continuesTypeID_.push_back(310);
   continuesTypeID_.push_back(3);
   continuesTypeID_.push_back(330);
+
+  valElem=conf->getValue("bufr_master_table");
+
+  if( !valElem.empty() ) {
+    EncodeBufrManager::masterBufrTable = valElem.valAsInt(31);
+  }
+
+  IDLOGINFO("main", "Using master BUFR table:"  << EncodeBufrManager::masterBufrTable);
+  LOGINFO("Using master BUFR table:"  << EncodeBufrManager::masterBufrTable);
+  cerr << "Using master BUFR table:"  << EncodeBufrManager::masterBufrTable << endl;
 
   valElem = conf->getValue("bufr_tables");
 
@@ -346,6 +389,20 @@ App::App(int argn, char **argv, const std::string &confFile_, miutil::conf::Conf
   } else {
     IDLOGINFO("main", "BUFR_TABLE_NAMES=false");
     setenv("PRINT_TABLE_NAMES", "false", 1);
+  }
+
+  string paramTblFile;
+  EncodeBufrManager::paramValidater=BufrParamValidater::loadTable(EncodeBufrManager::masterBufrTable, &paramTblFile);
+
+  if( !EncodeBufrManager::paramValidater ) {
+    IDLOGFATAL("main", "Failed to read BUFR Param table  :"  << paramTblFile);
+    LOGFATAL("Failed to read BUFR Param table  :"  << paramTblFile);
+    cerr << "Failed to read BUFR Param table  :"  << paramTblFile << endl;
+    exit(1);
+  } else {
+    IDLOGINFO("main", "Using BUFR Param table  :"  << paramTblFile);
+    LOGINFO("Using BUFR Param table  :"  << paramTblFile);
+    cerr << "Using BUFR Param table  :"  << paramTblFile << endl;
   }
 
   valElem = conf->getValue("accept_all_obstimes");
@@ -786,7 +843,10 @@ bool App::getSavedBufrData(StationInfoPtr info, const pt::ptime &obstime, std::l
 
   gate.busytimeout(300);
 
-  ost << " WHERE wmono=" << info->wmono() << " AND id=" << info->stationID() << " AND callsign='" << info->callsign() << "'" << " AND obstime='" << pt::to_kvalobs_string(obstime)
+  ost << " WHERE wmono=" << info->wmono() << " AND id=" << info->stationID() 
+      << " AND callsign='" << info->callsign() << "'" 
+      << " AND code='" << info->code() << "'"
+      << " AND obstime='" << pt::to_kvalobs_string(obstime)
       << "'";
 
   if (!gate.select(tblBufr, ost.str())) {
@@ -1043,6 +1103,7 @@ void decodeArgs(int argn, char **argv, Opt &opt) {
         { "config-file", 1, 0, 'c' },
         { "pidfile", 1, 0, 'p' },
         { "fromtime", 1, 0, 'f' },
+        { "obs-logfile", 1, 0, 'o'},
         { "help", 0, 0, 'h' },
         { "disable-data-receiver", 0, 0, 'd'},
         { "loglevel", 1, 0, 'l'},
@@ -1070,6 +1131,9 @@ void decodeArgs(int argn, char **argv, Opt &opt) {
         break;
       case 'p':
         opt.pidfile = optarg;
+        break;
+      case 'o':
+        opt.obslogfile = optarg;
         break;
       case 'c':
         opt.conffile = optarg;
@@ -1142,7 +1206,10 @@ void usage(const std::string &progname, int exitCode) {
        << "\n\t      Default value is set to " << kvPath("sysconfdir") << "/" << progname << ".conf"
        << "\n\t [--pidfile|-p] pidfile Use this as the pid file. "
        << "\n\t      Default value " << kvPath("rundir") << "/" << progname << "-node.pid"
+       << "\n\t [--obs-logfile|-o] logfile Write the observation logfile to logfile. "
+       << "\n\t      Default value " << kvPath("logdir") << "/" << progname << "_observation.log"
        << "\n\t      Where node is determined by the hostname." << "\n\n";
+
   exit(exitCode);
 }
 

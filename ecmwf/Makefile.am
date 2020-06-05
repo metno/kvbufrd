@@ -1,5 +1,5 @@
-BUFRSRC=$(top_srcdir)/ecmwf/bufrdc_000405.tar.gz
-BUFRSRCDIR=bufrdc_000405
+BUFRSRC=$(top_srcdir)/ecmwf/bufrdc_000409.tar.gz
+BUFRSRCDIR=bufrdc_000409
 
 libbufrdir=${bufrdir}
 libbufr_LIBRARIES = libbufr.a
@@ -16,5 +16,5 @@ libbufr.a: unpack_bufr
 	fi 
 
 EXTRA_DIST=\
-	bufrdc_000405.tar.gz \
+	bufrdc_000409.tar.gz \
 	my_build_library

@@ -67,7 +67,9 @@ class EncodeBufrManager
    friend class EncodeBufrBase;
 
 public:
-
+   static int masterBufrTable;
+   static BufrParamValidaterPtr paramValidater;
+   
 
    EncodeBufrManager();
 

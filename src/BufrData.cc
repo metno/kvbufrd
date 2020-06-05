@@ -176,7 +176,10 @@ operator=( const BufrData &rhs )
    return *this;
 }
 
-
+std::ostream &operator<<(std::ostream &o, const BufrData &bd){
+   bd.crcHelper(o);
+   return o;  
+}
 
 std::ostream
 &operator<<(std::ostream &o, const BufrData::CloudDataExtra &cd )

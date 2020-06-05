@@ -29,6 +29,7 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <tuple>
 #include <boost/assign.hpp>
 #include "EncodeBufr306004.h"
 
@@ -56,44 +57,49 @@ encodeIds()const
 
 
 
+
+namespace {
+  //Get data from all sensor and levels, 
+  //lower sensor numbers has priority before higher numbers.
+  //map< level, tuple<tw, ssw> >
+  std::map<int, std::tuple<float,float> > merge(const KvParam &tw, const KvParam &ssw) {
+    using namespace std;
+    map<int, std::tuple<float,float> > res;
+
+    for(auto t : tw.getBySensorsAndLevels() ) {
+      res[t.first]=make_tuple(t.second, FLT_MAX);
+    }
+
+    for(auto t : ssw.getBySensorsAndLevels() ) {
+      auto it = res.find(t.first);
+
+      if( it == res.end() ) {
+        res[t.first]=make_tuple(FLT_MAX, t.second);
+      } else {
+        res[it->first]=make_tuple(get<0>(it->second), t.second);
+      }
+    }
+
+    return res;
+  }
+}
+
+
 void
 EncodeBufr306004::
 encode( )
 {
-  //Start her
+  using namespace std;
+  auto count=[](float v) {return v!=FLT_MAX;};
+  auto d = merge(data->TW, data->SSW);
+  bufr->addValue(2032, 3, "Indicator of digitization (tbl code 3 = missing)");
+  bufr->addValue(2033, 7, "Method of salinity/depth measurement (tbl code 7 = missing)");
 
-  bufr->addDelayedReplicationFactor(31000, 0);
-
-
-  // //Pressure data
-  // bufr->addValue( 10004, data->PO, "P0" );
-  // bufr->addValue( 10051, data->PR, "PP" );
-  
-   
-  // //temperature 
-  // bufr->addValue( 7033, stationInfo->heightTemperature(), "Height of sensor above water surface" );
-  // bufr->addValue( 12101, data->TA, "TA" );
-  // bufr->addValue( 12103, data->TD, "TD, dew-point temperature" );
-  // bufr->addValue( 13003, data->UU, "UU, relativ humidity" );
-
-  // //wind
-  //  bufr->addValue(  7033, stationInfo->heightWind(), "Height of sensor above water surface", false);
-  //  bufr->addValue(  8021, 2, "Time significance (=2: time averaged)", false);
-  //  bufr->addValue(  4025, static_cast<float>(-10), "Time period or displacement (minutes)", false);
-  //  bufr->addValue( 11001, data->DD, "DD, wind direction");
-  //  bufr->addValue( 11002, data->FF, "FF, wind speed");
-  //  bufr->addValue(  8021, INT_MAX, "Time significance", false);
-
-  // //Gust
-  // bufr->addValue(  4025, (data->FG_010.valid()?static_cast<float>(-10):FLT_MAX), "Time period or displacement (minutes)", false, "GUST");
-  // bufr->addValue( 11041, data->FG_010, "FG_010, wind speed (gust)"), true, "GUST";
-
-  // //Sea temperature
-  // bufr->addValue(  4025, FLT_MAX, "Time period or displacement (minutes)", false);
-  // bufr->addValue( 7033, FLT_MAX, "Height of sensor above water surface.", false);
-  // bufr->addValue(2005,FLT_MAX, "Precision of temperature observation (K)", false);
-  // bufr->addValue( 7063, 0.5f, "Sea/water depth of measurement (cm)", false );
-  // bufr->addValue( 22049, data->TW, "Sea/water temperature" );
-  
+  bufr->addDelayedReplicationFactor(31001, d.size());
+  for( auto &s : d) {
+    bufr->addValue(7062, s.first, "SSW.level");
+    bufr->addValue(22043, get<0>(s.second), "TW", count(get<0>(s.second)));
+    bufr->addValue(22062, get<1>(s.second), "SSW", count(get<1>(s.second)));
+  }
 }
 

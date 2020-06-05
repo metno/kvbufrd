@@ -60,20 +60,20 @@ namespace {
 StationInfoPtr
 ConfMaker::
 findStation( int wmono, int stationid, const std::string &callsign,
-             const std::list<int> &codeList, bool &newStation )
+             int bufrCode, bool &newStation )
 {
    newStation = false;
 
    for( std::list<StationInfoPtr>::const_iterator it=stationList.begin(); it!=stationList.end(); ++it ) {
       if( (*it)->wmono() == wmono && (*it)->stationID() == stationid &&
-           (*it)->callsign() == callsign && (*it)->code() == codeList ) {
+           (*it)->callsign() == callsign && (*it)->code() == bufrCode ) {
          return *it;
       }
    }
 
    for( std::list<StationInfoPtr>::const_iterator it=templateStationList.begin(); it!=templateStationList.end(); ++it ) {
       if( (*it)->wmono() == wmono && (*it)->stationID() == stationid &&
-          (*it)->callsign() == callsign && (*it)->code() == codeList) {
+          (*it)->callsign() == callsign && (*it)->code() == bufrCode) {
          StationInfoPtr p( new StationInfo( **it ) );
          stationList.push_back( p );
          return p;
@@ -750,7 +750,7 @@ doSVVConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
    std::list<int> networksids;
 
    boost::assign::push_back( networksids)(33);
-   boost::assign::push_back( codeList )( 4 );//BUFR template for SVV
+   int bufrCode = 4;//BUFR template for SVV
 
    app.loadNetworkStation( networkStations, networksids );
 
@@ -768,7 +768,7 @@ doSVVConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
       else
          wmono = tblStation.wmono();
 
-      pStation = findStation( wmono, tblStation.stationid(), "", codeList, newStation );
+      pStation = findStation( wmono, tblStation.stationid(), "", bufrCode, newStation );
 
       if( ! it->name().empty() ) {
          pStation->name( it->name() );
@@ -777,7 +777,7 @@ doSVVConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
 
 
       if( pStation->code_.empty() ) {
-         pStation->code_ = codeList;
+         pStation->code_.push_back(bufrCode);
       }
 
       if( tblStation.hs() != INT_MAX ) {
@@ -892,7 +892,7 @@ doPrecipConf( const std::string &outfile, miutil::conf::ConfSection *templateCon
    std::list<int> typeids;
 
    boost::assign::push_back( typeids)(302)(304)(305);
-   boost::assign::push_back( codeList)(2);  //BUFR template for PRECIP stations.
+   int bufrCode=2;  //BUFR template for PRECIP stations.
 
    app.loadObsPgmH( obspgm, typeids );
 
@@ -911,7 +911,7 @@ doPrecipConf( const std::string &outfile, miutil::conf::ConfSection *templateCon
       else
          wmono = tblStation.wmono();
 
-      pStation = findStation( wmono, tblStation.stationid(), "", codeList, newStation );
+      pStation = findStation( wmono, tblStation.stationid(), "", bufrCode, newStation );
 
       if( ! tblStation.name().empty() ) {
          pStation->name( tblStation.name() );
@@ -920,7 +920,7 @@ doPrecipConf( const std::string &outfile, miutil::conf::ConfSection *templateCon
 
 
       if( pStation->code_.empty() ) {
-         pStation->code_ = codeList;
+         pStation->code_.push_back(bufrCode);
       }
 
       if( tblStation.hs() != INT_MAX ) {
@@ -1106,7 +1106,7 @@ doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf 
 	std::list<int> networksids;
 
 	boost::assign::push_back( networksids)(6);
-	boost::assign::push_back( codeList )( 3 );//BUFR template for SHIP
+	int bufrCode= 3;//BUFR template for SHIP
 
 	app.loadNetworkStation( networkStations, networksids );
 
@@ -1123,7 +1123,7 @@ doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf 
 
 		callsign = it->externalStationcode();
 
-		pStation = findStation( 0, tblStation.stationid(), callsign, codeList, newStation );
+		pStation = findStation( 0, tblStation.stationid(), callsign, bufrCode, newStation );
 
 		setShipOwner( pStation, tblStation, it );
 
@@ -1139,7 +1139,7 @@ doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf 
 		}
 
 		if( pStation->code_.empty() ) {
-			pStation->code_ = codeList;
+			pStation->code_.push_back(bufrCode);
 		}
 
 		if( tblStation.hs() != INT_MAX ) {
@@ -1252,7 +1252,7 @@ doBStationsConf( const std::string &outfile, miutil::conf::ConfSection *template
 	std::list<int> networksids;
 
 	boost::assign::push_back( networksids)(33);
-	boost::assign::push_back( codeList )( 1 );//BUFR template for SVV
+	int bufrCode= 1;//BUFR template for Bstaions
 	boost::assign::push_back( params )( 211 )(81); // TA (211), FF (81) used to find the type ids.
 	boost::assign::push_back( precipParams )(RR_1)(RR_3)(RR_6)(RR_12)(RR_24)
 				(RR_X)(RR_2)(RR_9)(RR_15)(RR_18);
@@ -1293,7 +1293,7 @@ doBStationsConf( const std::string &outfile, miutil::conf::ConfSection *template
 		else
 			wmono = tblStation.wmono();
 
-		pStation = findStation( wmono, stationid, "", codeList, newStation );
+		pStation = findStation( wmono, stationid, "", bufrCode, newStation );
 
 		if( ! it->name().empty() ) {
 			pStation->name( it->name() );
@@ -1302,7 +1302,7 @@ doBStationsConf( const std::string &outfile, miutil::conf::ConfSection *template
 
 
 		if( pStation->code_.empty() ) {
-			pStation->code_ = codeList;
+			pStation->code_.push_back(bufrCode);
 		}
 
 		if( tblStation.hs() != INT_MAX ) {
@@ -1417,7 +1417,7 @@ doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
    TblStInfoSysStation tblStation;
    TblStInfoSysNetworkStation networkStation;
    StInfoSysSensorInfoList tblSensors;
-   list<int> codeList;
+   int bufrCode;
    int nValues;
    bool newStation;;
 
@@ -1430,7 +1430,7 @@ doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
 
    //TODO: Until stinfosys contains information about which
    //BUFR codes to use we hardcode it here to 0 (SYNOP)
-   codeList.push_back(0);
+   bufrCode=0;
 
    app.loadStationOutmessage( tblWmoList );
 
@@ -1451,7 +1451,7 @@ doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
          continue;
       }
 
-      pStation = findStation( tblStation.wmono(), 0, "", codeList, newStation );
+      pStation = findStation( tblStation.wmono(), 0, "", bufrCode, newStation );
 
       if( !networkStation.name().empty() ) {
           pStation->name( networkStation.name() );

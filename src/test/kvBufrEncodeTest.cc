@@ -52,7 +52,7 @@
 #include "kvBufrEncodeTestConf.h"
 #include "StationInfoParse.h"
 #include "ReadDataFile.h"
-#include "encodebufr.h"
+//#include "encodebufr.h"
 #include "bufr/EncodeBufrBase.h"
 #include "bufr/BUFRparam.h"
 #include "bufr/EncodeBufrManager.h"
@@ -113,8 +113,8 @@ protected:
 		 //istringstream iconf(testconf);
 		setenv("BUFR_TABLES", bufr_tables.c_str(), 1 );
 		string conffile(string(TESTDATADIR) + "/kvBufrEncodeTest.conf" );
-		string btabl(string(BUFRTBLDIR)+"/B0000000000000019000.TXT");
-		ifstream iconf( conffile.c_str() );
+		string btabl(string(BUFRTBLDIR)+"/B0000000000000033000.TXT");
+      ifstream iconf( conffile.c_str() );
 		//Turn off almost all logging.
 		milog::Logger::logger().logLevel( milog::ERROR );
 
@@ -132,7 +132,8 @@ protected:
 		ASSERT_TRUE( stationParser.parse( conf, stationList ) ) << "Cant parse the station information.";
 
 		validater = BufrParamValidater::loadTable( btabl );
-		ASSERT_TRUE( validater.get() ) << "Cant load BUFR B table: " << btabl;
+      ASSERT_TRUE( validater.get() ) << "Cant load BUFR B table: " << btabl;
+      EncodeBufrManager::paramValidater=validater;
 	}
 
 	///Called after each test case.
@@ -151,6 +152,66 @@ namespace
 		return boost::posix_time::time_from_string(formatted);
 	}
 }
+
+
+TEST_F(BufrEncodeTest, BUOY_basic) 
+{
+   using namespace miutil;
+   DataElementList allData;
+   DataElementList data;
+   StationInfoPtr  stInfo;
+   boost::posix_time::ptime dt;
+   BufrDataPtr bufr( new BufrData() );
+   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   string id="6301001";
+   stInfo = findCallsign( id );
+
+   ASSERT_TRUE( stInfo.get() ) << "No station information for callsign " << id;
+
+   loadBufrDataFromFile( "bouy_76933_20200426T06.dat", stInfo, allData, validData );
+   dt=getTime("2020-04-26 06:00:00");
+
+   cerr << allData << endl;
+
+
+   data=allData.subData( dt );
+   
+   EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
+   EXPECT_TRUE( data.size() != 0 ) << "Expcting at least one hour of data.";
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
+   auto bufrHelperPtr=bufrEncoder.encodeBufr(stInfo, data);
+   EXPECT_TRUE(bufrHelperPtr != nullptr) << "Failed to encode BUFR.";
+   auto crc=bufrHelperPtr->computeCRC();
+   cout << "crc '" << crc << "'" << endl;
+   FAIL();
+   EXPECT_EQ(4179140996, crc) << "Failed to generate crc.";
+
+   bufrHelperPtr->setSequenceNumber(2);
+   bufrHelperPtr->saveToFile(".", 0);
+
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   EncodeBufrManager encoder;
+   BufrTemplateList templateList;
+   b::assign::push_back( templateList )(900005);
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+   }
+   catch ( EncodeException &ex ) {
+      FAIL() << "EXCEPTION (BufrEncodeException): " << ex.what();
+   }
+   catch ( const std::exception &ex ) {
+       FAIL() << "EXCEPTION: " << ex.what();
+   }
+   catch( ... ) {
+      FAIL() << "EXCEPTION: Unknown.";
+   }
+
+   ASSERT_NO_THROW( bufrHelper.saveToFile( ".", true, true ) );
+}
+
+
+#if 0
 
 
 
@@ -172,7 +233,7 @@ TEST_F( BufrEncodeTest, GustFrom_FG_1_or_FG_010 )
    loadBufrDataFromFile( "data_18700_501_2019051404.dat", stInfo, allData, validData );
    dt=getTime("2019-05-14 06:00:00");
    data=allData.subData( dt );
-
+   
    EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
 
@@ -1727,7 +1788,7 @@ TEST_F( BufrEncodeTest, MsgTimeNoMustHaveTypesTest )
    ASSERT_FALSE( forceDelay );
    ASSERT_FALSE( relativeToFirst );
 }
-
+#endif
 
 int
 main(int argc, char **argv) {

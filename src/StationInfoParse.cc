@@ -249,7 +249,7 @@ parseSection( miconf::ConfSection *stationConf,
                            "height_visibility", "height_precip",
                            "height_pressure", "height_temperature",
                            "height_wind","height_wind_above_sea", "name", "callsign", "wmono",
-                           "code",
+                           "code", "buoy_type",
                            0 };
 
    list<std::string>           keys;
@@ -347,6 +347,7 @@ parseSection( miconf::ConfSection *stationConf,
                strcmp( keywords[i], "height_wind_above_sea" ) == 0 ||
                strcmp( keywords[i], "latitude" ) == 0 ||
                strcmp( keywords[i], "longitude" ) == 0  ||
+               strcmp( keywords[i], "buoy_type" ) == 0  ||
                strcmp( keywords[i], "name" ) == 0 ||
                strcmp( keywords[i], "callsign" ) == 0 ||
                strcmp( keywords[i], "wmono" ) == 0) {
@@ -400,7 +401,9 @@ parseSection( miconf::ConfSection *stationConf,
             doFloat( st->latitude_, value );
          }else if( strcmp( keywords[i], "longitude" ) == 0 ) {
             doFloat( st->longitude_, value );
-         } else if( strcmp( keywords[i], "code") == 0 ){
+         } else if( strcmp( keywords[i], "buoy_type" ) == 0 ) {
+            doInt(st->buoyType_, value );
+         }else if( strcmp( keywords[i], "code") == 0 ){
             doIntList( st->code_, value );
          }else if( strcmp( keywords[i], "name" ) == 0 ) {
             IValElementList it=value.begin();
@@ -435,7 +438,7 @@ parseSection( miconf::ConfSection *stationConf,
 
    //TODO: At the moment we hardcode the BUFR 'code' value to
    //0 (SYNOP) if it is NOT given and we have a wmo number.
-   if( st->wmono() > 0 && st->code().empty() ) {
+   if( st->wmono() > 0 && st->code_.empty() ) {
       st->code_.push_back( 0 );//Default value 0 is SYNOP.
       LOGDEBUG("Missing code for station <" << st->toIdentString()
               <<"> Setting 'code' to: 0 (SYNOP)." );

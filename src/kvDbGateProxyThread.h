@@ -63,8 +63,9 @@ public:
 class KvDbGateResultRow
 {
    KvDbGateResultRow();
-   std::list< std::string > *colNames;
    std::vector<std::string> row;
+   std::list< std::string > *colNames;
+   
 
 public:
 

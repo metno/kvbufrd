@@ -93,7 +93,7 @@ main(int argn, char **argv)
    //exit if an instance is allready running.
    checkPidfile(options);
    
-   App  app(argn, argv, options.conffile, conf );
+   App  app(argn, argv, options, conf );
    std::shared_ptr<dnmi::thread::CommandQue> newDataQue(new dnmi::thread::CommandQue());
    std::shared_ptr<dnmi::thread::CommandQue> newObsQue(new dnmi::thread::CommandQue());
 

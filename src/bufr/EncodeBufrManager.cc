@@ -81,6 +81,7 @@
 #include "EncodeBufr306041.h"
 #include "EncodeBufr307079.h"
 #include "EncodeBufr308009.h"
+#include "EncodeBufr315008.h"
 #include "EncodeBufr900000_SYNOP.h"
 #include "EncodeBufr900001_Bstations.h"
 #include "EncodeBufr900002_PRECIP_AND_SNOW.h"
@@ -88,9 +89,13 @@
 #include "EncodeBufr900004_SVV.h"
 #include "EncodeBufr900005_MOORED_BUOY.h"
 #include "GuessBufrTemplate.h"
+#include "BUFRparam.h"
 
 
 namespace b=boost;
+
+int EncodeBufrManager::masterBufrTable = 31;
+BufrParamValidaterPtr EncodeBufrManager::paramValidater=BufrParamValidater::loadTable(EncodeBufrManager::masterBufrTable, nullptr);
 
 EncodeBufrManager::
 EncodeBufrManager()
@@ -142,6 +147,7 @@ EncodeBufrManager()
    addEncoder( new EncodeBufr306041() );
    addEncoder( new EncodeBufr307079() );
    addEncoder( new EncodeBufr308009() );
+   addEncoder( new EncodeBufr315008() );
    addEncoder( new EncodeBufr900000() );
    addEncoder( new EncodeBufr900001() );
    addEncoder( new EncodeBufr900002() );
@@ -213,26 +219,14 @@ void
 EncodeBufrManager::
 encode( BufrHelper &bufrHelper )
 {
-   BufrTemplateList templateList=bufrHelper.getStationInfo()->code();
+   int bufrCode=bufrHelper.getStationInfo()->code();
 
-   for( BufrTemplateList::iterator it = templateList.begin();
-        it != templateList.end(); ++it ) {
-      if( *it < 900000 )
-         *it += 900000;
-   }
-
-   if( templateList.empty() )
-      templateList = guessBufrTemplate( *bufrHelper.getStationInfo() );
-
-   if( templateList.empty() )
-      throw std::logic_error("Missing or cant guess BUFR template to use.");
-
+   if( bufrCode < 900000 )
+         bufrCode += 900000;
+     
    std::ostringstream o;
-   o << "Using BUFR encoder:";
-   for( BufrTemplateList::const_iterator it=templateList.begin();
-         it != templateList.end(); ++it )
-      o << " " << *it;
+   o << "Using BUFR encoder: "  << bufrCode;
 
    LOGINFO( o.str() );
-   encode( templateList, bufrHelper );
+   encode( bufrCode, bufrHelper );
 }

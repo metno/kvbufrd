@@ -49,7 +49,6 @@ kvbufrd_SOURCES = \
    getDataReceiver.cc getDataReceiver.h \
    GetDataThread.cc GetDataThread.h \
    LoadBufrData.h LoadBufrData.cc \
-   encodebufr.h encodebufr.cc \
    base64.cc base64.h \
    scanstring.cc scanstring.h \
    SemiUniqueName.cc SemiUniqueName.h \
@@ -57,7 +56,9 @@ kvbufrd_SOURCES = \
    isDirWithWritePermission.cc isDirWithWritePermission.h \
    dbhelper.cc dbhelper.h \
 	 cachedb.h cachedb.cc \
-	 utils.h utils.cc
+	 utils.h utils.cc  \
+	 LogAppender.h LogAppender.cc 
+	 
  
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
