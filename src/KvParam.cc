@@ -118,7 +118,6 @@ KvParam::KvParam(KvParamList& paramList, const KvParam& param)
   paramList.params.push_back(this);
 }
 
-/*
 KvParam&
 KvParam::copy(const KvParam& src, bool mustHaveSameId)
 {

@@ -237,8 +237,8 @@ TEST_F( BufrEncodeTest, GustFrom_FG_1_or_FG_010 )
    EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
    EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
 
-   //EXPECT_TRUE( data.size() != 0 );
-   //EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< wmono;
+   EXPECT_TRUE( data.size() != 0 );
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) ) << "FAILED: Cant generate bufr for "<< wmono;
 
    BufrHelper bufrHelper( validater, stInfo, bufr );
    EncodeBufrManager encoder;

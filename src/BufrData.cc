@@ -157,7 +157,6 @@ operator=( const BufrData &rhs )
 {
 
    if( this != &rhs ) {
-      
       *static_cast<DataElement*>(this) = static_cast<DataElement&>( const_cast<BufrData&>(rhs) );
       tWeatherPeriod = rhs.tWeatherPeriod;
       vsci = rhs.vsci;
