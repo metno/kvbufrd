@@ -33,10 +33,10 @@
 #define __kvDbGateProxyTread_H__
 
 #include <stdexcept>
-#include <dnmithread/CommandQue.h>
+#include "CommandQueue.h"
 #include <kvdb/kvdb.h>
-#include <boost/thread/thread.hpp>
-#include <boost/shared_ptr.hpp>
+#include <thread>
+#include <memory>
 #include <kvalobs/kvDbGate.h>
 
 namespace kvalobs {
@@ -136,19 +136,19 @@ public:
 };
 
 
-class KvDbGateCommand : public dnmi::thread::CommandBase
+class KvDbGateCommand : public threadutil::CommandBase
 {
 protected:
    kvDbGate *gate;
-   dnmi::thread::CommandQue *retQue;
+   threadutil::CommandQueue *retQue;
    dnmi::db::Connection *con;
    friend class kvDbGateProxy;
    
    KvDbGateCommand():gate(0), retQue(0), con(0){};
-   KvDbGateCommand( dnmi::thread::CommandQue *retQue_, kvDbGate *gate )
+   KvDbGateCommand( threadutil::CommandQueue *retQue_, kvDbGate *gate )
       : gate( gate ), retQue( retQue_ ), con( 0 )
    {}
-   KvDbGateCommand( dnmi::thread::CommandQue *retQue_ )
+   KvDbGateCommand( threadutil::CommandQueue *retQue_ )
          : gate( 0 ), retQue( retQue_ ), con( 0 )
       {}
 
@@ -202,7 +202,7 @@ public:
    KvDbGateResult &result;
    bool returnStatus;
 
-   KvDbGateExecResult( dnmi::thread::CommandQue *retQue_,
+   KvDbGateExecResult( threadutil::CommandQueue *retQue_,
                        KvDbGateResult &res, const std::string &query, int timeout   )
       : KvDbGateCommand( retQue_ ), query( query), timeout( timeout ), result( res )
    {
@@ -218,7 +218,7 @@ class KvDbGateInsert : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateInsert( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
+   KvDbGateInsert( threadutil::CommandQueue *retQue_, kvDbGate *gate,
                    const kvalobs::kvDbBase &elem,
                    const std::string &tblName,
                    bool replace)
@@ -239,7 +239,7 @@ class KvDbGateUpdate : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateUpdate( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
+   KvDbGateUpdate( threadutil::CommandQueue *retQue_, kvDbGate *gate,
                    const kvalobs::kvDbBase &elem,
                    const std::string &tblName )
       : KvDbGateCommand( retQue_, gate ), elem( elem ),  tableName( tblName )
@@ -259,7 +259,7 @@ class KvDbGateReplace : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateReplace( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
+   KvDbGateReplace( threadutil::CommandQueue *retQue_, kvDbGate *gate,
                    const kvalobs::kvDbBase &elem,
                    const std::string &tblName )
       : KvDbGateCommand( retQue_, gate ), elem( elem ),  tableName( tblName )
@@ -281,14 +281,14 @@ class KvDbGateRemove : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateRemove( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
+   KvDbGateRemove( threadutil::CommandQueue *retQue_, kvDbGate *gate,
                    const kvalobs::kvDbBase &elem,
                    const std::string &tblName )
       : KvDbGateCommand( retQue_, gate ), elem( &elem ),  tableName( tblName )
    {
    }
 
-   KvDbGateRemove( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
+   KvDbGateRemove( threadutil::CommandQueue *retQue_, kvDbGate *gate,
                    const std::string &query )
       : KvDbGateCommand( retQue_, gate ), elem( 0 ), query( query )
    {
@@ -312,7 +312,7 @@ class KvDbGateExec : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateExec( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
+   KvDbGateExec( threadutil::CommandQueue *retQue_, kvDbGate *gate,
                    const std::string &query)
       : KvDbGateCommand( retQue_, gate ), query( query )
    {
@@ -334,7 +334,7 @@ class KvDbGateInsertList : public KvDbGateCommand
 
 public:
    bool result;
-   KvDbGateInsertList( dnmi::thread::CommandQue *retQue_, kvDbGate *gate, const std::list<T>& li , bool replace=false,
+   KvDbGateInsertList( threadutil::CommandQueue *retQue_, kvDbGate *gate, const std::list<T>& li , bool replace=false,
                        const std::string &tblName="")
       : KvDbGateCommand( retQue_, gate ), data( li ), replace( replace ), tableName( tblName )
    {
@@ -355,7 +355,7 @@ class KvDbGateSelect : public KvDbGateCommand
 public:
    typename std::list<T> data;
    bool result;
-   KvDbGateSelect( dnmi::thread::CommandQue *retQue_, kvDbGate *gate,
+   KvDbGateSelect( threadutil::CommandQueue *retQue_, kvDbGate *gate,
                    const std::string &q="",
                    const std::string &tblName="" )
       : KvDbGateCommand( retQue_, gate ), query( q ), tableName( tblName )
@@ -382,14 +382,14 @@ class KvDbGateProxyThread {
    //KvDbGateProxyThread( const KvDbGateProxyThread &);
    KvDbGateProxyThread& operator=( const KvDbGateProxyThread &);
 
-   boost::shared_ptr<bool>  joinable_;
-   boost::shared_ptr<boost::thread> thread;
-   boost::shared_ptr<ConnectionFactory> connectionFactory;
+   std::shared_ptr<bool>  joinable_;
+   std::shared_ptr<std::thread> thread;
+   std::shared_ptr<ConnectionFactory> connectionFactory;
 
 public:
-   boost::shared_ptr<dnmi::thread::CommandQue> dbQue;
+   std::shared_ptr<threadutil::CommandQueue> dbQue;
 
-   KvDbGateProxyThread( boost::shared_ptr<ConnectionFactory> conFactory );
+   KvDbGateProxyThread( std::shared_ptr<ConnectionFactory> conFactory );
    KvDbGateProxyThread( const KvDbGateProxyThread &cp )
       : joinable_( cp.joinable_ ),
         thread( cp.thread ),

@@ -33,11 +33,10 @@
 
 #include <string>
 #include <list>
-#include "dnmithread/CommandQue.h"
+#include <memory>
+#include "CommandQueue.h"
 #include "kvalobs/kvDbGate.h"
 #include "kvDbGateProxyThread.h"
-/* Created by met.no/FoU/PU: j.schulze@met.no
-   at Wed Aug 28 13:49:02 2002 */
 
 namespace kvalobs {
 
@@ -56,14 +55,14 @@ namespace kvalobs {
   class kvDbGateProxy  {
   protected:
      kvDbGate gate;
-     boost::shared_ptr<dnmi::thread::CommandQue> dbQue;
+     std::shared_ptr<threadutil::CommandQueue> dbQue;
      kvDbGate::TError error;
      std::string errorString;
 
      bool errorFromExecResult;
   public:
     
-    kvDbGateProxy(boost::shared_ptr<dnmi::thread::CommandQue> dbQue_ ):dbQue( dbQue_ ) {}
+    kvDbGateProxy(std::shared_ptr<threadutil::CommandQueue> dbQue_ ):dbQue( dbQue_ ) {}
     ~kvDbGateProxy(){}
     
     /**
@@ -150,7 +149,7 @@ namespace kvalobs {
     bool insert( const std::list<T>& li , bool replace=false,
                  const std::string &tblName="")
     {
-       dnmi::thread::CommandQue retQue;
+       threadutil::CommandQueue retQue;
        errorFromExecResult = false;
        bool retStatus=false;
 
@@ -158,10 +157,10 @@ namespace kvalobs {
 
        try {
           dbQue->postAndBrodcast( command );
-          dnmi::thread::CommandBase *ret = retQue.get();
+          threadutil::CommandBase *ret = retQue.get();
           retStatus = static_cast<KvDbGateInsertList<T> *>( ret )->result;
        }
-       catch ( const dnmi::thread::QueSuspended &e) {
+       catch ( const threadutil::QueSuspended &e) {
        }
 
        delete command;
@@ -384,19 +383,19 @@ namespace kvalobs {
     bool select( std::list<T>& li , const std::string &q="",
                  const std::string &tblName="")
     {
-       dnmi::thread::CommandQue retQue;
+       threadutil::CommandQueue retQue;
        errorFromExecResult = false;
        KvDbGateSelect<T> *command = new KvDbGateSelect<T>( &retQue, &gate, q, tblName );
        bool retStatus=false;
 
        try {
           dbQue->postAndBrodcast( command );
-          dnmi::thread::CommandBase *ret = retQue.get();
+          threadutil::CommandBase *ret = retQue.get();
           KvDbGateSelect<T> *retCommand = static_cast<KvDbGateSelect<T> *>( ret );
           li = retCommand->data;
           retStatus = retCommand->result;
        }
-       catch ( const dnmi::thread::QueSuspended &e) {
+       catch ( const threadutil::QueSuspended &e) {
        }
 
        delete command;

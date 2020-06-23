@@ -430,7 +430,7 @@ App::App(int argn, char **argv, Opt &opt, miutil::conf::ConfSection *conf)
   //Create cacheDB if it does not exist.
   checkAndInitCacheDB(getCacheDbFile());
 
-  dbThread = boost::shared_ptr<KvDbGateProxyThread>(new KvDbGateProxyThread(boost::shared_ptr<MyConnectionFactory>(new MyConnectionFactory(this))));
+  dbThread = std::shared_ptr<KvDbGateProxyThread>(new KvDbGateProxyThread(std::shared_ptr<MyConnectionFactory>(new MyConnectionFactory(this))));
   dbThread->start();
 
   readWaitingElementsFromDb();

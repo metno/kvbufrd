@@ -32,13 +32,13 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <fstream>
-#include "boost/thread/thread.hpp"
+#include <thread>
+//#include "boost/thread/thread.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/date_time/posix_time/ptime.hpp"
 #include "milog/milog.h"
 #include "fileutil/pidfileutil.h"
 #include "miutil/timeconvert.h"
-#include "kvalobs/kvapp.h"
 #include "kvalobs/kvPath.h"
 #include "BufrWorker.h"
 #include "DataReceiver.h"
@@ -123,7 +123,7 @@ main(int argn, char **argv)
       }
    }
 
-   boost::thread bufrWorkerThread(bufrWorker);
+   std::thread bufrWorkerThread(bufrWorker);
    IDLOGDEBUG("main","Started <BufrWorkerThread>!");
 
    if(startTime.is_special()){
@@ -150,13 +150,13 @@ main(int argn, char **argv)
    IDLOGDEBUG("main","Return from app.getDataFrom!");
 
 
-   boost::thread dataReceiverThread(dataReceiver);
+   std::thread dataReceiverThread(dataReceiver);
    IDLOGDEBUG("main","Started <dataReceiverThread>!");
 
-   boost::thread delayThread(delayControl);
+   std::thread delayThread(delayControl);
    IDLOGDEBUG("main","Started <delayControlThread>!");
 
-   boost::thread cacheDbCleanerThread(cacheDbCleaner);
+   std::thread cacheDbCleanerThread(cacheDbCleaner);
 
 
    app.run(newDataQue);

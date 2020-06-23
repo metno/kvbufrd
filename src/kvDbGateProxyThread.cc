@@ -448,9 +448,9 @@ executeImpl()
 
 
 KvDbGateProxyThread::
-KvDbGateProxyThread( boost::shared_ptr< ConnectionFactory> conFactory )
+KvDbGateProxyThread( std::shared_ptr< ConnectionFactory> conFactory )
    : joinable_( new bool(false) ), connectionFactory( conFactory ),
-     dbQue( boost::shared_ptr<dnmi::thread::CommandQue>( new dnmi::thread::CommandQue() ) )
+     dbQue( std::shared_ptr<threadutil::CommandQueue>( new threadutil::CommandQueue(false) ) )
 {
 }
 
@@ -458,7 +458,7 @@ void
 KvDbGateProxyThread::
 operator()()
 {
-   using namespace dnmi::thread;
+   using namespace threadutil;
    const int QUESIZE=0;
    const int PROBETIME=1;
    bool quit=false;
@@ -550,7 +550,7 @@ void
 KvDbGateProxyThread::
 start()
 {
-   thread.reset( new boost::thread( *this ) );
+   thread.reset( new std::thread( *this ) );
 }
 
 }

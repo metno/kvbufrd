@@ -37,8 +37,9 @@
 
 #include <list>
 #include <atomic>
+#include <memory>
 #include "boost/filesystem.hpp"
-#include "boost/thread/mutex.hpp"
+#include <mutex>
 #include "boost/date_time/posix_time/ptime.hpp"
 #include "kvcpp/KvApp.h"
 #include "kvdb/dbdrivermgr.h"
@@ -77,8 +78,8 @@ class GetData;
 class App : public kvalobs::sql::DbQuery {
 
  public:
-  typedef boost::mutex Mutex;
-  typedef boost::mutex::scoped_lock Lock;
+  typedef std::mutex Mutex;
+  typedef std::lock_guard<Mutex> Lock;
   static volatile std::atomic_bool AppShutdown;
  private:
 
@@ -115,7 +116,7 @@ class App : public kvalobs::sql::DbQuery {
   static App *kvApp;
   Opt options;
 
-  boost::shared_ptr<kvalobs::KvDbGateProxyThread> dbThread;
+  std::shared_ptr<kvalobs::KvDbGateProxyThread> dbThread;
 
   App(int argn, char **argv, Opt &opt /* const std::string &confFile_*/, miutil::conf::ConfSection *conf);
   ~App();

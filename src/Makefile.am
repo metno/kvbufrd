@@ -57,7 +57,9 @@ kvbufrd_SOURCES = \
    dbhelper.cc dbhelper.h \
 	 cachedb.h cachedb.cc \
 	 utils.h utils.cc  \
-	 LogAppender.h LogAppender.cc 
+	 LogAppender.h LogAppender.cc \
+	 CommandQueue.h CommandQueue.cc \
+	 CommandBase.h CommandBase.cc
 	 
  
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
@@ -70,7 +72,10 @@ kvxmltest_SOURCES = \
 	kvDbGateProxyThread.cc kvDbGateProxyThread.h \
 	StationInfoParse.cc StationInfoParse.h \
 	StationInfo.cc StationInfo.h \
-	parseMilogLogLevel.cc parseMilogLogLevel.h
+	parseMilogLogLevel.cc parseMilogLogLevel.h \
+	CommandQueue.h CommandQueue.cc \
+  CommandBase.h CommandBase.cc
+
 
 kvxmltest_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
@@ -89,7 +94,10 @@ kvconftest_SOURCES = \
 	kvconf_test.cc \
 	StationInfoParse.cc StationInfoParse.h \
 	StationInfo.cc StationInfo.h \
-	parseMilogLogLevel.cc parseMilogLogLevel.h
+	parseMilogLogLevel.cc parseMilogLogLevel.h \
+	CommandQueue.h CommandQueue.cc \
+  CommandBase.h CommandBase.cc
+
 
 
 kvconftest_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)

@@ -45,17 +45,17 @@ insert(const kvalobs::kvDbBase &elem,
        const std::string &tblName,
        bool replace)
 {
-   dnmi::thread::CommandQue retQue;
+   threadutil::CommandQueue retQue;
    errorFromExecResult = false;
    KvDbGateInsert *command = new KvDbGateInsert( &retQue, &gate, elem, tblName, replace );
    bool retStatus=false;
 
    try {
       dbQue->postAndBrodcast( command );
-      dnmi::thread::CommandBase *ret = retQue.get();
+      threadutil::CommandBase *ret = retQue.get();
       retStatus = static_cast<KvDbGateInsert*>( ret )->result;
    }
-   catch ( const dnmi::thread::QueSuspended &e) {
+   catch ( const threadutil::QueSuspended &e) {
    }
 
    delete command;
@@ -102,16 +102,16 @@ kvalobs::
 kvDbGateProxy::
 update(const kvalobs::kvDbBase &elem, const std::string &tblName)
 {
-   dnmi::thread::CommandQue retQue;
+   threadutil::CommandQueue retQue;
    errorFromExecResult = false;
    KvDbGateUpdate *command = new KvDbGateUpdate( &retQue, &gate, elem, tblName );
    bool retStatus=false;
    try {
       dbQue->postAndBrodcast( command );
-      dnmi::thread::CommandBase *ret = retQue.get();
+      threadutil::CommandBase *ret = retQue.get();
       retStatus = static_cast<KvDbGateUpdate*>( ret )->result;
    }
-   catch ( const dnmi::thread::QueSuspended &e) {
+   catch ( const threadutil::QueSuspended &e) {
    }
 
    delete command;
@@ -139,17 +139,17 @@ kvalobs::
 kvDbGateProxy::
 replace(const kvalobs::kvDbBase &elem, const std::string &tblName)
 {
-   dnmi::thread::CommandQue retQue;
+   threadutil::CommandQueue retQue;
    errorFromExecResult = false;
    KvDbGateReplace *command = new KvDbGateReplace( &retQue, &gate, elem, tblName );
    bool retStatus = false;
 
    try {
       dbQue->postAndBrodcast( command );
-      dnmi::thread::CommandBase *ret = retQue.get();
+      threadutil::CommandBase *ret = retQue.get();
       retStatus =  static_cast<KvDbGateReplace*>( ret )->result;
    }
-   catch ( const dnmi::thread::QueSuspended &e) {
+   catch ( const threadutil::QueSuspended &e) {
    }
    delete command;
    return retStatus;
@@ -176,17 +176,17 @@ kvalobs::
 kvDbGateProxy::
 remove(const kvalobs::kvDbBase &elem, const std::string &tblName)
 {
-   dnmi::thread::CommandQue retQue;
+   threadutil::CommandQueue retQue;
    errorFromExecResult = false;
    KvDbGateRemove *command = new KvDbGateRemove( &retQue, &gate, elem, tblName );
    bool retStatus=false;
 
    try {
       dbQue->postAndBrodcast( command );
-      dnmi::thread::CommandBase *ret = retQue.get();
+      threadutil::CommandBase *ret = retQue.get();
       retStatus = static_cast<KvDbGateRemove*>( ret )->result;
    }
-   catch ( const dnmi::thread::QueSuspended &e) {
+   catch ( const threadutil::QueSuspended &e) {
    }
 
    delete command;
@@ -198,17 +198,17 @@ kvalobs::
 kvDbGateProxy::
 remove(const std::string &query)
 {
-   dnmi::thread::CommandQue retQue;
+   threadutil::CommandQueue retQue;
    errorFromExecResult = false;
    KvDbGateRemove *command = new KvDbGateRemove( &retQue, &gate, query );
    bool retStatus=false;
 
    try {
       dbQue->postAndBrodcast( command );
-      dnmi::thread::CommandBase *ret = retQue.get();
+      threadutil::CommandBase *ret = retQue.get();
       retStatus = static_cast<KvDbGateRemove*>( ret )->result;
    }
-   catch ( const dnmi::thread::QueSuspended &e) {
+   catch ( const threadutil::QueSuspended &e) {
    }
 
    delete command;
@@ -220,17 +220,17 @@ kvalobs::
 kvDbGateProxy::
 exec(const std::string &query)
 {
-   dnmi::thread::CommandQue retQue;
+   threadutil::CommandQueue retQue;
    errorFromExecResult = false;
    KvDbGateExec *command = new KvDbGateExec( &retQue, &gate, query );
    bool retStatus = false;
 
    try {
       dbQue->postAndBrodcast( command );
-      dnmi::thread::CommandBase *ret = retQue.get();
+      threadutil::CommandBase *ret = retQue.get();
       retStatus = static_cast<KvDbGateExec*>( ret )->result;
    }
-   catch ( const dnmi::thread::QueSuspended &e) {
+   catch ( const threadutil::QueSuspended &e) {
    }
 
    delete command;
@@ -246,20 +246,20 @@ kvalobs::
 kvDbGateProxy::
 exec( KvDbGateResult &result, const std::string &query )
 {
-   dnmi::thread::CommandQue retQue;
+   threadutil::CommandQueue retQue;
    KvDbGateExecResult *command = new KvDbGateExecResult( &retQue, result, query, busytimeout() );
    errorFromExecResult = true;
    bool retStatus = false;
 
    try {
       dbQue->postAndBrodcast( command );
-      dnmi::thread::CommandBase *ret = retQue.get();
+      threadutil::CommandBase *ret = retQue.get();
       KvDbGateExecResult *result = static_cast<KvDbGateExecResult*>( ret );
       error = result->error;
       errorString = result->errorString;
       retStatus = result->returnStatus;
    }
-   catch ( const dnmi::thread::QueSuspended &e) {
+   catch ( const threadutil::QueSuspended &e) {
    }
 
    delete command;
@@ -272,12 +272,12 @@ kvalobs::
 kvDbGateProxy::
 doExec(KvDbGateDoExecCommand *cmd)
 {
-   dnmi::thread::CommandQue retQue;
+   threadutil::CommandQueue retQue;
    bool retStatus=false;
    try {
       cmd->retQue=&retQue;
       dbQue->postAndBrodcast( cmd );
-      dnmi::thread::CommandBase *ret = retQue.get();
+      threadutil::CommandBase *ret = retQue.get();
       auto myCmd=static_cast<KvDbGateDoExecCommand*>(ret);
       if( myCmd != cmd ) {
        cerr << " @@@@@@ kvalobs::kvDbGateProxy::doExec: incomming command differ from returned command.";
@@ -287,7 +287,7 @@ doExec(KvDbGateDoExecCommand *cmd)
       }
       retStatus = static_cast<KvDbGateDoExecCommand*>(ret)->ret;
    }
-   catch ( const dnmi::thread::QueSuspended &e) {
+   catch ( const threadutil::QueSuspended &e) {
    }
 
    return retStatus;
