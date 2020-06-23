@@ -41,19 +41,36 @@
 
 using namespace std;
 
+
+std::string Options::getType()const
+{
+   switch(type){
+      case NON: return "<undefined>";
+      case PRECIP: return "precip";
+      case SVV: return "svv";
+      case SHIP: return "ship";
+      case SYNOP: return "synop";
+      case BSTATIONS: return "bstations";
+      case MBOUY: return "moored buoys";
+      default:
+         return "<unknown type>";
+   }
+}
+
 void
 getOptions(int argn, char **argv, Options &opt)
 {
    struct option long_options[]={{"help", 0, 0, 'h'},
                                  {"conf", 1, 0, 'c'},
                                  {"template", 1, 0, 't'},
-								 {"debug",1, 0, 'd' },
+								         {"debug",1, 0, 'd' },
                                  {"out", 1, 0, 'o'},
                                  {"svv", 0, 0, 0 },
                                  {"precip", 0, 0, 0 },
                                  {"ship", 0, 0, 0 },
                                  {"bstations", 0, 0, 0},
                                  {"synop", 0, 0, 0},
+                                 {"mbouy", 0, 0, 0},
                                  {0,0,0,0}};
 
    int c;
@@ -76,19 +93,22 @@ getOptions(int argn, char **argv, Options &opt)
                opt.type= Options::SVV; ++opt.nIsTypes;
             } else if( strcmp( long_options[index].name, "precip") == 0 ) {
                 opt.type= Options::PRECIP; ++opt.nIsTypes;
-            }else if( strcmp( long_options[index].name, "ship") == 0 ) {
+            } else if( strcmp( long_options[index].name, "ship") == 0 ) {
                 opt.type= Options::SHIP; ++opt.nIsTypes;
             } else if( strcmp( long_options[index].name, "bstations") == 0 ) {
                 opt.type= Options::BSTATIONS; ++opt.nIsTypes;
             } else if( strcmp( long_options[index].name, "synop") == 0 ) {
                 opt.type= Options::SYNOP; ++opt.nIsTypes;
+            } else if( strcmp( long_options[index].name, "mbouy") == 0 ) {
+               cerr << "Option: --mbuoy\n";
+                opt.type= Options::MBOUY; ++opt.nIsTypes;
             } else {
                use( 1 );
             }
             break;
          case 'h':
-         use(0);
-         break;
+            use(0);
+            break;
 
          case 'c':
             opt.confile=optarg;
@@ -101,8 +121,8 @@ getOptions(int argn, char **argv, Options &opt)
             break;
 
          case 'd':
-        	 opt.debug=atoi( optarg );
-        	 break;
+        	   opt.debug=atoi( optarg );
+        	   break;
          case '?':
             cerr << "Unknown option : <" << (char)optopt << "> unknown!" << endl;
             use(1);
@@ -156,6 +176,7 @@ getOptions(int argn, char **argv, Options &opt)
    logmsg << "Using configuration file: " << opt.confile << endl
          << "Reading template file:    " << (opt.templatefile.empty()?string("(none)"):opt.templatefile ) << endl
          << "outfile:                  " << (opt.outconf.empty()?string("(screen)"):opt.outconf ) << endl
+         << "bufr type:                " << opt.getType() << endl 
          << endl;
 
    LOGINFO( logmsg.str() );
@@ -175,6 +196,7 @@ use(int exitstatus)
         <<"\t\t--ship Generate a configuration file for SHIP stations.\n"
         <<"\t\t--bstations Generate a configuration file for bstations.\n"
         <<"\t\t  bstations use the same BUFR template as SVV stations.\n"
+        <<"\t\t--mbuoy moored buoys. (NOT IMPLEMENTED)\n"
         <<"\n\t\tIf no TYPE is given the --synop option is assumed.\n"
         <<"\n";
 

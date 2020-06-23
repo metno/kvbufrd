@@ -114,18 +114,53 @@ void GetData::reloadOne(kvalobs::kvDbGateProxy &gate, const pt::ptime &bufferFro
 void GetData::reload(kvalobs::kvDbGateProxy &gate, const StationInfoPtr station, const pt::ptime &bufferFromTime) {
   string logid;
   ostringstream ost;
-
+  std::list<long> sids;
+  std::list<long> tids;
+  std::set<long> sidSet;
+  std::set<long> tidSet;
   ost << "GetData-" << station->toIdentString();
   logid = ost.str();
 
   app.createGlobalLogger(logid);
   ost.str("");
 
-  for (auto &s : station->definedStationID())
+  for( auto sid : station->definedStationID() ) {
+    for( auto tid : station->typepriority()) {
+      auto r = loadedSet.insert(GetData::Loaded(sid, tid));
+      if( r.second ) {
+        sidSet.insert(sid);
+        tidSet.insert(tid);
+      } else {
+        IDLOGINFO(logid, "GetData: " << station->toIdentString() << " stationid: " << sid << " typeid: " << tid << " allready loaded");
+        IDLOGINFO("GetData", "GetData: " << station->toIdentString() << " stationid: " << sid << " typeid: " << tid << " allready loaded");
+      }
+    }
+  }
+
+  if( sidSet.empty() ) {
+    app.cacheReloaded(station);
+    ost.str("");
+    for (auto &s : station->definedStationID()) {
+      ost << " " << s;
+    }
+
+    IDLOGINFO(logid, "GetData: " << station->toIdentString() << " all stationids: " << ost.str() <<  ", allready loaded");
+    IDLOGINFO("GetData", "GetData: " << station->toIdentString() << " all stationids: " << ost.str() <<  ", allready loaded");
+    return;  
+  }
+
+  for( auto sid : sidSet) {
+    sids.push_back(sid);
+  }
+  for( auto tid : tidSet) {
+    tids.push_back(tid);
+  } 
+
+  for (auto &s : sids)
     ost << " " << s;
 
   IDLOGINFO(logid, "Started GetData: " << station->toIdentString() << " stationids:" << ost.str() << " FromTime: " << pt::to_kvalobs_string(fromTime));
-  IDLOGINFO("GetData", "Started GetData: wmono=" << station->toIdentString() << " stationids:" << ost.str() << " FromTime: " << pt::to_kvalobs_string(fromTime));
+  IDLOGINFO("GetData", "Started GetData: " << station->toIdentString() << " stationids:" << ost.str() << " FromTime: " << pt::to_kvalobs_string(fromTime));
 
   try {
     app.cacheReload(station);
@@ -135,7 +170,7 @@ void GetData::reload(kvalobs::kvDbGateProxy &gate, const StationInfoPtr station,
     (long sid, long tid, const pt::ptime &obstime, const kvalobs::ObsDataElement &data) {
       myDataReceiver.next(sid, tid, obstime, data);
     },
-                       station->definedStationID(), station->typepriority(), fromTime, pt::ptime(), true)) {
+                       sids, tids, fromTime, pt::ptime(), true)) {
       IDLOGERROR("GetData", "Failed GetData: " << station->toIdentString() << " stationids:" << ost.str() << " FromTime: " << pt::to_kvalobs_string(fromTime));
       IDLOGERROR(logid, "Failed GetData: " << station->toIdentString() << " stationids:" << ost.str() << " FromTime: " << pt::to_kvalobs_string(fromTime));
     } else {

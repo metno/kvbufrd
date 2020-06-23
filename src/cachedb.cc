@@ -63,8 +63,8 @@ const char* cacheSchema[] = {
   "  text, bufrBase64 text, tbtime timestamp DEFAULT CURRENT_TIMESTAMP, "
   " UNIQUE(wmono, id, callsign, code, obstime)"
   ");",
-  "CREATE TABLE waiting( wmono integer, id integer, callsign text, code text, "
-  "  obstime timestamp, delaytime timestamp, "
+  "CREATE TABLE waiting( wmono integer, id integer, callsign text, code integer, "
+  "  note text, obstime timestamp, delaytime timestamp, "
   " UNIQUE(wmono, id, callsign, code,  obstime) "
   ");",
   "CREATE TABLE keyval(key text, val text, UNIQUE(key));",

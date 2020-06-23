@@ -1,0 +1,4 @@
+etc/kvalobs
+usr/bin
+usr/share/kvbufrconf
+var/log/kvalobs

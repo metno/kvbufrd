@@ -215,6 +215,8 @@ class App : public kvalobs::sql::DbQuery {
 
   StationInfoList findStationInfoWmono(int wmono);
 
+  StationInfoList findStationInfo(int wmono, long id, const std::string &callsign, int code )const;
+
   /**
    * \brief The time the application was started.
    * 
@@ -262,7 +264,7 @@ class App : public kvalobs::sql::DbQuery {
    * If it allready is a record for \a w, ie. for \a w wmono and 
    * obstime, the record is replaced with this \a w, if and only if 
    * \a replace is true. The record is also  added to the table \c waiting 
-   * in the database. This table is searched  at startup of \e kvsynopd.
+   * in the database. This table is searched  at startup of \e kvbufrd.
    *
    * The waiting list is sorted on delay. ie. the longest delay in the
    * future is on the back and the delay nearest in time is on the  front.

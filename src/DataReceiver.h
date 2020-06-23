@@ -64,6 +64,7 @@ class DataReceiver {
   void prepareToProcessAnyBufrBasedOnThisObs(const boost::posix_time::ptime &obstime,
 					      StationInfoPtr station);
   bool typeidReceived(ObsEvent &event);
+  void regenerateToWaiting(ObsEvent *event, int minutesToDelay);
   
   /**
    * set the default logger to log to file.

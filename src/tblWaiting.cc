@@ -42,14 +42,15 @@ namespace pt = boost::posix_time;
 
 void TblWaiting::createSortIndex() {
   using namespace boost;
-  sortBy_ = lexical_cast<string>(wmono_) + lexical_cast<string>(id_) + callsign_ + code_ + pt::to_kvalobs_string(obstime_) + pt::to_kvalobs_string(delaytime_);
+  sortBy_ = lexical_cast<string>(wmono_) + lexical_cast<string>(id_) + callsign_ + lexical_cast<string>(code_) + pt::to_kvalobs_string(obstime_);
 }
 
 void TblWaiting::clean() {
   wmono_ = 0;
   id_ = 0;
   callsign_.erase();
-  code_.erase();
+  code_=-1;
+  note_.erase();
   obstime_ = pt::second_clock::universal_time();
   delaytime_ = pt::second_clock::universal_time();
 
@@ -73,7 +74,9 @@ bool TblWaiting::set(const dnmi::db::DRow &r_) {
       } else if (*it == "callsign") {
         callsign_ = buf;
       } else if (*it == "code") {
-        code_ = buf;
+        code_ = atoi(buf.c_str());
+      } else if (*it == "note") {
+        note_ = buf;
       } else if (*it == "obstime") {
         obstime_ = pt::time_from_string_nothrow(buf);
       } else if (*it == "delaytime") {
@@ -103,11 +106,13 @@ bool TblWaiting::set(const TblWaiting &s) {
   return true;
 }
 
-bool TblWaiting::set(int wmono, int id, const std::string &callsign, const std::string &code, const pt::ptime &obtime, const pt::ptime &delaytime) {
+bool TblWaiting::set(int wmono, int id, const std::string &callsign, int code, 
+  const std::string &note, const pt::ptime &obtime, const pt::ptime &delaytime) {
   wmono_ = wmono;
   id_ = id;
   callsign_ = callsign;
   code_ = code;
+  note_ = note;
   obstime_ = obtime;
   delaytime_ = delaytime;
 
@@ -119,7 +124,8 @@ bool TblWaiting::set(int wmono, int id, const std::string &callsign, const std::
 std::string TblWaiting::toSend() const {
   ostringstream ost;
 
-  ost << "(" << wmono_ << "," << id_ << "," << quoted(callsign_) << "," << quoted(code_) << "," << quoted(pt::to_kvalobs_string(obstime_)) << ","
+  ost << "(" << wmono_ << "," << id_ << "," << quoted(callsign_) << "," << code_ << "," 
+      << quoted(note_) << "," << quoted(pt::to_kvalobs_string(obstime_)) << ","
       << quoted(pt::to_kvalobs_string(delaytime_)) << ")";
 
   return ost.str();
@@ -128,7 +134,7 @@ std::string TblWaiting::toSend() const {
 std::string TblWaiting::uniqueKey() const {
   ostringstream ost;
 
-  ost << " WHERE wmono=" << wmono_ << " AND id=" << id_ << " AND callsign=" << quoted(callsign_) << " AND code=" << quoted(code_) << " AND obstime="
+  ost << " WHERE wmono=" << wmono_ << " AND id=" << id_ << " AND callsign=" << quoted(callsign_) << " AND code=" << code_ << " AND obstime="
       << quoted(pt::to_kvalobs_string(obstime_));
 
   return ost.str();
@@ -137,8 +143,10 @@ std::string TblWaiting::uniqueKey() const {
 std::string TblWaiting::toUpdate() const {
   ostringstream ost;
 
-  ost << "SET delaytime=" << quoted(pt::to_kvalobs_string(delaytime_)) << " WHERE wmono=" << wmono_ << " AND id=" << id_ << " AND callsign="
-      << quoted(callsign_) << " AND code=" << quoted(code_) << " AND obstime=" << quoted(pt::to_kvalobs_string(obstime_));
+  ost << "SET delaytime=" << quoted(pt::to_kvalobs_string(delaytime_)) 
+      << "    ,note="<< quoted(note_)      
+      << " WHERE wmono=" << wmono_ << " AND id=" << id_ << " AND callsign="
+      << quoted(callsign_) << " AND code=" << code_ << " AND obstime=" << quoted(pt::to_kvalobs_string(obstime_));
 
   return ost.str();
 }

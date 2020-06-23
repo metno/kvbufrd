@@ -456,7 +456,7 @@ void App::readWaitingElementsFromDb() {
 
   if (gate.select(data, " order by delaytime")) {
     for (it = data.begin(); it != data.end(); it++) {
-      StationInfoList info = findStationInfoWmono(it->wmono());
+      StationInfoList info = findStationInfo(it->wmono(), it->id(), it->callsign(), it->code());
 
       if (info.empty()) {
         gate.remove(*it);
@@ -465,7 +465,10 @@ void App::readWaitingElementsFromDb() {
 
       for (StationInfoList::iterator itInfo = info.begin(); itInfo != info.end(); ++itInfo) {
         try {
-          waitingList.push_back(WaitingPtr(new Waiting(it->delaytime(), it->obstime(), *itInfo)));
+          auto itCon=it->note().find("cont"); 
+          auto w=WaitingPtr(new Waiting(it->delaytime(), it->obstime(), *itInfo, it->note(), itCon!=std::string::npos));
+          
+          waitingList.push_back(w);
         } catch (...) {
           LOGFATAL("NOMEM: while reading 'waiting' from database!");
           exit(1);
@@ -619,6 +622,17 @@ StationInfoList App::findStationInfoWmono(int wmono) {
   Lock lock(mutex);
   return stationList.findStationByWmono(wmono);
 }
+
+ StationInfoList App::findStationInfo(int wmono, long id, const std::string &callsign, int code ) const {
+   Lock lock(mutex);
+   StationInfoList ret;
+   for( auto st : stationList ) {
+     if( st->wmono()==wmono && st->stationID() == id && st->callsign() == callsign && st->code()==code) {
+       ret.push_back(st);
+     }
+   }
+   return ret;
+ } 
 
 WaitingPtr App::addWaiting(WaitingPtr w, bool replace) {
   Lock lock(mutex);

@@ -48,7 +48,7 @@ addToDb()
 {
   kvDbGateProxy gate( static_cast<App*>( App::kvApp )->dbThread->dbQue );
   TblWaiting data(info_->wmono(), info_->stationID(),
-                  info_->callsign(), info_->codeToString(),obstime_, delay_);
+                  info_->callsign(), info_->code(), note_, obstime_, delay_);
  
   gate.busytimeout(300);
   
@@ -66,7 +66,7 @@ removeFrom()
 {
   kvDbGateProxy gate(  static_cast<App*>( App::kvApp )->dbThread->dbQue );
   TblWaiting data(info_->wmono(), info_->stationID(), info_->callsign(),
-                  info_->codeToString(), obstime_, delay_);
+                  info_->code(), note_, obstime_, delay_);
   
   gate.busytimeout(300);
   
@@ -77,6 +77,14 @@ removeFrom()
 
   return true;
 }
+
+
+namespace {
+  std::string quoted( const std::string &s) {
+    return std::string("'") + s + "'";
+  }
+}
+
 
 bool 
 Waiting::
@@ -90,6 +98,8 @@ inDb()
 
   o << "WHERE wmono=" << info_->wmono()
     << " AND id=" << info_->stationID()
+    << " AND callsign=" << quoted(info_->callsign())
+    << " AND code="<< info_->code()
     << " AND obstime=\'"<< pt::to_kvalobs_string(obstime_) << "\'";
 
   if(gate.select(data, o.str())){

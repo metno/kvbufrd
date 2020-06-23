@@ -461,6 +461,7 @@ setMsgForTime( const std::string &timespec )
 
 StationInfo::
 StationInfo():
+code_(-1),
 height_( INT_MAX ),
 heightVisability_( INT_MAX ),
 heightTemperature_( INT_MAX ),
@@ -481,6 +482,7 @@ ignore( false )
 
 StationInfo::
 StationInfo( int wmono ):
+code_(-1),
 height_( INT_MAX ),
 heightVisability_( INT_MAX ),
 heightTemperature_( INT_MAX ),
@@ -854,7 +856,7 @@ msgForTime( const pt::ptime &t)const
 
 int
 StationInfo::code()const {
-   if( code_.empty() ) {
+   if( code_ < 0 ) {
       if( wmono_>0 ) {
          return 0;  //SYNOP as default
       } else {
@@ -862,27 +864,26 @@ StationInfo::code()const {
       }
    }
 
-   return *code_.begin();
+   return code_;
 } 
+
+void       
+StationInfo::code( int c_, bool replace ){
+   if( !replace && code_ >= 0 ) {
+      return;
+   }
+
+   code_=c_;
+}
 
 std::string
 StationInfo::
 codeToString()const
 {
-   if( code_.empty() )
+   if( code_<0 )
       return "0";
 
-   ostringstream o;
-
-   o << *code_.begin();
-   // IntList::const_iterator it = code_.begin();
-   // o << *it;
-   // ++it;
-
-   // for( ; it != code_.end(); ++it )
-   //    o << " " << *it;
-
-   return o.str();
+   return std::to_string(code_);
 }
 
 int
@@ -939,12 +940,12 @@ toIdentString()const
    else if( ! callsign_.empty() )
       o << "callsign_" << callsign_;
    else
-      o << "id_UNKNOWN";
+      o << "id-UNKNOWN";
 
-   if (  code_.empty() ) {
+   if (  code_ < 0) {
       o << "_0"; //SYNOP is default.
    } else {
-      o << "_" << *code_.begin();
+      o << "_" << code_;
    }
    return o.str();
 }
@@ -978,7 +979,8 @@ equalTo(const StationInfo &st)
          heightWindAboveSea_ == st.heightWindAboveSea_ &&
          height_ == st.height_ &&
          latitude_ == st.latitude_ &&
-         longitude_ == st.longitude_ )
+         longitude_ == st.longitude_ &&
+         buoyType_ == st.buoyType_ )
       return true;
    else
       return false;
@@ -989,9 +991,10 @@ bool
 StationInfo::
 operator<(const StationInfo &rhs )const
 {
-   if( ( wmono_ < rhs.wmono_ ) ||
-         ( wmono_ == rhs.wmono_ && stationID_ < rhs.stationID_ ) ||
-         ( wmono_ == rhs.wmono_ && stationID_ == rhs.stationID_ && callsign_ < rhs.callsign_ ) )
+   if(( wmono_ < rhs.wmono_ ) ||
+      ( wmono_ == rhs.wmono_ && stationID_ < rhs.stationID_ ) ||
+      ( wmono_ == rhs.wmono_ && stationID_ == rhs.stationID_ && callsign_ < rhs.callsign_ ) ||
+      ( wmono_ == rhs.wmono_ && stationID_ == rhs.stationID_ && callsign_ == rhs.callsign_  && stationID_<rhs.stationID_) )
       return true;
    else
       return false;
@@ -1002,8 +1005,9 @@ StationInfo::
 operator==(const StationInfo &rhs) const
 {
    if( wmono_ == rhs.wmono_ &&
-         stationID_ == rhs.stationID_ &&
-         callsign_ == rhs.callsign_ )
+       stationID_ == rhs.stationID_ &&
+       callsign_ == rhs.callsign_  && 
+       code()  == rhs.code())
       return true;
    else
       return false;
@@ -1018,12 +1022,7 @@ keyToString(const std::string &key)
    if( key == "callsign" ) {
       return callsign_;
    } else if( key == "code") {
-      for( IntList::const_iterator it=code_.begin();
-            it != code_.end(); ++it ) {
-         if( it != code_.begin() )
-            ost << " ";
-         ost << *it;
-      }
+      ost << code();
       return ost.str();
    } else if(key=="wmono"){
       ost << wmono();
@@ -1163,6 +1162,16 @@ keyToString(const std::string &key)
    return string();
 }
 
+
+int 
+StationInfo::numberOfHourToRegenerate()const {
+   if( code_ == 5 ) {
+      return 0;
+   }
+
+   return 24;
+}
+
 std::ostream&
 StationInfo::
 printDelayInfo( std::ostream& ost )
@@ -1264,54 +1273,37 @@ operator<<(std::ostream& ost,
            const StationInfo& sd)
 {
    ost << "                name: " << sd.name() << endl;
-   ost << "                code:";
-   for(StationInfo::IntList::const_iterator it=sd.code_.begin();
-         it!=sd.code_.end(); it++)
-      ost << " " << *it;
-
-   ost << endl;
-
-   ost << "         StationInfo: " << sd.wmono() << endl;
-
+   ost << "                code: " << sd.code() <<  endl;
+   ost << "            idstring: " << sd.toIdentString() << endl;
+   ost << " wmo/stationID/callsign: " << sd.wmono() << "/" << sd.stationID() << "/" << sd.callsign()  << endl;
    ost << "defined stationid(s): ";
 
-
-   for(StationInfo::CITLongList it=sd.definedStationid_.begin();
-         it!=sd.definedStationid_.end(); it++)
-      ost << *it << " ";
+   for(auto id : sd.definedStationid_) {
+      ost << id << " ";
+   }
 
    ost << endl;
 
 
    ost << "        typepriority:";
-   for(StationInfo::CITTypeList it=sd.typepriority_.begin();
-         it!=sd.typepriority_.end();it++)
-      ost << " " << *it;
-
-   ost << endl;
-   ost << "      stationid: " << sd.stationID() << endl;
-   ost << "       callsign: " << sd.callsign() << endl;;
-   ost << "          wmono: " ;
-
-   if( sd.wmono()<0 )
-      ost << "NA";
-   else
-      ost << sd.wmono();
+   for(auto tid : sd.typepriority_) {
+       ost << " " << tid;
+   }
    ost << endl;
 
    ost << "  mustHaveTypes: ";
-   for(StationInfo::CITTypeList it=sd.typepriority_.begin();
-         it!=sd.typepriority_.end();it++)
-      if(it->mustHaveType())
-         ost << it->typeID() << " ";
+   for(auto tid : sd.typepriority_) {
+      if(tid.mustHaveType()) {
+         ost << tid.typeID() << " ";
+      }
+   }
 
    ost << endl;
 
    ost << "  precipitation: ";
-   for(StationInfo::CITStringList it=sd.precipitation_.begin();
-         it!=sd.precipitation_.end();it++)
-      ost << *it << " ";
-
+   for( auto precip : sd.precipitation_) {
+      ost << precip << " ";
+   }
    ost << endl;
 
    ost << "          delay: ";
@@ -1327,11 +1319,10 @@ operator<<(std::ostream& ost,
 //      miutil::replace( val, ",", " ");
       ost << val;
    } else {
-      for(StationInfo::CITDelayList it=sd.delayList_.begin();
-            it!=sd.delayList_.end();it++)
-         ost << *it << " ";
+      for(auto d : sd.delayList_) {
+         ost << d << " ";
+      }
    }
-
    ost << endl;
 
    ost << "     delayUntil: ";
@@ -1350,13 +1341,14 @@ operator<<(std::ostream& ost,
    ost << "   height_temperature: " << printOut( sd.heightTemperature() )<< endl;
    ost << "          height_wind: " << printOut( sd.heightWind() ) << endl;
    ost << "height_wind_above_sea: " << printOut( sd.heightWindAboveSea() ) << endl;
+   ost << "             buoy_type: " << printOut(sd.buoyType() ) << endl;
    ost << "                 list: " << sd.list_ << endl;
    ost << "                 copy: " << (sd.copy_?"TRUE":"FALSE") << endl;
    ost << "               copyto: " << sd.copyto_ << endl;
    ost << "                owner: " << sd.owner_ << endl;
-   ost << "           delayLogic: " << (!sd.delayList_.empty()?"TRUE":"FALSE")
-      	      << endl;
+   ost << "           delayLogic: " << (!sd.delayList_.empty()?"TRUE":"FALSE") << endl;
    ost << "             loglevel: " << sd.loglevel_ << endl;
+   
 
    return ost;
 }

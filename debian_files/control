@@ -17,4 +17,9 @@ Depends: ${shlibs:Depends}, ${misc:Depends},  sqlite3
 Description: A bufr encoder for kvalobs.
  Kvalobs is a quality assurance system for meteorological observations.
 
+Package: kvbufrconf
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: A bufr encoder for kvalobs.
+ Kvalobs is a quality assurance system for meteorological observations.
 

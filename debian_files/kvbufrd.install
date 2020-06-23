@@ -1,3 +1,6 @@
-usr/bin/*
+usr/bin/kvbufrd
+usr/bin/kvbufrdbadmin
+usr/bin/check_kvbufrd.sh
+usr/bin/kvbase64
 usr/share/kvbufrd/*.sql
 usr/share/kvbufrd/bufrtables/*

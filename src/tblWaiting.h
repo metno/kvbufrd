@@ -39,7 +39,8 @@ private:
   int              wmono_;
   int              id_;
   std::string      callsign_;
-  std::string      code_;
+  int              code_;
+  std::string      note_;
   boost::posix_time::ptime obstime_;
   boost::posix_time::ptime delaytime_;
 
@@ -52,15 +53,17 @@ private:
   TblWaiting(int                  wmono,
              int                  id,
              const std::string    &callsign,
-             const std::string    &code,
+             int                  code,
+             const std::string    note,
 	     const boost::posix_time::ptime &obstime,
 	     const boost::posix_time::ptime &delaytime)
-  { set(wmono, id, callsign, code, obstime, delaytime);}
+  { set(wmono, id, callsign, code, note, obstime, delaytime);}
 
   bool set(int                  wmono,
-           int id,
+           int                  id,
            const std::string    &callsign,
-           const std::string    &code,
+           int                  code,
+           const std::string    &note,
            const boost::posix_time::ptime &obtime,
            const boost::posix_time::ptime &delaytime);
 
@@ -77,7 +80,8 @@ private:
   int              wmono()    const { return wmono_;    }
   int              id()       const { return id_; }
   std::string      callsign() const { return callsign_; }
-  std::string      code()     const { return code_; }
+  int              code()     const { return code_; }
+  std::string      note()     const { return note_;}
   boost::posix_time::ptime obstime()  const { return obstime_;  }
   boost::posix_time::ptime delaytime()const { return delaytime_;}
 

@@ -13,7 +13,7 @@ clean-local:
 		rm -rf bufrtables ;\
 	fi
 
-noinst_PROGRAMS = base64Test kvxmltest kvmd5sum
+noinst_PROGRAMS = base64Test kvxmltest kvmd5sum kvconftest
 
 bin_PROGRAMS = kvbufrd kvbufrdbclt  kvbufrdparse kvbase64 
 
@@ -83,6 +83,29 @@ kvxmltest_LDADD = \
     $(BOOST_DATE_TIME_LIB) \
     $(BOOST_SYSTEM_LIB) \
     -lm -ldl
+
+
+kvconftest_SOURCES = \
+	kvconf_test.cc \
+	StationInfoParse.cc StationInfoParse.h \
+	StationInfo.cc StationInfo.h \
+	parseMilogLogLevel.cc parseMilogLogLevel.h
+
+
+kvconftest_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
+
+kvconftest_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" \
+	-DCACHEDIR="\""$(localstatedir)/lib/kvbufrd"\""
+
+kvconftest_LDADD = \
+    $(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) \
+    $(BOOST_FILESYSTEM_LIB) \
+    $(BOOST_DATE_TIME_LIB) \
+    $(BOOST_SYSTEM_LIB) \
+    -lm -ldl
+
+
+
 
 kvbase64_SOURCES = \
 	kvbase64.cc \

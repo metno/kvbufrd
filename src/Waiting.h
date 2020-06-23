@@ -50,18 +50,22 @@ class Waiting
   bool           waitingOnContiniusData_;
   int            count_; //How many times has this observation
                          //been waiting. To prevent an unlimited loop.
-
+  std::string    note_;
+  
  public:
   Waiting(const boost::posix_time::ptime &delay,
 	  const boost::posix_time::ptime &obstime,
 	  StationInfoPtr info,
-	  bool  waitingOnConData=false):
+    const std::string    &note,
+    bool  waitingOnConData=false):
     delay_(delay),
     obstime_(obstime),
     info_(info),
     waitingOnContiniusData_(waitingOnConData),
-    count_(0)
+    count_(0),
+    note_(note)
     {
+      
     }
 
   boost::posix_time::ptime delay()const{ return delay_;}
@@ -76,6 +80,8 @@ class Waiting
   void waitingOnContinuesData(bool f){ waitingOnContiniusData_=f;}
   int  count(){ return count_;} 
   void incCount(){ count_++;}
+  void note(const std::string &n) { note_=n;}
+  std::string note()const { return note_;}
 
   friend std::ostream& operator<<(std::ostream& ost,
 				  const Waiting& sd);

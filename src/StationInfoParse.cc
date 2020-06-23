@@ -337,7 +337,7 @@ parseSection( miconf::ConfSection *stationConf,
          }else if( strcmp( keywords[i], "code") == 0 ){
             LOGDEBUG6("NO VALUE: for key <" <<keywords[i] << "> in " << idType << " section <"
                       << id << ">! Using default value!");
-            st->code_=defVal.code;
+            st->code(defVal.code, true);
          } else if( strcmp( keywords[i], "height" ) == 0 ||
                strcmp( keywords[i], "height_precip" ) == 0 ||
                strcmp( keywords[i], "height_pressure" ) == 0 ||
@@ -404,7 +404,13 @@ parseSection( miconf::ConfSection *stationConf,
          } else if( strcmp( keywords[i], "buoy_type" ) == 0 ) {
             doInt(st->buoyType_, value );
          }else if( strcmp( keywords[i], "code") == 0 ){
-            doIntList( st->code_, value );
+            if( value.size()>0) {
+                 st->code(value.begin()->valAsInt(), true );
+               if( value.size() > 1 ) {
+                  curErr << "code: can only have one value. The code has #" << value.size() <<"." << endl;
+                  ok=false;
+               }
+            }
          }else if( strcmp( keywords[i], "name" ) == 0 ) {
             IValElementList it=value.begin();
             if(it != value.end() ) {
@@ -438,10 +444,8 @@ parseSection( miconf::ConfSection *stationConf,
 
    //TODO: At the moment we hardcode the BUFR 'code' value to
    //0 (SYNOP) if it is NOT given and we have a wmo number.
-   if( st->wmono() > 0 && st->code_.empty() ) {
-      st->code_.push_back( 0 );//Default value 0 is SYNOP.
-      LOGDEBUG("Missing code for station <" << st->toIdentString()
-              <<"> Setting 'code' to: 0 (SYNOP)." );
+   if( st->wmono() > 0 ) {
+      st->code(0, false);
    }
 
    if(st->delayList_.empty() &&
@@ -513,7 +517,7 @@ doDefault(miutil::conf::ConfSection *stationConf)
          defVal.loglevel=doDefLogLevel( value );
       }else if(*it=="code"){
          defVal.code = doDefCode( value ); //Default value 0 is SYNOP.
-         ok = !defVal.code.empty();
+         ok = defVal.code >= 0; 
       }else{
          LOGWARN("UNKNOWN KEY: in <"<< curSectionName << "> section! Ignoring it.");
       }
@@ -550,28 +554,15 @@ doDefLogLevel( miconf::ValElementList &vl)
 }
 
 
-std::list<int>
+int
 StationInfoParse::
 doDefCode( miconf::ValElementList &vl )
 {
-   string val;
-   list<int> codeList;
-   IValElementList it=vl.begin();
-
-   if(it==vl.end()) {
-      codeList.push_back( 0 );
-      return codeList;
+   if( vl.size()>0) {
+      return vl.begin()->valAsInt();
    }
 
-   for( ; it==vl.end(); ++it  ) {
-      if( it->type() != INT ) {
-         curErr<< "Invalid code value <" << val << "> in section <"<< curSectionName<< ">. Ignoring code <" << *it << ">." << endl;
-         continue;
-      }
-      codeList.push_back(it->valAsInt() );
-   }
-
-   return codeList;
+   return -1;
 }
 
 

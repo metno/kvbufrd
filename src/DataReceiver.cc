@@ -40,6 +40,7 @@
 #include "kvDbGateProxy.h"
 #include "DataReceiver.h"
 #include "tblBufr.h"
+#include "Waiting.h"
 
 using namespace std;
 using namespace kvservice;
@@ -360,9 +361,12 @@ void DataReceiver::prepareToProcessAnyBufrBasedOnThisObs(const pt::ptime &obstim
   pt::ptime now(pt::second_clock::universal_time());
   pt::ptime maxTime;
   pt::ptime time = obstime;
+  pt::ptime delayBefore(now.date(), pt::time_duration(now.time_of_day().hours(), 0, 0));
+  
+  delayBefore -= pt::hours(1);
 
   maxTime = pt::ptime(obstime.date(), pt::time_duration(obstime.time_of_day().hours(), 0, 0));
-  maxTime += pt::hours(24);
+  maxTime += pt::hours(station->numberOfHourToRegenerate());
 
   milog::LogContext context("regenerate");
 
@@ -388,6 +392,7 @@ void DataReceiver::prepareToProcessAnyBufrBasedOnThisObs(const pt::ptime &obstim
     LOGINFO("Possibly regenerating BUFR for: <" << station->toIdentString() << "> obstime: " << pt::to_kvalobs_string(time)<<endl);
 
     try {
+      //if( time < delayBefore )
       ObsEvent *event = new ObsEvent(time, station, true);
 
       if (!typeidReceived(*event)) {
@@ -399,6 +404,8 @@ void DataReceiver::prepareToProcessAnyBufrBasedOnThisObs(const pt::ptime &obstim
         LOGWARN(
             "No data received (stationid/typeid)!" << endl << "Station: " << event->stationInfo()->toIdentString() << " obstime: " << pt::to_kvalobs_string(event->obstime()));
         delete event;
+      } else if ( time < delayBefore ) {
+        regenerateToWaiting( event, 2 ); //Add the event to the waiting que, delay 2 minutes
       } else {
         app.addObsEvent(event, *outputQue);
       }
@@ -409,6 +416,20 @@ void DataReceiver::prepareToProcessAnyBufrBasedOnThisObs(const pt::ptime &obstim
     time += pt::hours(3);
   }
 
+}
+
+void
+DataReceiver::regenerateToWaiting(ObsEvent *event, int minutesToDelay){
+  pt::ptime delay(pt::second_clock::universal_time());
+  delay += pt::minutes(minutesToDelay);
+
+  auto w = WaitingPtr(new Waiting(delay, event->obstime(), event->stationInfo(),"regenerate",false));
+  delete event;
+
+  w=app.addWaiting(w, true);
+  if( w ) {
+    LOGINFO("Replacing waiting element: obstime: " << pt::to_kvalobs_string(w->obstime()) << " note: '" << w->note() << "'.");
+  }
 }
 
 bool DataReceiver::typeidReceived(ObsEvent &event) {

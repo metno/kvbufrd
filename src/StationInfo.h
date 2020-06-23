@@ -421,8 +421,8 @@ private:
    friend class StationInfoParse;
    friend class ConfMaker;
 
-   StationInfo& operator=(const StationInfo &);
-   IntList        code_;
+   StationInfo& operator=(const StationInfo &)=delete;
+   int            code_;
    int            height_;
    int            heightVisability_;
    int            heightTemperature_;
@@ -478,6 +478,10 @@ public:
    milog::LogLevel loglevel()const { return loglevel_;}
    //IntList        code()const { return code_; }
    int        code()const; 
+
+   //Set the BUFR code to use. If a value is allready set and replace is true it replace the value 
+   //and if false it leave the value untouched.
+   void       code( int c_ , bool replace=true);
    std::string    codeToString()const;
 
 
@@ -677,6 +681,14 @@ public:
    bool operator!=(const StationInfo &rhs) const {
       return !( *this == rhs );
    }
+
+   /**
+    * Number of hours to take into consideration when regenerating BUFR.
+    * At the momment it is only a quick fix. Returns 0 for BUOY (code=5) and 24 
+    * otherwise.
+    * @TODO: Find a better way to do this.
+    */
+   int numberOfHourToRegenerate()const;
 
    /**
     * Returns a string on the form [stationid1,stationid2,..,stationidN/typeid1,typeid2,..,typeidN] 

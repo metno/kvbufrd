@@ -101,6 +101,9 @@ main( int argn, char **argv )
        break;
    case Options::BSTATIONS: ret = confMaker.doBStationsConf( opt.outconf, templateConf );
    	   break;
+   case Options::MBOUY: cerr << "\n\n --- Moored buoys is not implemented --- \n\n";
+       ret=true;
+   	   break;
    default:
        ret = false;
        break;

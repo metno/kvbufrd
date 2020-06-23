@@ -66,7 +66,7 @@ findStation( int wmono, int stationid, const std::string &callsign,
 
    for( std::list<StationInfoPtr>::const_iterator it=stationList.begin(); it!=stationList.end(); ++it ) {
       if( (*it)->wmono() == wmono && (*it)->stationID() == stationid &&
-           (*it)->callsign() == callsign && (*it)->code() == bufrCode ) {
+          (*it)->callsign() == callsign && (*it)->code() == bufrCode ) {
          return *it;
       }
    }
@@ -75,6 +75,7 @@ findStation( int wmono, int stationid, const std::string &callsign,
       if( (*it)->wmono() == wmono && (*it)->stationID() == stationid &&
           (*it)->callsign() == callsign && (*it)->code() == bufrCode) {
          StationInfoPtr p( new StationInfo( **it ) );
+         p->code(bufrCode);
          stationList.push_back( p );
          return p;
       }
@@ -93,6 +94,7 @@ findStation( int wmono, int stationid, const std::string &callsign,
    ptr->stationID_ = stationid;
    ptr->wmono_ = wmono;
    ptr->callsign_ = callsign;
+   ptr->code(bufrCode, false);
 
    stationList.push_back( ptr );
 
@@ -650,13 +652,16 @@ doStationConf( StationInfoPtr station )const
 
    indent.incrementLevel();
 
-   if( ! station->code_.empty( ) ) {
+   if( station->code()!=0 ) {
+      o << indent.spaces() << "code=(" << station->code() << ")" << endl;
+      /*
       StationInfo::IntList::const_iterator it=station->code_.begin();
       o << indent.spaces() << "code=(" << *it;
       ++it;
       for( ; it!=station->code_.end(); ++it  )
          o << "," << *it;
       o << ")" << endl;
+      */
    }
 
    tmp = station->name();
@@ -775,10 +780,6 @@ doSVVConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
          nValues++;
       }
 
-
-      if( pStation->code_.empty() ) {
-         pStation->code_.push_back(bufrCode);
-      }
 
       if( tblStation.hs() != INT_MAX ) {
          pStation->height( tblStation.hs() );
@@ -918,10 +919,6 @@ doPrecipConf( const std::string &outfile, miutil::conf::ConfSection *templateCon
          nValues++;
       }
 
-
-      if( pStation->code_.empty() ) {
-         pStation->code_.push_back(bufrCode);
-      }
 
       if( tblStation.hs() != INT_MAX ) {
          pStation->height( tblStation.hs() );
@@ -1138,9 +1135,6 @@ doShipConf( const std::string &outfile, miutil::conf::ConfSection *templateConf 
 			nValues++;
 		}
 
-		if( pStation->code_.empty() ) {
-			pStation->code_.push_back(bufrCode);
-		}
 
 		if( tblStation.hs() != INT_MAX ) {
 			pStation->height( tblStation.hs() );
@@ -1301,10 +1295,6 @@ doBStationsConf( const std::string &outfile, miutil::conf::ConfSection *template
 		}
 
 
-		if( pStation->code_.empty() ) {
-			pStation->code_.push_back(bufrCode);
-		}
-
 		if( tblStation.hs() != INT_MAX ) {
 			pStation->height( tblStation.hs() );
 			nValues++;
@@ -1452,6 +1442,7 @@ doConf( const std::string &outfile, miutil::conf::ConfSection *templateConf )
       }
 
       pStation = findStation( tblStation.wmono(), 0, "", bufrCode, newStation );
+
 
       if( !networkStation.name().empty() ) {
           pStation->name( networkStation.name() );

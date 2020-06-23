@@ -151,13 +151,21 @@ public:
         waiting_(w),
         isOk_(false),
         regenerate_(false)
-   {}
+   {
+      auto it=w->note().find("regen");
+      regenerate_=it!=std::string::npos;
+   }
 
    boost::posix_time::ptime obstime()const{ return obstime_;}
    StationInfoPtr     stationInfo()const{ return stInfo;}
    WaitingPtr             waiting()const{ return waiting_;}
 
    bool regenerate()const { return regenerate_;}
+   std::string note()const {
+      if(waiting_)
+         return waiting_->note();
+      return "";
+   }
 
    ///The following tree functions is used to comunicate
    ///data back to a client trough the callback \a ref.

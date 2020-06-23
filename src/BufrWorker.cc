@@ -56,6 +56,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <set>
 
 using namespace std;
 using namespace kvalobs;
@@ -295,7 +296,8 @@ BufrWorker::operator()()
     LOGINFO("New observation: ("
             << event->stationInfo()->toIdentString() << ") "
             << pt::to_kvalobs_string(event->obstime())
-            << " regenerate: " << (event->regenerate() ? "T" : "F"));
+            << " regenerate: " << (event->regenerate() ? "T" : "F")
+            << " note: " <<  event->note());
 
     try {
       FLogStream* logs = new FLogStream(2, 307200); // 300k
@@ -385,7 +387,7 @@ BufrWorker::readyForBufr(const DataEntryList& data, ObsEvent& e) const
   if (delayMin > 0) {
     if (relativToFirst) {
       // If we allready have a registred waiting element dont replace it.
-      // This ensures that we only register an waiting element for
+      // This ensures that we only register one waiting element for
       // the first data received.
 
       if (haveAllTypes)
@@ -398,7 +400,7 @@ BufrWorker::readyForBufr(const DataEntryList& data, ObsEvent& e) const
       if (!wp) {
         LOGDEBUG1("Delaying (relativeToFirst): " << delayTime);
         auto wpRet = app.addWaiting(
-          WaitingPtr(new Waiting(delayTime, obstime, info)), false);
+          WaitingPtr(new Waiting(delayTime, obstime, info,"relative to first")), false);
         if (!wpRet) {
           logDelayObservation(info, obstime, stationAndType(data, info, obstime),delayTime);
         }
@@ -440,7 +442,7 @@ BufrWorker::readyForBufr(const DataEntryList& data, ObsEvent& e) const
 
         try {
           auto wpRet = app.addWaiting(
-            WaitingPtr(new Waiting(delayTime, obstime, info)), true);
+            WaitingPtr(new Waiting(delayTime, obstime, info, "delay")), true);
           logDelayObservation(info, obstime, stationAndType(data, info, obstime), delayTime);
         } catch (...) {
           LOGFATAL("NOMEM: cant allocate delay element!");
@@ -457,15 +459,15 @@ BufrWorker::readyForBufr(const DataEntryList& data, ObsEvent& e) const
 
   if (delayMin > 0) {
     if (delayTime < nowTime) {
-      if (mustHaveTypes) {
-        return true;
-      } else {
-        return false;
-      }
+     return mustHaveTypes;
     } else {
       try {
+        std::string note("delay");
+        if( !mustHaveTypes ) {
+          note="Missing required types";
+        } 
         auto wpRet = app.addWaiting(
-          WaitingPtr(new Waiting(delayTime, obstime, info)), true);
+          WaitingPtr(new Waiting(delayTime, obstime, info, note)), true);
         logDelayObservation(info, obstime, stationAndType(data, info, obstime),delayTime);
       } catch (...) {
         LOGFATAL("NOMEM: cant allocate delay element!");
@@ -502,6 +504,13 @@ BufrWorker::newObs(ObsEvent& event)
   bool debug = logLevel >= milog::LogLevel::DEBUG;
 
   info = event.stationInfo();
+
+  LOGINFO("New observation: ("
+            << event.stationInfo()->toIdentString() << ") "
+            << pt::to_kvalobs_string(event.obstime())
+            << " regenerate: " << (event.regenerate() ? "T" : "F")
+            << " delay note: '" <<  event.note() << "'\n"
+            << "Station configuration:\n" << *info)
 
   if (!info->msgForTime(event.obstime())) {
     LOGINFO("Skip BUFR for time: " << pt::to_kvalobs_string(event.obstime())
@@ -736,6 +745,57 @@ BufrWorker::newObs(ObsEvent& event)
   }
 }
 
+namespace {
+  struct SidTidData {
+    long sid;
+    long tid;
+    SidTidData(long s, long t):sid(s), tid(t){}
+    bool operator<(const SidTidData &d) const {
+      return (sid < d.sid) || 
+      (sid==d.sid && tid < d.tid);
+    }
+  };
+
+  class SidTidDataSet: public virtual std::set<SidTidData>{
+    boost::posix_time::ptime obstime;
+    std::list<long> sids;
+  
+    public:
+      SidTidDataSet(const boost::posix_time::ptime &obstime, const std::list<long> &sids):
+      obstime(obstime), sids(sids){}
+      
+      void add( long sid, long tid, const pt::ptime &obstime) {
+        if ( obstime != this->obstime) {
+          return;
+        }
+
+        insert( SidTidData(sid, tid) );
+      }
+
+      void logObservationLoaded() {
+        std::ostringstream ost;
+        ost << "Observation loaded for obstime "<< pt::to_kvalobs_string(obstime) << ":"; 
+        if( size() == 0 ) {
+          ost << " No observations loaded for station(s)";
+          for ( auto sid : sids ) {
+            ost << " " << sid;
+          }
+          LOGINFO(ost.str());
+          return;
+        } 
+
+        for( auto &e : *this ) {
+          ost << " (" << e.sid << "/" << e.tid << ")";
+        }
+        LOGINFO(ost.str());
+      }
+  };
+
+}
+
+
+
+
 BufrWorker::EReadData
 BufrWorker::readData(ObsEvent& event, DataEntryList& data) const
 {
@@ -764,6 +824,9 @@ BufrWorker::readData(ObsEvent& event, DataEntryList& data) const
   stIDs = station->definedStationID();
   itStId = stIDs.rbegin();
 
+  SidTidDataSet loadedData(event.obstime(), stIDs);
+
+
   if (itStId == stIDs.rend()) {
     LOGERROR("No stationid's for station <" << station->toIdentString()
                                             << ">!");
@@ -790,6 +853,16 @@ BufrWorker::readData(ObsEvent& event, DataEntryList& data) const
 
     for (dit = dataList.begin(); dit != dataList.end(); dit++) {
       try {
+        if( station->hasDefinedStationIdAndTypeId(dit->stationID(), dit->typeID(), dit->obstime().time_of_day().hours())) {
+          if (validate(*dit)) {
+            loadedData.add(dit->stationID(), dit->typeID(), dit->obstime());
+            data.insert(*dit);
+
+            if (!hasObstime && dit->obstime() == event.obstime())
+              hasObstime = true;
+          }
+        }
+        /*
         if (event.hasReceivedTypeid(
               dit->stationID(), dit->typeID(), doLogTypeidInfo)) {
 
@@ -801,6 +874,7 @@ BufrWorker::readData(ObsEvent& event, DataEntryList& data) const
           }
         }
 
+*/
         doLogTypeidInfo = false;
       } catch (DataListEntry::TimeError& e) {
         LOGDEBUG("EXCEPTION(DataListEntry::TimeError): Hmmm... "
@@ -808,6 +882,8 @@ BufrWorker::readData(ObsEvent& event, DataEntryList& data) const
       }
     }
   }
+
+  loadedData.logObservationLoaded();
 
   string rejected = validate.getLog();
 
@@ -1040,7 +1116,7 @@ BufrWorker::checkContinuesTypes(ObsEvent& event,
       now += pt::minutes(5);
 
       try {
-        w = WaitingPtr(new Waiting(now, event.obstime(), info, true));
+        w = WaitingPtr(new Waiting(now, event.obstime(), info, "continues types", true));
       } catch (...) {
         LOGERROR("NO MEM");
         return true;

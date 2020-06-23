@@ -61,9 +61,9 @@ class StationInfoParse
 
       StationInfo::TDelayList delay;
       std::string delayConf;
-      std::list<int> code;
+      int code;
 
-      DefaultVal(): copy(false), loglevel(milog::INFO) {
+      DefaultVal(): copy(false), loglevel(milog::INFO), code(-1) {
       }
 
       DefaultVal(const DefaultVal &dv)
@@ -96,7 +96,7 @@ class StationInfoParse
 
    std::string doDefList( miconf::ValElementList &vl );
 
-   std::list<int>  doDefCode( miconf::ValElementList &vl );
+   int  doDefCode( miconf::ValElementList &vl );
 
    std::string doDefOwner( miconf::ValElementList &vl );
 

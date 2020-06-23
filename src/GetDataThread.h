@@ -48,6 +48,20 @@ class GetData {
   	int                      wmono;
 		int                      hours;
 
+		struct Loaded{
+			int sid;
+			int tid;
+
+			Loaded(int sid_, int tid_): sid(sid_), tid(tid_){}
+			bool operator<(const Loaded &rhs)const {
+				return  (sid < rhs.sid) || 
+								(sid==rhs.sid && tid < rhs.tid);
+			}
+
+		};
+
+		std::set<Loaded> loadedSet;
+
   	void reloadAll(kvalobs::kvDbGateProxy &gate,
 		 		   const boost::posix_time::ptime &bufferFromTime);
 

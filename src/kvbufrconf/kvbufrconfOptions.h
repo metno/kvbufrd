@@ -34,7 +34,7 @@
 #include <string>
 
 struct Options {
-    typedef enum { NON, PRECIP, SVV, SHIP, SYNOP, BSTATIONS } What;
+    typedef enum { NON, PRECIP, SVV, SHIP, SYNOP, BSTATIONS, MBOUY } What;
    std::string confile;              //--conf
    std::string templatefile;         //--template
    std::string outconf;              //--out
@@ -42,6 +42,7 @@ struct Options {
    int debug;
    What  type;
 
+   std::string getType()const;
    Options():nIsTypes(0), debug(0), type( NON ) {}
 };
 

@@ -1,3 +1,10 @@
+kvbufrd (3.0.7~rc1-1) xenial; urgency=low
+  * Fix kvbufrconf for SVV stations.
+  * Some minor fixes in startup code. Do not reload data allready loaded. 
+
+ -- Kvalobs <kvalobs@met.no> Thu, 18 Jun 2020 14:00:00 +0100
+
+
 kvbufrd (3.0.6-1) xenial; urgency=low
   * New release.
   * Support for MOORED BUOY.
