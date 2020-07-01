@@ -648,7 +648,5 @@ boost::uint32_t BufrHelper::computeCRC()const{
    
 
    crcChecker.process_bytes( msg.c_str(),  msg.length() );
-
-   cerr << msg;
    return crcChecker.checksum();
 }

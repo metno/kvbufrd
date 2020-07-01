@@ -42,13 +42,14 @@ using namespace miutil;
 using namespace milog;
 namespace pt = boost::posix_time;
 
-GetData::GetData(App &app_, const boost::posix_time::ptime &fromTime_, int wmono_, int hours_, std::shared_ptr<dnmi::thread::CommandQue> que_)
+GetData::GetData(App &app_, const boost::posix_time::ptime &fromTime_, int wmono_, int hours_, std::shared_ptr<threadutil::CommandQueueBase> que_)
     : app(app_),
       que(que_),
       fromTime(fromTime_),
       joinable_(new bool(false)),
       wmono(wmono_),
       hours(hours_) {
+  
 }
 
 void GetData::operator()() {

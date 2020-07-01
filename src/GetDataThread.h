@@ -34,17 +34,18 @@
 #define __kvbuffer_getdatathread_h__
 
 #include <memory>
-#include "boost/thread/thread.hpp"
+#include <thread>
+#include "CommandBase.h"
 #include "boost/date_time/posix_time/ptime.hpp"
 
 class App;
 
 class GetData {
   	App                      &app;
-  	std::shared_ptr<dnmi::thread::CommandQue> que;
+  	std::shared_ptr<threadutil::CommandQueueBase> que;
   	boost::posix_time::ptime fromTime;
   	boost::shared_ptr<bool>  joinable_;
-  	boost::shared_ptr<boost::thread> thread;
+  	boost::shared_ptr<std::thread> thread;
   	int                      wmono;
 		int                      hours;
 
@@ -78,12 +79,12 @@ class GetData {
 	  		    const boost::posix_time::ptime &fromTime,
 	  			int                  wmono,
 	  			int                  hours,
-	  			std::shared_ptr<dnmi::thread::CommandQue> que);
+	  			std::shared_ptr<threadutil::CommandQueueBase> que);
 
   		void operator()();
  		bool joinable(){ return *joinable_; }
   		void join(){ if(thread) thread->join(); } 
-  		void setThread(boost::thread *th){ thread.reset(th);}
+  		void setThread(std::thread *th){ thread.reset(th);}
 }; 
 
 

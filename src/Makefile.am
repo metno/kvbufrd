@@ -18,7 +18,7 @@ noinst_PROGRAMS = base64Test kvxmltest kvmd5sum kvconftest
 bin_PROGRAMS = kvbufrd kvbufrdbclt  kvbufrdparse kvbase64 
 
 kvbufrd_SOURCES = \
-   kvevents.h \
+   kvevents.h  kvevents.cc \
    KvDataConsumer.h KvDataConsumer.cc \
    KvObsData.h KvObsData.cc \
    DbQuery.h DbQuery.cc \
@@ -59,13 +59,16 @@ kvbufrd_SOURCES = \
 	 utils.h utils.cc  \
 	 LogAppender.h LogAppender.cc \
 	 CommandQueue.h CommandQueue.cc \
-	 CommandBase.h CommandBase.cc
+	 CommandBase.h CommandBase.cc \
+	 CommandPriorityQueue.h CommandPriorityQueue.cc \
+	 CommandPriority2Queue.h CommandPriority2Queue.cc
 	 
  
 kvbufrd_LDFLAGS = -pthread -export-dynamic $(BOOST_LDFLAGS)
 
 kvxmltest_SOURCES = \
 	kvxml_test.cc \
+	kvevents.cc \
 	kvxml_test_data.cc \
 	Data.cc Data.h\
 	KvObsData.cc KvObsData.h \
@@ -92,11 +95,13 @@ kvxmltest_LDADD = \
 
 kvconftest_SOURCES = \
 	kvconf_test.cc \
+	kvevents.cc \
 	StationInfoParse.cc StationInfoParse.h \
 	StationInfo.cc StationInfo.h \
 	parseMilogLogLevel.cc parseMilogLogLevel.h \
 	CommandQueue.h CommandQueue.cc \
-  CommandBase.h CommandBase.cc
+  CommandBase.h CommandBase.cc \
+	CommandPriority2Queue.h CommandPriority2Queue.cc
 
 
 

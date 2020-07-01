@@ -452,6 +452,7 @@ KvDbGateProxyThread( std::shared_ptr< ConnectionFactory> conFactory )
    : joinable_( new bool(false) ), connectionFactory( conFactory ),
      dbQue( std::shared_ptr<threadutil::CommandQueue>( new threadutil::CommandQueue(false) ) )
 {
+   dbQue->setName("dbThread");
 }
 
 void
@@ -467,8 +468,6 @@ operator()()
    time_t printQueSize; //Print the quesize every 15'th minute and quesize is greater than 10.
    time_t now;
    int queSize;
-   int debugCnt=0;
-   int debugOther=0;
    dnmi::db::Connection *con;
 
    createGlobalLogger( logid );
@@ -504,32 +503,21 @@ operator()()
             continue;
          }
 
-         // DEBUG
-         if( gateCommand->name() == "DataInsertCommand") {
-            cerr << " @@@@@@@ KvDbGateProxyThread: name: " << gateCommand->name() << "\n";
-            debugCnt++;
-         } else {
-            debugOther++;
-            cerr << " @@@@@@@ KvDbGateProxyThread: name: " << gateCommand->name() << "\n";
-         }
 
          con = connectionFactory->newConnection();
 
          if( ! con ) {
-            cerr << " @@@@@@@ KvDbGateProxyThread: No connection. debugCnt: "  << debugCnt 
-            <<" otherCnt: " << debugOther << " dnCnt: "  << connectionFactory->openCount() << "\n";
             LOGFATAL( "KvDbGateProxyThread: No connection." );
             exit(128);
          }
-
-         cerr << " @@@@@@@ KvDbGateProxyThread: debugCnt: "  << debugCnt 
-            <<" otherCnt: " << debugOther << " dnCnt: "  << connectionFactory->openCount() << "\n";
 
          gateCommand->setConnection( con );
          gateCommand->execute();
 
       }
       catch ( const QueSuspended &ex ) {
+         cerr << "KvDbGateProxyThread: Exception: QueSuspended (quit)\n";
+
          quit = true;
       }
       catch( ... ) {

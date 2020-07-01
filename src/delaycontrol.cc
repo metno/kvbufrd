@@ -43,7 +43,7 @@ using namespace miutil;
 namespace pt=boost::posix_time;
 
 DelayControl::DelayControl(App &app_, 
-                           std::shared_ptr<dnmi::thread::CommandQue> que_)
+                           std::shared_ptr<threadutil::CommandQueue> que_)
 : app(app_), que(que_)
 {
 }

@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <fstream>
 #include <thread>
-//#include "boost/thread/thread.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/date_time/posix_time/ptime.hpp"
 #include "milog/milog.h"
@@ -48,6 +47,8 @@
 #include "kvDbGateProxyThread.h"
 #include "cachedb.h"
 #include "cachedbcleaner.h"
+#include "CommandPriorityQueue.h"
+#include "CommandPriority2Queue.h"
 
 //using namespace kvservice;
 using namespace std;
@@ -94,8 +95,11 @@ main(int argn, char **argv)
    checkPidfile(options);
    
    App  app(argn, argv, options, conf );
-   std::shared_ptr<dnmi::thread::CommandQue> newDataQue(new dnmi::thread::CommandQue());
-   std::shared_ptr<dnmi::thread::CommandQue> newObsQue(new dnmi::thread::CommandQue());
+   std::shared_ptr<threadutil::CommandQueue> newDataQue(new threadutil::CommandQueue());
+   std::shared_ptr<threadutil::CommandPriority2Queue> newObsQue(new threadutil::CommandPriority2Queue());
+
+   newDataQue->setName("newDataQue");
+   newObsQue->setName("newObsQue");
 
    DataReceiver dataReceiver(app, newDataQue, newObsQue);
    BufrWorker   bufrWorker(app, newObsQue);
@@ -158,23 +162,25 @@ main(int argn, char **argv)
 
    std::thread cacheDbCleanerThread(cacheDbCleaner);
 
-
    app.run(newDataQue);
 
+   LOGINFO(" --- SHUTDOWN --- ");
+
+   dataReceiverThread.join();
+   IDLOGINFO("main","Joined <dataReceiverThread>!");
+
+   bufrWorkerThread.join();
+   IDLOGINFO("main","Joined <bufrWorkerThread>!");
+
+   //The dbThread must run until the bufrworker has completed
    app.dbThread->dbQue->suspend();
    app.dbThread->join();
 
-   dataReceiverThread.join();
-   IDLOGDEBUG("main","Joined <dataReceiverThread>!");
-
-   bufrWorkerThread.join();
-   IDLOGDEBUG("main","Joined <bufrWorkerThread>!");
-
    delayThread.join();
-   IDLOGDEBUG("main","Joined <delayControlThread>!");
+   IDLOGINFO("main","Joined <delayControlThread>!");
 
    cacheDbCleanerThread.join();
-   IDLOGDEBUG("main","Joined <cacheDbCleanerThread>!");
+   IDLOGINFO("main","Joined <cacheDbCleanerThread>!");
    //app.doShutdown();
 
    return 0;

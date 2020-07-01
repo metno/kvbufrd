@@ -379,9 +379,9 @@ class App : public kvalobs::sql::DbQuery {
    *              wmono<0, reload the cache for all defined stations.
    * \param hours If hours<0 get \a hours with data back in time from
    *              \a t. If hours>=0 get data from \a t until current time.
-   * \param que   post Synop event on this que.
+   * \param que   post ObsEvent on this que.
    */
-  bool getDataFrom(const boost::posix_time::ptime &t, int wmono, int hours, std::shared_ptr<dnmi::thread::CommandQue> que);
+  bool getDataFrom(const boost::posix_time::ptime &t, int wmono, int hours, std::shared_ptr<threadutil::CommandQueueBase> que);
 
   /**
    * \brief Join all joinable GetData threads.
@@ -426,7 +426,7 @@ class App : public kvalobs::sql::DbQuery {
    * \param event the event to be added.
    * \param que The event que to send the event if the station is reloaded.
    */
-  void addObsEvent(ObsEvent *event, dnmi::thread::CommandQue &que);
+  void addObsEvent(ObsEvent *event, threadutil::CommandQueueBase &que);
 
   /**
    * \brief Check the list of event waiting on cache reload against the 
@@ -437,11 +437,11 @@ class App : public kvalobs::sql::DbQuery {
    *
    * \return true if there still is station waiting on reloading and false otherwise.
    */
-  bool checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que, const std::string &logid = "");
+  bool checkObsEventWaitingOnCacheReload(threadutil::CommandQueue &que, const std::string &logid = "");
 
   bool shutdown();
 
-  void run( std::shared_ptr<dnmi::thread::CommandQue> newDataQue);
+  void run( std::shared_ptr<threadutil::CommandQueue> newDataQue);
 
 };
 

@@ -1,7 +1,7 @@
 /*
- Kvalobs - Free Quality Control Software for Meteorological Observations 
+ Kvalobs - Free Quality Control Software for Meteorological Observations
 
- $Id: CommandQue.cc,v 1.7.2.2 2007/09/27 09:02:33 paule Exp $                                                       
+ $Id: CommandQue.cc,v 1.7.2.2 2007/09/27 09:02:33 paule Exp $
 
  Copyright (C) 2007 met.no
 
@@ -15,8 +15,8 @@
  This file is part of KVALOBS
 
  KVALOBS is free software; you can redistribute it and/or
- modify it under the terms of the GNU General Public License as 
- published by the Free Software Foundation; either version 2 
+ modify it under the terms of the GNU General Public License as
+ published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
 
  KVALOBS is distributed in the hope that it will be useful,
@@ -24,18 +24,52 @@
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  General Public License for more details.
 
- You should have received a copy of the GNU General Public License along 
- with KVALOBS; if not, write to the Free Software Foundation Inc., 
+ You should have received a copy of the GNU General Public License along
+ with KVALOBS; if not, write to the Free Software Foundation Inc.,
  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#include <stdlib.h>
 #include "CommandBase.h"
+#include <stdlib.h>
 
-bool threadutil::CommandBase::execute() {
-  return executeImpl(); 
+namespace threadutil {
+
+bool
+CommandBase::execute()
+{
+  return executeImpl();
 }
 
-void threadutil::CommandBase::debugInfo(std::ostream &info) const {
+void
+CommandBase::debugInfo(std::ostream& info) const
+{
   info << "No implementation for <CommandBase::debugInfo>.\n";
 }
 
+void
+CommandBase::onGet()
+{}
+
+void
+CommandBase::onPost()
+{}
+
+
+void CommandQueueBase::post(CommandBase *command) {
+  command->onPost();
+  postImpl(command);
+}
+
+void CommandQueueBase::postAndBrodcast(CommandBase *command) {
+  command->onPost();
+  postAndBrodcastImpl(command);
+}
+
+CommandBase* CommandQueueBase::get(int timeoutInSeconds) {
+  auto cmd=getImpl(timeoutInSeconds);
+  if( cmd )
+    cmd->onGet();
+  return cmd;
+}
+
+
+} // threadutil

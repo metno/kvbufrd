@@ -33,7 +33,7 @@
 #include <decodeutility/kvalobsdataserializer.h>
 #include "App.h"
 #include "decodeutility/kvalobsdata.h"
-#include "dnmithread/CommandQue.h"
+#include "CommandQueue.h"
 #include "kvsubscribe/DataSubscriber.h"
 #include "miconfparser/miconfparser.h"
 #include <string>
@@ -42,12 +42,13 @@ class KvDataConsumer : public kvalobs::subscribe::DataSubscriber
 {
   KvDataConsumer() = delete;
   KvDataConsumer(const KvDataConsumer&) = delete;
+  KvDataConsumer(const KvDataConsumer&&) = delete;
   KvDataConsumer& operator=(const KvDataConsumer&) = delete;
 
 public:
   KvDataConsumer(const std::string& domain,
                  const std::string& brokers,
-                 std::shared_ptr<dnmi::thread::CommandQue> newDataQue);
+                 std::shared_ptr<threadutil::CommandQueue> newDataQue);
   void newData(const kvalobs::serialize::KvalobsData& data, const std::string &msg);
 
   static void debugMsgWriter(const std::string &message, const kvalobs::serialize::KvalobsData &d);
@@ -56,7 +57,7 @@ protected:
   virtual void error(int code, const std::string& msg);
 
 private:
-  std::shared_ptr<dnmi::thread::CommandQue> que;
+  std::shared_ptr<threadutil::CommandQueue> que;
 };
 
 #endif

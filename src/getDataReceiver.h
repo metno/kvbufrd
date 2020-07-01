@@ -32,7 +32,6 @@
 #define __kvbuffer_getDataReceiver_h__
 
 #include <memory>
-#include "boost/shared_ptr.hpp"
 #include "boost/date_time/posix_time/ptime.hpp"
 #include "KvObsData.h"
 #include "kvDbGateProxy.h"
@@ -41,7 +40,7 @@
 class GetKvDataReceiver {
   App &app;
   kvalobs::kvDbGateProxy &gate;
-  std::shared_ptr<dnmi::thread::CommandQue> que;
+  std::shared_ptr<threadutil::CommandQueueBase> que;
   boost::posix_time::ptime fromTime;  //generate buffer from this time
   const std::string logid;
 
@@ -59,7 +58,7 @@ class GetKvDataReceiver {
   }current;
 
  public:
-  GetKvDataReceiver(App &app_, const boost::posix_time::ptime &fromTime_, std::shared_ptr<dnmi::thread::CommandQue> que_, kvalobs::kvDbGateProxy &gate_, const std::string &logid_ = "")
+  GetKvDataReceiver(App &app_, const boost::posix_time::ptime &fromTime_, std::shared_ptr<threadutil::CommandQueueBase> que_, kvalobs::kvDbGateProxy &gate_, const std::string &logid_ = "")
       : app(app_),
         gate(gate_),
         que(que_),

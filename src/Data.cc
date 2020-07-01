@@ -259,7 +259,6 @@ bool DataInsertCommand::doExec( dnmi::db::Connection *con) {
           for( int i=0; i<n; ++i) {
             o << v.fieldName(i) <<"(" << v[i]<< "), ";
           }
-          cerr << "doExec: res: "<<o.str() << "\n";
           LOGINFO("doExec: " << o.str());
           if(!logid_.empty()) {
             IDLOGINFO(logid_, "doExec: " << o.str());

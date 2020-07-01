@@ -40,13 +40,13 @@
 
 class DataReceiver {
   App                      &app;
-  std::shared_ptr<dnmi::thread::CommandQue> inputQue;
-  std::shared_ptr<dnmi::thread::CommandQue> outputQue;
+  std::shared_ptr<threadutil::CommandQueue> inputQue;
+  std::shared_ptr<threadutil::CommandQueueBase> outputQue;
 
  public:
   DataReceiver(App &app, 
-               std::shared_ptr<dnmi::thread::CommandQue> inputQue,
-               std::shared_ptr<dnmi::thread::CommandQue> outputQue);
+               std::shared_ptr<threadutil::CommandQueue> inputQue,
+               std::shared_ptr<threadutil::CommandQueueBase> outputQue);
 
   /**
    * Which data is received for the station given with wmono in

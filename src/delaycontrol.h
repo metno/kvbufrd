@@ -38,11 +38,11 @@
 
 class DelayControl {
   App                      &app;
-  std::shared_ptr<dnmi::thread::CommandQue> que;
+  std::shared_ptr<threadutil::CommandQueue> que;
 
  public:
   DelayControl(App &app, 
-	       std::shared_ptr<dnmi::thread::CommandQue> que);
+	       std::shared_ptr<threadutil::CommandQueue> que);
 
   void operator()();
 }; 

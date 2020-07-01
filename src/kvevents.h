@@ -32,15 +32,19 @@
 #define __kvalobs_kvevents_h__
 
 #include <sstream>
-#include <dnmithread/CommandQue.h>
+#include "CommandQueue.h"
+#include "CommandPriorityQueue.h"
 #include "boost/date_time/posix_time/ptime.hpp"
+#include <kvalobs/miutil/timeconvert.h>
+#include <kvalobs/milog/milog.h>
 #include "StationInfo.h"
 #include "Waiting.h"
 #include "KvObsData.h"
+#include <stdexcept>
 
 //namespace kvalobs {
 
-class KvEventBase : public dnmi::thread::CommandBase {
+class KvEventBase : virtual public threadutil::CommandBase {
  public:
   KvEventBase() {
   };
@@ -56,6 +60,9 @@ class KvEventBase : public dnmi::thread::CommandBase {
     return true;
   };
 };
+
+
+
 
 class DataEvent : public KvEventBase {
   kvalobs::KvObsDataMapPtr data_;
@@ -90,11 +97,18 @@ class DataEvent : public KvEventBase {
 
 
 
-class ObsEvent : public KvEventBase
+class ObsEvent : 
+   virtual public threadutil::Priority2CommandBase, 
+   virtual public threadutil::PriorityCommandBase
 {
+   static boost::posix_time::ptime now_;
+   boost::posix_time::ptime delayInQue_;
+   bool                     isDelayedInQue_;
    boost::posix_time::ptime obstime_;
    StationInfoPtr        stInfo;
    WaitingPtr            waiting_;
+   boost::posix_time::ptime addedToQueue_;
+   boost::posix_time::time_duration timeInQueue_;
 
    ///Used to send a message back in the callback \a ref
    std::ostringstream    msg_;
@@ -138,7 +152,9 @@ public:
    ObsEvent( const boost::posix_time::ptime &obstime,
              StationInfoPtr stInfo_,
              bool regenerate=false )
-   :obstime_(obstime),
+   :delayInQue_(boost::posix_time::microsec_clock::universal_time()),
+    isDelayedInQue_(false),
+    obstime_(obstime),
     stInfo(stInfo_),
     isOk_(false),
     regenerate_(regenerate)
@@ -146,7 +162,9 @@ public:
 
 
    ObsEvent(WaitingPtr w)
-      : obstime_(w->obstime()),
+      : delayInQue_(boost::posix_time::microsec_clock::universal_time()),
+        isDelayedInQue_(false),
+        obstime_(w->obstime()),
         stInfo(w->info()),
         waiting_(w),
         isOk_(false),
@@ -156,9 +174,87 @@ public:
       regenerate_=it!=std::string::npos;
    }
 
+   virtual ~ObsEvent(){}
+
+   //setNow is only for testing.
+   void setNow( const boost::posix_time::ptime &n) {
+      now_=n;
+   }
+
+   boost::posix_time::ptime getNow(bool use_microsecond_clock=true)const {
+      namespace pt = boost::posix_time;
+      if(now_.is_special() ) {
+         if(use_microsecond_clock) {
+            return pt::microsec_clock::universal_time();
+         }
+         return pt::second_clock::universal_time();
+      }
+      return now_;
+   }
+  /**
+   * from CommandBase. 
+   * Do nothing!
+   */
+   bool executeImpl() override {
+      return true;
+   };
+
+   void onPost() override {
+      addedToQueue_=getNow();
+   }
+
+   void onGet() override {
+      auto now=getNow();
+      timeInQueue_=now - addedToQueue_;
+   }
+
+   boost::posix_time::time_duration timeInQue()const {
+      return timeInQueue_;
+   }
+
+   //The queue is sorted with the latest obstime first
+   virtual Action add(const Priority2CommandBase &e_)override{
+      auto e=dynamic_cast<const ObsEvent*>(&e_);
+      if(!e) {
+         std::cerr << "ObsEvent::add: failed assert. Cant cast 'Priority2CommandBase' to 'ObsEvent'\n";
+         LOGWARN("ObsEvent::add: Failed assert. Cant cast 'Priority2CommandBase' to 'ObsEvent'");
+         abort();
+      }
+
+      if( e->obstime_ > obstime_) {
+         return CONTINUE;
+      } else {
+         return INSERT;
+      }
+   }; 
+
+   virtual bool get(){
+      boost::posix_time::ptime now=getNow();
+      if(delayInQue_>now) {
+         return false;
+      } else {
+         return true;
+      }
+   }; 
+
+   virtual bool lessThan(const PriorityCommandBase *rhs)const {
+      auto p = dynamic_cast<const ObsEvent*>(rhs);
+      if( !p ) {
+         throw std::runtime_error("--ObsEvent: lessThan: argument is not an ObsEvent--");
+      }
+      return obstime_< p->obstime_;
+   }
+   
    boost::posix_time::ptime obstime()const{ return obstime_;}
    StationInfoPtr     stationInfo()const{ return stInfo;}
    WaitingPtr             waiting()const{ return waiting_;}
+   
+   void                  delayInQue(int milliseconds) {
+      namespace pt=boost::posix_time;
+      isDelayedInQue_=milliseconds>0;
+      
+      delayInQue_=pt::microsec_clock::universal_time()+pt::milliseconds(milliseconds);
+   }
 
    bool regenerate()const { return regenerate_;}
    std::string note()const {
@@ -244,6 +340,19 @@ public:
 
       return false;
    }
+   void debugInfo(std::ostream& info) const  override{   
+      namespace pt=boost::posix_time;
+      auto now = getNow().time_of_day();
+      auto d = delayInQue_ - addedToQueue_;
+      std::string delayed;
+      if( isDelayedInQue_) {
+         delayed="(D) ";
+      }
+      info << delayed << "ObsEvent: " << stInfo->toIdentString() << "/" << pt::to_kvalobs_string(obstime_) 
+         << " addedToQue: " << addedToQueue_.time_of_day()
+         << " delayInQue: " << delayInQue_.time_of_day() << " now: " << now << " d: " << d.total_milliseconds() <<"ms"
+         << " regen: " << (regenerate_?"T":"F") << " waiting: " << (!waiting_?"F":"T") << "\n"; 
+   } 
 };
 
 

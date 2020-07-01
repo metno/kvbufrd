@@ -33,6 +33,7 @@
 #include "Data.h"
 #include "LoadBufrData.h"
 #include "SemiUniqueName.h"
+#include "CommandPriority2Queue.h"
 #include "StationInfo.h"
 #include "base64.h"
 #include "boost/crc.hpp"
@@ -236,7 +237,7 @@ stationAndType(const DataEntryList& data,
 LogAppender *BufrWorker::logMetrics=nullptr;
 
 BufrWorker::BufrWorker(App& app_,
-                       std::shared_ptr<dnmi::thread::CommandQue> que_)
+                       std::shared_ptr<threadutil::CommandQueueBase> que_)
   : app(app_)
   , que(que_)
   , swmsg(*(new std::ostringstream()))
@@ -266,24 +267,40 @@ BufrWorker::BufrWorker(App& app_,
 void
 BufrWorker::operator()()
 {
-  dnmi::thread::CommandBase* com;
+  threadutil::CommandBase* com;
   ObsEvent* event;
+  bool quit=false;
 
   milog::LogContext context("BufrWorker");
 
-  while (!app.shutdown()) {
+  while (!quit) {
+    if( app.shutdown() ) {
+      que->suspend();
+    }
     try {
       com = que->get(1);
-    } catch (dnmi::thread::QueSuspended& e) {
-      LOGDEBUG6("EXCEPTION(QueSuspended): Input que is susspended!" << endl);
+    } catch (const threadutil::QueSuspended &e) {
+      quit=true;
+      LOGINFO("Input que is susspended! quiting." );
       continue;
     } catch (...) {
-      LOGDEBUG("EXCEPTION(Unknown): Uknown exception from input que!" << endl);
+      LOGINFO("EXCEPTION(Unknown): Uknown exception from input que!" );
       continue;
     }
 
-    if (!com)
+    if (!com) {
+      auto theQue = dynamic_cast<threadutil::CommandPriority2Queue*>(que.get());
+      if( ! theQue ) {
+        LOGINFO("Unexpected NOT a CommandPriority2Queue queue!");
+      } else {
+        ostringstream o;
+        if( ! que->empty() ) {
+          theQue->printQueue(o);
+          LOGINFO(o.str());
+        }
+      }
       continue;
+    }
 
     event = dynamic_cast<ObsEvent*>(com);
 
@@ -297,7 +314,8 @@ BufrWorker::operator()()
             << event->stationInfo()->toIdentString() << ") "
             << pt::to_kvalobs_string(event->obstime())
             << " regenerate: " << (event->regenerate() ? "T" : "F")
-            << " note: " <<  event->note());
+            << " note: " <<  event->note() 
+            << " waitingInQue: " << event->timeInQue().total_milliseconds() << "ms");
 
     try {
       FLogStream* logs = new FLogStream(2, 307200); // 300k
@@ -315,7 +333,9 @@ BufrWorker::operator()()
                 << endl
                 << "New observation: (" << event->stationInfo()->toIdentString()
                 << ") " << pt::to_kvalobs_string(event->obstime())
-                << " regenerate: " << (event->regenerate() ? "T" : "F"));
+                << " regenerate: " << (event->regenerate() ? "T" : "F")
+                << " note: " <<  event->note() 
+                << " waitingInQue: " << event->timeInQue().total_milliseconds() << "ms");
       } else {
         LOGERROR("Cant open the logfile <" << ost.str() << ">!");
         delete logs;

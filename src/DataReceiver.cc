@@ -54,14 +54,15 @@ using std::list;
 using std::endl;
 using kvalobs::kvData;
 
-DataReceiver::DataReceiver(App &app_, std::shared_ptr<dnmi::thread::CommandQue> inputQue_, std::shared_ptr<dnmi::thread::CommandQue> outputQue_)
+DataReceiver::DataReceiver(App &app_, std::shared_ptr<threadutil::CommandQueue> inputQue_
+  , std::shared_ptr<threadutil::CommandQueueBase> outputQue_)
     : app(app_),
       inputQue(inputQue_),
       outputQue(outputQue_) {
 }
 
 void DataReceiver::operator()() {
-  dnmi::thread::CommandBase *com;
+  threadutil::CommandBase *com;
   DataEvent *event;
 
   milog::LogContext context("DataReceiver");
@@ -146,6 +147,23 @@ print(std::ostream &o, const kvalobs::kvData &d) {
 
   return o;
 } 
+
+
+/**
+ * Compute a delay for the command queue if the obstime is older than previous hour.
+ */
+void computeDelay(ObsEvent *e, int delayInMilleseconds) {
+    pt::ptime now=pt::second_clock::universal_time();
+    auto td=now.time_of_day();
+    now=pt::ptime(now.date(), pt::time_duration(td.hours(), 0, 0));
+    now-=pt::hours(1);
+
+    if( e->obstime() < now) {
+      e->delayInQue(delayInMilleseconds);
+    }
+}
+
+
 }
 
 void DataReceiver::newData(const DataEvent &event) {
@@ -317,7 +335,7 @@ void DataReceiver::newData(const DataEvent &event) {
       }
 
       ObsEvent *event;
-
+      
       try {
         event = new ObsEvent(dit->obstime(), station);
 
@@ -334,7 +352,9 @@ void DataReceiver::newData(const DataEvent &event) {
           LOGWARN(
               "No data received (stationid/typeid)!" << endl << "Station: " << event->stationInfo()->toIdentString() << " obstime: " << pt::to_kvalobs_string(event->obstime()));
           delete event;
+          continue;
         } else {
+          computeDelay(event, 5000); //5 sekunder
           app.addObsEvent(event, *outputQue);
         }
       } catch (...) {
@@ -342,7 +362,7 @@ void DataReceiver::newData(const DataEvent &event) {
         LOGERROR("NOMEM: cant send a ObsEvent!");
       }
 
-      prepareToProcessAnyBufrBasedOnThisObs(event->obstime(), station);
+      prepareToProcessAnyBufrBasedOnThisObs(dit->obstime(), station);
 
       Logger::resetDefaultLogger();
 

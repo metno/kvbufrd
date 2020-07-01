@@ -2,7 +2,7 @@
 #include <string.h>
 #include <decodeutility/kvalobsdataserializer.h>
 #include <decodeutility/kvalobsdataparser.h>
-#include <dnmithread/CommandQue.h>
+#include "CommandQueue.h"
 #include "kvevents.h"
 #include "Data.h"
 #include <list>
@@ -13,7 +13,7 @@ extern const char *xml;
 extern const char *conf;
 
 namespace serialize=kvalobs::serialize;
-namespace mithread=dnmi::thread;
+namespace mithread=threadutil;
 using std::cerr;
 using std::string;
 using std::endl;
@@ -53,7 +53,7 @@ void parseConf(const char *theConf ) {
 
 void DataReceiver_newData(const DataEvent &event);
 
-void que_post(dnmi::thread::CommandBase *command) {
+void que_post(mithread::CommandBase *command) {
   auto event = dynamic_cast<DataEvent*>(command);
 
   if( !event) {
@@ -151,7 +151,7 @@ void KvDataConsumer_data(const char * msg, unsigned length) {
 
 
 int
-main( int argn, const char *argv){
+main( int argn, const char *argv[]){
   
 
   std::list<kvalobs::kvData> data;

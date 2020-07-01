@@ -60,7 +60,7 @@ void
 BufrData::CloudExtra::
 add( const CloudDataExtra &cd, int index )
 {
-   cerr << "CloadExtra size: " << cloudData.size() << endl;
+   //cerr << "CloadExtra size: " << cloudData.size() << endl;
    if( index < 0 && nElements_ < cloudData.size() ) {
       cloudData[ nElements_ ] = cd;
       nElements_++;

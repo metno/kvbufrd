@@ -1,8 +1,14 @@
 kvbufrd (3.0.7~rc1-1) xenial; urgency=low
   * Fix kvbufrconf for SVV stations.
   * Some minor fixes in startup code. Do not reload data allready loaded. 
+  * Reduce number of recomputation of BUFR when a timeserie is changed.
+  * Rwrite to use standard library for shared_ptr, thread, mutex and 
+    condition_variable instead of boost. 
+  * Implement a priority queue for generating BUFR (bufrworker). At
+    the momment newst observations is comuted first. Most of the time 
+    the queue will have only one observation in flight. 
 
- -- Kvalobs <kvalobs@met.no> Thu, 18 Jun 2020 14:00:00 +0100
+ -- Kvalobs <kvalobs@met.no> Wed, 24 Jun 2020 12:30:00 +0100
 
 
 kvbufrd (3.0.6-1) xenial; urgency=low

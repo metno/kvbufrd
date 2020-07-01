@@ -49,6 +49,7 @@ insert(const kvalobs::kvDbBase &elem,
    errorFromExecResult = false;
    KvDbGateInsert *command = new KvDbGateInsert( &retQue, &gate, elem, tblName, replace );
    bool retStatus=false;
+   retQue.setName("kvDbGateProxy::insert/"+tblName);
 
    try {
       dbQue->postAndBrodcast( command );
@@ -106,6 +107,8 @@ update(const kvalobs::kvDbBase &elem, const std::string &tblName)
    errorFromExecResult = false;
    KvDbGateUpdate *command = new KvDbGateUpdate( &retQue, &gate, elem, tblName );
    bool retStatus=false;
+
+   retQue.setName("kvDbGateProxy::update/"+tblName);
    try {
       dbQue->postAndBrodcast( command );
       threadutil::CommandBase *ret = retQue.get();
@@ -143,6 +146,7 @@ replace(const kvalobs::kvDbBase &elem, const std::string &tblName)
    errorFromExecResult = false;
    KvDbGateReplace *command = new KvDbGateReplace( &retQue, &gate, elem, tblName );
    bool retStatus = false;
+   retQue.setName("kvDbGateProxy::replace/"+tblName);
 
    try {
       dbQue->postAndBrodcast( command );
@@ -181,6 +185,7 @@ remove(const kvalobs::kvDbBase &elem, const std::string &tblName)
    KvDbGateRemove *command = new KvDbGateRemove( &retQue, &gate, elem, tblName );
    bool retStatus=false;
 
+   retQue.setName("kvDbGateProxy::remove/"+tblName);
    try {
       dbQue->postAndBrodcast( command );
       threadutil::CommandBase *ret = retQue.get();
@@ -203,6 +208,7 @@ remove(const std::string &query)
    KvDbGateRemove *command = new KvDbGateRemove( &retQue, &gate, query );
    bool retStatus=false;
 
+   retQue.setName("kvDbGateProxy::remove/query");
    try {
       dbQue->postAndBrodcast( command );
       threadutil::CommandBase *ret = retQue.get();
@@ -224,6 +230,7 @@ exec(const std::string &query)
    errorFromExecResult = false;
    KvDbGateExec *command = new KvDbGateExec( &retQue, &gate, query );
    bool retStatus = false;
+   retQue.setName("kvDbGateProxy::exec/queruy");
 
    try {
       dbQue->postAndBrodcast( command );
@@ -251,6 +258,8 @@ exec( KvDbGateResult &result, const std::string &query )
    errorFromExecResult = true;
    bool retStatus = false;
 
+   retQue.setName("kvDbGateProxy::exec/res+query");
+
    try {
       dbQue->postAndBrodcast( command );
       threadutil::CommandBase *ret = retQue.get();
@@ -274,16 +283,18 @@ doExec(KvDbGateDoExecCommand *cmd)
 {
    threadutil::CommandQueue retQue;
    bool retStatus=false;
+
+   retQue.setName("kvDbGateProxy::doExec");
    try {
       cmd->retQue=&retQue;
       dbQue->postAndBrodcast( cmd );
       threadutil::CommandBase *ret = retQue.get();
       auto myCmd=static_cast<KvDbGateDoExecCommand*>(ret);
       if( myCmd != cmd ) {
-       cerr << " @@@@@@ kvalobs::kvDbGateProxy::doExec: incomming command differ from returned command.";
+       //cerr << " @@@@@@ kvalobs::kvDbGateProxy::doExec: incomming command differ from returned command.";
        LOGFATAL("kvalobs::kvDbGateProxy::doExec: incomming command differ from returned command.");
        IDLOGFATAL("DbThread","kvalobs::kvDbGateProxy::doExec: incomming command differ from returned command.");
-       exit(128);
+       abort();
       }
       retStatus = static_cast<KvDbGateDoExecCommand*>(ret)->ret;
    }

@@ -30,23 +30,24 @@
  */
 #include <stdlib.h>
 #include <chrono>
+#include <iostream>
 #include "CommandQueue.h"
 
 namespace threadutil{
 
 CommandQueue::CommandQueue()
-    : suspended(false) {
+    : CommandQueueBase(false) {
 }
 
 CommandQueue::CommandQueue(bool suspended_)
-    : suspended(suspended_) {
+    : CommandQueueBase(suspended_) {
 }
 
 CommandQueue::~CommandQueue() {
   clear();
 }
 
-void CommandQueue::post(CommandBase *command) {
+void CommandQueue::postImpl(CommandBase *command) {
   Lock lock(m);
 
   if (suspended)
@@ -55,16 +56,18 @@ void CommandQueue::post(CommandBase *command) {
   que.push_back(command);
 }
 
-void CommandQueue::postAndBrodcast(CommandBase *command) {
+void CommandQueue::postAndBrodcastImpl(CommandBase *command) {
   Lock lock(m);
 
-  if (suspended)
+  if (suspended) {
+    //std::cerr << "CommandQueue::postAndBrodcast: suspended '" << name <<"'\n";  
     throw QueSuspended();
+  }
 
   que.push_back(command);
 
   cond.notify_all();
-
+  //std::cerr << "CommandQueue::postAndBrodcast: posted '" << name <<"' #: " << que.size() << "\n";  
 }
 
 CommandBase*
@@ -77,25 +80,32 @@ CommandQueue::peek(int timeout) {
       while (que.empty()) {
         cond.wait(lk);
 
-        if (suspended)
+        if (suspended) {
+          //std::cerr << "CommandQueue::peek: suspended '" << name <<"' #: " << que.size() << "\n";  
           throw QueSuspended();
+        }
       }
     } else {
       cond.wait_for(lk, std::chrono::seconds(timeout));
 
-      if (suspended)
+      if (suspended) {
+        //std::cerr << "CommandQueue::peek: suspended '" << name <<"' #: " << que.size() << "\n";  
         throw QueSuspended();
+      }
 
-      if (que.empty())
+      if (que.empty()) {
+        //std::cerr << "CommandQueue::peek: ret nullptr '" << name <<"' #: " << que.size() << "\n";  
         return nullptr;
+      }
     }
   }
   CommandBase *tmp = que.front();
+  //std::cerr << "CommandQueue::peek: data '" << name <<"' #: " << que.size() << "\n";  
   return tmp;
 }
 
 CommandBase*
-CommandQueue::get(int timeout) {
+CommandQueue::getImpl(int timeout) {
   Lock lk(m);
 
   if (que.empty()) {
@@ -104,24 +114,28 @@ CommandQueue::get(int timeout) {
       while (que.empty()) {
         cond.wait(lk);
 
-        if (que.empty() && suspended)
+        if (que.empty() && suspended) {
+          //std::cerr << "CommandQueue::get: suspended '" << name <<"' #: " << que.size() << "\n";  
           throw QueSuspended();
+        }
       }
     } else {
       cond.wait_for(lk, std::chrono::seconds(timeout));
 
       if (que.empty()) {
-        if (suspended)
+        if (suspended){
+          //std::cerr << "CommandQueue::get: suspended '" << name <<"' #: " << que.size() << "\n";  
           throw QueSuspended();
-
-        return 0;
+        }
+        //std::cerr << "CommandQueue::get: ret nullptr '" << name <<"' #: " << que.size() << "\n";  
+        return nullptr;
       }
     }
   }
 
   CommandBase *tmp = que.front();
   que.pop_front();
-
+  //std::cerr << "CommandQueue::get: ret data '" << name <<"' #: " << que.size() << "\n";  
   return tmp;
 }
 
@@ -196,6 +210,7 @@ void CommandQueue::brodcast() {
 void CommandQueue::suspend() {
   Lock lk(m);
 
+  //std::cerr << "CommandQueue::suspend: '" << name <<"' #: " << que.size() << "\n";  
   if (suspended)
     return;
 
@@ -205,6 +220,7 @@ void CommandQueue::suspend() {
 
 void CommandQueue::resume() {
   Lock lk(m);
+  //std::cerr << "CommandQueue::resume: '" << name <<"' #: " << que.size() << "\n";  
 
   if (!suspended)
     return;

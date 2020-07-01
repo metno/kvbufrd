@@ -327,6 +327,7 @@ App::App(int argn, char **argv, Opt &opt, miutil::conf::ConfSection *conf)
   milog::createGlobalLogger(logdir, opt.progname, "datareceiver_saved", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
   //milog::createGlobalLogger(logdir, opt.progname, "observation", milog::DEBUG, 1024, 1, new milog::StdLayout1());
   milog::createGlobalLogger(logdir, opt.progname, "cachedb", milog::DEBUG, 500, 2, new milog::StdLayout1());
+  milog::createGlobalLogger(logdir, opt.progname, "debug", milog::DEBUG1, 10*1024*1024, 2, new milog::StdLayout1());
  
   setObslogfile(options, conf);
   IDLOGINFO("main", "Writing observation (metriccs) to obslogfile: " << options.obslogfile);
@@ -437,6 +438,7 @@ App::App(int argn, char **argv, Opt &opt, miutil::conf::ConfSection *conf)
 
   //We dont need conf any more.
   delete conf;
+  setSigHandlers();
 }
 
 App::~App() {
@@ -884,7 +886,7 @@ bool App::saveBufrData(const TblBufr &tblBufr) {
   return true;
 }
 
-bool App::getDataFrom(const pt::ptime &t, int wmono, int hours, std::shared_ptr<dnmi::thread::CommandQue> que) {
+bool App::getDataFrom(const pt::ptime &t, int wmono, int hours, std::shared_ptr<threadutil::CommandQueueBase> que) {
   LogContext lContext("getDataFrom");
 
   LOGINFO("Get data from server, start time: " << t);
@@ -901,7 +903,7 @@ bool App::getDataFrom(const pt::ptime &t, int wmono, int hours, std::shared_ptr<
   try {
     //Create and start a background thread to receive the
     //data from kvalobs.
-    getData->setThread(new boost::thread(*getData));
+    getData->setThread(new std::thread(*getData));
   } catch (...) {
     LOGERROR("NO MEM!");
     delete getData;
@@ -980,7 +982,7 @@ StationList App::reloadCache(int wmono, int id) {
 }
 
 
-void App::addObsEvent(ObsEvent *event, dnmi::thread::CommandQue &que) {
+void App::addObsEvent(ObsEvent *event, threadutil::CommandQueueBase &que) {
   Lock lock(mutex);
 
   if (!hasStationWaitingOnCacheReload) {
@@ -1023,7 +1025,7 @@ void App::addObsEvent(ObsEvent *event, dnmi::thread::CommandQue &que) {
   obsEventWaitingOnCacheReload.push_back(event);
 }
 
-bool App::checkObsEventWaitingOnCacheReload(dnmi::thread::CommandQue &que, const std::string &logid) {
+bool App::checkObsEventWaitingOnCacheReload(threadutil::CommandQueue &que, const std::string &logid) {
   Lock lock(mutex);
 
   IDLOGDEBUG(logid, "CheckObsEventWaitingOnCacheReload called!");
@@ -1089,7 +1091,7 @@ bool App::shutdown() {
   return AppShutdown;
 }
 
-void App::run(std::shared_ptr<dnmi::thread::CommandQue> newDataQue) {
+void App::run(std::shared_ptr<threadutil::CommandQueue> newDataQue) {
   int idleCheck=0;
   std::unique_ptr<KvDataConsumer> consumer;
 
@@ -1106,6 +1108,8 @@ void App::run(std::shared_ptr<dnmi::thread::CommandQue> newDataQue) {
     if( idleCheck==0)
       kvDbPool.releaseIdleConnections();
   }
+
+  LOGINFO("---- SHUTDOWN ----");
 
   if( consumer )
     consumer->stopAll();

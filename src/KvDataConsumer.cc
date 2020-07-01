@@ -49,7 +49,7 @@ using std::string;
 KvDataConsumer::KvDataConsumer(
   const std::string& domain,
   const std::string& brokers,
-  std::shared_ptr<dnmi::thread::CommandQue> newDataQue)
+  std::shared_ptr<threadutil::CommandQueue> newDataQue)
   : DataSubscriber(
       [this](const kvalobs::serialize::KvalobsData& data) { newData(data, ""); },
       domain,
@@ -118,11 +118,14 @@ KvDataConsumer::newData(const kvalobs::serialize::KvalobsData& dataIn, const std
   try {
     auto event = new DataEvent(map);
     event->inCommingMessage(msg);
-    que->post(event);
-  } catch (...) {
+    //std::cerr << "KvDataConsumer: new message received and posted on incomming queue.\n";
+    que->postAndBrodcast(event);
+  } 
+  catch(const threadutil::QueSuspended &e) {
+    LOGINFO("KvDataConsumer: que suspended!");
   }
-  
-  que->brodcast();
+  catch (...) {
+  }
 }
 
 void KvDataConsumer::data(const char * msg, unsigned length) {

@@ -54,7 +54,7 @@ class BufrWorker {
 		 RdERROR} EReadData; 
   
   App                      &app;
-  std::shared_ptr<dnmi::thread::CommandQue> que;
+  std::shared_ptr<threadutil::CommandQueueBase> que;
   std::ostringstream       &swmsg;
   boost::shared_ptr<EncodeBufrManager> encodeBufrManager;
   BufrParamValidaterPtr bufrParamValidater;
@@ -157,7 +157,7 @@ class BufrWorker {
 
  public:
   BufrWorker( App &app,
-              std::shared_ptr<dnmi::thread::CommandQue> que);
+              std::shared_ptr<threadutil::CommandQueueBase> que);
 
   static LogAppender *logMetrics;
 

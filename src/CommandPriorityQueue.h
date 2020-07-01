@@ -28,8 +28,8 @@
  with KVALOBS; if not, write to the Free Software Foundation Inc., 
  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#ifndef __THREAD_COMMANDQUEUE_H__
-#define __THREAD_COMMANDQUEUE_H__
+#ifndef __THREAD_COMMAND_PRIORITY_QUEUE_H__
+#define __THREAD_COMMAND_PRIORITY_QUEUE_H__
 
 #include <iosfwd>
 #include <string>
@@ -49,27 +49,28 @@ namespace threadutil {
 /**
  * \brief A FIFO que to comunicate between threads.
  */
-class CommandQueue : public virtual CommandQueueBase {
+class CommandPriorityQueue: virtual public CommandQueueBase {
 
  protected:
   typedef std::unique_lock<std::mutex>  Lock;
-  typedef std::deque<CommandBase*> Que;
-  typedef std::deque<CommandBase*>::iterator QueIterator;
-  typedef std::deque<CommandBase*>::const_iterator QueCIterator;
+  typedef std::list<CommandBase*> Que;
+  typedef std::list<CommandBase*>::iterator QueIterator;
+  typedef std::list<CommandBase*>::const_iterator QueCIterator;
 
   std::mutex m;
   std::condition_variable cond;
   Que que;
   
+  void add(PriorityCommandBase *e);
  public:
-  CommandQueue();
-  CommandQueue(const CommandQueue &)=delete;
-  CommandQueue(const CommandQueue &&)=delete;
-  CommandQueue& operator=(const CommandQueue &)=delete;
+  CommandPriorityQueue();
+  CommandPriorityQueue(const CommandPriorityQueue &)=delete;
+  CommandPriorityQueue(const CommandPriorityQueue &&)=delete;
+  CommandPriorityQueue& operator=(const CommandPriorityQueue &)=delete;
   
 
-  explicit CommandQueue(bool suspended);
-  virtual ~CommandQueue();
+  explicit CommandPriorityQueue(bool suspended);
+  virtual ~CommandPriorityQueue();
 
   void postImpl(CommandBase *command) override;
   void postAndBrodcastImpl(CommandBase *command) override;
@@ -102,7 +103,7 @@ class CommandQueue : public virtual CommandQueueBase {
 
   void suspend() override;
   void resume() override;
-  bool isSuspended() override {
+  bool isSuspended()  override{
     Lock lk(m);
     return suspended;
   }

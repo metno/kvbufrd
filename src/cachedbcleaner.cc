@@ -92,8 +92,9 @@ CacheDbCleaner::operator()()
   LOGINFO("CacheDbCleaner: started");
 
    time(&tNow);
-
-   nextTime=tNow-(tNow%3600)+1800; //Compute the nearest XX:30 hour from current time
+   
+   //Compute the nearest XX:30 hour from current time, at least one hour into future.
+   nextTime=tNow-(tNow%3600)+3600+1800; 
    
    while(!app.shutdown()){
       time(&tNow);

@@ -153,6 +153,8 @@ namespace kvalobs {
        errorFromExecResult = false;
        bool retStatus=false;
 
+       retQue.setName("kvDbGateProxy::insert");
+
        KvDbGateInsertList<T> *command= new KvDbGateInsertList<T>( &retQue, &gate, li, replace, tblName );
 
        try {
@@ -388,6 +390,8 @@ namespace kvalobs {
        KvDbGateSelect<T> *command = new KvDbGateSelect<T>( &retQue, &gate, q, tblName );
        bool retStatus=false;
 
+       retQue.setName("kvDbGateProxy::select");
+       
        try {
           dbQue->postAndBrodcast( command );
           threadutil::CommandBase *ret = retQue.get();
@@ -396,6 +400,7 @@ namespace kvalobs {
           retStatus = retCommand->result;
        }
        catch ( const threadutil::QueSuspended &e) {
+          std::cerr << "kvDbGateProxy::select: Exception: QueSuspended\n";
        }
 
        delete command;
