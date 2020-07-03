@@ -75,7 +75,7 @@ void CommandPriority2Queue::add(Priority2CommandBase *e) {
 
   if( que.size() > 1 ) {
     std::ostringstream o;
-    o << "CommandPriority2Queue::Add: size: " << que.size() << "\n"
+    o << "Add: '" << name << "' size: " << que.size() << "\n"
       << "   add: ";
     e->debugInfo(o);
     o << "--------------------\n";
@@ -85,7 +85,7 @@ void CommandPriority2Queue::add(Priority2CommandBase *e) {
       }
       c->debugInfo(o);
     }
-    IDLOGINFO("debug", o.str());
+    IDLOGDEBUG("priqueue", o.str());
   }
 }
 
@@ -105,9 +105,8 @@ CommandBase *CommandPriority2Queue::select(bool peek)
     e=dynamic_cast<Priority2CommandBase*>(*it);
  
     if( !e ) { //Should never happend. As it is checked at insert.
-      std::cerr <<"CommandPriority2Queue::select: assert failed!\n";
-      LOGFATAL("CommandPriority2Queue::select: assert failed!");
-      IDLOGDEBUG("debug", "CommandPriority2Queue::select: assert failed!");
+      LOGFATAL("CommandPriority2Queue::select: assert failed! '" << name << "'");
+      IDLOGFATAL("priqueue", "select: assert failed! '" << name << "'");
       abort();
     }
  
@@ -119,7 +118,7 @@ CommandBase *CommandPriority2Queue::select(bool peek)
       break;
     }
     if(printDebugHeader) {
-      o << "CommandPriority2Queue::select: que size: " << que.size() << "\n";
+      o << "select: '" << name << "' que size: " << que.size() << "\n";
     }
 
     (*it)->debugInfo(o);
@@ -132,10 +131,10 @@ CommandBase *CommandPriority2Queue::select(bool peek)
       o <<"NO element found!\n";
     }
     if(!suspended ) {
-      IDLOGDEBUG("debug", o.str());
+      IDLOGDEBUG("priqueue", o.str());
       return nullptr;
     }
-    o <<"CommandPriority2Queue::select: SUSPENDED!\n";
+    o <<"select: SUSPENDED!\n";
     cmd = que.front();
     if( ! peek ) {
       que.pop_front();
@@ -149,7 +148,7 @@ CommandBase *CommandPriority2Queue::select(bool peek)
   
   if( printDebugHeader ) {
     if( cmd ) {
-      o <<"CommandPriority2Queue::select: remaining que size: " << qSize-1 << "\nFound: ";
+      o <<"select: '" << name << "' remaining que size: " << qSize-1 << "\nFound: ";
       cmd->debugInfo(o);
     }
   }
@@ -157,7 +156,7 @@ CommandBase *CommandPriority2Queue::select(bool peek)
   if( qSize > 0 ){
     std::string s=o.str();
     if( ! s.empty() ) {
-      IDLOGINFO("debug",o.str());
+      IDLOGDEBUG("priqueue",o.str());
     }
   }
   return cmd;
@@ -167,7 +166,8 @@ void CommandPriority2Queue::postImpl(CommandBase *command) {
   Lock lock(m);
 
   if (suspended) {
-    std::cerr << "CommandPriorityQueue::post: suspended '" << name << "' #: " << que.size()<<"\n";  
+    LOGINFO("CommandPriorityQueue::post: suspended '" << name << "'");
+    IDLOGINFO("priqueue","post: suspended '" << name << "'");
     throw QueSuspended();
   }
   
@@ -185,7 +185,8 @@ void CommandPriority2Queue::postAndBrodcastImpl(CommandBase *command) {
   Lock lock(m);
 
   if (suspended) {
-    std::cerr << "CommandPriorityQueue::postAndBrodcast: suspended '" << name <<"' #: " << que.size() << "\n";  
+    LOGINFO("CommandPriorityQueue::postAndBrodcast: suspended '" << name << "'");
+    IDLOGINFO("priqueue","postAndBrodcast: suspended '" << name << "'");
     throw QueSuspended();
   }
 
@@ -243,20 +244,21 @@ CommandPriority2Queue::getImpl(int timeout) {
   Lock lk(m);
   std::ostringstream o;
   CommandBase *cmd=select(false);
+
+  milog::LogLevel ll = milog::Logger::logger("priqueue").logLevel();
+  
   if ( !cmd) {
     if (suspended && que.empty()) {
-      std::cerr << "CommandPriorityQueue::getImpl: suspended '" << name <<"' #: " << que.size() << "\n";  
-      LOGINFO("CommandPriorityQueue::getImpl: suspended '" << name <<"' #: " << que.size() );
-      IDLOGINFO("debug","CommandPriorityQueue::getImpl: suspended '" << name <<"' #: " << que.size() );
+      LOGINFO("CommandPriorityQueue::getImpl: '" << name << "' suspended!");
+      IDLOGINFO("priqueue","getImpl: '" << name << "' suspended!");
       throw QueSuspended();
     }
 
     if (timeout == 0) {
       while (!cmd ) {
         if (suspended && que.empty()) {
-          std::cerr << "CommandPriority2Queue::getImpl: suspended '" << name <<"' #: " << que.size() << "\n";  
-          LOGINFO("CommandPriority2Queue::getImpl: suspended '" << name <<"' #: " << que.size());
-          IDLOGINFO("debug","CommandPriority2Queue::getImpl: suspended '" << name <<"' #: " << que.size());
+          LOGINFO("CommandPriority2Queue::getImpl: '" << name << "' suspended!");
+          IDLOGINFO("priqueue","getImpl: '" << name << "' suspended! ");
           throw QueSuspended();
         }
         cond.wait(lk);
@@ -267,9 +269,8 @@ CommandPriority2Queue::getImpl(int timeout) {
       cmd=select(false);
       if (!cmd ) {
         if (suspended && que.empty()) {
-          std::cerr << "CommandPriorityQueue::getImpl: suspended '" << name <<"' #: " << que.size() << "\n";  
-          LOGINFO("CommandPriorityQueue::getImpl: suspended '" << name <<"' #: " << que.size());
-          IDLOGINFO("debug","CommandPriorityQueue::getImpl: suspended '" << name <<"' #: " << que.size());
+          LOGINFO("CommandPriorityQueue::getImpl: '" << name << "' suspended!");
+          IDLOGINFO("priqueue","getImpl: '" << name << "' suspended!");
           throw QueSuspended();
         }
         return nullptr;
@@ -281,10 +282,13 @@ CommandPriority2Queue::getImpl(int timeout) {
     cmd = select(false);
   }
 
+  if(! que.empty()) {
+    IDLOGINFO("priqueue", "getImpl '" << name << "' : que size: " << que.size());
+  }
   std::string s=o.str();
   
   if( !s.empty() ) {
-    IDLOGINFO("debug", o.str());
+    IDLOGDEBUG("priqueue", o.str());
   }
   
   return cmd;

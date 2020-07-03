@@ -271,6 +271,8 @@ BufrWorker::operator()()
   ObsEvent* event;
   bool quit=false;
 
+  milog::Logger::logger("priqueue").logLevel(app.priorityQueLogLevel);
+
   milog::LogContext context("BufrWorker");
 
   while (!quit) {

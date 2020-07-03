@@ -98,6 +98,8 @@ main(int argn, char **argv)
    std::shared_ptr<threadutil::CommandQueue> newDataQue(new threadutil::CommandQueue());
    std::shared_ptr<threadutil::CommandPriority2Queue> newObsQue(new threadutil::CommandPriority2Queue());
 
+   IDLOGINFO("main", "main Priority loglevel: " << milog::Logger::logger("priqueue").logLevel());
+
    newDataQue->setName("newDataQue");
    newObsQue->setName("newObsQue");
 
