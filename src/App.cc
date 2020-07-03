@@ -39,6 +39,7 @@
 #include <thread>
 #include <chrono>
 #include <mutex>
+#include <tuple>
 #include "boost/version.hpp"
 #include "boost/filesystem.hpp"
 #include "milog/milog.h"
@@ -269,6 +270,54 @@ void App::setObslogfile(Opt &opt, miutil::conf::ConfSection *conf) {
   opt.obslogfile = path.string();
 }
 
+namespace {
+milog::LogLevel getLogLevel(miutil::conf::ConfSection *conf, const std::string &var, milog::LogLevel defaultLogLevel=milog::INFO) {
+  ValElementList valElem = conf->getValue(var);
+  
+  if (!valElem.empty()) {
+    std::string level = valElem[0].valAsString();
+    milog::LogLevel ll = parseMilogLogLevel(level);
+
+    if (ll != milog::NOTSET)
+       return ll;
+  }
+  return defaultLogLevel;
+}
+
+//Setting loglevel here does nor work, why ?
+std::tuple<bool, milog::LogLevel> createPriorityGlobalLogger(miutil::conf::ConfSection *conf, const std::string &logdir, const std::string &progname ) {
+  const std::string quename="priqueue";
+  const std::string logname=progname+"_"+quename;
+  const std::string logLevel=quename+"_loglevel";
+
+  auto ll=getLogLevel(conf, logLevel, milog::INFO);
+  
+  IDLOGINFO("main","Creating logger '" << logname << "' id '" << quename << "' " << logLevel << "=" << logLevelToStr(ll) );
+
+  auto ret=milog::createGlobalLogger(logdir, progname, quename, ll, 10*1024*1024, 2, new milog::StdLayout1());
+  if(!ret) {
+    IDLOGERROR("main","Failed to create priority logger '" <<logname << "'.");
+    return std::make_tuple(false, ll);
+  }
+  
+  IDLOGINFO("main", "Priority queue '" << logLevel << "' " << logLevelToStr(ll) << " " << logname); 
+
+  milog::LogManager *manager = milog::LogManager::instance();
+
+  if (manager) {
+    milog::Logger &logger = milog::Logger::logger(quename);
+    logger.logLevel(ll);
+    IDLOGINFO("main","Priority queue 'actual' " << logLevelToStr(logger.logLevel()) ); 
+  } else {
+    IDLOGERROR("main","createPriorityGlobalLogger: failed to get the LogManager.");
+  }
+
+  
+  return std::make_tuple(false, ll);
+}
+
+}
+
 App::App(int argn, char **argv, Opt &opt, miutil::conf::ConfSection *conf)
     : kvDbPool([this]() {return createKvDbConnection();}, [this](dnmi::db::Connection *con) {releaseKvDbConnection(con);} ),
       DbQuery([this]() {return kvDbPool.get();}),
@@ -277,7 +326,8 @@ App::App(int argn, char **argv, Opt &opt, miutil::conf::ConfSection *conf)
       hasStationWaitingOnCacheReload(false),
       acceptAllTimes_(false),
       defaultLogLevel(milog::INFO),
-      options(opt) {
+      options(opt),
+      priorityQueLogLevel(milog::INFO) {
   ValElementList valElem;
   string val;
   string bufr_tables(DATADIR);
@@ -297,17 +347,7 @@ App::App(int argn, char **argv, Opt &opt, miutil::conf::ConfSection *conf)
     EncodeBufrManager::masterBufrTable = valElem.valAsInt(31);
   }
 
-
-
-  valElem = conf->getValue("loglevel");
-
-  if (!valElem.empty()) {
-    std::string slevel = valElem[0].valAsString();
-    milog::LogLevel ll = parseMilogLogLevel(slevel);
-
-    if (ll != milog::NOTSET)
-      defaultLogLevel = ll;
-  }
+  defaultLogLevel=getLogLevel(conf, "loglevel", defaultLogLevel);
 
   milog::LogManager *manager = milog::LogManager::instance();
 
@@ -325,10 +365,11 @@ App::App(int argn, char **argv, Opt &opt, miutil::conf::ConfSection *conf)
   createGlobalLogger("DataReceiver");
   milog::createGlobalLogger(logdir, opt.progname, "kafka_received", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
   milog::createGlobalLogger(logdir, opt.progname, "datareceiver_saved", milog::DEBUG, 10*1024, 10, new milog::StdLayout1());
-  //milog::createGlobalLogger(logdir, opt.progname, "observation", milog::DEBUG, 1024, 1, new milog::StdLayout1());
   milog::createGlobalLogger(logdir, opt.progname, "cachedb", milog::DEBUG, 500, 2, new milog::StdLayout1());
-  milog::createGlobalLogger(logdir, opt.progname, "debug", milog::DEBUG1, 10*1024*1024, 2, new milog::StdLayout1());
- 
+  auto priQue = createPriorityGlobalLogger(conf, logdir, opt.progname);
+
+  priorityQueLogLevel=std::get<1>(priQue);
+  
   setObslogfile(options, conf);
   IDLOGINFO("main", "Writing observation (metriccs) to obslogfile: " << options.obslogfile);
   LOGINFO("Writing observation (metrics) to obslogfile: " << options.obslogfile);
@@ -910,7 +951,7 @@ bool App::getDataFrom(const pt::ptime &t, int wmono, int hours, std::shared_ptr<
     return false;
   }
 
-  Lock lock(mutex);
+  Lock lock(mutexGetDataThreads);
 
   getDataThreads.push_back(getData);
 
@@ -918,7 +959,7 @@ bool App::getDataFrom(const pt::ptime &t, int wmono, int hours, std::shared_ptr<
 }
 
 bool App::joinGetDataThreads(bool waitToAllIsJoined, const std::string &logid) {
-  Lock lock(mutex);
+  Lock lock(mutexGetDataThreads);
   std::list<GetData*>::iterator it = getDataThreads.begin();
   bool joined = false;
 

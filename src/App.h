@@ -107,6 +107,7 @@ class App : public kvalobs::sql::DbQuery {
 
 
   mutable Mutex mutex;
+  mutable Mutex mutexGetDataThreads; //Mutex to protect getDataThreads
 
   void readDatabaseConf(miutil::conf::ConfSection *conf);
   void setObslogfile(Opt &opt, miutil::conf::ConfSection *conf);
@@ -115,6 +116,7 @@ class App : public kvalobs::sql::DbQuery {
 
   static App *kvApp;
   Opt options;
+  milog::LogLevel priorityQueLogLevel;
 
   std::shared_ptr<kvalobs::KvDbGateProxyThread> dbThread;
 
