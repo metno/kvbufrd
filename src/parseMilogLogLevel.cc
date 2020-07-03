@@ -29,58 +29,90 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <strings.h>
 #include "parseMilogLogLevel.h"
+#include <strings.h>
 
 milog::LogLevel
-parseMilogLogLevel(const std::string &logLevel)
+parseMilogLogLevel(const std::string& logLevel)
 {
-   if( strcasecmp(logLevel.c_str(),"FATAL") == 0 ){
-      return milog::FATAL;
-   }else if( strcasecmp(logLevel.c_str(),"ERROR") == 0 ){
-      return milog::ERROR;
-   }else if( strcasecmp(logLevel.c_str(),"WARN") == 0 ){
-      return milog::WARN;
-   }else if( strcasecmp(logLevel.c_str(),"DEBUG") == 0 ){
-      return milog::DEBUG;
-   }else if( strcasecmp(logLevel.c_str(),"DEBUG1") == 0 ){
-      return milog::DEBUG1;
-   }else if( strcasecmp(logLevel.c_str(),"DEBUG2") == 0 ){
-      return milog::DEBUG2;
-   }else if( strcasecmp(logLevel.c_str(),"DEBUG3") == 0 ){
-      return milog::DEBUG3;
-   }else if( strcasecmp(logLevel.c_str(),"DEBUG4") == 0 ){
-      return milog::DEBUG4;
-   }else if( strcasecmp(logLevel.c_str(),"DEBUG5") == 0 ){
-      return milog::DEBUG5;
-   }else if( strcasecmp(logLevel.c_str(),"DEBUG6") == 0 ){
-      return milog::DEBUG6;
-   }else if( strcasecmp(logLevel.c_str(),"INFO") == 0 ){
-      return milog::INFO;
-   }else if( logLevel == "0" ){
-      return milog::FATAL;
-   }else if( logLevel == "1" ){
-      return milog::ERROR;
-   }else if( logLevel == "2" ){
-      return milog::WARN;
-   }else if( logLevel == "3" ){
-      return milog::INFO;
-   }else if( logLevel == "4" ){
-      return milog::DEBUG;
-   }else if( logLevel == "5" ){
-      return milog::DEBUG1;
-   }else if( logLevel == "6" ){
-      return milog::DEBUG2;
-   }else if( logLevel == "7" ){
-      return milog::DEBUG3;
-   }else if( logLevel == "8" ){
-      return milog::DEBUG4;
-   }else if( logLevel == "9" ){
-      return milog::DEBUG5;
-   }else if( logLevel == "10" ){
-      return milog::DEBUG6;
-   }else{
-      return milog::NOTSET;
-   }
+  if (strcasecmp(logLevel.c_str(), "FATAL") == 0) {
+    return milog::FATAL;
+  } else if (strcasecmp(logLevel.c_str(), "ERROR") == 0) {
+    return milog::ERROR;
+  } else if (strcasecmp(logLevel.c_str(), "WARN") == 0) {
+    return milog::WARN;
+  } else if (strcasecmp(logLevel.c_str(), "DEBUG") == 0) {
+    return milog::DEBUG;
+  } else if (strcasecmp(logLevel.c_str(), "DEBUG1") == 0) {
+    return milog::DEBUG1;
+  } else if (strcasecmp(logLevel.c_str(), "DEBUG2") == 0) {
+    return milog::DEBUG2;
+  } else if (strcasecmp(logLevel.c_str(), "DEBUG3") == 0) {
+    return milog::DEBUG3;
+  } else if (strcasecmp(logLevel.c_str(), "DEBUG4") == 0) {
+    return milog::DEBUG4;
+  } else if (strcasecmp(logLevel.c_str(), "DEBUG5") == 0) {
+    return milog::DEBUG5;
+  } else if (strcasecmp(logLevel.c_str(), "DEBUG6") == 0) {
+    return milog::DEBUG6;
+  } else if (strcasecmp(logLevel.c_str(), "INFO") == 0) {
+    return milog::INFO;
+  } else if (logLevel == "0") {
+    return milog::FATAL;
+  } else if (logLevel == "1") {
+    return milog::ERROR;
+  } else if (logLevel == "2") {
+    return milog::WARN;
+  } else if (logLevel == "3") {
+    return milog::INFO;
+  } else if (logLevel == "4") {
+    return milog::DEBUG;
+  } else if (logLevel == "5") {
+    return milog::DEBUG1;
+  } else if (logLevel == "6") {
+    return milog::DEBUG2;
+  } else if (logLevel == "7") {
+    return milog::DEBUG3;
+  } else if (logLevel == "8") {
+    return milog::DEBUG4;
+  } else if (logLevel == "9") {
+    return milog::DEBUG5;
+  } else if (logLevel == "10") {
+    return milog::DEBUG6;
+  } else {
+    return milog::NOTSET;
+  }
 }
 
+std::string
+logLevelToStr(const milog::LogLevel ll)
+{
+  switch (ll) {
+    case milog::FATAL:
+      return "FATAL";
+    case milog::ERROR:
+      return "ERROR";
+    case milog::WARN:
+      return "WARN";
+    case milog::INFO:
+      return "INFO";
+    case milog::DEBUG:
+      return "DEBUG";
+    case milog::DEBUG1:
+      return "DEBUG1";
+    case milog::DEBUG2:
+      return "DEBUG2";
+    case milog::DEBUG3:
+      return "DEBUG3";
+    case milog::DEBUG4:
+      return "DEBUG4";
+    case milog::DEBUG5:
+      return "DEBUG5";
+    case milog::DEBUG6:
+      return "DEBUG6";
+    case milog::NOTSET:
+      return "NORTSET";
+    default:
+      return "<unknown>";
+  }
+}

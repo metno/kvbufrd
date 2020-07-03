@@ -38,7 +38,6 @@
 
 milog::LogLevel parseMilogLogLevel(const std::string &logLevel);
 
-
-
-
+std::string logLevelToStr(const milog::LogLevel ll);
+ 
 #endif
