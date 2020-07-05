@@ -1,4 +1,17 @@
-kvbufrd (3.0.7~rc3-1) xenial; urgency=low
+kvbufrd (3.0.7-1) xenial; urgency=low
+  * Fix kvbufrconf for SVV stations.
+  * Some minor fixes in startup code. Do not reload data allready loaded. 
+  * Reduce number of recomputation of BUFR when a timeserie is changed.
+  * Rwrite to use standard library for shared_ptr, thread, mutex and 
+    condition_variable instead of boost. 
+  * Implement a priority queue for generating BUFR (bufrworker). At
+    the momment newst observations is comuted first. Most of the time 
+    the queue will have only one observation in flight. 
+  * Fix a deadlock at exit. 
+
+ -- Kvalobs <kvalobs@met.no> Sun, 5 Jul 2020 13:00:00 +0200
+
+kvbufrd (3.0.7~rc4-1) xenial; urgency=low
   * Fix kvbufrconf for SVV stations.
   * Some minor fixes in startup code. Do not reload data allready loaded. 
   * Reduce number of recomputation of BUFR when a timeserie is changed.
@@ -12,8 +25,22 @@ kvbufrd (3.0.7~rc3-1) xenial; urgency=low
  -- Kvalobs <kvalobs@met.no> Fri, 3 Jul 2020 14:00:00 +0200
 
 
+kvbufrd (3.0.7~rc3-1) xenial; urgency=low
+  * Fix kvbufrconf for SVV stations.
+  * Some minor fixes in startup code. Do not reload data allready loaded. 
+  * Reduce number of recomputation of BUFR when a timeserie is changed.
+  * Rwrite to use standard library for shared_ptr, thread, mutex and 
+    condition_variable instead of boost. 
+  * Implement a priority queue for generating BUFR (bufrworker). At
+    the momment newst observations is computed first. Most of the time 
+    the queue will have only one observation in flight. 
+  * Fix a deadlock at exit. 
+
+ -- Kvalobs <kvalobs@met.no> Fri, 3 Jul 2020 14:00:00 +0200
+
+
 kvbufrd (3.0.7~rc2-1) xenial; urgency=low
-* Fix kvbufrconf for SVV stations.
+  * Fix kvbufrconf for SVV stations.
   * Some minor fixes in startup code. Do not reload data allready loaded. 
   * Reduce number of recomputation of BUFR when a timeserie is changed.
   * Rwrite to use standard library for shared_ptr, thread, mutex and 
