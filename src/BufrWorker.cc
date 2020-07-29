@@ -727,7 +727,7 @@ BufrWorker::newObs(ObsEvent& event)
       ostringstream dataOst;
 
       bufrData.writeTo(dataOst, true, debug);
-      if (saveTo(bufrHelper, ccx, &base64)) {
+      if (saveTo(bufrHelper, ccx, (debug?&base64:nullptr))) { //only save BUFR to the cachedb if debug is true
         if (app.saveBufrData(TblBufr(info->wmono(),
                                      info->stationID(),
                                      info->callsign(),
