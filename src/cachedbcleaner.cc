@@ -44,12 +44,19 @@ using namespace miutil;
 namespace pt=boost::posix_time;
 
 namespace {
-  const char* cleanSql[] = {
+/*   const char* cleanSql[] = {
     "delete from data where tbtime<date('now', '-8 day');",
     "delete from bufr where tbtime<date('now', '-31 day');",
     "VACUUM;",
     0 
   };
+ */
+  const char* cleanSql[] = {
+    "delete from data where tbtime<date('now', '-8 day');",
+    "delete from bufr where tbtime<date('now', '-31 day');",
+    0 
+  };
+
 }
 
 
