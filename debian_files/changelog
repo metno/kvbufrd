@@ -1,3 +1,11 @@
+kvbufrd (3.0.8~rc1-1) xenial; urgency=low
+  * Only save BUFR in the cachedb if loglevel for the station is greater
+    or equal to DEBUG.
+  * disable VACUUM (compacting) of the cachedb.
+
+ -- Kvalobs <kvalobs@met.no>  Wed, 29 Jul 2020 16:30:00 +0200
+
+
 kvbufrd (3.0.7-1) xenial; urgency=low
   * Fix kvbufrconf for SVV stations.
   * Some minor fixes in startup code. Do not reload data allready loaded. 
