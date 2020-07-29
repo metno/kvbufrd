@@ -539,7 +539,7 @@ doDefLogLevel( miconf::ValElementList &vl)
    IValElementList it=vl.begin();
 
    if(it==vl.end())
-      return milog::NOTSET;
+      return milog::INFO;
 
    val=it->valAsString();
 
