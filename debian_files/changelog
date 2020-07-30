@@ -1,3 +1,11 @@
+kvbufrd (3.0.8-1) xenial; urgency=low
+  * Only save BUFR in the cachedb if loglevel for the station is greater
+    or equal to DEBUG.
+  * disable VACUUM (compacting) of the cachedb.
+
+ -- Kvalobs <kvalobs@met.no>  Thu, 30 Jul 2020 08:30:00 +0200
+
+
 kvbufrd (3.0.8~rc1-1) xenial; urgency=low
   * Only save BUFR in the cachedb if loglevel for the station is greater
     or equal to DEBUG.
@@ -17,7 +25,7 @@ kvbufrd (3.0.7-1) xenial; urgency=low
     the queue will have only one observation in flight. 
   * Fix a deadlock at exit. 
 
- -- Kvalobs <kvalobs@met.no> Sun, 5 Jul 2020 13:00:00 +0200
+ -- Kvalobs <kvalobs@met.no>  Sun, 5 Jul 2020 13:00:00 +0200
 
 kvbufrd (3.0.7~rc4-1) xenial; urgency=low
   * Fix kvbufrconf for SVV stations.
@@ -30,7 +38,7 @@ kvbufrd (3.0.7~rc4-1) xenial; urgency=low
     the queue will have only one observation in flight. 
   * Fix a deadlock at exit. 
 
- -- Kvalobs <kvalobs@met.no> Fri, 3 Jul 2020 14:00:00 +0200
+ -- Kvalobs <kvalobs@met.no>  Fri, 3 Jul 2020 14:00:00 +0200
 
 
 kvbufrd (3.0.7~rc3-1) xenial; urgency=low
@@ -44,7 +52,7 @@ kvbufrd (3.0.7~rc3-1) xenial; urgency=low
     the queue will have only one observation in flight. 
   * Fix a deadlock at exit. 
 
- -- Kvalobs <kvalobs@met.no> Fri, 3 Jul 2020 14:00:00 +0200
+ -- Kvalobs <kvalobs@met.no>  Fri, 3 Jul 2020 14:00:00 +0200
 
 
 kvbufrd (3.0.7~rc2-1) xenial; urgency=low
