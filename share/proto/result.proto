@@ -1,0 +1,34 @@
+syntax="proto3"
+
+message CreateResult {
+  enum Result {
+    OK = 0;
+    DUPLICATE = 1;
+    ERROR=2;
+  }
+  Result result = 1;
+  string message = 2;  
+  uint64 crc=3;
+  repeated bytes bufr=4;
+}
+
+message KeyVal {
+  string key =   1;
+  repeated val = 2;
+}
+
+message BufrCreate {
+  enum DataTypes {
+    KV2KL_XML=1;
+    KV2KL_PROTO=2;
+  };
+
+  bool createGTSHeader=1;
+  int32  ccx=2;   //ccx to use, 0 if no BUFR exist.
+  string owner=3;
+  string list=4;
+  uint64 crc=5;  //crc of old BUFR, if a previous BUFR allready exist. 
+  repeated config = 6; 
+  DataTypes datatype=7;
+  bytes  data=8; 
+}
