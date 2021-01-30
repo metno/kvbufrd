@@ -1,3 +1,14 @@
+kvbufrd (3.0.9~rc2-1) xenial; urgency=low
+  * Actually add encoder 302045 to the list of encoders.
+  
+ -- Kvalobs <kvalobs@met.no>  Sat, 30 Jan 2021 07:45:00 +0100
+
+kvbufrd (3.0.9~rc1-1) xenial; urgency=low
+  * Encode radiation in template TM307079
+  
+ -- Kvalobs <kvalobs@met.no>  Fri, 29 Jan 2021 16:00:00 +0100
+
+
 kvbufrd (3.0.8-1) xenial; urgency=low
   * Only save BUFR in the cachedb if loglevel for the station is greater
     or equal to DEBUG.

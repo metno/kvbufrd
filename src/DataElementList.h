@@ -165,6 +165,10 @@ private:
   	KvParam ITR;
   	KvParam OT_1;
   	KvParam OT_24;
+		KvParam QLI; //Long-wave radiation, integrated over period specified
+		KvParam QSI; //Global solar radiation (high accuracy), integrated over period specified
+		KvParam QD;  //Diffuse solar radiation (high accuracy), integrated over period specified
+		KvParam QS;  //Direct solar radiation (high accuracy), integrated over period specified
   	KvParam MDIR; //Direction of motion of moving observing platform/ship.
   	KvParam MSPEED; //Speed of motion of moving observing platform/ship.
   	KvParam MLAT; //Latitude of ship/platform.

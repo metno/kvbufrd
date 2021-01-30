@@ -62,6 +62,7 @@
 #include "EncodeBufr302041.h"
 #include "EncodeBufr302042.h"
 #include "EncodeBufr302043.h"
+#include "EncodeBufr302045.h"
 #include "EncodeBufr302052.h"
 #include "EncodeBufr302053.h"
 #include "EncodeBufr302054.h"
@@ -128,6 +129,7 @@ EncodeBufrManager()
    addEncoder( new EncodeBufr302041() );
    addEncoder( new EncodeBufr302042() );
    addEncoder( new EncodeBufr302043() );
+   addEncoder( new EncodeBufr302045() );
    addEncoder( new EncodeBufr302052() );
    addEncoder( new EncodeBufr302053() );
    addEncoder( new EncodeBufr302054() );

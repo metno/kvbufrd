@@ -125,9 +125,13 @@ encode(  )
 
    /* 3 02 045
     * Radiation data (1 hour and 24 hour period)
-    * Not implemented.
     */
-   bufr->addDelayedReplicationFactor( 31000, 0, "Delayed replication");
+   if( data->QLI.valid() || data->QSI.valid() || data->QD.valid() || data->QS.valid()) {
+      bufr->addDelayedReplicationFactor( 31001, 1, "Delayed replication");
+      encodeTemplate(302045);
+   } else {
+      bufr->addDelayedReplicationFactor( 31001, 0, "Delayed replication");
+   }
 
    /* 3 02 046
     * Temperature change (54g0sndT)

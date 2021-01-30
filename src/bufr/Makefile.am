@@ -46,6 +46,7 @@ libbufr_la_SOURCES = \
     EncodeBufr302041.cc EncodeBufr302041.h \
     EncodeBufr302042.cc EncodeBufr302042.h \
     EncodeBufr302043.cc EncodeBufr302043.h \
+    EncodeBufr302045.cc EncodeBufr302045.h \
     EncodeBufr302052.cc EncodeBufr302052.h \
     EncodeBufr302053.cc EncodeBufr302053.h \
     EncodeBufr302054.cc EncodeBufr302054.h \
