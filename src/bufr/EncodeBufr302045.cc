@@ -61,13 +61,13 @@ void
 EncodeBufr302045::
 encode( )
 {
-  
+
   bufr->addValue(4024, static_cast<float>(-1), "Time period in hours", false, "Radiation period" );
-  bufr->addValue(14002, (data->QLI.valid()?data->QLI:FLT_MAX), "Long-wave radiation, integrated over period specified", true, "Radiation");
+  bufr->addValue(14002, (data->QLI.valid()?data->QLI*3600:FLT_MAX), "Long-wave radiation, integrated over period specified", true, "Radiation");
   bufr->addValue(14004, FLT_MAX, "Short-wave radiation, integrated over period specified", false, "Radiation");
   bufr->addValue(14016, FLT_MAX, "Net radiation, integrated over period specified", false, "Radiation");
-  bufr->addValue(14028, (data->QSI.valid()?data->QSI:FLT_MAX), "Global solar radiation (high accuracy), integrated over period specified", true, "Radiation");
-  bufr->addValue(14029, (data->QD.valid()?data->QD:FLT_MAX), "Diffuse solar radiation (high accuracy), integrated over period specified", true, "Radiation");   
-  bufr->addValue(14030, (data->QS.valid()?data->QS:FLT_MAX), "Direct solar radiation (high accuracy), integrated over period specified", true, "Radiation");   
+  bufr->addValue(14028, (data->QSI.valid()?data->QSI*3600:FLT_MAX), "Global solar radiation (high accuracy), integrated over period specified", true, "Radiation");
+  bufr->addValue(14029, (data->QD.valid()?data->QD*3600:FLT_MAX), "Diffuse solar radiation (high accuracy), integrated over period specified", true, "Radiation");   
+  bufr->addValue(14030, (data->QS.valid()?data->QS*3600:FLT_MAX), "Direct solar radiation (high accuracy), integrated over period specified", true, "Radiation");   
 }
 

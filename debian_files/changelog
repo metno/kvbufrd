@@ -1,7 +1,8 @@
 kvbufrd (3.0.9~rc2-1) xenial; urgency=low
   * Actually add encoder 302045 to the list of encoders.
+  * The value from the radiation sensors must scaled.
   
- -- Kvalobs <kvalobs@met.no>  Sat, 30 Jan 2021 07:45:00 +0100
+ -- Kvalobs <kvalobs@met.no>  Mon, 1 Feb 2021 13:15:00 +0100
 
 kvbufrd (3.0.9~rc1-1) xenial; urgency=low
   * Encode radiation in template TM307079
