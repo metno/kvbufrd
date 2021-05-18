@@ -162,11 +162,14 @@ bool
 EncodeBufrManager::
 addEncoder( EncodeBufrBase *encoder_ )
 {
-   b::shared_ptr<EncodeBufrBase> encoder( encoder_ );
-   std::list<int> ids = encoder->encodeIds();
+   using namespace std;
 
-   for( std::list<int>::iterator it=ids.begin(); it != ids.end(); ++it )
-      encoders[*it] = encoder;
+   b::shared_ptr<EncodeBufrBase> encoder( encoder_ );
+   list<int> ids = encoder->encodeIds();
+   for( auto it : ids) {
+     encoders[it] = encoder;
+   }
+   return true;
 }
 
 void

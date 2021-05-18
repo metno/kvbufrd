@@ -37,8 +37,15 @@ using namespace std;
 
 
 EncodeBufrBase::
-EncodeBufrBase()
-    : validValues( false ), nValidValues( 0 )
+EncodeBufrBase():
+    supportReplication(false),
+    iValueOld(0),
+    templateid(0),
+    validValues( false ),
+    nValidValues( 0 ),
+    bufr(nullptr),
+    encodeMgr(nullptr),
+    replicator(0)
 {
 }
 
