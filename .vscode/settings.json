@@ -56,5 +56,6 @@
     "stack": "cpp",
     "strstream": "cpp",
     "utility": "cpp"
-  }
+  },
+  "git.ignoreLimitWarning": true
 }

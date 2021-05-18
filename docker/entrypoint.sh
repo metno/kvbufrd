@@ -59,14 +59,16 @@ kill_pid() {
 
 echo "ENTRYPOINT: NARGS: $# ARGS: '$@'"
 
+
 echo "getent: $(getent passwd kvalobs)"
 echo "id: $(id -u)"
-echo "app: '$app'  $#"
 
 if [ $# -gt 0 ]; then
    app=$1
    shift 
 fi
+
+echo "app: '$app'  $#"
 
 if [ "$app" != "bash" ]; then
   echo "ENTRYPOINT $app"
@@ -100,7 +102,7 @@ if [ "$app" != "bash" ]; then
 
   #return the exitcode for the process that died in the first place.
   exit $ec  
-elif [ "$1" = "bash" ]; then
+elif [ "$app" = "bash" ]; then
     echo "ENTRYPOINT starting bash!"
     /bin/bash
 else
