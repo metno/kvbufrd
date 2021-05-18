@@ -52,6 +52,7 @@ const std::string sqliteDriver("sqlite3driver");
 std::mutex mu;
 bool driverLoaded = false;
 //CREATE TABLE data (stationid integer, obstime timestamp, tbtime timestamp   DEFAULT CURRENT_TIMESTAMP, original text, paramid integer, typeid integer, sensor integer, level integer, controlinfo text, useinfo text,  UNIQUE(stationid, obstime, paramid, typeid, level, sensor))
+
 const char* cacheSchema[] = {
   "CREATE TABLE data (stationid integer, obstime timestamp, tbtime timestamp "
   "  DEFAULT CURRENT_TIMESTAMP, original text, paramid integer, typeid integer, "
@@ -75,6 +76,50 @@ const char* cacheSchema[] = {
   "PRAGMA user_version = 1;",
   0
 };
+
+
+const char *cacheSchemaMeta[] = {
+  "CREATE TABLE ccx(wmono integer, id integer, callsign text, code text, "
+  "  obstime timestamp, createtime timestamp, crc integer, ccx integer, "
+  "  tbtime timestamp DEFAULT CURRENT_TIMESTAMP, "
+  " UNIQUE(wmono, id, callsign, code, obstime)"
+  ");",
+  "CREATE TABLE waiting( wmono integer, id integer, callsign text, code integer, "
+  "  note text, obstime timestamp, delaytime timestamp, "
+  " UNIQUE(wmono, id, callsign, code,  obstime) "
+  ");",
+  "CREATE TABLE keyval(key text, val text, UNIQUE(key));",
+  "PRAGMA user_version = 2;",
+  0
+};
+
+const char *cacheSchemaBufr[] = {
+  "CREATE TABLE bufr(wmono integer, id integer, callsign text, code text, "
+  "  obstime timestamp, ccx integer, bufrBase64 text, "
+  "  tbtime timestamp DEFAULT CURRENT_TIMESTAMP, "
+  " UNIQUE(wmono, id, callsign, code, obstime, ccx)"
+  ");",
+  "CREATE INDEX bufr_obstime_index on bufr (obstime);",
+  "PRAGMA user_version = 2;",
+  0
+};
+
+const char* cacheSchemaData[] = {
+  "CREATE TABLE data (stationid integer, obstime timestamp, tbtime timestamp "
+  "  DEFAULT CURRENT_TIMESTAMP, original text, paramid integer, typeid integer, "
+  "  sensor integer, level integer, controlinfo text, useinfo text, "
+  " UNIQUE(stationid, obstime, paramid, typeid, level, sensor)"
+  ");",
+  "CREATE INDEX data_stationid_obstime_index on data (stationid,obstime);",
+  "CREATE INDEX data_tbtime_index on data (tbtime);",
+  "CREATE INDEX bufr_tbtime_index on data (tbtime);",
+  "PRAGMA user_version = 2;",
+  0
+};
+
+
+
+
 
 const char *truncateTbls[] = {
   "data",
@@ -168,6 +213,32 @@ truncateCacheDB(const std::string &cachedb)
       << "'. Error: " << ex.what());
     cerr << "Failed to trucate tables. Failed table '" << tbl << "' cacheDB schema '" << cachedb
       << "'. Error: " << ex.what();
+    releaseConnection(con);
+    unlink(cachedb.c_str());
+    exit(2);
+  }
+}
+
+void createCacheWithSchema(const std::string &cachedb, const char *schemaName, const char *schema[]){
+  db::Connection* con = connect(cacheDbDriverId, cachedb);
+  if (!con) {
+    LOGFATAL("Failed to create cacheDB '"<< cachedb << ", schema '" << schemaName << "'. Error: " << getErr());
+   cerr << "Failed to create cacheDB '"<< cachedb << ", schema '" << schemaName << "'. Error: " << getErr() << endl << endl;
+   exit(2);
+  }
+  
+  try {
+    for (int i = 0; schema[i]; ++i) {
+      con->exec(schema[i]);
+    }
+    releaseConnection(con);
+    IDLOGINFO("cachedb", "Created cacheDB '" << cachedb << "', schema '" << schemaName<< "'.");
+    LOGINFO("Created cacheDB '" << cachedb << "', schema '" << schemaName << "'.");
+    cerr << "Created cacheDB '" << cachedb << "', schema '" << schemaName << "'." << endl;
+  } catch (const exception& ex) {
+    IDLOGFATAL("cachedb", "Created cacheDB '" << cachedb << "', schema '" << schemaName<< 
+      "'. Error: " << ex.what());
+    LOGFATAL("Created cacheDB '" << cachedb << "', schema '" << schemaName<< "'. Error: " << ex.what());
     releaseConnection(con);
     unlink(cachedb.c_str());
     exit(2);
