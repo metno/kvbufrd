@@ -77,21 +77,25 @@ done
 echo "tag: $tag"
 echo "mode: $mode"
 echo "os: $os"
-echo "registry: $regisrtry"
 echo "Build mode: $mode"
 echo "targets: $targets"
-echo "kvcpp registry: $kvcpp_registry"
-echo "kvcpp tag: $kvcpp_tag"
 
 
 
-if [ $mode = test ]; then 
+if [ "$mode" = "test" ]; then 
   kvuserid=$(id -u)
   registry=""
   kvcpp_registry="$kvcpp_registry/staging/"
 else 
+  kvcpp_registry="$kvcpp_registry/$mode/"
   registry="$registry/$mode/"
 fi
+
+echo "registry: $registry"
+echo "tag: $tag"
+echo "kvcpp registry: $kvcpp_registry"
+echo "kvcpp tag: $kvcpp_tag"
+
 
 for target in $targets ; do
   docker build $nocache --target $target --build-arg "REGISTRY=${kvcpp_registry}" --build-arg="BASE_IMAGE_TAG=${kvcpp_tag}" \
