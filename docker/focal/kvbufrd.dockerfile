@@ -36,14 +36,29 @@ WORKDIR /build
 
 ENTRYPOINT [ "/bin/bash" ]
 
-RUN --mount=type=cache,target=/build cd /src && autoreconf -if && cd /build && /src/configure --prefix=/usr \
+RUN --mount=type=cache,target=/build cd /src \
+  && autoreconf -if && cd /build &&\
+  /src/configure \
+  --prefix=/usr \
  	--localstatedir=/var \
  	--mandir=/usr/share/man \
+   --sysconfdir=/etc \
  	--with-boost-libdir=/usr/lib/x86_64-linux-gnu/ \
- 	LDFLAGS="-Wl,-z,defs" CFLAGS=-g && \
+ 	LDFLAGS="-Wl,-z,defs" CFLAGS=-g &&\
   make && make install
 
 # ENTRYPOINT [ "/bin/bash" ]
+
+
+#Get metno-bufrtables from the repository
+FROM ubuntu:focal AS bufrtables
+RUN apt-get update && apt-get install -y git
+#Get the metno-bufrtables
+
+RUN mkdir -p /usr/share/metno-bufrtables/tmp && cd /usr/share/metno-bufrtables/tmp && \
+  git clone https://gitlab.met.no/it-geo/metno-bufrtables.git && \
+  cp metno-bufrtables/bufrtables/* .. && cd .. && rm -rf tmp/
+
 
 
 FROM ${REGISTRY}focal-kvcpp-runtime:${BASE_IMAGE_TAG} AS kvbufrd
@@ -60,6 +75,8 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4e8a0c1418
 RUN apt-get update && apt-get install -y sqlite3 libgfortran5
 #metno-bufrtables
 
+RUN apt-get install -y gdb
+
 #Create a runtime user for kvalobs
 RUN useradd -ms /bin/bash --uid ${kvuserid} --user-group  ${kvuser}
 
@@ -72,31 +89,42 @@ RUN mkdir -p /var/lib/kvalobs/kvbufrd/debug && chown ${kvuser}:${kvuser}  /var/l
 COPY --from=build /usr/bin/kvbufrd  /usr/bin/
 COPY --from=build /usr/share/kvbufrd /usr/share/kvbufrd/
 COPY docker/entrypoint.sh /usr/bin/ 
+
+#Create a link for kvbufrd-svv
+RUN ln -s /usr/bin/kvbufrd /usr/bin/kvbufrd-svv
+
 RUN chmod +x /usr/bin/entrypoint.sh
 
+#Get the metno-bufrtables
+RUN mkdir -p /usr/share/metno-bufrtables
+COPY --from=bufrtables /usr/share/metno-bufrtables/* /usr/share/metno-bufrtables/
 
 VOLUME /etc/kvalobs
 VOLUME /var/lib/kvalobs/kvbufrd
 VOLUME /var/log/kvalobs
+
+RUN mkdir /cores && chmod 0777 /cores
+
+VOLUME /cores
+
 
 USER ${kvuser}:${kvuser}
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh" ]
 
 
+# FROM kvbufrd AS kvbufrd-svv
+# ARG DEBIAN_FRONTEND=noninteractive
+# ARG kvuser=kvalobs
+# ARG kvuserid=5010
 
-FROM kvbufrd AS kvbufrd-svv
-ARG DEBIAN_FRONTEND=noninteractive
-ARG kvuser=kvalobs
-ARG kvuserid=5010
 
+# COPY --from=build /usr/bin/kvbufrd  /usr/bin/kvbufrd-svv
 
-COPY --from=build /usr/bin/kvbufrd  /usr/bin/kvbufrd-svv
+# VOLUME /etc/kvalobs
+# VOLUME /var/lib/kvalobs/kvbufrd
+# VOLUME /var/log/kvalobs
 
-VOLUME /etc/kvalobs
-VOLUME /var/lib/kvalobs/kvbufrd
-VOLUME /var/log/kvalobs
+# USER ${kvuser}:${kvuser}
 
-USER ${kvuser}:${kvuser}
-
-ENTRYPOINT ["/usr/bin/entrypoint.sh" ]
+# ENTRYPOINT ["/usr/bin/entrypoint.sh" ]
