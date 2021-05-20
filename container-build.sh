@@ -100,10 +100,10 @@ echo "kvcpp tag: $kvcpp_tag"
 for target in $targets ; do
   docker build $nocache --target $target --build-arg "REGISTRY=${kvcpp_registry}" --build-arg="BASE_IMAGE_TAG=${kvcpp_tag}" \
     --build-arg "kvuser=$kvuser" --build-arg "kvuserid=$kvuserid" \
-    -f docker/${os}/${target}.dockerfile ${only_build} --tag ${registry}${os}-${target}:$tag .
+    -f docker/${os}/${target}.dockerfile ${only_build} --tag ${registry}${target}:$tag .
   
   if [ $mode != test ]; then 
-    docker push ${registry}${os}-${target}:$tag
+    docker push ${registry}${target}:$tag
   fi
 done
 
