@@ -69,7 +69,7 @@ if [ $# -gt 0 ]; then
 fi
 
 echo "app: '$app'  $#"
-
+echo "$version" > "/var/log/kvalobs/${app}_VERSION"
 if [ "$app" != "bash" ]; then
   echo "ENTRYPOINT $app"
   echo "Starting $app."
