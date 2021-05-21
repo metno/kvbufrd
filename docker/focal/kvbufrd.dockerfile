@@ -99,6 +99,8 @@ RUN chmod +x /usr/bin/entrypoint.sh
 RUN mkdir -p /usr/share/metno-bufrtables
 COPY --from=bufrtables /usr/share/metno-bufrtables/* /usr/share/metno-bufrtables/
 
+COPY GITREF /usr/share/kvbufrd/VERSION
+
 VOLUME /etc/kvalobs
 VOLUME /var/lib/kvalobs/kvbufrd
 VOLUME /var/log/kvalobs

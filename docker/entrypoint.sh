@@ -6,6 +6,7 @@
 #Killed by SIGTERM (15) => 128 + 15 = 143.
 
 app=kvbufrd
+version=$(cat /usr/share/$app/VERSION)
 set -e
 
 export PGPASSFILE=/etc/kvalobs/.pgpass
@@ -58,10 +59,9 @@ kill_pid() {
 }
 
 echo "ENTRYPOINT: NARGS: $# ARGS: '$@'"
-
-
 echo "getent: $(getent passwd kvalobs)"
 echo "id: $(id -u)"
+echo "VERSION: $version"
 
 if [ $# -gt 0 ]; then
    app=$1
@@ -90,8 +90,10 @@ if [ "$app" != "bash" ]; then
     kill_pid $app_PID
     ec=$?
     echo "Killed $app on signal. Exit code: $ec"
+    echo "VERSION: $version"
   else
     kill -0 $app_PID &>/dev/null || echo "kvbufrd: died  ec: $ec"
+    echo "VERSION: $version"
   fi
 
   #It may be dead, but we call kill_pid for kvManagerd anyway. It will be killed
@@ -99,15 +101,17 @@ if [ "$app" != "bash" ]; then
 
   kill_pid $app_PID  
   echo "app exit code: $?"
-
+  echo "VERSION: $version"
   #return the exitcode for the process that died in the first place.
   exit $ec  
 elif [ "$app" = "bash" ]; then
-    echo "ENTRYPOINT starting bash!"
-    /bin/bash
+  echo "VERSION: $version"
+  echo "ENTRYPOINT starting bash!"
+  /bin/bash
 else
-    echo "ENTRYPOINT sleep forever!"
-    while running="true"; do 
-        sleep 1; 
-    done
+  echo "VERSION: $version"
+  echo "ENTRYPOINT sleep forever!"
+  while running="true"; do 
+    sleep 1; 
+  done
 fi

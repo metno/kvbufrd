@@ -46,6 +46,7 @@ echo -e "$usage\n\n"
 
 }
 
+
 while test $# -ne 0; do
   case $1 in
     --tag) tag=$2; shift;;
@@ -69,18 +70,11 @@ while test $# -ne 0; do
   shift
 done
 
-
-
-
-
-
 echo "tag: $tag"
 echo "mode: $mode"
 echo "os: $os"
 echo "Build mode: $mode"
 echo "targets: $targets"
-
-
 
 if [ "$mode" = "test" ]; then 
   kvuserid=$(id -u)
@@ -96,6 +90,8 @@ echo "tag: $tag"
 echo "kvcpp registry: $kvcpp_registry"
 echo "kvcpp tag: $kvcpp_tag"
 
+
+gitref.sh 
 
 for target in $targets ; do
   docker build $nocache --target $target --build-arg "REGISTRY=${kvcpp_registry}" --build-arg="BASE_IMAGE_TAG=${kvcpp_tag}" \
