@@ -113,7 +113,6 @@ parseStationDefSections( miconf::ConfSection *conf,
 
    for(list<string>::iterator it=sect.begin();
          it!=sect.end(); it++){
-      idType.erase();
       i=it->find("wmo_");
 
       if( (i=it->find("wmo_")) != string::npos ) {
@@ -147,7 +146,6 @@ parseStationDefSections( miconf::ConfSection *conf,
             LOGERROR("ERROR: Missing section for <" << *it << ">!" << endl);
             continue;
          }
-
          try {
             ConfSection *noteSection=new ConfSection();
             noteSection->addValue( IdType, ValElement(idType), true );
