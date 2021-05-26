@@ -34,7 +34,8 @@ Options:
   --tag tagname tag the image with the name tagname, default $tag.
   --staging     build and push to staging.
   --prod        build and push to prod.
-  --stage stage stop at build stage. Default $target.
+  --test        only build. Default.
+  --stage stage stop at build stage. Default $targets.
   --no-cache    Do not use the docker build cache.
   --only-build  Stop after building.
   --kvcpp-local Use local docker registry for kvcpp. Default: $kvcpp_registry
@@ -79,9 +80,13 @@ echo "targets: $targets"
 if [ "$mode" = "test" ]; then 
   kvuserid=$(id -u)
   registry=""
-  kvcpp_registry="$kvcpp_registry/staging/"
+  if [ -n "$kvcpp_registry" ]; then
+    kvcpp_registry="$kvcpp_registry/staging/"
+  fi
 else 
-  kvcpp_registry="$kvcpp_registry/$mode/"
+  if [ -n "$kvcpp_registry" ]; then
+    kvcpp_registry="$kvcpp_registry/$mode/"
+  fi
   registry="$registry/$mode/"
 fi
 

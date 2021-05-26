@@ -7,6 +7,7 @@
 
 app=kvbufrd
 version=$(cat /usr/share/$app/VERSION)
+
 set -e
 
 export PGPASSFILE=/etc/kvalobs/.pgpass
@@ -70,6 +71,11 @@ fi
 
 echo "app: '$app'  $#"
 echo "$version" > "/var/log/kvalobs/${app}_VERSION"
+
+if [ -f /usr/share/kvalobs/VERSION ]; then
+  cat /usr/share/kvalobs/VERSION >> "/var/log/kvalobs/${app}_VERSION"
+fi
+
 if [ "$app" != "bash" ]; then
   echo "ENTRYPOINT $app"
   echo "Starting $app."
