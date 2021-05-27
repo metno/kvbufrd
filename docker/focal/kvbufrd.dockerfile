@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y gfortran gpg software-properties-common
 
 COPY configure.ac  \
   check_kvbufrd.sh.in changelog cleanbufrdb.sql \
-  kvbufrdbadmin.sh Makefile.am Makefile.in  \
+  kvbufrdbadmin.sh Makefile.am \
   AUTHORS NEWS README \
   /src/
 
@@ -21,7 +21,6 @@ COPY m4 /src/m4
 COPY mk /src/mk
 COPY share /src/share
 COPY src /src/src 
-#COPY bufr-20200420.tar.gz /src
 
 VOLUME /src
 VOLUME /build
