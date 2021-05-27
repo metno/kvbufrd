@@ -98,7 +98,7 @@ echo "kvcpp registry: $kvcpp_registry"
 echo "kvcpp tag: $kvcpp_tag"
 
 
-gitref 
+$gitref 
 
 for target in $targets ; do
   docker build $nocache --target $target --build-arg "REGISTRY=${kvcpp_registry}" --build-arg="BASE_IMAGE_TAG=${kvcpp_tag}" \
