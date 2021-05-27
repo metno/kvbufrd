@@ -8,9 +8,9 @@ FROM ${REGISTRY}focal-kvcpp-dev:${BASE_IMAGE_TAG} AS build
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y gfortran gpg software-properties-common apt-utils
 
-COPY compile config.h.in configure configure.ac config.sub config.guess \
+COPY configure.ac  \
   check_kvbufrd.sh.in changelog cleanbufrdb.sql \
-  depcomp install-sh kvbufrdbadmin.sh   ltmain.sh Makefile.am Makefile.in missing \
+  kvbufrdbadmin.sh Makefile.am Makefile.in  \
   test-driver \
   AUTHORS NEWS README \
   /src/
@@ -22,7 +22,7 @@ COPY m4 /src/m4
 COPY mk /src/mk
 COPY share /src/share
 COPY src /src/src 
-COPY bufr-20200420.tar /src
+#COPY bufr-20200420.tar.gz /src
 
 VOLUME /src
 VOLUME /build

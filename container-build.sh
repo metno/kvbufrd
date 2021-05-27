@@ -15,6 +15,8 @@ registry="registry.met.no/obs/kvalobs/kvbuild"
 nocache=
 only_build=
 
+gitref=$(git rev-parse --show-toplevel)/gitref.sh
+
 use() {
 
   usage="\
@@ -96,7 +98,7 @@ echo "kvcpp registry: $kvcpp_registry"
 echo "kvcpp tag: $kvcpp_tag"
 
 
-gitref.sh 
+gitref 
 
 for target in $targets ; do
   docker build $nocache --target $target --build-arg "REGISTRY=${kvcpp_registry}" --build-arg="BASE_IMAGE_TAG=${kvcpp_tag}" \
