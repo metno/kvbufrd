@@ -4,7 +4,7 @@ ARG REGISTRY
 ARG BASE_IMAGE_TAG=
 
 #FROM registry.met.no/obs/kvalobs/kvbuild/staging/focal-kvcpp-dev AS build
-FROM ${REGISTRY}focal-kvcpp-dev:${BASE_IMAGE_TAG} AS build
+FROM ${REGISTRY}kvcpp-dev:${BASE_IMAGE_TAG} AS build
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y gfortran gpg software-properties-common apt-utils
 
@@ -59,7 +59,7 @@ RUN mkdir -p /usr/share/metno-bufrtables/tmp && cd /usr/share/metno-bufrtables/t
 
 
 
-FROM ${REGISTRY}focal-kvcpp-runtime:${BASE_IMAGE_TAG} AS kvbufrd
+FROM ${REGISTRY}kvcpp-runtime:${BASE_IMAGE_TAG} AS kvbufrd
 ARG DEBIAN_FRONTEND=noninteractive
 ARG kvuser=kvalobs
 ARG kvuserid=5010
