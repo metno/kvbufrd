@@ -84,5 +84,7 @@
     "typeinfo": "cpp",
     "variant": "cpp"
   },
-  "git.ignoreLimitWarning": true
+  "git.ignoreLimitWarning": true,
+  "workbench.tree.indent": 10,
+  "window.zoomLevel": 2.5
 }
