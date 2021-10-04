@@ -1,3 +1,8 @@
+kvbufrd (3.0.9~rc5-1) xenial; urgency=low
+  * Use kafka consumer group.
+
+ -- Kvalobs <kvalobs@met.no>  Mon, 4 Oct 2021 06:15:00 +0100
+
 kvbufrd (3.0.9~rc2-1) xenial; urgency=low
   * Actually add encoder 302045 to the list of encoders.
   * The value from the radiation sensors must scaled.
