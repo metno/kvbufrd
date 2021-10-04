@@ -92,6 +92,7 @@ class App : public kvalobs::sql::DbQuery {
   std::string kvDbDriverId;
   std::string kafkaDomain;
   std::string kafkaBrokers;
+  std::string kafkaGroupId;
   StationList stationList;
   boost::posix_time::ptime startTime_;
   WaitingList waitingList;

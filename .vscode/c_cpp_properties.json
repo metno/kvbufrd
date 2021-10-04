@@ -4,8 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/disk1/kvalobs/include/kvalobs/**",
-                "/disk1/kvalobs/include"
+                "/usr/include/kvalobs/**"
               ],
             "defines": ["_REENTRANT" ],
             "compilerPath": "/usr/bin/clang",

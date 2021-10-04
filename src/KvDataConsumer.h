@@ -48,6 +48,7 @@ class KvDataConsumer : public kvalobs::subscribe::DataSubscriber
 public:
   KvDataConsumer(const std::string& domain,
                  const std::string& brokers,
+                 const std::string& groupid,
                  std::shared_ptr<threadutil::CommandQueue> newDataQue);
   void newData(const kvalobs::serialize::KvalobsData& data, const std::string &msg);
 

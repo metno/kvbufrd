@@ -29,8 +29,8 @@
 
 #include "KvDataConsumer.h"
 
-#include <decodeutility/kvalobsdataserializer.h>
-#include <decodeutility/kvalobsdataparser.h>
+#include <kvalobs/decodeutility/kvalobsdataserializer.h>
+#include <kvalobs/decodeutility/kvalobsdataparser.h>
 #include "KvObsData.h"
 #include "kvevents.h"
 #include <miconfparser/confsection.h>
@@ -49,11 +49,12 @@ using std::string;
 KvDataConsumer::KvDataConsumer(
   const std::string& domain,
   const std::string& brokers,
+  const std::string& groupid,
   std::shared_ptr<threadutil::CommandQueue> newDataQue)
   : DataSubscriber(
       [this](const kvalobs::serialize::KvalobsData& data) { newData(data, ""); },
       domain,
-      brokers)
+      brokers, groupid)
   , que(newDataQue)
 {
   setDebugWriter(debugMsgWriter);
