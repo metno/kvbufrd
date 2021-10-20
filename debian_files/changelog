@@ -1,3 +1,8 @@
+kvbufrd (3.0.9~rc6-1) focal; urgency=low
+  * Update criteriea for vaidating an observation.
+
+ -- Kvalobs <kvalobs@met.no>  Wed, 20 Oct 2021 14:00:00 +0200
+
 kvbufrd (3.0.9~rc5-1) xenial; urgency=low
   * Use kafka consumer group.
 
