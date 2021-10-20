@@ -70,7 +70,7 @@ RUN apt-get install -y gpg software-properties-common apt-utils
 RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4e8a0c1418494cf45d1b8533799e9fe74bb0156c &&\
   add-apt-repository 'deb [arch=amd64] http://internrepo.met.no/focal focal main contrib'
 
-RUN apt-get update && apt-get install -y sqlite3 libgfortran5
+RUN apt-get update && apt-get install -y sqlite3 libgfortran5 
 #metno-bufrtables
 
 RUN apt-get install -y gdb
@@ -103,28 +103,7 @@ VOLUME /etc/kvalobs
 VOLUME /var/lib/kvalobs/kvbufrd
 VOLUME /var/log/kvalobs
 
-RUN mkdir /cores && chmod 0777 /cores
-
-VOLUME /cores
-
 
 USER ${kvuser}:${kvuser}
 
 ENTRYPOINT ["/usr/bin/entrypoint.sh" ]
-
-
-# FROM kvbufrd AS kvbufrd-svv
-# ARG DEBIAN_FRONTEND=noninteractive
-# ARG kvuser=kvalobs
-# ARG kvuserid=5010
-
-
-# COPY --from=build /usr/bin/kvbufrd  /usr/bin/kvbufrd-svv
-
-# VOLUME /etc/kvalobs
-# VOLUME /var/lib/kvalobs/kvbufrd
-# VOLUME /var/log/kvalobs
-
-# USER ${kvuser}:${kvuser}
-
-# ENTRYPOINT ["/usr/bin/entrypoint.sh" ]
