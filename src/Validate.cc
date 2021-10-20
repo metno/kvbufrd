@@ -28,6 +28,7 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc., 
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+#include <initializer_list>
 #include <milog/milog.h>
 #include "Validate.h"
 
@@ -43,6 +44,19 @@ using namespace std;
 //laveste testverdi.
 
 
+namespace {
+
+//Check if a value is in the set given by validValues 
+template<class T> bool valueIn(T value, initializer_list<T> validValues){
+   for( const T &v : validValues ) {
+      if (value == v ) {
+         return true;
+      }
+   }
+   return false;
+} 
+
+}
 
 
 kvdatacheck::
@@ -187,6 +201,75 @@ validDataUseOnlyControlInfo( const Data &data )
    return true;
 }
 
+
+
+
+bool
+kvdatacheck::
+Validate::
+validDataUseOnlyUseInfo( const Data &data )
+{
+   kvUseInfo uinfo=data.useinfo();
+   kvControlInfo cinfo=data.controlinfo();
+   const int A = 10;
+   int uf_0 = uinfo.flag( 0 );
+   int uf_1 = uinfo.flag( 1 );
+   int uf_2 = uinfo.flag( 2 ); // QA level for original data value.
+   int uf_3 = uinfo.flag( 3 ); //Treatment of original data value.
+   int fmis    = cinfo.flag( f_fmis );
+   int fr      = cinfo.flag( f_fr );
+   int fpre    = cinfo.flag( f_fpre );
+   int fhqc    = cinfo.flag( f_fhqc );
+
+   /*
+   LOGDEBUG2("Validate: stationid: " << data.stationID() << " typeid: " << data.typeID()
+             << " obstime: " << data.obstime()
+             << " paramid/sensor/level: " << data.paramID() << "/" << data.sensor() << "/" << data.level()
+             << " original: " << data.original()
+             << " cflags: " << data.controlinfo()
+             << " uflags: " << data.useinfo() << " u0: " << uinfo_0 << " u2: " << uinfo_2 << " u3: " << uinfo_3 << " cmis: "<< cinfo_mis );
+    */
+
+
+   if (atoi( data.original().c_str() ) == -32767 ) {
+      log << "REJECTED: stationid: " << data.stationID() << " typeid: " << data.typeID()
+                          << " obstime: " << data.obstime()
+                          << " paramid: " << data.paramID()
+                          << " original: " << data.original() << " (-32767 (missing))"
+                          << " sensor/level: " << data.sensor() << "/" << data.level()
+                          << endl;
+
+      return false;
+   }
+
+   //Flagg kriterier for å godkjenne en observasjon fra Pål.
+   // original != -32767  && 
+   // useinfo(0) != 9 && useinfo(1)=0,1,9 && 
+   //   ( (fmis=0 && useinfo(2)=0,1,2,9 && useinfo(3)=0,9) || 
+   //       (fmis=4 && useinfo(2)=3  && useinfo(3)=1 && (fr=A || fpre=4) && fhqc != 7)  )
+   //
+
+   if( uf_0 != 9 && valueIn( uf_1, {0,1,9} ) && 
+      ( ( fmis=0 && valueIn( uf_2, {0,1,2,9} ) && valueIn(uf_3, {0,9})) || 
+        ( fmis=4 && uf_2 == 3  &&  uf_3 == 1 && ( fr == A || fpre == 4) && fhqc != 7)  ) ) 
+   {
+      return true;
+   }
+
+   log << "REJECTED: stationid: " << data.stationID() << " typeid: " << data.typeID()
+       << " obstime: " << data.obstime()
+       << " paramid: " << data.paramID()
+       << " original: " << data.original() 
+       << " sensor/level: " << data.sensor() << "/" << data.level()
+       << " cflag: " << cinfo << " uflag: " << uinfo
+       << endl;
+   return false;
+}
+
+
+
+
+#if 0
 bool
 kvdatacheck::
 Validate::
@@ -195,10 +278,14 @@ validDataUseOnlyUseInfo( const Data &data )
    kvUseInfo uinfo=data.useinfo();
    kvControlInfo cinfo=data.controlinfo();
 
-   int uinfo_0 = uinfo.flag( 0 );
-   int uinfo_2=uinfo.flag( 2 ); // QA level for original data value.
-   int uinfo_3=uinfo.flag( 3 ); //Treatment of original data value.
-   int cinfo_mis = cinfo.flag( f_fmis );
+   int uinfo_0    = uinfo.flag( 0 );
+   int uinfo_1    = uinfo.flag(1);
+   int uinfo_2    = uinfo.flag( 2 ); // QA level for original data value.
+   int uinfo_3    = uinfo.flag( 3 ); //Treatment of original data value.
+   int cinfo_mis  = cinfo.flag( f_fmis );
+   int cinfo_fr   = cinfo.flag(f_fr);
+   int cinfo_fpre = cinfo.flag(f_fpre);
+   int cinfo_fhqc = cinfo.flag(f_fhqc);
 
    /*
    LOGDEBUG2("Validate: stationid: " << data.stationID() << " typeid: " << data.typeID()
@@ -281,6 +368,8 @@ validDataUseOnlyUseInfo( const Data &data )
 
    return true;
 }
+#endif
+
 
 
 bool
