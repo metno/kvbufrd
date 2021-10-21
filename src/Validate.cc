@@ -248,10 +248,10 @@ validDataUseOnlyUseInfo( const Data &data )
    //   ( (fmis=0 && useinfo(2)=0,1,2,9 && useinfo(3)=0,9) || 
    //       (fmis=4 && useinfo(2)=3  && useinfo(3)=1 && (fr=A || fpre=4) && fhqc != 7)  )
    //
-
+   //cf (fmis,fr,fpre,fhqc): (0,1,0,0) uf (uf_0,uf_1,uf_2,uf_3): (7,0,0,0)
    if( uf_0 != 9 && valueIn( uf_1, {0,1,9} ) && 
-      ( ( fmis=0 && valueIn( uf_2, {0,1,2,9} ) && valueIn(uf_3, {0,9})) || 
-        ( fmis=4 && uf_2 == 3  &&  uf_3 == 1 && ( fr == A || fpre == 4) && fhqc != 7)  ) ) 
+      ( ( fmis == 0 && valueIn( uf_2, {0,1,2,9} ) && valueIn(uf_3, {0,9})) || 
+        ( fmis == 4 && uf_2 == 3  &&  uf_3 == 1 && ( fr == A || fpre == 4) && fhqc != 7)  ) ) 
    {
       return true;
    }
@@ -261,7 +261,8 @@ validDataUseOnlyUseInfo( const Data &data )
        << " paramid: " << data.paramID()
        << " original: " << data.original() 
        << " sensor/level: " << data.sensor() << "/" << data.level()
-       << " cflag: " << cinfo << " uflag: " << uinfo
+       << " cf (fmis,fr,fpre,fhqc): (" << fmis<< "," << fr << "," << fpre << "," << fhqc << ")" 
+       << " uf (uf_0,uf_1,uf_2,uf_3): (" << uf_0 << "," << uf_1 << "," << uf_2 << "," << uf_3 << ")" 
        << endl;
    return false;
 }
@@ -283,9 +284,9 @@ validDataUseOnlyUseInfo( const Data &data )
    int uinfo_2    = uinfo.flag( 2 ); // QA level for original data value.
    int uinfo_3    = uinfo.flag( 3 ); //Treatment of original data value.
    int cinfo_mis  = cinfo.flag( f_fmis );
-   int cinfo_fr   = cinfo.flag(f_fr);
-   int cinfo_fpre = cinfo.flag(f_fpre);
-   int cinfo_fhqc = cinfo.flag(f_fhqc);
+   int cinfo_fr   = cinfo.flag( f_fr );
+   int cinfo_fpre = cinfo.flag( f_fpre );
+   int cinfo_fhqc = cinfo.flag( f_fhqc );
 
    /*
    LOGDEBUG2("Validate: stationid: " << data.stationID() << " typeid: " << data.typeID()
