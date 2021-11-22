@@ -46,6 +46,7 @@ loadBufrData( const DataEntryList   &dl,
    DataListEntry::ITDataList       itd;
    DataListEntry::TDataList        dataList;
    stringstream log;
+   bool  useCorrected;
 
    validate.clearLogger();
    sd.clear();
@@ -74,7 +75,8 @@ loadBufrData( const DataEntryList   &dl,
             //the parameters we wish to overide this behavior for.
 
 
-            if( validate( *itd ) ) {
+            if( validate( *itd, &useCorrected ) ) {
+               itd->useCorrected(useCorrected);
               //cerr << "LoadBufrData: '" << itd->obstime() << "' " << itd->paramID() << ", " << itd->typeID() << ", " << itd->original() << endl;
               bufrData.setData( itd->paramID(), itd->typeID(), 
               itd->sensor(), itd->level(), itd->original() );

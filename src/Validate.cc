@@ -92,14 +92,18 @@ Validate( HowToValidate howToValidate )
 bool
 kvdatacheck::
 Validate::
-operator()( const Data &data )
+operator()( const Data &data, bool *useCorrected )
 {
+   if( useCorrected != nullptr ) {
+      *useCorrected = false;
+   }
+
    if( data.paramID() == 0 ) {
       //Ignore and reject paramid==0.
       return false;
    }
 
-   return (this->*validate)( data );
+   return (this->*validate)( data, useCorrected );
 }
 
 
@@ -119,7 +123,7 @@ operator()( const Data &data )
 bool
 kvdatacheck::
 Validate::
-validDataUseOnlyControlInfo( const Data &data )
+validDataUseOnlyControlInfo( const Data &data, bool *useCorrected )
 {
    kvUseInfo     uinfo=data.useinfo();
    kvControlInfo info=data.controlinfo();
@@ -207,7 +211,7 @@ validDataUseOnlyControlInfo( const Data &data )
 bool
 kvdatacheck::
 Validate::
-validDataUseOnlyUseInfo( const Data &data )
+validDataUseOnlyUseInfo( const Data &data, bool *useCorrected )
 {
    kvUseInfo uinfo=data.useinfo();
    kvControlInfo cinfo=data.controlinfo();
@@ -253,6 +257,9 @@ validDataUseOnlyUseInfo( const Data &data )
       ( ( fmis == 0 && valueIn( uf_2, {0,1,2,9} ) && valueIn(uf_3, {0,9})) || 
         ( fmis == 4 && uf_2 == 3  &&  uf_3 == 1 && ( fr == A || fpre == 4) && fhqc != 7)  ) ) 
    {
+      if( fmis == 4 && useCorrected != nullptr) {
+         *useCorrected = true;
+      }
       return true;
    }
 
@@ -376,7 +383,7 @@ validDataUseOnlyUseInfo( const Data &data )
 bool
 kvdatacheck::
 Validate::
-validDataCombineControlAndUseInfo( const Data &data )
+validDataCombineControlAndUseInfo( const Data &data, bool *useCorrected)
 {
    kvUseInfo     uinfo=data.useinfo();
    kvControlInfo info=data.controlinfo();
@@ -388,7 +395,7 @@ validDataCombineControlAndUseInfo( const Data &data )
 bool
 kvdatacheck::
 Validate::
-validDataNoCheck( const Data &data )
+validDataNoCheck( const Data &data, bool *useCorrected )
 {
    return true;
 }

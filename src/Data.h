@@ -47,13 +47,14 @@ private:
 	boost::posix_time::ptime obstime_;
 	boost::posix_time::ptime tbtime_;
 	std::string      original_;
+	std::string      corrected_;
 	int              paramid_;
 	int              typeid_;
 	int              sensor_;
 	int              level_;
 	std::string      controlinfo_;
 	std::string      useinfo_;
-
+	bool             useCorrected_;
 
 	void createSortIndex();
 
@@ -64,17 +65,19 @@ public:
 	Data(int                      pos,
 			const boost::posix_time::ptime &obt,
 			const std::string       &org,
+			const std::string       &cor,
 			int                      par,
 			int                      typ,
 			int                      sen,
 			int                      lvl,
 			const std::string &controlinfo="",
 			const std::string &useinfo="" )
-	{ set(pos, obt, org, par, typ, sen, lvl, controlinfo, useinfo);}
+	{ set(pos, obt, org, cor, par, typ, sen, lvl, controlinfo, useinfo);}
 
 	bool set(int                      pos,
 			const boost::posix_time::ptime &obt,
 			const std::string       &org,
+			const std::string       &cor,
 			int                      par,
 			int                      typ,
 			int                      sen,
@@ -96,10 +99,15 @@ public:
 	int              stationID()   const { return stationid_;  }
 	boost::posix_time::ptime obstime()     const { return obstime_;    }
 	boost::posix_time::ptime tbtime()      const { return tbtime_;    }
-	std::string      original()    const { return original_;   }
+
+		
+	bool             useCorrected()const { return useCorrected_; }
+	void             useCorrected( bool v) { useCorrected_=v;}
+	std::string      original()    const;
+	std::string      corrected()   const { return corrected_;  }
 	int              paramID()     const { return paramid_;    }
 	int              typeID()      const { return typeid_;     }
-	int              sensor()      const { return sensor_; }
+	int              sensor()      const { return sensor_;     }
 	int              level()       const { return level_;      }
 	kvalobs::kvControlInfo controlinfo()const;
 	kvalobs::kvUseInfo useinfo()const;

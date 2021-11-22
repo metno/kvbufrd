@@ -55,7 +55,7 @@ bool driverLoaded = false;
 
 const char* cacheSchema[] = {
   "CREATE TABLE data (stationid integer, obstime timestamp, tbtime timestamp "
-  "  DEFAULT CURRENT_TIMESTAMP, original text, paramid integer, typeid integer, "
+  "  DEFAULT CURRENT_TIMESTAMP, original text, corrected text, paramid integer, typeid integer, "
   "  sensor integer, level integer, controlinfo text, useinfo text, "
   " UNIQUE(stationid, obstime, paramid, typeid, level, sensor)"
   ");",

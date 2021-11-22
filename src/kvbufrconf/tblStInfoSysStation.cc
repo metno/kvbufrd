@@ -110,6 +110,7 @@ set(const TblStInfoSysStation &station )
    name_ = station.name_;
    shortName_ = station.shortName_;
    wmono_ = station.wmono_;
+   return true;
 }
 
 void

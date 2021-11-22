@@ -32,6 +32,7 @@
 #define __validdata_h__
 
 #include <sstream>
+#include <string>
 #include "Data.h"
 
 namespace kvdatacheck{
@@ -48,12 +49,12 @@ class Validate {
 	bool check_fmis(kvalobs::kvControlInfo &f,int paramid);
 	bool check_useinfo1(kvalobs::kvUseInfo  &f,int paramid);
 
-	bool (Validate::*validate) ( const Data &data );
+	bool (Validate::*validate) ( const Data &data, bool *useCorrected );
 
-	bool validDataUseOnlyControlInfo( const Data &data );
-	bool validDataUseOnlyUseInfo( const Data &data );
-	bool validDataCombineControlAndUseInfo( const Data &data );
-	bool validDataNoCheck( const Data &data );
+	bool validDataUseOnlyControlInfo( const Data &data, bool *useCorrected );
+	bool validDataUseOnlyUseInfo( const Data &data, bool *useCorrected );
+	bool validDataCombineControlAndUseInfo( const Data &data, bool *useCorrected );
+	bool validDataNoCheck( const Data &data, bool *useCorrected );
 
 	std::stringstream log;
 public:
@@ -63,7 +64,7 @@ public:
 
 	void clearLogger() { log.str(""); }
 	std::string getLog()const{ return log.str(); }
-	bool operator()( const Data &data );
+	bool operator()( const Data &data, bool *useCorrected );
 };
 
 }

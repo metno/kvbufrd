@@ -872,13 +872,16 @@ BufrWorker::readData(ObsEvent& event, DataEntryList& data) const
     }
 
     bool doLogTypeidInfo = true;
+    bool useCorrected;
 
     for (dit = dataList.begin(); dit != dataList.end(); dit++) {
       try {
         if( station->hasDefinedStationIdAndTypeId(dit->stationID(), dit->typeID(), dit->obstime().time_of_day().hours())) {
-          if (validate(*dit)) {
+          if (validate(*dit, &useCorrected)) {
             loadedData.add(dit->stationID(), dit->typeID(), dit->obstime());
-            data.insert(*dit);
+            Data tmpData(*dit);
+            tmpData.useCorrected(useCorrected);
+            data.insert(tmpData);
 
             if (!hasObstime && dit->obstime() == event.obstime())
               hasObstime = true;
@@ -936,6 +939,7 @@ BufrWorker::readData(ObsEvent& event, DataEntryList& data) const
   return RdOK;
 }
 
+
 void
 BufrWorker::loadBufrData(const DataEntryList& dl,
                          DataElementList& sd,
@@ -944,6 +948,7 @@ BufrWorker::loadBufrData(const DataEntryList& dl,
   kvdatacheck::Validate validate(kvdatacheck::Validate::NoCheck);
   ::loadBufrData(dl, sd, info, validate);
 }
+
 
 bool
 BufrWorker::checkTypes(const DataEntryList& data,

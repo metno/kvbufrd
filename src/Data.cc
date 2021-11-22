@@ -50,20 +50,25 @@ void Data::clean() {
   stationid_ = 0;
   obstime_ = pt::second_clock::universal_time();
   original_.erase();
+  corrected_.erase();
   paramid_ = 0;
   typeid_ = 0;
   sensor_ = 0;
   level_ = 0;
+  useCorrected_=false;
 
   createSortIndex();
 }
 
 bool Data::set(const kvalobs::kvData &data) {
-  char buf[100];
+  char orig[100];
+  char cor[100];
   tbtime_ = pt::second_clock::universal_time();
-  sprintf(buf, "%.2f", data.original());
+  sprintf(orig, "%.2f", data.original());
+  sprintf(cor, "%.2f", data.corrected());
+  useCorrected_=false;
 
-  set(data.stationID(), data.obstime(), buf, data.paramID(), data.typeID(), data.sensor(), data.level(), data.controlinfo().flagstring(),
+  set(data.stationID(), data.obstime(), orig, cor, data.paramID(), data.typeID(), data.sensor(), data.level(), data.controlinfo().flagstring(),
       data.useinfo().flagstring());
 
   return true;
@@ -87,6 +92,8 @@ bool Data::set(const dnmi::db::DRow &r_) {
         tbtime_ = pt::time_from_string_nothrow(buf);
       } else if (*it == "original") {
         original_ = buf;
+      } else if (*it == "corrected") {
+        corrected_ = buf;
       } else if (*it == "paramid") {
         paramid_ = atoi(buf.c_str());
       } else if (*it == "typeid") {
@@ -111,12 +118,13 @@ bool Data::set(const dnmi::db::DRow &r_) {
   return true;
 }
 
-bool Data::set(int pos, const pt::ptime &obt, const std::string &org, int par, int typ, int sen, int lvl, const std::string &controlinfo,
+bool Data::set(int pos, const pt::ptime &obt, const std::string &org, const std::string &cor,int par, int typ, int sen, int lvl, const std::string &controlinfo,
                const std::string &useinfo) {
   tbtime_ = pt::second_clock::universal_time();
   stationid_ = pos;
   obstime_ = obt;
   original_ = org;
+  corrected_ = cor;
   paramid_ = par;
   typeid_ = typ;
   sensor_ = sen;
@@ -134,7 +142,8 @@ Data::toSend() const {
   ostringstream ost;
   pt::ptime now = pt::second_clock::universal_time();;
 
-  ost << "(" << stationid_ << "," << quoted(pt::to_kvalobs_string(obstime_)) << "," << quoted(pt::to_kvalobs_string(now)) << "," << quoted(original_) << "," << paramid_ << "," << typeid_
+  ost << "(" << stationid_ << "," << quoted(pt::to_kvalobs_string(obstime_)) << "," << quoted(pt::to_kvalobs_string(now)) 
+      << "," << quoted(original_) << "," << quoted(corrected_) << "," << paramid_ << "," << typeid_
       << "," << sensor_ << "," << level_ << "," << quoted(controlinfo_) << "," << quoted(useinfo_) << ")";
 
   return ost.str();
@@ -155,10 +164,12 @@ Data::toUpdate() const {
   ostringstream ost;
   pt::ptime now = pt::second_clock::universal_time();
 
-  ost << "SET original=" << quoted(original_) << "    ,controlinfo=" << quoted(controlinfo_) << "    ,useinfo=" << quoted(useinfo_) << "    ,tbtime="
-      << quoted(pt::to_kvalobs_string(now)) << " WHERE stationid=" << stationid_ << " AND " << "       obstime=" << quoted(pt::to_kvalobs_string(obstime_)) << " AND "
-      << "       paramid=" << paramid_ << " AND " << "       typeid=" << typeid_ << " AND " << "       sensor=" << quoted(sensor_) << " AND " << "       level="
-      << level_;
+  ost << "SET original=" << quoted(original_) << ", corrected=" << quoted(corrected_) 
+      << ", controlinfo=" << quoted(controlinfo_) << ", useinfo=" << quoted(useinfo_) << ", tbtime="
+      << quoted(pt::to_kvalobs_string(now)) 
+      << " WHERE stationid=" << stationid_ << " AND " << "obstime=" << quoted(pt::to_kvalobs_string(obstime_)) << " AND "
+      << "   paramid=" << paramid_ << " AND " << "typeid=" << typeid_ << " AND " << "sensor=" << quoted(sensor_) 
+      << "   AND " << "level=" << level_;
 
   return ost.str();
 }
@@ -168,6 +179,15 @@ std::list<Data> kvDataToData( const std::list<kvalobs::kvData> &data){
   for( auto &d : data )
     ret.push_back(Data(d));
   return ret;
+}
+
+
+std::string  Data::original()const {
+  if (useCorrected_ ){
+    return corrected_;
+  }
+
+  return original_;
 }
 
 kvalobs::kvControlInfo Data::controlinfo() const {
@@ -239,13 +259,14 @@ bool DataInsertCommand::doExec( dnmi::db::Connection *con) {
   ostringstream log;
   for( const auto &d : dl_ ) {
     q.str("");
-    q <<"INSERT INTO data (stationid, obstime, tbtime,original, paramid, typeid, sensor, level, controlinfo, useinfo ) VALUES("
-      << d.stationID() << ", " << Q(d.obstime()) << ", " << Q(now) << ", " << Q(d.original()) << ", " 
+    q <<"INSERT INTO data (stationid, obstime, tbtime,original, corrected, paramid, typeid, sensor, level, controlinfo, useinfo ) VALUES("
+      << d.stationID() << ", " << Q(d.obstime()) << ", " << Q(now) << ", " 
+      << Q(d.original()) << ", " << Q(d.corrected()) << ", "
       << d.paramID() << ", " << d.typeID()<< ", " << d.sensor() << ", " << d.level() << ", " 
       << Q(d.controlinfo().flagstring()) << ", " << Q(d.useinfo().flagstring())<<")"
       << " ON CONFLICT(stationid, obstime, paramid, typeid, level, sensor) DO"
-      << " UPDATE SET original=excluded.original, controlinfo=excluded.controlinfo, useinfo=excluded.useinfo, tbtime=" << Q(now)
-      << " WHERE original<>excluded.original OR controlinfo<>excluded.controlinfo OR useinfo<>excluded.useinfo;";
+      << " UPDATE SET original=excluded.original, corrected=excluded.corrected, controlinfo=excluded.controlinfo, useinfo=excluded.useinfo, tbtime=" << Q(now)
+      << " WHERE original<>excluded.original OR corrected<>excluded.corrected OR controlinfo<>excluded.controlinfo OR useinfo<>excluded.useinfo;";
 
     try {
       unique_ptr<dnmi::db::Result> r(con->execQuery(q.str()));
@@ -294,7 +315,8 @@ bool DataInsertCommand::doExec( dnmi::db::Connection *con) {
 std::ostream&
 operator<<(std::ostream& ost, const Data& data) {
   ost << "[" << data.stationid_ << ", " << data.typeid_ << ", " << pt::to_kvalobs_string(data.obstime_) << ", " << data.paramid_ <<  ", " << data.original_ 
-      << ", " << data.sensor_ << ", " << data.level_ << ", " << data.controlinfo_ << ", " << data.useinfo_ << ", " << pt::to_kvalobs_string(data.tbtime_) << "]";
+      << ", " << data.sensor_ << ", " << data.level_ << ", " << data.controlinfo_ << ", " << data.useinfo_ << ", " << pt::to_kvalobs_string(data.tbtime_) << "] useCorrected(" 
+      <<(data.useCorrected_?"t":"f") <<")";
   return ost;
 }
 
