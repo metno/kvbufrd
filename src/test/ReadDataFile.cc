@@ -55,7 +55,6 @@ readDataFile( const std::string &filename, DataEntryList &data, const boost::pos
 		return false;
 
 	while( getline( fin, line ) ) {
-
 		string::size_type i = line.find( "#@#"); //Comment
 
 		if( i != string::npos )
@@ -84,8 +83,14 @@ readDataFile( const std::string &filename, DataEntryList &data, const boost::pos
 		if( ! fromtime.is_not_a_date_time() && obstime > fromtime )
 			continue;
 
+/*
+		cerr << "Data(" << atoi( dataValues[0].c_str() ) << ", " <<  obstime << ", "
+				 << dataValues[2] << ", " << dataValues[8] << ", "  << atoi( dataValues[3].c_str() ) << ", "
+				 << atoi( dataValues[5].c_str() ) << ", " << atoi( dataValues[6].c_str() ) << ", " 
+				 <<	atoi( dataValues[7].c_str() ) << ", " << dataValues[9] << ", " << dataValues[10] << ")\n";
+*/
 		Data d( atoi( dataValues[0].c_str() ), obstime,
-				dataValues[2], atoi( dataValues[3].c_str() ) ,
+				dataValues[2], dataValues[8], atoi( dataValues[3].c_str() ) ,
 				atoi( dataValues[5].c_str() ), atoi( dataValues[6].c_str() ),
 				atoi( dataValues[7].c_str() ), dataValues[9], dataValues[10] );
 	
@@ -128,6 +133,8 @@ loadBufrDataFromFile( const std::string &filename,
 		cerr << "Failed to read datafile <" << filename << ">." << endl;
 		return false;
 	}
+
+	cerr << "rawData #" << rawdata.size() << "\n" << rawdata << "\n\n";
 	cerr << "readdatafile end\n";
 	cerr << "loadBufrdata start\n";
 	loadBufrData( rawdata, sd, info, validate );

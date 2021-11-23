@@ -397,6 +397,7 @@ kvdatacheck::
 Validate::
 validDataNoCheck( const Data &data, bool *useCorrected )
 {
+   *useCorrected = data.useCorrected();
    return true;
 }
 

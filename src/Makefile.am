@@ -165,11 +165,11 @@ kvbufrd_LDADD = \
 	-lrdkafka \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
-        $(BOOST_FILESYSTEM_LIB) \
-        $(BOOST_DATE_TIME_LIB) \
-        $(BOOST_SYSTEM_LIB) \
-        $(top_builddir)/ecmwf/libbufr.a \
-        -lgfortran -lm -ldl
+  $(BOOST_FILESYSTEM_LIB) \
+  $(BOOST_DATE_TIME_LIB) \
+  $(BOOST_SYSTEM_LIB) \
+  $(top_builddir)/ecmwf/libbufr.a \
+  -lgfortran -lm -ldl
 else
 kvbufrd_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS) -DDATADIR="\""$(pkgdatadir)/bufrtables"\"" \
 	-DCACHEDIR="\""$(localstatedir)/lib/kvbufrd"\""
@@ -198,13 +198,13 @@ kvbufrdbclt_LDADD = \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_corbahelper.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miconfparser.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
 	$(putools_LIBS) \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
@@ -292,7 +292,9 @@ kvBufrEncodeTest_SOURCES= \
 	SemiUniqueName.cc SemiUniqueName.h \
 	Strerror.cc Strerror.h \
   isDirWithWritePermission.cc isDirWithWritePermission.h \
-	kvDbGateProxyThread.cc kvDbGateProxyThread.h
+	kvDbGateProxyThread.cc kvDbGateProxyThread.h \
+	CommandQueue.h CommandQueue.cc \
+	 CommandBase.h CommandBase.cc 
 
 kvBufrEncodeTest_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 
@@ -315,12 +317,12 @@ kvBufrEncodeTest_LDADD =   \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_corbahelper.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miconfparser.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
+	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
 	$(putools_LIBS) \
 	$(omniORB4_LIBS) \
 	$(BOOST_THREAD_LIB) \
@@ -335,6 +337,7 @@ kvBufrEncodeTest_LDADD =   \
 else
 kvBufrEncodeTest_CPPFLAGS = \
 	$(gtest_CFLAGS) \
+	$(kvcpp_CFLAGS) \
 	$(AM_CPPFLAGS) \
 	-DTESTDATADIR="\""$(top_srcdir)/src/test"\""\
 	-DBUFRTBLDIR="\""$(BUFRTABLES)"\""
@@ -344,25 +347,13 @@ kvBufrEncodeTest_CPPFLAGS = \
 
 kvBufrEncodeTest_LDADD =   \
 	$(top_builddir)/src/bufr/libbufr.la \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_corbahelper.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_miconfparser.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_dnmithread.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvdb.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_miutil.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_fileutil.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvadmininterface.a \
-	$(KVLIBDIR)/${KVLIBPREFIX}_kvskel.a \
-	$(top_builddir)/ecmwf/libbufr.a \
-	$(putools_LIBS) \
-	$(omniORB4_LIBS) \
-	$(BOOST_THREAD_LIB) \
-	$(BOOST_DATE_TIME_LIB) \
-	$(BOOST_FILESYSTEM_LIB) \
-	$(BOOST_SYSTEM_LIB) \
+	$(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) \
+  $(BOOST_FILESYSTEM_LIB) \
+  $(BOOST_DATE_TIME_LIB) \
+  $(BOOST_SYSTEM_LIB) \
+  $(top_builddir)/ecmwf/libbufr.a \
 	$(gtest_LIBS) \
-    -lgfortran -lm -ldl
+  -lgfortran \
+  -lm -ldl
 endif			
-endif			
+endif

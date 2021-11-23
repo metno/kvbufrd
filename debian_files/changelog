@@ -1,8 +1,20 @@
+kvbufrd (3.0.9~rc9-1) focal; urgency=low
+  * Encode radiation in template TM307079
+  * The value from the radiation sensors must be scaled.
+  * Use kafka consumer group.
+  * Update criteriea for vaidating an observation.
+  * bugfix in validating an observation.
+  * When validate is true and fmis=4, use corrected.
+  * When validator is NoCheck, just copy the useCorected flag.
+
+ -- Kvalobs <kvalobs@met.no>  Tue, 23 Nov 2021 13:45:00 +0100
+
+
 kvbufrd (3.0.9~rc8-1) focal; urgency=low
   * bugfix in validating an observation.
   * When validate is true and fmis=4, use corrected.
 
- -- Kvalobs <kvalobs@met.no>  Mon, 22 Nov 2021 15:15:00 +0200
+ -- Kvalobs <kvalobs@met.no>  Mon, 22 Nov 2021 15:15:00 +0100
 
 kvbufrd (3.0.9~rc7-1) focal; urgency=low
   * bugfix in validating an observation.

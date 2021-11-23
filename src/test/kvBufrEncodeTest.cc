@@ -153,6 +153,63 @@ namespace
 	}
 }
 
+TEST_F(BufrEncodeTest, UseCorrected) 
+{
+   using namespace miutil;
+   DataElementList allData;
+   DataElementList data;
+   StationInfoPtr  stInfo;
+   boost::posix_time::ptime dt;
+   BufrDataPtr bufr( new BufrData() );
+   kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
+   int wmono=1026;
+   stInfo = findWmoNo( wmono   );
+
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "90450_20211123T060000.dat", stInfo, allData, validData );
+   dt=getTime("2021-11-23 06:00:00");
+
+   cerr << allData << endl;
+
+   cerr << "allData #" << allData.size() << "\n";
+   data=allData.subData( dt );
+   
+   EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
+   EXPECT_TRUE( data.size() != 0 ) << "Expcting at least one hour of data.";
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
+   auto bufrHelperPtr=bufrEncoder.encodeBufr(stInfo, data);
+   EXPECT_TRUE(bufrHelperPtr != nullptr) << "Failed to encode BUFR.";
+   auto crc=bufrHelperPtr->computeCRC();
+   cout << "crc '" << crc << "'" << endl;
+   //FAIL();
+   //EXPECT_EQ(2945486157, crc) << "Failed to generate crc.";
+
+   bufrHelperPtr->setSequenceNumber(2);
+   bufrHelperPtr->saveToFile(".", 0);
+
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   EncodeBufrManager encoder;
+   BufrTemplateList templateList;
+   b::assign::push_back( templateList )(900000);
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+   }
+   catch ( EncodeException &ex ) {
+      FAIL() << "EXCEPTION (BufrEncodeException): " << ex.what();
+   }
+   catch ( const std::exception &ex ) {
+       FAIL() << "EXCEPTION: " << ex.what();
+   }
+   catch( ... ) {
+      FAIL() << "EXCEPTION: Unknown.";
+   }
+
+   ASSERT_NO_THROW( bufrHelper.saveToFile( ".", true, true ) );
+}
+
+#if 0
 
 TEST_F(BufrEncodeTest, BUOY_basic) 
 {
@@ -168,12 +225,12 @@ TEST_F(BufrEncodeTest, BUOY_basic)
 
    ASSERT_TRUE( stInfo.get() ) << "No station information for callsign " << id;
 
-   loadBufrDataFromFile( "bouy_76933_20200426T06.dat", stInfo, allData, validData );
-   dt=getTime("2020-04-26 06:00:00");
+   loadBufrDataFromFile( "76933_20211123T000000.dat", stInfo, allData, validData );
+   dt=getTime("2021-11-23 06:00:00");
 
    cerr << allData << endl;
 
-
+   cerr << "allData #" << allData.size() << "\n";
    data=allData.subData( dt );
    
    EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
@@ -183,8 +240,8 @@ TEST_F(BufrEncodeTest, BUOY_basic)
    EXPECT_TRUE(bufrHelperPtr != nullptr) << "Failed to encode BUFR.";
    auto crc=bufrHelperPtr->computeCRC();
    cout << "crc '" << crc << "'" << endl;
-   FAIL();
-   EXPECT_EQ(4179140996, crc) << "Failed to generate crc.";
+   //FAIL();
+   EXPECT_EQ(2945486157, crc) << "Failed to generate crc.";
 
    bufrHelperPtr->setSequenceNumber(2);
    bufrHelperPtr->saveToFile(".", 0);
@@ -210,8 +267,6 @@ TEST_F(BufrEncodeTest, BUOY_basic)
    ASSERT_NO_THROW( bufrHelper.saveToFile( ".", true, true ) );
 }
 
-
-#if 0
 
 
 
