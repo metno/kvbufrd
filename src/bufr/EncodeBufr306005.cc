@@ -74,7 +74,7 @@ encode( )
     } else {
       bufr->addValue(22004, INT_MAX, "CD");
     }
-    bufr->addValue(22031, e.second, "CV");
+    bufr->addValue(22031, e.second.value, "CV");
   }
 }
 

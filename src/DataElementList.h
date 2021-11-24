@@ -209,11 +209,13 @@ private:
 
   	DataElement& operator=(const DataElement &p);
 
+		//If isCorrected == true, we use the corrected value from kvalobs and
+		//not the original value.
   	bool setData( int  param,
   	              int  typeid_,
 									int  sensor,
 									int level,
-				     const std::string &data_ );
+				     			const std::string &data_, bool isCorrected );
 
   	/**
   	 * Removes data that only generates groups with slashes.

@@ -43,9 +43,16 @@ class KvParamList;
 
 class KvParam {
 public:
+   struct SensorValue {
+      float value;
+      bool  isCorrected;
+      SensorValue(float v, bool corrected):
+         value(v), isCorrected(corrected){}
+      SensorValue():value(FLT_MAX), isCorrected(false){}
+   };
    struct Sensor {
       int num;
-      std::map<int, float> levels;
+      std::map<int, SensorValue> levels;
       
       Sensor():num(-1){}
       Sensor( int sensor):num(sensor){}
@@ -60,7 +67,7 @@ public:
    private:
       friend class KvParam;
       void clean();
-      void set(float value, int level);
+      void set(float value, int level, bool corrected);
    };
 
 private:
@@ -134,7 +141,10 @@ public:
    //Is there any valid values in any sensor and levels
    bool hasValidValues()const;
    bool valid(int sensor=0, int level=0 )const;
-   void value( float val, int sensor=0, int level=0 );
+
+   //Set the value for sensor at level. If isCorrected == true, we use the
+   //corrected value from kvalobs and not the original.
+   void value( float val, bool isCorrected, int sensor, int level );
    float value( int sensor=0, int level=0 )const;
    int valAsInt(int sensor=0, int level=0)const;
 

@@ -79,7 +79,7 @@ loadBufrData( const DataEntryList   &dl,
                itd->useCorrected(useCorrected);
               //cerr << "LoadBufrData: '" << itd->obstime() << "' " << itd->paramID() << ", " << itd->typeID() << ", " << itd->original() << endl;
               bufrData.setData( itd->paramID(), itd->typeID(), 
-              itd->sensor(), itd->level(), itd->original() );
+              itd->sensor(), itd->level(), itd->original(), itd->useCorrected() );
             }else{
                log << "NOT USED. sid: " << itd->stationID()
                        << " tid: " << itd->typeID()

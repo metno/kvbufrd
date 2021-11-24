@@ -682,12 +682,17 @@ buoyType(int bt ){
 int  
 StationInfo::
 callsignAsInt()const{
-   std::string::size_type idx;
-   auto i = std::stoi(callsign_, &idx);
-   if( ! callsign_.substr(idx).empty()) {
+   try {
+      std::string::size_type idx;
+      auto i = std::stoi(callsign_, &idx);
+      if( ! callsign_.substr(idx).empty()) {
+         return INT_MAX;
+      }
+      return i;
+   } catch ( const std::exception &ex){
       return INT_MAX;
-   }
-   return i;
+   } 
+   return INT_MAX;
 }
 
 

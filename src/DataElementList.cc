@@ -277,7 +277,7 @@ setData( int  param,
          int typeid_,
          int  sensor,
 				 int level,
-         const std::string &data_)
+         const std::string &data_, bool isCorrected)
 {
   float       fData;
 
@@ -295,7 +295,7 @@ setData( int  param,
   for( ; pit != params.end(); ++pit ) {
   	if( (*pit)->id() == param ) {
    		//**pit = fData;
-      (*pit)->value(fData, sensor, level); 
+      (*pit)->value(fData, isCorrected, sensor, level); 
    		break;
    	}
   }
@@ -356,9 +356,10 @@ crcHelper(std::ostream &o)const
     for( ; it != params.end(); ++it ) {
       for( auto sit = (*it)->sensorsBegin(); sit != (*it)->sensorsEnd(); ++sit ) {
         for( auto lvl : sit->second.levels ) {
-          if( lvl.second == FLT_MAX )
+          if( lvl.second.value == FLT_MAX )
             continue;
-          o << (*it)->name() << " (" << sit->first <<", " << lvl.first << "): " << lvl.second << std::endl;
+          o << (*it)->name() << " (" << sit->first <<", " << lvl.first << "): " << lvl.second.value 
+            << (lvl.second.isCorrected?" (corrected value)":"") << std::endl;
         }
       }
     }
@@ -704,9 +705,10 @@ operator<<(std::ostream& o, const DataElement& sd)
     for( ; it != sd.params.end(); ++it ) {
       for( auto sit = (*it)->sensorsBegin(); sit != (*it)->sensorsEnd(); ++sit ) {
         for( auto lvl : sit->second.levels ) {
-          if( lvl.second == FLT_MAX )
+          if( lvl.second.value == FLT_MAX )
             continue;
-          o << (*it)->name()<<":" << (*it)->id() << " (" << sit->first <<", " << lvl.first << "): " << lvl.second << std::endl;
+          o << (*it)->name()<<":" << (*it)->id() << " (" << sit->first <<", " << lvl.first << "): " 
+            << lvl.second.value << (lvl.second.isCorrected?" (Use corrected)":"") << std::endl;
         }
       }
     }

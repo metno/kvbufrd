@@ -52,9 +52,9 @@ KvParamList::numberOfValidParams() const
 }
 
 void
-KvParam::Sensor::set(float value, int level)
+KvParam::Sensor::set(float value, int level, bool isCorrected)
 {
-  levels[level] = value;
+  levels[level] = SensorValue(value, isCorrected);
 }
 
 void
@@ -62,7 +62,7 @@ KvParam::Sensor::clean()
 {
   auto it = levels.begin();
   while (it != levels.end()) {
-    if (it->second == FLT_MAX || it->second == -32767) {
+    if (it->second.value == FLT_MAX || it->second .value == -32767) {
       it = levels.erase(it);
     } else {
       ++it;
@@ -76,7 +76,7 @@ KvParam::Sensor::getLevel(int level) const
   auto it = levels.find(level);
   if (it == levels.end())
     return FLT_MAX;
-  return it->second;
+  return it->second.value;
 }
 
 std::tuple<float, int>
@@ -85,7 +85,7 @@ KvParam::Sensor::getFirstValue() const
   auto it = levels.begin();
   if (it == levels.end())
     return make_tuple(FLT_MAX, 0);
-  return make_tuple(it->second, it->first);
+  return make_tuple(it->second.value, it->first);
 }
 
 KvParam::KvParam()
@@ -156,7 +156,7 @@ operator=( const KvParam &rhs )
 KvParam&
 KvParam::operator=(float rhs)
 {
-  value(rhs, 0, 0);
+  value(rhs, false, 0, 0);
   return *this;
 }
 
@@ -211,7 +211,7 @@ KvParam::getBySensorsAndLevels() const
     for (auto& l : s.second.levels) {
       auto il = res.find(l.first);
       if (il == res.end()) {
-        res[l.first] = l.second;
+        res[l.first] = l.second.value;
       }
     }
   }
@@ -224,8 +224,8 @@ KvParam::getFirstValueAtLevel(int level) const
 {
   for (auto s : sensors_) {
     for (auto& l : s.second.levels) {
-      if (l.first == level && l.second != -32767) {
-        return l.second;
+      if (l.first == level && l.second.value != -32767) {
+        return l.second.value;
       }
     }
   }
@@ -237,7 +237,7 @@ KvParam::hasValidValues() const
 {
   for (auto s : sensors_) {
     for (auto& l : s.second.levels) {
-      if (l.second != FLT_MAX && l.second != -32767) {
+      if (l.second.value != FLT_MAX && l.second.value != -32767) {
         return true;
       }
     }
@@ -252,7 +252,7 @@ KvParam::valid(int sensor, int level) const
 }
 
 void
-KvParam::value(float val, int sensor, int level)
+KvParam::value(float val, bool isCorrected, int sensor, int level)
 {
   if (val == -32767) {
     return;
@@ -260,7 +260,7 @@ KvParam::value(float val, int sensor, int level)
 
   auto s = sensorRef(sensor, true);
   auto l = level * levelScale_;
-  s->set(val, l);
+  s->set(val, l, isCorrected);
 }
 
 float
@@ -286,8 +286,8 @@ KvParam::transform(float func(float))
 {
   for (auto& s : sensors_) {
     for (auto& l : s.second.levels) {
-      if (l.second != FLT_MAX && l.second != -32767) {
-        l.second = func(l.second);
+      if (l.second.value != FLT_MAX && l.second.value != -32767) {
+        l.second.value = func(l.second.value);
       }
     }
   }
@@ -355,7 +355,8 @@ KvParam::print(std::ostream& o, bool printEmpty) const
 
   for (auto& s : sensors_) {
     for (auto& l : s.second.levels) {
-      o << "  " << s.first << ", " << l.first << " : " << l.second << "\n";
+      o << "  " << s.first << ", " << l.first << " : " << l.second.value 
+        << ( l.second.isCorrected?" (use corrected value)":"") << "\n";
     }
   }
   return o;
