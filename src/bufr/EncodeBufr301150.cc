@@ -30,26 +30,26 @@
 */
 
 #include <boost/assign.hpp>
-#include "EncodeBufr301004.h"
+#include "EncodeBufr301150.h"
 
-EncodeBufr301004::
-EncodeBufr301004()
+EncodeBufr301150::
+EncodeBufr301150()
 {
 
 }
 std::string
-EncodeBufr301004::
+EncodeBufr301150::
 logIdentifier() const
 {
-   return "301004";
+   return "301150";
 }
 
 std::list<int>
-EncodeBufr301004::
+EncodeBufr301150::
 encodeIds()const
 {
    std::list<int> ids;
-   boost::assign::push_back( ids )(301004);
+   boost::assign::push_back( ids )(301150);
 
    return ids;
 }
@@ -57,25 +57,23 @@ encodeIds()const
 
 
 void
-EncodeBufr301004::
+EncodeBufr301150::
 encode( )
 {
-   int defWmoNo=stationInfo->wmono();
-   int blockNumber=INT_MAX;
-   int wmoNo=INT_MAX;
-
-   if ( defWmoNo!=0 && defWmoNo!=INT_MAX && defWmoNo!=INT_MIN ){
-      blockNumber=static_cast<int>(defWmoNo/1000);
-      wmoNo=static_cast<int>( defWmoNo%1000 );
+   if( !stationInfo->wigosIdIsDefined() ) {
+      bufr->validBufr(false);
+      bufr->addErrorMessage("Missing WIGOS id.");
    }
+   int identifierSeries;
+   int issuerOfIdentifier;
+   int issueNumber;
+   std::string localIdentifier;
+   stationInfo->getWigosId(identifierSeries, issuerOfIdentifier,issueNumber,localIdentifier);
 
-   //WMO block number  II
-    bufr->addValue( 1001, static_cast<int>( blockNumber ), "II", false );
-   
-   //WMO station number  iii*
-   bufr->addValue(1002, static_cast<int>( wmoNo), "iii", false);
-   
-   bufr->addValue(1015, stationInfo->name(), "Site name", false);
-   bufr->addValue(2001, data->IX.valAsInt(), "ix", false );
+   bufr->addValue(1125, static_cast<int>(identifierSeries), "WIGOS identifier series", false);
+   bufr->addValue(1126, static_cast<int>(issuerOfIdentifier), "WIGOS issuer of identifier", false);
+   bufr->addValue(1127, static_cast<int>(issueNumber), "WIGOS issue number", false);
+   bufr->addValue(1128, localIdentifier, "WIGOS local identifier", false);
+
 }
 

@@ -29,53 +29,31 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <boost/assign.hpp>
-#include "EncodeBufr301004.h"
+#ifndef __ENCODEBUFR301150_H__
+#define __ENCODEBUFR301150_H__
 
-EncodeBufr301004::
-EncodeBufr301004()
-{
-
-}
-std::string
-EncodeBufr301004::
-logIdentifier() const
-{
-   return "301004";
-}
-
-std::list<int>
-EncodeBufr301004::
-encodeIds()const
-{
-   std::list<int> ids;
-   boost::assign::push_back( ids )(301004);
-
-   return ids;
-}
+#include "EncodeBufrBase.h"
 
 
+/**
+ * Encode BUFR template 3 01 150
+ * Station identification with use of WIGOS identifier.
+ */
+class EncodeBufr301150 :
+public EncodeBufrBase {
 
-void
-EncodeBufr301004::
-encode( )
-{
-   int defWmoNo=stationInfo->wmono();
-   int blockNumber=INT_MAX;
-   int wmoNo=INT_MAX;
+protected:
 
-   if ( defWmoNo!=0 && defWmoNo!=INT_MAX && defWmoNo!=INT_MIN ){
-      blockNumber=static_cast<int>(defWmoNo/1000);
-      wmoNo=static_cast<int>( defWmoNo%1000 );
-   }
+   //override
+   virtual void encode( );
 
-   //WMO block number  II
-    bufr->addValue( 1001, static_cast<int>( blockNumber ), "II", false );
-   
-   //WMO station number  iii*
-   bufr->addValue(1002, static_cast<int>( wmoNo), "iii", false);
-   
-   bufr->addValue(1015, stationInfo->name(), "Site name", false);
-   bufr->addValue(2001, data->IX.valAsInt(), "ix", false );
-}
+public:
+   EncodeBufr301150();
 
+   virtual std::string logIdentifier() const;
+   virtual std::list<int> encodeIds()const;
+
+
+};
+
+#endif

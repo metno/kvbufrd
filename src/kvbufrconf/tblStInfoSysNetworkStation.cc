@@ -108,6 +108,7 @@ set(const TblStInfoSysNetworkStation &ns )
    comment_ = ns.comment_;
    toTime_ = ns.toTime_;
    fromTime_ = ns.fromTime_;
+   return true;
 }
 
 void

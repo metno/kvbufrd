@@ -43,6 +43,7 @@
 #include "EncodeBufr301090.h"
 #include "EncodeBufr301093.h"
 #include "EncodeBufr301126.h"
+#include "EncodeBufr301150.h"
 #include "EncodeBufr302001.h"
 #include "EncodeBufr302004.h"
 #include "EncodeBufr302005.h"
@@ -89,6 +90,7 @@
 #include "EncodeBufr900003_SHIP.h"
 #include "EncodeBufr900004_SVV.h"
 #include "EncodeBufr900005_MOORED_BUOY.h"
+#include "EncodeBufr900006_SYNOP_WSI.h"
 #include "GuessBufrTemplate.h"
 #include "BUFRparam.h"
 
@@ -110,6 +112,7 @@ EncodeBufrManager()
    addEncoder( new EncodeBufr301090() );
    addEncoder( new EncodeBufr301093() );
    addEncoder( new EncodeBufr301126() );
+   addEncoder( new EncodeBufr301150() );
    addEncoder( new EncodeBufr302001() );
    addEncoder( new EncodeBufr302004() );
    addEncoder( new EncodeBufr302005() );
@@ -156,6 +159,7 @@ EncodeBufrManager()
    addEncoder( new EncodeBufr900003() );
    addEncoder( new EncodeBufr900004() );
    addEncoder( new EncodeBufr900005() );
+   addEncoder( new EncodeBufr900006() );
 }
 
 bool

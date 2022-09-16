@@ -159,6 +159,8 @@ main(int argn, char **argv)
   }else if(listconf){
      for(std::list<StationInfoPtr>::iterator it=stationList.begin();
            it!=stationList.end(); it++){
+        if (it != stationList.begin() )
+            cout << "-------------------------------------------------------------\n";    
         cout << **it << endl;
      }
   }else if(check){

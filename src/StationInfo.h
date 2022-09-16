@@ -37,6 +37,7 @@
 #include <iostream>
 #include <list>
 #include <string>
+#include <memory>
 #include "boost/shared_ptr.hpp"
 #include "boost/date_time/posix_time/ptime.hpp"
 #include "miconfparser/miconfparser.h"
@@ -320,10 +321,13 @@ public:
                                    const DelayInfo& sd);
 };
 
+
+
+
 class StationInfo
 {
 public:
-
+   typedef enum { ST_UNKNOWN, ST_WMO, ST_WSI, ST_CALLSIGN, ST_STATIONID } SectionType;
 
    /**
    * Type is a class to hold information about one typeid
@@ -451,6 +455,8 @@ private:
    milog::LogLevel loglevel_;
    bool            cacheReloaded48_;
    bool            ignore;
+   std::string     wsiId_; //wigosid
+   SectionType     sectionType_;
 
 
 
@@ -512,7 +518,13 @@ public:
    int       buoyType()const { return buoyType_;}
    
    int       wmono()const{ return wmono_;}
+   bool      wigosIdIsDefined()const;
 
+   SectionType getSectionType()const { return sectionType_;}
+
+   //throws invalid_argument if wigosid is not defined or there is an error in the format.
+   void      getWigosId(int &identifierSeries, int &issuerOfIdentifier, int &issueNumber, std::string &localIdentifier);
+   std::string wigosId()const{ return wsiId_;};
    /**
     * return callsign as a number if possible.
     * return MAX_INT, if it is not a number.
@@ -717,6 +729,7 @@ public:
       StationInfoList findStationByWmono( int wmono )const;
       StationInfoList findStationById( int stationid )const;
       StationInfoList findStationByCallsign( const std::string &callsign )const;
+      StationInfoList findStationByWsiId( const std::string &wsiId )const;
 };
 
 typedef StationList::iterator        IStationList;

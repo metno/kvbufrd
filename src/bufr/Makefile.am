@@ -27,6 +27,7 @@ libbufr_la_SOURCES = \
     EncodeBufr301090.cc EncodeBufr301090.h \
     EncodeBufr301093.cc EncodeBufr301093.h \
     EncodeBufr301126.cc EncodeBufr301126.h \
+    EncodeBufr301150.cc EncodeBufr301150.h \
     EncodeBufr302001.cc EncodeBufr302001.h \
     EncodeBufr302004.cc EncodeBufr302004.h \
     EncodeBufr302005.cc EncodeBufr302005.h \
@@ -72,7 +73,8 @@ libbufr_la_SOURCES = \
     EncodeBufr900002_PRECIP_AND_SNOW.cc EncodeBufr900002_PRECIP_AND_SNOW.h \
     EncodeBufr900003_SHIP.cc EncodeBufr900003_SHIP.h \
     EncodeBufr900004_SVV.cc EncodeBufr900004_SVV.h \
-    EncodeBufr900005_MOORED_BUOY.cc EncodeBufr900005_MOORED_BUOY.h
+    EncodeBufr900005_MOORED_BUOY.cc EncodeBufr900005_MOORED_BUOY.h \
+    EncodeBufr900006_SYNOP_WSI.cc EncodeBufr900006_SYNOP_WSI.h 
     
 
 

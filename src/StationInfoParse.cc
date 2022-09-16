@@ -124,6 +124,9 @@ parseStationDefSections( miconf::ConfSection *conf,
       } else if( (i=it->find("callsign_")) != string::npos ) {
          id = it->substr(i+9);
          idType = "CALLSIGN";
+      } else if( (i=it->find("wsi_")) != string::npos ) {
+         id = it->substr(i+4);
+         idType = "WSI"; //WIGOS id
       }else {
          continue;
       }
@@ -247,6 +250,7 @@ parseSection( miconf::ConfSection *stationConf,
                            "height_visibility", "height_precip",
                            "height_pressure", "height_temperature",
                            "height_wind","height_wind_above_sea", "name", "callsign", "wmono",
+                           "station_id", "wigos_id",
                            "code", "buoy_type",
                            0 };
 
@@ -291,10 +295,16 @@ parseSection( miconf::ConfSection *stationConf,
 
    if( idType == "WMO" ) {
       st->wmono_= atoi( id.c_str() );
+      st->sectionType_=StationInfo::ST_WMO;
    } else if( idType == "ID" ) {// idType == "ID"
       st->stationID_ = atoi( id.c_str() );
-   } else {// idType == "CALLSIGN"
+      st->sectionType_=StationInfo::ST_STATIONID;
+   } else if( idType == "CALLSIGN"){
       st->callsign_ = id;
+      st->sectionType_=StationInfo::ST_CALLSIGN;
+   } else { //idType == "WSI")
+      st->wsiId_ = id;
+      st->sectionType_=StationInfo::ST_WSI;
    }
 
    if( stationConf->ignoreThisSection() )
@@ -348,7 +358,10 @@ parseSection( miconf::ConfSection *stationConf,
                strcmp( keywords[i], "buoy_type" ) == 0  ||
                strcmp( keywords[i], "name" ) == 0 ||
                strcmp( keywords[i], "callsign" ) == 0 ||
-               strcmp( keywords[i], "wmono" ) == 0) {
+               strcmp( keywords[i], "wmono" ) == 0 ||
+               strcmp( keywords[i], "station_id" ) == 0 ||
+               strcmp( keywords[i], "wigos_id" ) == 0
+               ) {
             LOGDEBUG( "NO VALUE: for key <" << keywords[i] << "> in " << idType << " section <"
                       << id << ">!. Ignore!");
          } else {
@@ -402,19 +415,18 @@ parseSection( miconf::ConfSection *stationConf,
          } else if( strcmp( keywords[i], "buoy_type" ) == 0 ) {
             doInt(st->buoyType_, value );
          }else if( strcmp( keywords[i], "code") == 0 ){
-            if( value.size()>0) {
-                 st->code(value.begin()->valAsInt(), true );
-               if( value.size() > 1 ) {
-                  curErr << "code: can only have one value. The code has #" << value.size() <<"." << endl;
-                  ok=false;
-               }
+            if( value.size() > 1 ) {
+                curErr << "code: can only have one value. The code has #" << value.size() <<"." << endl;
+               ok=false;
+            } else {
+               st->code(value.valAsInt(0), true );
             }
          }else if( strcmp( keywords[i], "name" ) == 0 ) {
-            IValElementList it=value.begin();
-            if(it != value.end() ) {
-               if( it->type() == STRING  )
-                  st->name( it->valAsString() );
-            }
+            st->name( value.valAsString() );
+         } else if( strcmp( keywords[i], "wmono" ) == 0 ) {
+            doInt(st->wmono_, value);
+         } else if( strcmp( keywords[i], "wigos_id" ) == 0 ) {
+            st->wsiId_=value.valAsString();
          }
 
          if(!ok){

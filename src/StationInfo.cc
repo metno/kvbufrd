@@ -32,7 +32,9 @@
 #include <limits.h>
 #include <vector>
 #include <algorithm>
+#include <stdexcept>
 #include "miutil/timeconvert.h"
+#include "miutil/splitstr.h"
 #include "boost/lexical_cast.hpp"
 #include "boost/algorithm/string.hpp"
 #include "StationInfo.h"
@@ -40,6 +42,7 @@
 namespace b=boost;
 namespace pt=boost::posix_time;
 using namespace std;
+
 
 namespace {
 std::string printOut( int i )
@@ -458,7 +461,6 @@ setMsgForTime( const std::string &timespec )
       minAtHour_[0].set( 0, true );
 }
 
-
 StationInfo::
 StationInfo():
 code_(-1),
@@ -476,7 +478,9 @@ wmono_( 0 ),
 stationID_( 0 ),
 copyIsSet_( false ),
 cacheReloaded48_(true),
-ignore( false )
+ignore( false ),
+sectionType_(ST_UNKNOWN)
+
 {
 }
 
@@ -497,7 +501,8 @@ wmono_( wmono ),
 stationID_( INT_MIN ),
 copyIsSet_( false ),
 cacheReloaded48_(true),
-ignore( false )
+ignore( false ),
+sectionType_(ST_UNKNOWN)
 {
 }
 
@@ -533,12 +538,16 @@ StationInfo(const StationInfo &i)
    delayUntil_=i.delayUntil_;
    cacheReloaded48_=i.cacheReloaded48_;
    ignore = i.ignore;
+   wsiId_=i.wsiId_;
+   sectionType_=i.sectionType_;
 }
 
 StationInfo::
 ~StationInfo()
 {
 }
+
+
 
 void
 StationInfo::
@@ -678,6 +687,41 @@ buoyType(int bt ){
       buoyType_=63; //Missing
    }
 }
+
+bool StationInfo::wigosIdIsDefined()const{
+   return ! wsiId_.empty();
+}
+
+
+namespace {
+   int intWsiElem(const string &s, const string &elem) {
+      string::size_type idx;
+      int n=stoi(s, &idx, 10);
+      if( idx != s.length() ) {
+         ostringstream err;
+         err << "Expecting a number for wsi element '" << elem << "'. Got '" << s << "'."; 
+         throw invalid_argument(err.str());   
+      }
+      return n;
+   }
+}
+
+//throws invalid_argument if wigosid is not defined or there is an error in the format.
+void  StationInfo::getWigosId(int &identifierSeries, int &issuerOfIdentifier, int &issueNumber, std::string &localIdentifier){
+   auto wsiElems=miutil::splitstr(wsiId_, '-');
+   if (wsiElems.size() != 4 ) {
+      ostringstream err;
+      err << "Expecting 4 element separeted by -, got " << wsiElems.size() << " '" << wsiId_ << "'."; 
+      throw invalid_argument(err.str());
+   }
+
+   identifierSeries=intWsiElem(wsiElems[0], "identifier series");
+   issuerOfIdentifier=intWsiElem(wsiElems[1], "issuer of identifier");
+   issueNumber=intWsiElem(wsiElems[1], "issuer number");
+   localIdentifier=wsiElems[3];
+}
+
+
 
 int  
 StationInfo::
@@ -938,13 +982,16 @@ StationInfo::
 toIdentString()const
 {
    ostringstream o;
-   if( wmono_ > 0 )
+
+   if( sectionType_== ST_WMO )
       o << "wmo_" << wmono_;
-   else if ( stationID_ > 0 )
+   else if ( sectionType_ == ST_STATIONID )
       o << "id_"<< stationID_;
-   else if( ! callsign_.empty() )
+   else if( sectionType_ == ST_CALLSIGN )
       o << "callsign_" << callsign_;
-   else
+   else if( sectionType_ == ST_WSI )
+      o << "wsi_" << wsiId_;
+   else 
       o << "id-UNKNOWN";
 
    if (  code_ < 0) {
@@ -962,6 +1009,7 @@ equalTo(const StationInfo &st)
    if(&st==this)
       return true;
 
+   
    if(wmono_==st.wmono_                 &&
          stationID_ == st.stationID_       &&
          callsign_ == st.callsign_         &&
@@ -985,7 +1033,8 @@ equalTo(const StationInfo &st)
          height_ == st.height_ &&
          latitude_ == st.latitude_ &&
          longitude_ == st.longitude_ &&
-         buoyType_ == st.buoyType_ )
+         buoyType_ == st.buoyType_  &&
+         wsiId_ == st.wsiId_)
       return true;
    else
       return false;
@@ -999,7 +1048,8 @@ operator<(const StationInfo &rhs )const
    if(( wmono_ < rhs.wmono_ ) ||
       ( wmono_ == rhs.wmono_ && stationID_ < rhs.stationID_ ) ||
       ( wmono_ == rhs.wmono_ && stationID_ == rhs.stationID_ && callsign_ < rhs.callsign_ ) ||
-      ( wmono_ == rhs.wmono_ && stationID_ == rhs.stationID_ && callsign_ == rhs.callsign_  && stationID_<rhs.stationID_) )
+      ( wmono_ == rhs.wmono_ && stationID_ == rhs.stationID_ && callsign_ == rhs.callsign_  && stationID_<rhs.stationID_) ||
+      ( wmono_ == rhs.wmono_ && stationID_ == rhs.stationID_ && callsign_ == rhs.callsign_  && stationID_==rhs.stationID_ && wsiId_ < rhs.wsiId_))
       return true;
    else
       return false;
@@ -1012,6 +1062,7 @@ operator==(const StationInfo &rhs) const
    if( wmono_ == rhs.wmono_ &&
        stationID_ == rhs.stationID_ &&
        callsign_ == rhs.callsign_  && 
+       wsiId_ == rhs.wsiId_ &&
        code()  == rhs.code())
       return true;
    else
@@ -1031,6 +1082,11 @@ keyToString(const std::string &key)
       return ost.str();
    } else if(key=="wmono"){
       ost << wmono();
+      return ost.str();
+   } else if (key == "wigos_id") {
+      return wsiId_;
+   } else if (key == "station_id") {
+      ost << stationID();
       return ost.str();
    }else  if(key=="name"){
       return name();
@@ -1280,7 +1336,7 @@ operator<<(std::ostream& ost,
    ost << "                name: " << sd.name() << endl;
    ost << "                code: " << sd.code() <<  endl;
    ost << "            idstring: " << sd.toIdentString() << endl;
-   ost << " wmo/stationID/callsign: " << sd.wmono() << "/" << sd.stationID() << "/" << sd.callsign()  << endl;
+   ost << " wmo/stationID/callsign/wsiID: " << sd.wmono() << "/" << sd.stationID() << "/" << sd.callsign() << "/" << sd.wsiId_  << endl;
    ost << "defined stationid(s): ";
 
    for(auto id : sd.definedStationid_) {
@@ -1337,6 +1393,13 @@ operator<<(std::ostream& ost,
       ost << pt::to_kvalobs_string(sd.delayUntil_);
 
    ost << endl;
+   if ( sd.wmono_ != 0 ){
+      ost << "                wmono: " << printOut( sd.wmono_) << endl;   
+   }
+   if ( !sd.wsiId_.empty() ){
+      ost << "             wigos_id: " << sd.wsiId_ << endl;   
+   }
+   
    ost << "             latitude: " << printOut( sd.latitude_) << endl;
    ost << "            longitude: " << printOut( sd.longitude_ )<< endl;
    ost << "               height: " << printOut( sd.height_ ) << endl;
@@ -1501,6 +1564,20 @@ findStationByCallsign( const std::string &callsign )const
    return ret;
 }
 
+StationInfoList StationList::findStationByWsiId( const std::string &wsiId )const {
+   StationInfoList ret;
+
+   if( ! wsiId.empty() ) {
+      for( StationList::const_iterator it=begin();
+            it != end(); ++it ) {
+         if( (*it)->wigosId() == wsiId ){
+            ret.push_back( *it );
+         }
+      }
+   }
+
+   return ret;
+}
 
 
 StationInfoCompare::
