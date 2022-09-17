@@ -147,7 +147,7 @@ insert( int bufrParamId, int value, const std::string &name )
       val->log_ << std::setfill(' ') << std::setw(8) << "NA";
 
    if( ! name.empty() )
-      val->log_ << "  " << name;
+      val->log_ << " : " << name;
 
    val->log_ << std::endl;
 
@@ -178,7 +178,7 @@ insert( int bufrParamId, float value, const std::string &name )
       val->log_ << std::setfill(' ') << std::setw(8) << "NA";
 
    if( ! name.empty() )
-      val->log_ << "  " << name;
+      val->log_ << " : " << name;
 
    val->log_ << std::endl;
    val->values_[index] = ret;
@@ -204,10 +204,10 @@ insert( int bufrParamId, std::string &value, int sIndex, const std::string &name
              << std::setfill('0')<< std::setw(6)<< bufrParamId << " : ";
 
    val->log_ << std::fixed << std::setprecision(0) << std::setw(8) << ret
-         << "  '" << value << "'";
+         << " : '" << value << "'";
 
    if( ! name.empty() )
-      val->log_ << "  " << name ;
+      val->log_ << " : " << name ;
 
    val->log_ << std::endl;
    val->values_[index] = ret;

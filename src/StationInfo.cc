@@ -717,7 +717,7 @@ void  StationInfo::getWigosId(int &identifierSeries, int &issuerOfIdentifier, in
 
    identifierSeries=intWsiElem(wsiElems[0], "identifier series");
    issuerOfIdentifier=intWsiElem(wsiElems[1], "issuer of identifier");
-   issueNumber=intWsiElem(wsiElems[1], "issuer number");
+   issueNumber=intWsiElem(wsiElems[2], "issuer number");
    localIdentifier=wsiElems[3];
 }
 

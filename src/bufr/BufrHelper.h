@@ -50,7 +50,7 @@ class EncodeBufrBase;
 class TestHelper {
    public:
    struct Value {
-      typedef enum{ F, I, S, U} VT;
+      typedef enum{ F, I, S, M, U} VT;
       VT vt;
       float fv;
       int iv;
@@ -60,20 +60,78 @@ class TestHelper {
       Value(float v): vt(F), fv(v){} 
       Value(int v): vt(I), iv(v){} 
       Value(const std::string &v): vt(S), sv(v){} 
-
+      
       float getF()const { return vt==F?fv:FLT_MAX;}
       int   getI()const { return vt==I?iv:INT_MAX;}
       std::string   getS()const { return vt==S?sv:"";}
+      void setMissing() {
+         vt=M;
+      }
+      static Value createMissing() {
+         Value v;
+         v.setMissing();
+         return v;
+      }
+
+      bool isMissing() const{ return vt==M?true:false;}
+      std::string getAsString() {
+         std::ostringstream o;
+         switch( vt ) {
+            case U: o << "<unknown>"; break;
+            case M: o << "missing"; break;
+            case F: {
+                  if (fv==FLT_MAX || fv==FLT_MIN ) {
+                     o << "missing";
+                  } else {
+                     o << fv;
+                  };
+                  break;
+            }
+            case I: {
+                  if (iv==INT_MAX || iv==INT_MIN ) {
+                     o << "missing";
+                  } else {
+                     o << iv;
+                  }
+                  break;
+            }
+            default:
+               o << "'" << sv << "'";
+               break;
+         }
+         return o.str();
+      }
    };
+
    
    
    public:
-   void setF(float v, const std::string &id) { tests[id]=Value(v);}
-   void setI(int v, const std::string &id) { tests[id]=Value(v);}
-   void setS(const std::string &v, const std::string &id) { tests[id]=Value(v);}
-   Value get(const std::string &id) { return tests[id];}
+   void setF(float v, const std::string &id) { tests[id].push_back(Value(v));}
+   void setI(int v, const std::string &id) { tests[id].push_back(Value(v));}
+   void setS(const std::string &v, const std::string &id) { tests[id].push_back(Value(v));}
+   void setMissing(const std::string &id) { tests[id].push_back(Value::createMissing());}
+   Value get(const std::string &id) { 
+         auto it = tests.find(id);
+         return it == tests.end() ? Value():it->second.front();
+   }
+   std::list<Value> getValueList(const std::string &id) {
+         auto it =tests.find(id);
+         return it ==tests.end() ? std::list<Value>():it->second;
+   }
+
+   std::ostream& print(std::ostream &o) {
+      for ( auto kv : tests ) {
+         o << kv.first << " (" << kv.second.size() << "):";
+         for( auto &v : kv.second ) {
+            o << " " << v.getAsString();
+         }
+         o << std::endl;
+      }
+      return o;
+   }
+
    private:
-   std::map<std::string, Value> tests;
+   std::map<std::string, std::list<Value> > tests;
 };
 
 class BufrHelper {
@@ -223,6 +281,15 @@ public:
    //Only for Test
    TestHelper::Value getTestValue(const std::string &testId) {
       return testHelper.get(testId);
+   }
+
+   //Only for Test
+   std::list<TestHelper::Value> getTestValueList(const std::string &testId) {
+      return testHelper.getValueList(testId);
+   }
+
+   std::ostream &printTestValues(std::ostream &o) {
+      return testHelper.print(o);
    }
 
 };

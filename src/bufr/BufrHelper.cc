@@ -273,13 +273,24 @@ BufrHelper::
 addValue( int bufrParamId, float value,
           const std::string &name, bool countAsData, const std::string &testId )
 {
-   if( (*values)[iValue++].insert( bufrParamId, value, name ) ) {
-      if ( test && !testId.empty()) {
-         testHelper.setF(value, testId);
+   bool ok = (*values)[iValue++].insert( bufrParamId, value, name ); 
+   if( ok && countAsData ) {
+	   bufrBase->setHasValidValue();
+	}
+
+   if ( test ) {
+      ostringstream id;
+      if( !testId.empty() ) {
+         id << testId;
+      } else {
+         id << std::setfill('0')<< std::setw(6) << bufrParamId;
       }
-	   if( countAsData ) {
-		   bufrBase->setHasValidValue();
-	   }
+
+      if( ok ) {
+         testHelper.setF(value, id.str());
+      } else {
+         testHelper.setMissing(id.str());
+      }
    }
 }
 
@@ -289,13 +300,25 @@ addValue( int bufrParamId, int value,
           const std::string &name, bool countAsData, const std::string &testId )
 {
    try {
+      bool ok = (*values)[iValue++].insert( bufrParamId, value, name );
 
-      if( (*values)[iValue++].insert( bufrParamId, value, name ) ) {
-        if ( test && !testId.empty()) {
-            testHelper.setI(value, testId);
-        }
-    	  if( countAsData )
-    		  bufrBase->setHasValidValue();
+      if( ok && countAsData ) {
+	      bufrBase->setHasValidValue();
+   	}
+
+      if ( test ) {
+         ostringstream id;
+         if( !testId.empty() ) {
+            id << testId;
+         } else {
+            id << std::setfill('0')<< std::setw(6) << bufrParamId;
+         }
+
+         if( ok ) {
+            testHelper.setI(value, id.str());
+         } else {
+            testHelper.setMissing(id.str());
+         }
       }
    }
    catch( const TypeException &ex ) {
@@ -320,7 +343,13 @@ addValue( int bufrParamId, const std::string &value,
    string val( value );
 
    try {
-       if( (*values)[iValue++].insert( bufrParamId, val, iCvals+1, name ) ) {
+       bool ok=(*values)[iValue++].insert( bufrParamId, val, iCvals+1, name );
+
+      if ( ok ) {
+         if( countAsData ) {
+	         bufrBase->setHasValidValue();
+	      }
+
     	   //It seems that the BUFR software (fortran) code takes a
     	   //copy of the value we send it and allways takes the
     	   //numbers of bytes specified in the 'width' from the param definition
@@ -336,14 +365,22 @@ addValue( int bufrParamId, const std::string &value,
             cvalsLen[iCvals]=val.length()<value.length()?val.length():value.length();
     		   strncpy(cvals[iCvals++], val.c_str(), val.length() );
          }
+      }
 
-         if ( test && !testId.empty()) {
-            testHelper.setS(value, testId);
+      if ( test ) {
+         ostringstream id;
+         if( !testId.empty() ) {
+            id << testId;
+         } else {
+            id << std::setfill('0')<< std::setw(6) << bufrParamId;
          }
 
-         if( countAsData )
-            bufrBase->setHasValidValue();
-       }
+         if( ok ) {
+            testHelper.setS(value, id.str());
+         } else {
+            testHelper.setMissing(id.str());
+         }
+      }
    }
    catch( const std::exception  &ex ) {
        ostringstream ost;
