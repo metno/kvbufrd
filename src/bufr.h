@@ -175,7 +175,7 @@ class Bufr
 
 
    /**
-    * encodeBufr, call doBufr end endcode the BUFR in one go. It does
+    * encodeBufr, call doBufr and endcode the BUFR in one go. It does
     * not set CCX or write the BUFR to file. 
     * Returns a pointer to BufrHelper on success or a null ptr on fail.
     */

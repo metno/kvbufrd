@@ -83,6 +83,16 @@ protected:
 		return StationInfoPtr();
 	}
 
+   StationInfoPtr findWigosId( const std::string &wsi ) {
+		for( std::list<StationInfoPtr>::iterator it=stationList.begin(); it!=stationList.end(); ++it ) {
+			if( (*it)->wigosId() == wsi )
+				return *it;
+		}
+
+		return StationInfoPtr();
+	}
+
+
 	StationInfoPtr findStationId( int stationid ) {
 	      for( std::list<StationInfoPtr>::iterator it=stationList.begin(); it!=stationList.end(); ++it ) {
 	         if( (*it)->stationID() == stationid )
@@ -152,6 +162,163 @@ namespace
 		return boost::posix_time::time_from_string(formatted);
 	}
 }
+
+
+TEST_F(BufrEncodeTest, WIGOS_encode_with_wmono) 
+{
+using namespace miutil;
+   DataElementList allData;
+   DataElementList data;
+   StationInfoPtr  stInfo;
+   boost::posix_time::ptime dt;
+   BufrDataPtr bufr( new BufrData() );
+   kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
+   string wsi="0-20000-0-89504";
+   stInfo = findWigosId( wsi );
+
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wigos id '" << wsi << "'";
+
+   loadBufrDataFromFile( "data-99990_501_316_20220917T060000.dat", stInfo, allData, validData );
+   dt=getTime("2022-09-17 06:00:00");
+
+   cerr << allData << endl;
+
+   cerr << "allData #" << allData.size() << "\n";
+   data=allData.subData( dt );
+   
+   EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
+   EXPECT_TRUE( data.size() != 0 ) << "Expcting at least one hour of data.";
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
+   auto bufrHelperPtr=bufrEncoder.encodeBufr(stInfo, data);
+   EXPECT_TRUE(bufrHelperPtr != nullptr) << "Failed to encode BUFR.";
+   
+
+
+   bufrHelperPtr->setSequenceNumber(0);
+   bufrHelperPtr->saveToFile(".", 0);
+
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelper.setTest(true); 
+   EncodeBufrManager encoder;
+   BufrTemplateList templateList;
+   b::assign::push_back( templateList )(900006);
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+      //cout << bufrHelper.getLog() << endl;
+
+      //Check that wmo numer is set
+      ASSERT_TRUE( bufrHelper.getTestValue("001001").getI()==89 &&  bufrHelper.getTestValue("001002").getI()==504) << "Expect the wmo numer to be set to 89504";
+
+      //Check that the WIGOS id is set.
+
+      ASSERT_TRUE(bufrHelper.getTestValue("001125").getI()==0 &&  bufrHelper.getTestValue("001126").getI() == 20000 
+         && bufrHelper.getTestValue("001127").getI() == 0 && bufrHelper.getTestValue("001128").getS() == "89504" ) << "Expect WIGOS id '0-20000-0-89504'";
+      bufrHelper.printTestValues(cout);
+   }
+   catch ( EncodeException &ex ) {
+      FAIL() << "EXCEPTION (BufrEncodeException): " << ex.what();
+   }
+   catch ( const std::exception &ex ) {
+       FAIL() << "EXCEPTION: " << ex.what();
+   }
+   catch( ... ) {
+      FAIL() << "EXCEPTION: Unknown.";
+   }
+}
+
+
+
+TEST_F(BufrEncodeTest, WIGOS_encode_no_wmono) 
+{
+   using namespace miutil;
+   DataElementList allData;
+   DataElementList data;
+   StationInfoPtr  stInfo;
+   boost::posix_time::ptime dt;
+   BufrDataPtr bufr( new BufrData() );
+   kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
+   string wsi="0-578-0-92100";
+   stInfo = findWigosId( wsi );
+
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wigos id '" << wsi << "'";
+
+   loadBufrDataFromFile( "data-92100_501_506_20220917T060000.dat", stInfo, allData, validData );
+   dt=getTime("2022-09-17 06:00:00");
+
+   cerr << allData << endl;
+
+   cerr << "allData #" << allData.size() << "\n";
+   data=allData.subData( dt );
+   
+   EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
+   EXPECT_TRUE( data.size() != 0 ) << "Expcting at least one hour of data.";
+   EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
+   auto bufrHelperPtr=bufrEncoder.encodeBufr(stInfo, data);
+   EXPECT_TRUE(bufrHelperPtr != nullptr) << "Failed to encode BUFR.";
+   
+
+
+   bufrHelperPtr->setSequenceNumber(0);
+   bufrHelperPtr->saveToFile(".", 0);
+
+   BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelper.setTest(true); 
+   EncodeBufrManager encoder;
+   BufrTemplateList templateList;
+   b::assign::push_back( templateList )(900006);
+
+   try {
+      encoder.encode( templateList, bufrHelper );
+      //cout << bufrHelper.getLog() << endl;
+
+      //Check that wmo numer is nor set
+      ASSERT_TRUE(bufrHelper.getTestValue("001001").isMissing() &&  bufrHelper.getTestValue("001002").isMissing()) << "Expect the wmo numer to be missing";
+
+      //Check that the WIGOS id is set.
+      ASSERT_TRUE(bufrHelper.getTestValue("001125").getI()==0 &&  bufrHelper.getTestValue("001126").getI() == 578 
+         && bufrHelper.getTestValue("001127").getI() == 0 && bufrHelper.getTestValue("001128").getS() == "92100" ) << "Expect WIGOS id '0-578-0-92100'";
+      bufrHelper.printTestValues(cout);
+   }
+   catch ( EncodeException &ex ) {
+      FAIL() << "EXCEPTION (BufrEncodeException): " << ex.what();
+   }
+   catch ( const std::exception &ex ) {
+       FAIL() << "EXCEPTION: " << ex.what();
+   }
+   catch( ... ) {
+      FAIL() << "EXCEPTION: Unknown.";
+   }
+
+//   ASSERT_NO_THROW( bufrHelper.saveToFile( ".", true, true ) );
+}
+
+
+
+TEST_F(BufrEncodeTest, WIGOS_ID) 
+{
+   using namespace miutil;
+   DataElementList allData;
+   DataElementList data;
+   StationInfoPtr  stInfo;
+   
+   string wsi="0-20000-0-89504";
+   stInfo = findWigosId( wsi );
+
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wigos id '" << wsi << "'.";
+
+   int identifierSeries, issuerOfIdentifier, issueNumber;
+   string localIdentifier;
+   stInfo->getWigosId(identifierSeries, issuerOfIdentifier, issueNumber,localIdentifier );
+
+   cout << "identifierSeries: " << identifierSeries << " issuerOfIdentifier: " << issuerOfIdentifier << " issueNumber: " << issueNumber << " localIdentifier: '" << localIdentifier << "'\n";
+
+   ASSERT_TRUE( identifierSeries==0 && issuerOfIdentifier==20000 && issueNumber==0 && localIdentifier=="89504" ) << "Failed to decode wigos id '" << wsi << "'";
+
+}
+
+
+
 
 TEST_F(BufrEncodeTest, UseCorrected) 
 {
