@@ -56,16 +56,27 @@ class TestHelper {
       int iv;
       std::string sv;
 
-      Value():vt(U){}
-      Value(float v): vt(F), fv(v){} 
-      Value(int v): vt(I), iv(v){} 
-      Value(const std::string &v): vt(S), sv(v){} 
+      Value():vt(U), fv(FLT_MAX), iv(INT_MAX){}
+      Value(float v): vt(F), fv(v), iv(int(v)){
+         if(fv == FLT_MAX || fv==FLT_MIN) {
+            setMissing();
+         }
+      } 
+      Value(int v): vt(I), fv(float(v)),iv(v){
+         if( iv == INT_MAX || iv == INT_MIN) {
+            setMissing();
+         }
+      } 
+      Value(const std::string &v): vt(S), fv(FLT_MAX), iv(INT_MAX),sv(v){} 
       
       float getF()const { return vt==F?fv:FLT_MAX;}
       int   getI()const { return vt==I?iv:INT_MAX;}
       std::string   getS()const { return vt==S?sv:"";}
       void setMissing() {
          vt=M;
+         fv=FLT_MAX;
+         iv=INT_MAX;
+         sv.erase();
       }
       static Value createMissing() {
          Value v;
@@ -110,9 +121,16 @@ class TestHelper {
    void setI(int v, const std::string &id) { tests[id].push_back(Value(v));}
    void setS(const std::string &v, const std::string &id) { tests[id].push_back(Value(v));}
    void setMissing(const std::string &id) { tests[id].push_back(Value::createMissing());}
-   Value get(const std::string &id) { 
+   Value get(const std::string &id, int index=0) { 
          auto it = tests.find(id);
-         return it == tests.end() ? Value():it->second.front();
+         if( it == tests.end() ) {
+            return Value::createMissing();
+         }
+         
+         auto vit=it->second.begin();
+         //Advance vit, the values, to index
+         for(int i=0 ; vit!=it->second.end() && i<index; vit++, i++); 
+         return vit != it->second.end() ? *vit : Value::createMissing();
    }
    std::list<Value> getValueList(const std::string &id) {
          auto it =tests.find(id);
@@ -279,7 +297,7 @@ public:
    boost::uint32_t computeCRC()const;
 
    //Only for Test
-   TestHelper::Value getTestValue(const std::string &testId) {
+   TestHelper::Value getTestValue(const std::string &testId, int index=0) {
       return testHelper.get(testId);
    }
 

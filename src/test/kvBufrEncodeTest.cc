@@ -205,7 +205,9 @@ using namespace miutil;
 
    try {
       encoder.encode( templateList, bufrHelper );
-      //cout << bufrHelper.getLog() << endl;
+      cout << bufrHelper.getLog() << endl;
+      cout << " ------------------------ \n";
+      bufrHelper.printTestValues(cout);
 
       //Check that wmo numer is set
       ASSERT_TRUE( bufrHelper.getTestValue("001001").getI()==89 &&  bufrHelper.getTestValue("001002").getI()==504) << "Expect the wmo numer to be set to 89504";
@@ -214,7 +216,6 @@ using namespace miutil;
 
       ASSERT_TRUE(bufrHelper.getTestValue("001125").getI()==0 &&  bufrHelper.getTestValue("001126").getI() == 20000 
          && bufrHelper.getTestValue("001127").getI() == 0 && bufrHelper.getTestValue("001128").getS() == "89504" ) << "Expect WIGOS id '0-20000-0-89504'";
-      bufrHelper.printTestValues(cout);
    }
    catch ( EncodeException &ex ) {
       FAIL() << "EXCEPTION (BufrEncodeException): " << ex.what();
@@ -270,8 +271,9 @@ TEST_F(BufrEncodeTest, WIGOS_encode_no_wmono)
 
    try {
       encoder.encode( templateList, bufrHelper );
-      //cout << bufrHelper.getLog() << endl;
-
+      cout << bufrHelper.getLog() << endl;
+      cout << " ------------------------ \n";
+      bufrHelper.printTestValues(cout);
       //Check that wmo numer is nor set
       ASSERT_TRUE(bufrHelper.getTestValue("001001").isMissing() &&  bufrHelper.getTestValue("001002").isMissing()) << "Expect the wmo numer to be missing";
 
