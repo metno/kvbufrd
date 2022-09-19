@@ -64,8 +64,8 @@ encode( )
    //For now do not send out sunsshine data, we hardcode it to missing.
    //Remove the following two lines when the quality of OT_1 and OT_24
    //is ok.
-   data->OT_1 = FLT_MAX;
-   data->OT_24 = FLT_MAX;
+   // data->OT_1 = FLT_MAX;
+   // data->OT_24 = FLT_MAX;
 
    int rep=1;
    if( hasReplicator() ) {
