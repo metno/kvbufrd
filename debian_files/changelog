@@ -1,3 +1,19 @@
+kvbufrd (3.0.9~rc12-1) focal; urgency=low
+  * Enable soltime, TM302039.
+  * Add support for WIGOS id. code 6 (EncodeBufr900006_SYNOP_WSI).
+  * Encode radiation in template TM307079
+  * The value from the radiation sensors must be scaled.
+  * Use kafka consumer group.
+  * Update criteriea for vaidating an observation.
+  * bugfix in validating an observation.
+  * When validate is true and fmis=4, use corrected.
+  * When validator is NoCheck, just copy the useCorected flag.
+  * Log use of corrected value from kvalobs.
+
+ -- Kvalobs <kvalobs@met.no>  Sat, 19 Sep 2022 12:00:00 +0200
+
+
+
 kvbufrd (3.0.9~rc11-1) focal; urgency=low
   * Add support for WIGOS id. code 6 (EncodeBufr900006_SYNOP_WSI).
   * Encode radiation in template TM307079
