@@ -60,7 +60,7 @@ void
 EncodeBufr302033::
 encode( )
 {
-    bufr->addValue( 7032, stationInfo->heightVisability(), "h_V, height of visibility sensor or observation point", false );
+   bufr->addValue( 7032, stationInfo->heightVisability(), "h_V, height of visibility sensor or observation point", false );
 	bufr->addValue( 20001, data->VV, "VV, horisental visibility" );
 }
 
