@@ -162,7 +162,7 @@ class Bufr
               );
 
    /**
-    * doBufr only compute the date used to encode BUFR it does NOT
+    * doBufr only compute the data used to encode BUFR it does NOT
     * encode the BUFR.
     * This is only a shorthand for 
     * doBufr StationInfoPtr       info,
@@ -181,8 +181,7 @@ class Bufr
     */
    std::shared_ptr<BufrHelper> encodeBufr(StationInfoPtr  info,
                         DataElementList &bufrData);
-    
-
+   
 };
 
 #endif

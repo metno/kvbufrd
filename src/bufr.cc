@@ -1054,9 +1054,11 @@ doEsss( const DataElementList &data, BufrData &res  )
 
    if( (time.time_of_day().hours() % 6) != 0 )
       return;
-
+   
    int iSA = (data[0].SA == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SA) + 0.5 )));
    int iSD = (data[0].SD == FLT_MAX?INT_MAX:static_cast<int>(floor(static_cast<double>(data[0].SD) + 0.5 )));
+   
+   //cerr << "doEsss: obstime: '" << time << "' iSA=" << iSA << " (" << data[0].SA << ") iSD=" << iSD << "(" << data[0].SD << ") EE: " << data[0].EE.value() << "\n";
 
    if( data[0].EM == FLT_MAX && data[0].EE == FLT_MAX && iSA == INT_MAX && iSD == INT_MAX)
       return;
@@ -1081,6 +1083,8 @@ doEsss( const DataElementList &data, BufrData &res  )
         		 res.SA = 0.00;
         	 else
         		 res.SA = -0.02;
+         } else {
+            res.SA = 0.00;
          }
       } else if( iSA == 0 )
          res.SA = -0.01;
