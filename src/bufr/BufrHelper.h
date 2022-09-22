@@ -201,8 +201,6 @@ public:
                StationInfoPtr stationInfo_,
                BufrDataPtr bufrData_ );
 
-   BufrHelper( StationInfoPtr stationInfo_,
-               BufrDataPtr bufrData_ );               
    ~BufrHelper();
 
    bool emptyBufr() const;
