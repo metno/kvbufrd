@@ -123,7 +123,8 @@ protected:
 		 //istringstream iconf(testconf);
 		setenv("BUFR_TABLES", bufr_tables.c_str(), 1 );
 		string conffile(string(TESTDATADIR) + "/kvBufrEncodeTest.conf" );
-		string btabl(string(BUFRTBLDIR)+"/B0000000000000033000.TXT");
+		//string btabl(string(BUFRTBLDIR)+"/B0000000000000033000.TXT");
+      string btabl(string(BUFRTBLDIR)+"/B0000000000000031000.TXT");
       ifstream iconf( conffile.c_str() );
 		//Turn off almost all logging.
 		milog::Logger::logger().logLevel( milog::ERROR );
@@ -162,7 +163,6 @@ namespace
 		return boost::posix_time::time_from_string(formatted);
 	}
 }
-
 
 TEST_F(BufrEncodeTest, WIGOS_encode_with_wmono) 
 {
@@ -364,6 +364,8 @@ TEST_F(BufrEncodeTest, UseCorrected)
 
    try {
       encoder.encode( templateList, bufrHelper );
+
+
    }
    catch ( EncodeException &ex ) {
       FAIL() << "EXCEPTION (BufrEncodeException): " << ex.what();
@@ -377,6 +379,72 @@ TEST_F(BufrEncodeTest, UseCorrected)
 
    ASSERT_NO_THROW( bufrHelper.saveToFile( ".", true, true ) );
 }
+
+
+
+TEST_F(BufrEncodeTest, UseCorrected_SA) 
+{
+   using namespace miutil;
+   DataElementList allData;
+   DataElementList data;
+   StationInfoPtr  stInfo;
+   boost::posix_time::ptime dt;
+   //BufrDataPtr bufr( new BufrData() );
+   kvdatacheck::Validate validData( kvdatacheck::Validate::UseOnlyUseInfo );
+   int wmono=1045;
+   stInfo = findWmoNo( wmono   );
+
+   ASSERT_TRUE( stInfo.get() ) << "No station information for wmono " << wmono;
+
+   loadBufrDataFromFile( "92350_501_SA_20220919T060000.dat", stInfo, allData, validData );
+   dt=getTime("2022-09-19 06:00:00");
+
+   cerr << allData << endl;
+
+   cerr << "allData #" << allData.size() << "\n";
+   data=allData.subData( dt );
+   
+   EXPECT_TRUE( data.firstTime() == dt ) << "Expecting obstime: "<< dt << " got " <<data.firstTime();
+   EXPECT_TRUE( data.size() != 0 ) << "Expcting at least one hour of data.";
+   //EXPECT_TRUE( bufrEncoder.doBufr( stInfo, data, *bufr ) );
+   auto bufrHelperPtr=bufrEncoder.encodeBufr(stInfo, data);
+   EXPECT_TRUE(bufrHelperPtr != nullptr) << "Failed to encode BUFR.";
+   
+   //FAIL();
+   //EXPECT_EQ(2945486157, crc) << "Failed to generate crc.";
+
+   bufrHelperPtr->setSequenceNumber(2);
+   bufrHelperPtr->saveToFile(".", 0);
+
+   //BufrHelper bufrHelper( validater, stInfo, bufr );
+   bufrHelperPtr->setTest(true);
+   EncodeBufrManager encoder;
+   BufrTemplateList templateList;
+   b::assign::push_back( templateList )(900000);
+
+   try {
+      encoder.encode( templateList, *bufrHelperPtr );
+      cout << bufrHelperPtr->getLog() << endl;
+      cout << " ---------- test values ------------- \n";
+      bufrHelperPtr->printTestValues(cout);
+      cout << " ---------- end test values --------- \n";
+
+      ASSERT_FLOAT_EQ(bufrHelperPtr->getTestValue("013013").getF(), 0.0f) << "Expecting '013013' (SA) to be set to 0.0, got " << bufrHelperPtr->getTestValue("013013").getF()<<".";
+      
+   }
+   catch ( EncodeException &ex ) {
+      FAIL() << "EXCEPTION (BufrEncodeException): " << ex.what();
+   }
+   catch ( const std::exception &ex ) {
+       FAIL() << "EXCEPTION: " << ex.what();
+   }
+   catch( ... ) {
+      FAIL() << "EXCEPTION: Unknown.";
+   }
+
+   ASSERT_NO_THROW( bufrHelperPtr->saveToFile( ".", true, true ) );
+}
+
 
 #if 0
 

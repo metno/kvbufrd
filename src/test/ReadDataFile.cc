@@ -42,7 +42,7 @@ using namespace std;
 bool
 readDataFile( const std::string &filename, DataEntryList &data, const boost::posix_time::ptime &fromtime )
 {
-	string file=string(TESTDATADIR) + "/" + filename;
+	string file=string(TESTDATADIR) + "/data/" + filename;
 	ifstream fin;
 	string line;
 	boost::posix_time::ptime obstime;
