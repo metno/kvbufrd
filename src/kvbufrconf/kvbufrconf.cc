@@ -99,6 +99,8 @@ main( int argn, char **argv )
        break;
    case Options::SYNOP: ret = confMaker.doConf( opt.outconf, templateConf );
        break;
+    case Options::SYNOP_WIGOS: ret = confMaker.doConf( opt.outconf, templateConf );
+       break;
    case Options::BSTATIONS: ret = confMaker.doBStationsConf( opt.outconf, templateConf );
    	   break;
    case Options::MBOUY: cerr << "\n\n --- Moored buoys is not implemented --- \n\n";

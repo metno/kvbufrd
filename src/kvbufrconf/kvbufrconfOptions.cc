@@ -50,6 +50,7 @@ std::string Options::getType()const
       case SVV: return "svv";
       case SHIP: return "ship";
       case SYNOP: return "synop";
+      case SYNOP_WIGOS: return "synop_wigos";
       case BSTATIONS: return "bstations";
       case MBOUY: return "moored buoys";
       default:
@@ -70,6 +71,7 @@ getOptions(int argn, char **argv, Options &opt)
                                  {"ship", 0, 0, 0 },
                                  {"bstations", 0, 0, 0},
                                  {"synop", 0, 0, 0},
+                                 {"synop-wigos", 0, 0, 0},
                                  {"mbouy", 0, 0, 0},
                                  {0,0,0,0}};
 
@@ -99,6 +101,8 @@ getOptions(int argn, char **argv, Options &opt)
                 opt.type= Options::BSTATIONS; ++opt.nIsTypes;
             } else if( strcmp( long_options[index].name, "synop") == 0 ) {
                 opt.type= Options::SYNOP; ++opt.nIsTypes;
+            } else if( strcmp( long_options[index].name, "synop-wigos") == 0 ) {
+                opt.type= Options::SYNOP_WIGOS; ++opt.nIsTypes;
             } else if( strcmp( long_options[index].name, "mbouy") == 0 ) {
                cerr << "Option: --mbuoy\n";
                 opt.type= Options::MBOUY; ++opt.nIsTypes;
@@ -191,6 +195,7 @@ use(int exitstatus)
         <<"\n\n"
         <<"\t TYPE may be one of\n"
         <<"\t\t--synop Generate a configuration file for SYNOP stations.\n"
+        <<"\t\t--synop-wigos Generate a configuration file for SYNOP stations, but with wigos identifier.\n"
         <<"\t\t--svv Generate a configuration file for SVV stations.\n"
         <<"\t\t--precip Generate a configuration file for precipitations stations.\n"
         <<"\t\t--ship Generate a configuration file for SHIP stations.\n"

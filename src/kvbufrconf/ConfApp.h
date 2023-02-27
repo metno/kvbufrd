@@ -40,6 +40,7 @@
 #include "tblStInfoSysNetworkStation.h"
 #include "tblStInfoSysStationOutmessage.h"
 #include "tblStInfoSysStation.h"
+#include "tblStInfoSysWigosStation.h"
 #include "tblStInfoSysSensorInfo.h"
 #include "tblStInfoSysObsPgmH.h"
 #include "StationInfo.h"
@@ -48,6 +49,7 @@
 typedef std::list<TblStInfoSysParam> StInfoSysParamList;
 typedef std::list<TblStInfoSysStationOutmessage> StInfoSysStationOutmessageList;
 typedef std::list<TblStInfoSysStation> StInfoSysStationList;
+typedef std::list<TblStInfoSysWigosStation> StInfoSysWigosStationList;
 typedef std::list<TblStInfoSysSensorInfo> StInfoSysSensorInfoList;
 typedef std::list<TblStInfoSysNetworkStation> StInfoSysNetworkStationList;
 typedef std::list<TblStInfoSysObsPgmH> StInfoSysObsObsPgmHList;
@@ -122,6 +124,8 @@ public:
    bool loadStationData(int stationid,  TblStInfoSysStation &station );
    bool loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors );
    bool loadStationData(int stationid,  TblStInfoSysStation &station, StInfoSysSensorInfoList &sensors, TblStInfoSysNetworkStation &networkStation );
+   bool loadWigosStationData( int stationid, TblStInfoSysWigosStation &station, StInfoSysSensorInfoList &sensors,TblStInfoSysNetworkStation &networkStation );
+
    std::string getCallsign( int stationid );
    bool isPlatform( int stationid );
    bool isPlatformOrShip( int stationid );

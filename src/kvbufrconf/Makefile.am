@@ -21,6 +21,7 @@ kvbufrconf_SOURCES = \
       tblStInfoSysNetworkStation.h tblStInfoSysNetworkStation.cc \
 		tblStInfoSysSensorInfo.h tblStInfoSysSensorInfo.cc \
 		tblStInfoSysStation.h tblStInfoSysStation.cc \
+		tblStInfoSysWigosStation.h tblStInfoSysWigosStation.cc \
 		tblStInfoSysStationOutmessage.h tblStInfoSysStationOutmessage.cc \
 		tblStInfoSysObsPgmH.h tblStInfoSysObsPgmH.cc \
 		ConfMaker.h ConfMaker.cc \

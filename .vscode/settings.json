@@ -86,6 +86,6 @@
   },
   "git.ignoreLimitWarning": true,
   "workbench.tree.indent": 10,
-  "window.zoomLevel": 0,
+  "window.zoomLevel": 1,
   "cmake.configureOnOpen": false
 }

@@ -172,7 +172,7 @@ loadStationOutmessage( StInfoSysStationOutmessageList &stationOutmessages )
    dnmi::db::Connection *con = getDbConnection();
    kvDbGate gate( con );
 
-   gate.select( dbRes , "WHERE fromtime<='now' AND (totime>='now' OR totime IS NULL)");
+   gate.select( dbRes , "WHERE totime>='now' OR totime IS NULL");
 
    if( gate.getError() != kvDbGate::NoError ) {
       LOGERROR( "DB: Failed to load StationOutmessage. '" << gate.getErrorStr() << "'.");
@@ -235,6 +235,7 @@ hasNetworkStation( int stationid, int networkid )
 	throw std::logic_error("Excpetion: hasNetworkStation: DB error: " + gate.getErrorStr() );
 }
 
+
 bool
 ConfApp::
 loadNetworkStation( StInfoSysNetworkStationList &networkStationList,
@@ -252,8 +253,7 @@ loadNetworkStation( StInfoSysNetworkStationList &networkStationList,
 
    std::list<int>::const_iterator it = networkidList.begin();
 
-   q << " WHERE fromtime<='today' AND ( totime >= 'now' OR totime IS NULL)"
-        " AND networkid IN (" << *it;
+   q << " WHERE totime IS NULL AND networkid IN (" << *it;
 
    ++it;
 
@@ -264,6 +264,8 @@ loadNetworkStation( StInfoSysNetworkStationList &networkStationList,
 
    return gate.select( networkStationList, q.str() );
 }
+
+
 
 void
 ConfApp::
@@ -317,7 +319,7 @@ hasParamDefForTypeids( int stationid, const std::list<int> &typeids )
 	q <<") AND (fromtime<='now' AND (totime is NULL OR totime>='now')) group by message_formatid order by message_formatid" ;
 
 	try {
-		std::auto_ptr<dnmi::db::Result> res( con->execQuery( q.str() ) );
+		std::unique_ptr<dnmi::db::Result> res( con->execQuery( q.str() ) );
 
 		while( res->hasNext() ) {
 			dnmi::db::DRow &row=res->next();
@@ -474,6 +476,65 @@ loadStationData( int stationid,
 
    return true;
 }
+
+
+
+
+bool
+ConfApp::
+loadWigosStationData( int stationid,
+                 TblStInfoSysWigosStation &station,
+                 StInfoSysSensorInfoList &sensors,
+                 TblStInfoSysNetworkStation &networkStation )
+{
+   dnmi::db::Connection *con = getDbConnection();
+   kvDbGate gate( con );
+   ostringstream q;
+   StInfoSysWigosStationList stations;
+   StInfoSysNetworkStationList networkStationList;
+
+   q << " WHERE stationid=" << stationid << " AND ( totime >= 'now' OR totime IS NULL)";
+
+   gate.select( stations, q.str() );
+
+   if( stations.empty() )
+      return false;
+
+   if( stations.size() > 1 ) {
+      LOGWARN( "More than one record for the station <" << stationid << "> was selected from the 'station' table in stinfosys."
+               << endl << " Using the first selected.");
+   }
+
+   station = *stations.begin();
+
+   q.str("");
+   q << " WHERE stationid=" << stationid << " AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL) AND operational=true";
+
+   gate.select( sensors, q.str() );
+
+
+   //Lookup in the network_station to find the wmo name. Synopdata has networkid=4
+   //Search the table obs_network to find the correct networkid. it can not change over time so it is hardcoded to 4 here.
+   q.str("");
+   q << " WHERE stationid=" << stationid << " AND networkid IN ( 4, 44 ) AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL) ORDER BY networkid";
+   gate.select( networkStationList, q.str() );
+
+   if( ! networkStationList.empty() ) {
+      networkStation = *networkStationList.begin();
+      if( networkStationList.size() > 1 ) {
+         LOGWARN( "More than one record for the station <" << stationid << "> was selected from the 'network_station' table in stinfosys."
+                  << endl << " Using the first selected station (networkid=" << networkStation.networkid() << ").");
+      }
+
+   } else {
+      LOGWARN("No data in the table 'network_station' for stationid " << stationid << ". ie we are missing any name for the station.");
+      networkStation.clean();
+   }
+
+   return true;
+}
+
+
 
 bool
 ConfApp::
@@ -705,7 +766,7 @@ hasObsPgmHTypeids( int stationid, const std::list<int> &typeids, ObsPgmAnyTime a
 
 
 	try {
-		std::auto_ptr<dnmi::db::Result> res( con->execQuery( q.str() ) );
+		std::unique_ptr<dnmi::db::Result> res( con->execQuery( q.str() ) );
 
 		return  res->size() > 0;
 	}
