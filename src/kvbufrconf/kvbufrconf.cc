@@ -35,7 +35,7 @@
 #include <fstream>
 
 #include <miconfparser/miconfparser.h>
-
+#include <kvalobs/kvPath.h>
 #include "InitLogger.h"
 #include "ConfApp.h"
 #include "ConfMaker.h"
@@ -53,9 +53,14 @@ main( int argn, char **argv )
    miutil::conf::ConfSection *conf;
    miutil::conf::ConfSection *templateConf=0;
    miutil::conf::ConfParser parser(false);
-   InitLogger(argn, argv, "kvbufrconf");
 
+   //If we have different prefix than the kvalobs libs.
+   auto prefix = kvalobs::kvPath(kvalobs::prefix);
+   setKvPathPrefix(PREFIX); 
+   InitLogger(argn, argv, "kvbufrconf");
    getOptions( argn, argv, opt );
+   setKvPathPrefix(prefix);
+
 
    if( opt.debug > 0)
 	   parser.debugLevel( opt.debug );
@@ -99,7 +104,7 @@ main( int argn, char **argv )
        break;
    case Options::SYNOP: ret = confMaker.doConf( opt.outconf, templateConf );
        break;
-    case Options::SYNOP_WIGOS: ret = confMaker.doConf( opt.outconf, templateConf );
+    case Options::SYNOP_WIGOS: ret = confMaker.doConfWigos( opt.outconf, templateConf );
        break;
    case Options::BSTATIONS: ret = confMaker.doBStationsConf( opt.outconf, templateConf );
    	   break;

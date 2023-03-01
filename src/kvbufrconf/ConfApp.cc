@@ -493,7 +493,8 @@ loadWigosStationData( int stationid,
    StInfoSysWigosStationList stations;
    StInfoSysNetworkStationList networkStationList;
 
-   q << " WHERE stationid=" << stationid << " AND ( totime >= 'now' OR totime IS NULL)";
+   q << " WHERE stationid=" << stationid << " AND  (select max(fromtime) from wigos_station where stationid=" << stationid <<") < 'now'";
+   //q << " WHERE stationid=" << stationid << " AND ( totime >= 'now' OR totime IS NULL)";
 
    gate.select( stations, q.str() );
 
@@ -516,7 +517,7 @@ loadWigosStationData( int stationid,
    //Lookup in the network_station to find the wmo name. Synopdata has networkid=4
    //Search the table obs_network to find the correct networkid. it can not change over time so it is hardcoded to 4 here.
    q.str("");
-   q << " WHERE stationid=" << stationid << " AND networkid IN ( 4, 44 ) AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL) ORDER BY networkid";
+   q << " WHERE stationid=" << stationid << " AND networkid IN ( 5 ) AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL) ORDER BY networkid";
    gate.select( networkStationList, q.str() );
 
    if( ! networkStationList.empty() ) {

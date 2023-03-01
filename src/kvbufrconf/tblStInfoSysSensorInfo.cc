@@ -116,8 +116,7 @@ set(const dnmi::db::DRow &r_)
     operational_ = info.operational_;
     physical_height_ = info.physical_height_;
     measurement_methodid_ = info.measurement_methodid_;
-
-
+   return true;
  }
 
  void

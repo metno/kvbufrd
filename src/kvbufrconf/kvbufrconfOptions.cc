@@ -141,13 +141,13 @@ getOptions(int argn, char **argv, Options &opt)
             break;
       }
    }
-
+   
    if( opt.nIsTypes > 1  )
       use( 1 );
 
    if( opt.type == Options::NON )
        opt.type = Options::SYNOP;
-
+   
    if( opt.confile.empty() ) {
       if( checkfile( "./kvbufrconf.conf", R_OK, error ) )
          opt.confile = "./kvbufrconf.conf";
@@ -184,6 +184,7 @@ getOptions(int argn, char **argv, Options &opt)
          << endl;
 
    LOGINFO( logmsg.str() );
+
 }
 
 

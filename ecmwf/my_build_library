@@ -119,7 +119,7 @@ fujitsu* )
     ;;
 esac
 
-#CNAME=$CNAME
+#CNAME=
 if test "$gnu" = "yes" -a "x$CNAME" = "x" ; then
        echo "Do you want to work with GNU gfortran/gcc (answer y), ifort (answer i) ? [n]"
        read ans
@@ -135,39 +135,39 @@ if test "$gnu" = "yes" -a "x$CNAME" = "x" ; then
 fi
 
 
-if test "$target" = "darwin" -a "x$CNAME" = "x" ; then
-   echo "Do you want to work with g95 gfortran/gcc (answer y), ifort (answer i) ? [n]"
-   read ans
-   echo
-   if test -n "$ans" ; then
-      if test "$ans" = "y" -o "$ans" = "yes" ; then
-         CNAME=_g95
-      fi
-   fi
+if test "$target" = "darwin"  -a "x$CNAME" = "x" ; then
+       echo "Do you want to work with g95 gfortran/gcc (answer y), ifort (answer i) ? [n]"
+       read ans
+       echo
+       if test -n "$ans" ; then
+          if test "$ans" = "y" -o "$ans" = "yes" ; then
+              CNAME=_g95
+          fi
+       fi
 fi
 
-if test "$target" = "rs6000" -a "x$CNAME" = "x" ; then
-   echo "Do you want to force 64 bit addressing mode? (answer y) [n]"
-   read ans
-   echo
-   if test -n "$ans" ; then
-      if test "$ans" = "y" -o "$ans" = "yes" ; then
-         A64=A64
-     fi
-   fi
+if test "$target" = "rs6000" ; then
+       echo "Do you want to force 64 bit addressing mode? (answer y) [n]"
+       read ans
+       echo
+       if test -n "$ans" ; then
+          if test "$ans" = "y" -o "$ans" = "yes" ; then
+              A64=A64
+          fi
+       fi
 fi
 
+#R64=
 if [ "x$R64" = "x" ]; then 
-   echo "Default is  32 bit reals."
-   echo "Do you want 64 bit reals ? [y,n]"
-   read ans
-   echo
- 
-   if test -n "$ans" ; then
-      if test "$ans" = "y" -o "$ans" = "yes" ; then
-         R64=R64
-      fi
-   fi
+       echo "Default is  32 bit reals."
+       echo "Do you want 64 bit reals ? [y,n]"
+       read ans
+       echo
+    if test -n "$ans" ; then
+        if test "$ans" = "y" -o "$ans" = "yes" ; then
+            R64=R64
+        fi
+    fi
 fi
 
 if [ "$R64" = "yes" ]; then
@@ -176,35 +176,33 @@ elif [ "$R64" = "no" ]; then
    R64=
 fi
 
-
 echo $R64 > .r64
 
 
 INSTALL_DIR=/usr/local/lib
 
 if [ "x$INSTALLDIR" = "x" ]; then
-   echo
-   echo "   The default directory for BUFR tables and libbufr$R64.a"
-   echo "is $INSTALL_DIR,"
-   echo "but you may install them anywhere you wish,"
-   echo "assuming you have permission to do so."
-   echo "   You can specify your directory or just"
-   echo "press RETURN if you want default"
-   echo "Bufr library and tables directory [$INSTALL_DIR]: "
-   read ans
-   echo
+    echo
+    echo "   The default directory for BUFR tables and libbufr$R64.a"
+    echo "is $INSTALL_DIR,"
+    echo "but you may install them anywhere you wish,"
+    echo "assuming you have permission to do so."
+    echo "   You can specify your directory or just"
+    echo "press RETURN if you want default"
+    echo "Bufr library and tables directory [$INSTALL_DIR]: "
+    read ans
+    echo
 
-   if test -n "$ans" ; then
-       INSTALL_DIR=$ans
-   fi
+    if test -n "$ans" ; then
+        INSTALL_DIR=$ans
+    fi
 else 
-   INSTALL_DIR=$INSTALLDIR
+    INSTALL_DIR=$INSTALLDIR
 fi
 
 echo "R64:         $R64"
 echo "CNAME:       $CNAME"
 echo "INSTALL_DIR: $INSTALL_DIR"
-
 
 echo using config/config.$target$CNAME$R64$A64
 cat config/config.$target$CNAME$R64$A64.in | sed s:emos:$INSTALL_DIR: > config/config.$target$CNAME$R64$A64

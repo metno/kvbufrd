@@ -83,5 +83,5 @@ libbufr_la_CPPFLAGS = \
 	-D_REENTRANT \
 	$(putools_CFLAGS)
 	
-#libbufr_la_LIBADD = 
+#libbufr_la_LIBADD = $(top_builddir)/ecmwf/libbufr.a
 	

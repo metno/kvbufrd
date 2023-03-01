@@ -50,6 +50,12 @@ class ConfMaker
                              const std::string& callsign,
                              int bufrCode,
                              bool& newStation);
+  StationInfoPtr findStation(const std::string &wigosid,
+                             int wmono,
+                             int stationid,
+                             const std::string& callsign,
+                             int bufrCode,
+                             bool& newStation);
   void removeStation(StationInfoPtr station);
 
   bool findSensor(const StInfoSysSensorInfoList& sensors,

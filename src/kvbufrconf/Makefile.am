@@ -1,24 +1,25 @@
 AM_CPPFLAGS = \
 	-D_REENTRANT \
-   -I$(top_srcdir)/src \
+  -I$(top_srcdir)/src \
 	$(kvsubscribe_CFLAGS) \
 	$(putools_CFLAGS) \
-   $(BOOST_CPPFLAGS) \
-   $(omniORB4_CFLAGS)  
+  $(BOOST_CPPFLAGS) \
+  $(omniORB4_CFLAGS)\
+	-DPREFIX="\""$(prefix)"\""  
 
 
 bin_PROGRAMS = kvbufrconf kvbufrconfcmp
 
 kvbufrconf_SOURCES = \
 		../StationInfo.cc ../StationInfo.h \
-      ../StationInfoParse.cc ../StationInfoParse.h \
+		../StationInfoParse.cc ../StationInfoParse.h \
 		../splitstr.h ../splitstr.cc \
 		../InitLogger.cc ../InitLogger.h \
 		../parseMilogLogLevel.cc ../parseMilogLogLevel.h \
 		../checkfile.h ../checkfile.cc \
 		../dbhelper.cc ../dbhelper.h \
-      tblStInfoSysParam.h tblStInfoSysParam.cc \
-      tblStInfoSysNetworkStation.h tblStInfoSysNetworkStation.cc \
+		tblStInfoSysParam.h tblStInfoSysParam.cc \
+		tblStInfoSysNetworkStation.h tblStInfoSysNetworkStation.cc \
 		tblStInfoSysSensorInfo.h tblStInfoSysSensorInfo.cc \
 		tblStInfoSysStation.h tblStInfoSysStation.cc \
 		tblStInfoSysWigosStation.h tblStInfoSysWigosStation.cc \
@@ -52,11 +53,11 @@ kvbufrconf_LDADD = \
 	$(BOOST_SYSTEM_LIB) \
    	-lm -ldl
 else
-kvbufrconf_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrconf_LDADD = \
-	$(kvsubscribe_LIBS) $(putools_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
-	$(BOOST_SYSTEM_LIB) \
-   -lm -ldl
+  kvbufrconf_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
+  kvbufrconf_LDADD = \
+ 	  $(kvsubscribe_LIBS) $(putools_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
+ 	  $(BOOST_SYSTEM_LIB) \
+    -lm -ldl
 endif
                    
 kvbufrconfcmp_SOURCES = \

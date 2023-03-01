@@ -94,6 +94,7 @@ set(const TblStInfoSysParam &param )
    hlevel_scale_ = param.hlevel_scale_;
    standard_hlevel_ = param.standard_hlevel_;
    standard_physical_height_ = param.standard_physical_height_;
+   return true;
 }
 
 void

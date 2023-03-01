@@ -108,6 +108,61 @@ ConfMaker::findStation(int wmono,
   return ptr;
 }
 
+StationInfoPtr
+ConfMaker::findStation(const std::string& wigosid,
+                       int wmono,
+                       int stationid,
+                       const std::string& callsign,
+                       int bufrCode,
+                       bool& newStation)
+{
+  newStation = false;
+
+  for (std::list<StationInfoPtr>::const_iterator it = stationList.begin();
+       it != stationList.end();
+       ++it) {
+    if ((*it)->wigosId() == wigosid && (*it)->wmono() == wmono &&
+        (*it)->stationID() == stationid && (*it)->callsign() == callsign &&
+        (*it)->code() == bufrCode) {
+      return *it;
+    }
+  }
+
+  for (std::list<StationInfoPtr>::const_iterator it =
+         templateStationList.begin();
+       it != templateStationList.end();
+       ++it) {
+    if ((*it)->wigosId() == wigosid && (*it)->wmono() == wmono &&
+        (*it)->stationID() == stationid && (*it)->callsign() == callsign &&
+        (*it)->code() == bufrCode) {
+      StationInfoPtr p(new StationInfo(**it));
+      p->code(bufrCode);
+      stationList.push_back(p);
+      return p;
+    }
+  }
+
+  newStation = true;
+
+  StationInfoPtr ptr;
+
+  if (defaultVal) {
+    ptr.reset(new StationInfo(*defaultVal));
+  } else {
+    ptr.reset(new StationInfo());
+  }
+
+  ptr->stationID_ = stationid;
+  ptr->wmono_ = wmono;
+  ptr->callsign_ = callsign;
+  ptr->wsiId_ = wigosid;
+  ptr->code(bufrCode, false);
+
+  stationList.push_back(ptr);
+
+  return ptr;
+}
+
 void
 ConfMaker::removeStation(StationInfoPtr station)
 {
@@ -525,8 +580,6 @@ ConfMaker::decodePressureHeight(const StInfoSysSensorInfoList& sensors,
 
   return false;
 }
-
-
 
 bool
 ConfMaker::decodeTemperatureHeight(const StInfoSysSensorInfoList& sensors,
@@ -1345,9 +1398,11 @@ ConfMaker::doBStationsConf(const std::string& outfile,
 
     //		{ //DEBUG
     //			cerr << "stationid: " << it->stationid();
-    //			for( StInfoSysObsObsPgmHList::iterator pit = obspgm.begin(); pit
+    //			for( StInfoSysObsObsPgmHList::iterator pit = obspgm.begin();
+    //pit
     //!= obspgm.end(); ++pit ) 				cerr << " " <<
-    // pit->messageFormatid(); 			cerr << endl; 			continue;
+    // pit->messageFormatid(); 			cerr << endl;
+    // continue;
     //		}
 
     if (!app.loadStationData(stationid, tblStation, tblSensors)) {
@@ -1376,7 +1431,8 @@ ConfMaker::doBStationsConf(const std::string& outfile,
     ost << "typepriority=(" << typeid_ << ")";
     //		for( StInfoSysObsObsPgmHList::iterator oit = obspgm.begin(); oit
     //!=
-    // obspgm.end(); ++oit ) { 			if( oit != obspgm.begin() ) 				ost <<
+    // obspgm.end(); ++oit ) { 			if( oit != obspgm.begin() ) 				ost
+    // <<
     // ",";
     //
     //			ost << oit->messageFormatid();
@@ -1607,15 +1663,16 @@ ConfMaker::doConf(const std::string& outfile,
   return true;
 }
 
-const TblStInfoSysStationOutmessage* findStationOutmessage(int stationid, const StInfoSysStationOutmessageList &list ) {
-   for(auto &e : list) {
-      if( e.stationid() == stationid ) {
-         return &e;
-      }
-   }  
-   return nullptr;
+const TblStInfoSysStationOutmessage*
+findStationOutmessage(int stationid, const StInfoSysStationOutmessageList& list)
+{
+  for (auto& e : list) {
+    if (e.stationid() == stationid) {
+      return &e;
+    }
+  }
+  return nullptr;
 }
-
 
 bool
 ConfMaker::doConfWigos(const std::string& outfile,
@@ -1631,7 +1688,6 @@ ConfMaker::doConfWigos(const std::string& outfile,
   int nValues;
   bool newStation;
 
-
   if (templateConf) {
     if (!parseTemplate(templateConf)) {
       LOGFATAL("Failed to parse the template file.");
@@ -1641,11 +1697,11 @@ ConfMaker::doConfWigos(const std::string& outfile,
 
   // TODO: Until stinfosys contains information about which
   // BUFR codes to use we hardcode it here to 0 (SYNOP)
-  bufrCode = 0;
+  bufrCode = 6;
 
   app.loadStationOutmessage(outMessageList);
-  app.loadNetworkStation(wigosStations, {5});
-  for (auto &station : wigosStations) {
+  app.loadNetworkStation(wigosStations, { 5 });
+  for (auto& station : wigosStations) {
     nValues = 0;
 
     if (app.isPlatformOrShip(station.stationid()))
@@ -1657,12 +1713,15 @@ ConfMaker::doConfWigos(const std::string& outfile,
       continue;
     }
 
-    if (wigosStation.wmono() == kvDbBase::INT_NULL) {
-      LOGWARN("Station: " << station.stationid() << " Missising wmono.");
-      continue;
+    int wmono=0; 
+    if (wigosStation.wmono() != kvDbBase::INT_NULL) {
+      wmono=wigosStation.wmono();
+    } else   {
+      LOGWARN("Station: " << station.stationid()
+                          << " Missising wmono, but this is ok");
     }
 
-    pStation = findStation(wigosStation.wmono(), 0, "", bufrCode, newStation);
+    pStation = findStation(wigosStation.wigosid(), wmono, 0, "", bufrCode, newStation);
 
     if (!networkStation.name().empty()) {
       pStation->name(networkStation.name());
@@ -1674,10 +1733,12 @@ ConfMaker::doConfWigos(const std::string& outfile,
       nValues++;
     }
 
-    auto pStationOutMessage = findStationOutmessage(station.stationid(), outMessageList);
+    auto pStationOutMessage =
+      findStationOutmessage(station.stationid(), outMessageList);
 
-    if ( ! pStationOutMessage ) {
-      LOGWARN("Station: " << station.stationid() << " No 'station_outmessage' element in stinfosys.");
+    if (!pStationOutMessage) {
+      LOGWARN("Station: " << station.stationid()
+                          << " No 'station_outmessage' element in stinfosys.");
       continue;
     }
 

@@ -5,12 +5,15 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/include/kvalobs/**"
-              ],
-            "defines": ["_REENTRANT" ],
+            ],
+            "defines": [
+                "_REENTRANT"
+            ],
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
+            "intelliSenseMode": "clang-x64",
+            "configurationProvider": "ms-vscode.makefile-tools"
         }
     ],
     "version": 4
