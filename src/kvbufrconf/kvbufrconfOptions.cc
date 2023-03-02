@@ -66,6 +66,7 @@ getOptions(int argn, char **argv, Options &opt)
                                  {"template", 1, 0, 't'},
 								         {"debug",1, 0, 'd' },
                                  {"out", 1, 0, 'o'},
+                                 {"verbose", 0, 0,'v'},
                                  {"svv", 0, 0, 0 },
                                  {"precip", 0, 0, 0 },
                                  {"ship", 0, 0, 0 },
@@ -127,6 +128,9 @@ getOptions(int argn, char **argv, Options &opt)
          case 'd':
         	   opt.debug=atoi( optarg );
         	   break;
+         case 'v':
+            opt.verbose=true;
+            break;
          case '?':
             cerr << "Unknown option : <" << (char)optopt << "> unknown!" << endl;
             use(1);
@@ -183,7 +187,7 @@ getOptions(int argn, char **argv, Options &opt)
          << "bufr type:                " << opt.getType() << endl 
          << endl;
 
-   LOGINFO( logmsg.str() );
+   cerr << logmsg.str();
 
 }
 
@@ -192,7 +196,7 @@ void
 use(int exitstatus)
 {
    cerr << "\n\tuse" << endl
-        <<"\t   kvbufrconf [--help|-h] [TYPE] [--template|-t templatefile] [--conf|-c confile] [--out|-o outfile] " << endl
+        <<"\t   kvbufrconf [--help|-h] [--verbose|-v] [TYPE] [--template|-t templatefile] [--conf|-c confile] [--out|-o outfile] " << endl
         <<"\n\n"
         <<"\t TYPE may be one of\n"
         <<"\t\t--synop Generate a configuration file for SYNOP stations.\n"

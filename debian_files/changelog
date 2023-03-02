@@ -1,3 +1,19 @@
+kvbufrd (3.0.9c-1) focal; urgency=low
+  * kvbufrconf: fix name
+
+ -- Kvalobs <kvalobs@met.no>  Thu, 2 Mar 2023 17:00:00 +0100
+
+kvbufrd (3.0.9b-1) focal; urgency=low
+  * kvbufrconf: fix prefix
+
+ -- Kvalobs <kvalobs@met.no>  Thu, 2 Mar 2023 16:00:00 +0100
+
+
+kvbufrd (3.0.9a-2) focal; urgency=low
+  * kvbufrconf: fix build
+
+ -- Kvalobs <kvalobs@met.no>  Thu, 2 Mar 2023 12:00:00 +0100
+
 kvbufrd (3.0.9a-1) focal; urgency=low
   * kvbufrconf: Support for generating configuration files with WIGOS ID.
 

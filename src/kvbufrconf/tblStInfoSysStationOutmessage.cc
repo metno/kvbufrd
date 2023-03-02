@@ -29,97 +29,93 @@
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include "tblStInfoSysStationOutmessage.h"
+#include "miutil/timeconvert.h"
 #include <float.h>
 #include <limits.h>
+#include <milog/milog.h>
 #include <sstream>
 #include <stdlib.h>
-#include <milog/milog.h>
-#include "tblStInfoSysStationOutmessage.h"
 
 using namespace std;
 using namespace dnmi;
 
+namespace pt = boost::posix_time;
+
 void
-TblStInfoSysStationOutmessage::
-createSortIndex()
+TblStInfoSysStationOutmessage::createSortIndex()
 {
-   ostringstream ost;
+  ostringstream ost;
 
-   ost << stationid_;
-   sortBy_ = ost.str();
-
+  ost << stationid_;
+  sortBy_ = ost.str();
 }
 
 bool
-TblStInfoSysStationOutmessage::
-set(const dnmi::db::DRow &r_)
+TblStInfoSysStationOutmessage::set(const dnmi::db::DRow& r_)
 {
-   db::DRow      &r=const_cast<db::DRow&>(r_);
-   bool error=false;
-   string        buf;
-   list<string>  names=r.getFieldNames();
-   list<string>::iterator it=names.begin();
+  db::DRow& r = const_cast<db::DRow&>(r_);
+  bool error = false;
+  string buf;
+  list<string> names = r.getFieldNames();
+  list<string>::iterator it = names.begin();
 
-   for(;it!=names.end(); it++){
-      try{
-         buf=r[*it];
+  for (; it != names.end(); it++) {
+    try {
+      buf = r[*it];
 
-         if(*it=="stationid"){
-            stationid_ = atoi( buf.c_str() );
-         }else if(*it=="productcoupling"){
-            productcoupling_ = buf;
-         }else if(*it=="coupling_delay"){
-            coupling_delay_ = buf;
-         }else if(*it=="priority_precip"){
-            priority_precip_ = buf;
-         }else if( *it == "fromtime" ) {
-            fromTime_ = miutil::miTime( buf );
-         }
+      if (*it == "stationid") {
+        stationid_ = atoi(buf.c_str());
+      } else if (*it == "productcoupling") {
+        productcoupling_ = buf;
+      } else if (*it == "coupling_delay") {
+        coupling_delay_ = buf;
+      } else if (*it == "priority_precip") {
+        priority_precip_ = buf;
+      } else if (*it == "fromtime") {
+        fromTime_ =
+          (buf.empty() ? pt::ptime() : pt::time_from_string_nothrow(buf));
       }
-      catch(...){
-         LOGWARN("TblStInfoSysStation: unexpected exception ..... \n");
-         error = true;
-      }
-   }
+    } catch (...) {
+      LOGWARN("TblStInfoSysStation: unexpected exception ..... \n");
+      error = true;
+    }
+  }
 
-   createSortIndex();
-   return !error;
+  createSortIndex();
+  return !error;
 }
 
 bool
-TblStInfoSysStationOutmessage::
-set(const TblStInfoSysStationOutmessage &station )
+TblStInfoSysStationOutmessage::set(const TblStInfoSysStationOutmessage& station)
 {
-   stationid_ = station.stationid_;
-   productcoupling_ = station.productcoupling_;
-   coupling_delay_ = station.coupling_delay_;
-   priority_precip_ = station.priority_precip_;
-   fromTime_ = station.fromTime_;
-   return true;
+  stationid_ = station.stationid_;
+  productcoupling_ = station.productcoupling_;
+  coupling_delay_ = station.coupling_delay_;
+  priority_precip_ = station.priority_precip_;
+  fromTime_ = station.fromTime_;
+  return true;
 }
-
 
 void
-TblStInfoSysStationOutmessage::
-clean()
+TblStInfoSysStationOutmessage::clean()
 {
-   stationid_ = INT_MAX;
-   productcoupling_.erase();
-   coupling_delay_.erase();
-   priority_precip_.erase();
-   fromTime_ = miutil::miTime();
+  stationid_ = INT_MAX;
+  productcoupling_.erase();
+  coupling_delay_.erase();
+  priority_precip_.erase();
+  fromTime_ = pt::ptime();
 }
 
-#ifdef  __WITH_PUTOOLS__
+#ifdef __WITH_PUTOOLS__
 miutil::miString
 #else
 std::string
 #endif
-TblStInfoSysStationOutmessage::
-uniqueKey() const
+TblStInfoSysStationOutmessage::uniqueKey() const
 {
-   ostringstream ost;
+  ostringstream ost;
 
-   ost << " WHERE stationid=" << stationid_;
-   return ost.str();
+  ost << " WHERE stationid=" << stationid_;
+  return ost.str();
 }

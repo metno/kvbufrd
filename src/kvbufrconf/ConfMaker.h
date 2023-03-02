@@ -92,6 +92,7 @@ class ConfMaker
                     StInfoSysNetworkStationList::iterator itNetworkStation);
   bool setShipProductCouplingAndDelay(StationInfoPtr station);
 
+  bool doPrintStationConf( const std::string &file);
   std::string doStationConf(StationInfoPtr station) const;
 
 public:

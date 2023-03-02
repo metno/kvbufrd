@@ -28,94 +28,118 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <fstream>
 #include <iostream>
 #include <sstream>
-#include <fstream>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#include <miconfparser/miconfparser.h>
-#include <kvalobs/kvPath.h>
-#include "InitLogger.h"
 #include "ConfApp.h"
 #include "ConfMaker.h"
+#include "InitLogger.h"
 #include "kvbufrconfOptions.h"
-
+#include <kvalobs/kvPath.h>
+#include <miconfparser/miconfparser.h>
+#include <miutil/trimstr.h>
 
 using namespace std;
 
-
 int
-main( int argn, char **argv )
+main(int argn, char** argv)
 {
-   Options opt;
-   std::string confFile;
-   miutil::conf::ConfSection *conf;
-   miutil::conf::ConfSection *templateConf=0;
-   miutil::conf::ConfParser parser(false);
+  Options opt;
+  std::string confFile;
+  miutil::conf::ConfSection* conf;
+  miutil::conf::ConfSection* templateConf = 0;
+  miutil::conf::ConfParser parser(false);
 
-   //If we have different prefix than the kvalobs libs.
-   auto prefix = kvalobs::kvPath(kvalobs::prefix);
-   setKvPathPrefix(PREFIX); 
-   InitLogger(argn, argv, "kvbufrconf");
-   getOptions( argn, argv, opt );
-   setKvPathPrefix(prefix);
+  // If we have different prefix than the kvalobs libs.
+  auto prefix = kvalobs::kvPath(kvalobs::prefix);
+  std::string myprefix(PREFIX);
+  miutil::trimstr(prefix, miutil::TRIMBACK, "/ \t\r\n");
+  miutil::trimstr(myprefix, miutil::TRIMBACK, "/ \t\r\n");
+  if ( myprefix != prefix) {
+    cerr << "Setting prefix '" << myprefix << "'\n";
+    setKvPathPrefix(PREFIX);
+  }
 
+  InitLogger(argn, argv, "kvbufrconf");
+  getOptions(argn, argv, opt);
 
-   if( opt.debug > 0)
-	   parser.debugLevel( opt.debug );
+  if ( myprefix != prefix ) {
+    cerr << "Resetting prefix '" << prefix << "'\n";
+    setKvPathPrefix(prefix);
+  }
 
-   try{
-	   conf=miutil::conf::ConfParser::parse( opt.confile );
-   }
-   catch( const logic_error &ex ){
-      LOGFATAL( ex.what() );
+  
+
+  if (!opt.verbose) {
+    milog::Logger::logger().logLevel(milog::ERROR);
+  }
+
+  if (opt.debug > 0)
+    parser.debugLevel(opt.debug);
+
+  try {
+    conf = miutil::conf::ConfParser::parse(opt.confile);
+  } catch (const logic_error& ex) {
+    LOGFATAL(ex.what());
+    return 1;
+  }
+
+  if (!opt.templatefile.empty()) {
+    try {
+      ifstream fin(opt.templatefile.c_str());
+
+      if (!fin.is_open()) {
+        LOGFATAL("Cant open file '" << opt.confile << "'\n\n");
+        return 1;
+      }
+      templateConf = parser.parse(fin);
+
+      // templateConf = miutil::conf::ConfParser::parse( opt.templatefile );
+    } catch (const logic_error& ex) {
+      LOGFATAL("Cant parse templatefile '" << opt.templatefile
+                                           << "'. Reason: " << ex.what());
       return 1;
-   }
+    }
+  }
 
-   if( !opt.templatefile.empty() ) {
-      try{
-    	  ifstream fin( opt.templatefile.c_str() );
+  ConfApp app(opt, conf);
+  ConfMaker confMaker(app);
+  bool ret;
 
-    	  if( !fin.is_open() ) {
-    		  LOGFATAL("Cant open file '" << opt.confile << "'\n\n");
-    		  return 1;
-    	  }
-    	  templateConf = parser.parse( fin );
+  switch (opt.type) {
+    case Options::SVV:
+      ret = confMaker.doSVVConf(opt.outconf, templateConf);
+      break;
+    case Options::PRECIP:
+      ret = confMaker.doPrecipConf(opt.outconf, templateConf);
+      break;
+    case Options::SHIP:
+      ret = confMaker.doShipConf(opt.outconf, templateConf);
+      break;
+    case Options::SYNOP:
+      ret = confMaker.doConf(opt.outconf, templateConf);
+      break;
+    case Options::SYNOP_WIGOS:
+      ret = confMaker.doConfWigos(opt.outconf, templateConf);
+      break;
+    case Options::BSTATIONS:
+      ret = confMaker.doBStationsConf(opt.outconf, templateConf);
+      break;
+    case Options::MBOUY:
+      cerr << "\n\n --- Moored buoys is not implemented --- \n\n";
+      ret = true;
+      break;
+    default:
+      ret = false;
+      break;
+  }
 
-         //templateConf = miutil::conf::ConfParser::parse( opt.templatefile );
-      }
-      catch( const logic_error &ex ){
-         LOGFATAL( "Cant parse templatefile '" << opt.templatefile << "'. Reason: " << ex.what() );
-         return 1;
-      }
-   }
+  if (!ret) {
+    cerr << " -- Failed to generate kvbufrd configuration! --" << endl << endl;
+  }
 
-   ConfApp app( opt, conf );
-   ConfMaker confMaker( app );
-   bool ret;
-
-   switch( opt.type ) {
-   case Options::SVV: ret = confMaker.doSVVConf( opt.outconf, templateConf );
-       break;
-   case Options::PRECIP: ret = confMaker.doPrecipConf( opt.outconf, templateConf );
-       break;
-   case Options::SHIP: ret = confMaker.doShipConf( opt.outconf, templateConf );
-       break;
-   case Options::SYNOP: ret = confMaker.doConf( opt.outconf, templateConf );
-       break;
-    case Options::SYNOP_WIGOS: ret = confMaker.doConfWigos( opt.outconf, templateConf );
-       break;
-   case Options::BSTATIONS: ret = confMaker.doBStationsConf( opt.outconf, templateConf );
-   	   break;
-   case Options::MBOUY: cerr << "\n\n --- Moored buoys is not implemented --- \n\n";
-       ret=true;
-   	   break;
-   default:
-       ret = false;
-       break;
-   }
-
-   return ret?0:1;
+  return ret ? 0 : 1;
 }
-

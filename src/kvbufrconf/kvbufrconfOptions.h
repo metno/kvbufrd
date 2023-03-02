@@ -40,10 +40,11 @@ struct Options {
    std::string outconf;              //--out
    int nIsTypes;
    int debug;
+   bool verbose;
    What  type;
 
    std::string getType()const;
-   Options():nIsTypes(0), debug(0), type( NON ) {}
+   Options():nIsTypes(0), debug(0), verbose(false), type( NON ) {}
 };
 
 void

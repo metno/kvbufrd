@@ -147,6 +147,8 @@ ConfMaker::findStation(const std::string& wigosid,
   StationInfoPtr ptr;
 
   if (defaultVal) {
+    cerr << "New Station using default values owner='" << defaultVal->owner() << "' list='" << defaultVal->list() << "'\n ";
+    
     ptr.reset(new StationInfo(*defaultVal));
   } else {
     ptr.reset(new StationInfo());
@@ -738,6 +740,44 @@ ConfMaker::precipPriorityToConfString(StationInfoPtr station) const
   return o.str();
 }
 
+bool
+ConfMaker::doPrintStationConf(const std::string& outfile)
+{
+  stationList.sort(stationLessThan);
+
+  if (outfile.empty()) {
+    for (auto& it : stationList) {
+      cout << doStationConf(it) << endl;
+    }
+    cerr << "\n  --- Generated " << stationList.size() << " kvbufrd configuration elements --- \n\n";
+    return true;
+  }
+
+  string filename(outfile);
+  ofstream out;
+
+  if (outfile[0] != '/' && outfile[0] != '.')
+    filename = kvPath("sysconfdir") + "/" + outfile;
+
+  out.open(filename.c_str(), ios_base::out | ios_base::trunc);
+
+  if (!out.is_open()) {
+    LOGFATAL("Cant create file <" << filename << ">.");
+    return false;
+  }
+
+  for (auto it : stationList) {
+    out << doStationConf(it) << endl;
+  }
+  if (!out.good()) {
+    LOGFATAL("ERROR while writing configuration to file <" << filename << ">.");
+    return false;
+  }
+  cerr << "\n  --- Generated " << stationList.size() << " kvbufrd configuration elements ---\n\n";
+  out.close();
+  return true;
+}
+
 std::string
 ConfMaker::doStationConf(StationInfoPtr station) const
 {
@@ -752,12 +792,13 @@ ConfMaker::doStationConf(StationInfoPtr station) const
 
   if (station->wigosIdIsDefined()) {
     o << "wsi_" << station->wigosId() << " {" << endl;
-  } else if (station->wmono() > 0)
+  } else if (station->wmono() > 0) {
     o << "wmo_" << station->wmono() << " {" << endl;
-  else if (!station->callsign().empty())
+  } else if (!station->callsign().empty()) {
     o << "callsign_" << station->callsign() << " {" << endl;
-  else
+  } else {
     o << "id_" << station->stationID() << " {" << endl;
+  }
 
   indent.incrementLevel();
 
@@ -951,42 +992,7 @@ ConfMaker::doSVVConf(const std::string& outfile,
     }
   }
 
-  if (outfile.empty()) {
-    for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-         it != stationList.end();
-         ++it)
-      cout << doStationConf(*it) << endl;
-
-    return true;
-  }
-
-  stationList.sort(stationLessThan);
-
-  string filename(outfile);
-  ofstream out;
-
-  if (outfile[0] != '/' && outfile[0] != '.')
-    filename = kvPath("sysconfdir") + "/" + outfile;
-
-  out.open(filename.c_str(), ios_base::out | ios_base::trunc);
-
-  if (!out.is_open()) {
-    LOGFATAL("Cant create file <" << filename << ">.");
-    return false;
-  }
-
-  for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-       it != stationList.end();
-       ++it)
-    out << doStationConf(*it) << endl;
-
-  if (!out.good()) {
-    LOGFATAL("ERROR while writing configuration to file <" << filename << ">.");
-    return false;
-  }
-
-  out.close();
-  return true;
+  return doPrintStationConf(outfile);
 }
 
 bool
@@ -1082,12 +1088,6 @@ ConfMaker::doPrecipConf(const std::string& outfile,
     if (decodePressureHeight(tblSensors, tblStation, pStation))
       nValues++;
 
-    //      if( decodeCouplingDelay( "+HH:00", pStation ) )
-    //         nValues++;
-    //
-    //      if( decodePrecipPriority( it->priorityPrecip(), pStation ) )
-    //         nValues++;
-
     if (tblStation.lat() != FLT_MAX && tblStation.lon() != FLT_MAX) {
       pStation->latitude_ = tblStation.lat();
       pStation->longitude_ = tblStation.lon();
@@ -1100,43 +1100,7 @@ ConfMaker::doPrecipConf(const std::string& outfile,
               << tblStation.wmono() << " was found in stinfosys." << endl);
     }
   }
-
-  if (outfile.empty()) {
-    for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-         it != stationList.end();
-         ++it)
-      cout << doStationConf(*it) << endl;
-
-    return true;
-  }
-
-  stationList.sort(stationLessThan);
-
-  string filename(outfile);
-  ofstream out;
-
-  if (outfile[0] != '/' && outfile[0] != '.')
-    filename = kvPath("sysconfdir") + "/" + outfile;
-
-  out.open(filename.c_str(), ios_base::out | ios_base::trunc);
-
-  if (!out.is_open()) {
-    LOGFATAL("Cant create file <" << filename << ">.");
-    return false;
-  }
-
-  for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-       it != stationList.end();
-       ++it)
-    out << doStationConf(*it) << endl;
-
-  if (!out.good()) {
-    LOGFATAL("ERROR while writing configuration to file <" << filename << ">.");
-    return false;
-  }
-
-  out.close();
-  return true;
+  return doPrintStationConf(outfile);
 }
 
 // void
@@ -1304,42 +1268,7 @@ ConfMaker::doShipConf(const std::string& outfile,
     }
   }
 
-  if (outfile.empty()) {
-    for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-         it != stationList.end();
-         ++it)
-      cout << doStationConf(*it) << endl;
-
-    return true;
-  }
-
-  stationList.sort(stationLessThan);
-
-  string filename(outfile);
-  ofstream out;
-
-  if (outfile[0] != '/' && outfile[0] != '.')
-    filename = kvPath("sysconfdir") + "/" + outfile;
-
-  out.open(filename.c_str(), ios_base::out | ios_base::trunc);
-
-  if (!out.is_open()) {
-    LOGFATAL("Cant create file <" << filename << ">.");
-    return false;
-  }
-
-  for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-       it != stationList.end();
-       ++it)
-    out << doStationConf(*it) << endl;
-
-  if (!out.good()) {
-    LOGFATAL("ERROR while writing configuration to file <" << filename << ">.");
-    return false;
-  }
-
-  out.close();
-  return true;
+  return doPrintStationConf(outfile);
 }
 
 bool
@@ -1387,6 +1316,12 @@ ConfMaker::doBStationsConf(const std::string& outfile,
     nValues = 0;
 
     stationid = it->stationid();
+
+    //Only encode  norwegians stations
+    if ( stationid > 99999 ) {
+      continue;
+    }
+
     if (!app.findObsPgmHTypeids(obspgm, stationid, params))
       return false;
 
@@ -1396,14 +1331,6 @@ ConfMaker::doBStationsConf(const std::string& outfile,
     // If multiple typeid is found, we use just the first.
     typeid_ = obspgm.begin()->messageFormatid();
 
-    //		{ //DEBUG
-    //			cerr << "stationid: " << it->stationid();
-    //			for( StInfoSysObsObsPgmHList::iterator pit = obspgm.begin();
-    //pit
-    //!= obspgm.end(); ++pit ) 				cerr << " " <<
-    // pit->messageFormatid(); 			cerr << endl;
-    // continue;
-    //		}
 
     if (!app.loadStationData(stationid, tblStation, tblSensors)) {
       LOGINFO("No metadata for station <" << it->stationid() << ">.");
@@ -1431,7 +1358,8 @@ ConfMaker::doBStationsConf(const std::string& outfile,
     ost << "typepriority=(" << typeid_ << ")";
     //		for( StInfoSysObsObsPgmHList::iterator oit = obspgm.begin(); oit
     //!=
-    // obspgm.end(); ++oit ) { 			if( oit != obspgm.begin() ) 				ost
+    // obspgm.end(); ++oit ) { 			if( oit != obspgm.begin() )
+    // ost
     // <<
     // ",";
     //
@@ -1491,42 +1419,7 @@ ConfMaker::doBStationsConf(const std::string& outfile,
     }
   }
 
-  if (outfile.empty()) {
-    for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-         it != stationList.end();
-         ++it)
-      cout << doStationConf(*it) << endl;
-
-    return true;
-  }
-
-  stationList.sort(stationLessThan);
-
-  string filename(outfile);
-  ofstream out;
-
-  if (outfile[0] != '/' && outfile[0] != '.')
-    filename = kvPath("sysconfdir") + "/" + outfile;
-
-  out.open(filename.c_str(), ios_base::out | ios_base::trunc);
-
-  if (!out.is_open()) {
-    LOGFATAL("Cant create file <" << filename << ">.");
-    return false;
-  }
-
-  for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-       it != stationList.end();
-       ++it)
-    out << doStationConf(*it) << endl;
-
-  if (!out.good()) {
-    LOGFATAL("ERROR while writing configuration to file <" << filename << ">.");
-    return false;
-  }
-
-  out.close();
-  return true;
+  return doPrintStationConf(outfile);
 }
 
 bool
@@ -1625,42 +1518,7 @@ ConfMaker::doConf(const std::string& outfile,
     }
   }
 
-  stationList.sort(stationLessThan);
-
-  if (outfile.empty()) {
-    for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-         it != stationList.end();
-         ++it)
-      cout << doStationConf(*it) << endl;
-
-    return true;
-  }
-
-  string filename(outfile);
-  ofstream out;
-
-  if (outfile[0] != '/' && outfile[0] != '.')
-    filename = kvPath("sysconfdir") + "/" + outfile;
-
-  out.open(filename.c_str(), ios_base::out | ios_base::trunc);
-
-  if (!out.is_open()) {
-    LOGFATAL("Cant create file <" << filename << ">.");
-    return false;
-  }
-
-  for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-       it != stationList.end();
-       ++it)
-    out << doStationConf(*it) << endl;
-
-  if (!out.good()) {
-    LOGFATAL("ERROR while writing configuration to file <" << filename << ">.");
-    return false;
-  }
-
-  out.close();
-  return true;
+  return doPrintStationConf(outfile);
 }
 
 const TblStInfoSysStationOutmessage*
@@ -1713,18 +1571,19 @@ ConfMaker::doConfWigos(const std::string& outfile,
       continue;
     }
 
-    int wmono=0; 
+    int wmono = 0;
     if (wigosStation.wmono() != kvDbBase::INT_NULL) {
-      wmono=wigosStation.wmono();
-    } else   {
+      wmono = wigosStation.wmono();
+    } else {
       LOGWARN("Station: " << station.stationid()
                           << " Missising wmono, but this is ok");
     }
 
-    pStation = findStation(wigosStation.wigosid(), wmono, 0, "", bufrCode, newStation);
+    pStation =
+      findStation(wigosStation.wigosid(), wmono, 0, "", bufrCode, newStation);
 
-    if (!networkStation.name().empty()) {
-      pStation->name(networkStation.name());
+    if (!wigosStation.name().empty()) {
+      pStation->name(wigosStation.name());
       nValues++;
     }
 
@@ -1781,40 +1640,5 @@ ConfMaker::doConfWigos(const std::string& outfile,
     }
   }
 
-  stationList.sort(stationLessThan);
-
-  if (outfile.empty()) {
-    for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-         it != stationList.end();
-         ++it)
-      cout << doStationConf(*it) << endl;
-
-    return true;
-  }
-
-  string filename(outfile);
-  ofstream out;
-
-  if (outfile[0] != '/' && outfile[0] != '.')
-    filename = kvPath("sysconfdir") + "/" + outfile;
-
-  out.open(filename.c_str(), ios_base::out | ios_base::trunc);
-
-  if (!out.is_open()) {
-    LOGFATAL("Cant create file <" << filename << ">.");
-    return false;
-  }
-
-  for (std::list<StationInfoPtr>::iterator it = stationList.begin();
-       it != stationList.end();
-       ++it)
-    out << doStationConf(*it) << endl;
-
-  if (!out.good()) {
-    LOGFATAL("ERROR while writing configuration to file <" << filename << ">.");
-    return false;
-  }
-
-  out.close();
-  return true;
+  return doPrintStationConf(outfile);
 }
