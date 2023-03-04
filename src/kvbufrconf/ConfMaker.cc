@@ -108,37 +108,111 @@ ConfMaker::findStation(int wmono,
   return ptr;
 }
 
+bool
+isStation(int searchForBufrCode,
+          StationInfoPtr st,
+          const std::string& wigosid,
+          int wmono,
+          int stationid,
+          const std::string& callsign)
+{
+
+  switch (searchForBufrCode) {
+    case 1:
+    case 2:
+    case 4:
+      return st->stationID() == stationid;
+    case 0:
+      return st->wmono() == wmono;
+    case 3:
+    case 5:
+      return st->callsign() == callsign;
+    case 6:
+      return st->wigosId() == wigosid;
+    default:
+      return false;
+  }
+}
+
+
+StationInfoPtr
+ConfMaker::newStationFrom(int searchForBufrCode,
+                          StationInfoPtr templateStation,
+                          int newBufrCode,
+                          const std::string& wigosid,
+                          int wmono,
+                          int stationid,
+                          const std::string& callsign)
+{
+  StationInfoPtr p(new StationInfo(*templateStation));
+  p->code_ = newBufrCode;
+  switch (newBufrCode) {
+    case 1:
+    case 2:
+    case 4:
+      p->sectionType_ = StationInfo::ST_STATIONID;
+      p->stationID_ = stationid;
+      break;
+
+    case 0:
+      p->sectionType_ = StationInfo::ST_WMO;
+      p->wmono_ = wmono;
+      break;
+    case 3:
+    case 5:
+      p->sectionType_ = StationInfo::ST_CALLSIGN;
+      p->callsign_ = callsign;
+      break;
+
+    case 6:
+      p->sectionType_ = StationInfo::ST_WSI;
+      p->wsiId_ = wigosid;
+      break;
+    default:
+      p->sectionType_ = StationInfo::ST_UNKNOWN;
+  }
+  if (isStation(searchForBufrCode,
+                templateStation,
+                wigosid,
+                wmono,
+                stationid,
+                callsign)) {
+    return p;
+  }
+
+  return nullptr;
+}
+
+
 StationInfoPtr
 ConfMaker::findStation(const std::string& wigosid,
                        int wmono,
                        int stationid,
                        const std::string& callsign,
-                       int bufrCode,
+                       const std::list<int>& codeList,
                        bool& newStation)
 {
   newStation = false;
 
-  for (std::list<StationInfoPtr>::const_iterator it = stationList.begin();
-       it != stationList.end();
-       ++it) {
-    if ((*it)->wigosId() == wigosid && (*it)->wmono() == wmono &&
-        (*it)->stationID() == stationid && (*it)->callsign() == callsign &&
-        (*it)->code() == bufrCode) {
-      return *it;
+  if (codeList.empty()) {
+    return nullptr;
+  }
+
+  int bufrCode = *codeList.begin();
+  for (auto it : stationList) {
+    if (isStation(bufrCode, it, wigosid, wmono, stationid, callsign)) {
+      return it;
     }
   }
 
-  for (std::list<StationInfoPtr>::const_iterator it =
-         templateStationList.begin();
-       it != templateStationList.end();
-       ++it) {
-    if ((*it)->wigosId() == wigosid && (*it)->wmono() == wmono &&
-        (*it)->stationID() == stationid && (*it)->callsign() == callsign &&
-        (*it)->code() == bufrCode) {
-      StationInfoPtr p(new StationInfo(**it));
-      p->code(bufrCode);
-      stationList.push_back(p);
-      return p;
+  for (auto code : codeList) {
+    for (auto it : templateStationList) {
+      StationInfoPtr p =
+        newStationFrom(code, it, bufrCode, wigosid, wmono, stationid, callsign);
+      if (p) {
+        stationList.push_back(p);
+        return p;
+      }
     }
   }
 
@@ -147,8 +221,9 @@ ConfMaker::findStation(const std::string& wigosid,
   StationInfoPtr ptr;
 
   if (defaultVal) {
-    cerr << "New Station using default values owner='" << defaultVal->owner() << "' list='" << defaultVal->list() << "'\n ";
-    
+    // cerr << "New Station using default values owner='" << defaultVal->owner()
+    //      << "' list='" << defaultVal->list() << "'\n ";
+
     ptr.reset(new StationInfo(*defaultVal));
   } else {
     ptr.reset(new StationInfo());
@@ -159,7 +234,6 @@ ConfMaker::findStation(const std::string& wigosid,
   ptr->callsign_ = callsign;
   ptr->wsiId_ = wigosid;
   ptr->code(bufrCode, false);
-
   stationList.push_back(ptr);
 
   return ptr;
@@ -749,7 +823,8 @@ ConfMaker::doPrintStationConf(const std::string& outfile)
     for (auto& it : stationList) {
       cout << doStationConf(it) << endl;
     }
-    cerr << "\n  --- Generated " << stationList.size() << " kvbufrd configuration elements --- \n\n";
+    cerr << "\n  --- Generated " << stationList.size()
+         << " kvbufrd configuration elements --- \n\n";
     return true;
   }
 
@@ -773,7 +848,8 @@ ConfMaker::doPrintStationConf(const std::string& outfile)
     LOGFATAL("ERROR while writing configuration to file <" << filename << ">.");
     return false;
   }
-  cerr << "\n  --- Generated " << stationList.size() << " kvbufrd configuration elements ---\n\n";
+  cerr << "\n  --- Generated " << stationList.size()
+       << " kvbufrd configuration elements ---\n\n";
   out.close();
   return true;
 }
@@ -1317,8 +1393,8 @@ ConfMaker::doBStationsConf(const std::string& outfile,
 
     stationid = it->stationid();
 
-    //Only encode  norwegians stations
-    if ( stationid > 99999 ) {
+    // Only encode  norwegians stations
+    if (stationid > 99999) {
       continue;
     }
 
@@ -1330,7 +1406,6 @@ ConfMaker::doBStationsConf(const std::string& outfile,
 
     // If multiple typeid is found, we use just the first.
     typeid_ = obspgm.begin()->messageFormatid();
-
 
     if (!app.loadStationData(stationid, tblStation, tblSensors)) {
       LOGINFO("No metadata for station <" << it->stationid() << ">.");
@@ -1579,8 +1654,8 @@ ConfMaker::doConfWigos(const std::string& outfile,
                           << " Missising wmono, but this is ok");
     }
 
-    pStation =
-      findStation(wigosStation.wigosid(), wmono, 0, "", bufrCode, newStation);
+    pStation = findStation(
+      wigosStation.wigosid(), wmono, 0, "", { bufrCode, 0 }, newStation);
 
     if (!wigosStation.name().empty()) {
       pStation->name(wigosStation.name());

@@ -1,7 +1,7 @@
 /*
-  Kvalobs - Free Quality Control Software for Meteorological Observations 
+  Kvalobs - Free Quality Control Software for Meteorological Observations
 
-  $Id: StationInfoParse.h,v 1.5.6.2 2007/09/27 09:02:23 paule Exp $                                                       
+  $Id: StationInfoParse.h,v 1.5.6.2 2007/09/27 09:02:23 paule Exp $
 
   Copyright (C) 2007 met.no
 
@@ -15,8 +15,8 @@
   This file is part of KVALOBS
 
   KVALOBS is free software; you can redistribute it and/or
-  modify it under the terms of the GNU General Public License as 
-  published by the Free Software Foundation; either version 2 
+  modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation; either version 2
   of the License, or (at your option) any later version.
 
   KVALOBS is distributed in the hope that it will be useful,
@@ -24,149 +24,158 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   General Public License for more details.
 
-  You should have received a copy of the GNU General Public License along 
-  with KVALOBS; if not, write to the Free Software Foundation Inc., 
+  You should have received a copy of the GNU General Public License along
+  with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 #ifndef __StationInfoParse_h__
 #define __StationInfoParse_h__
 
+#include "StationInfo.h"
+#include <climits>
 #include <iostream>
-#include <milog/milog.h>
-#include <string>
 #include <list>
 #include <miconfparser/miconfparser.h>
-#include "StationInfo.h"
+#include <milog/milog.h>
+#include <string>
 
+namespace miconf = miutil::conf;
 
-namespace  miconf=miutil::conf;
-
-
-//class StationInfo;
-//StationInfo::TLongList;
+// class StationInfo;
+// StationInfo::TLongList;
 
 class ConfMaker;
 
 class StationInfoParse
 {
-   friend class ConfMaker;
+  friend class ConfMaker;
 
-   struct DefaultVal{
-      std::string copyto;
-      bool        copy;
-      std::string owner;
-      std::list<std::string> precipitation;
-      std::string list;
-      milog::LogLevel loglevel;
+  struct DefaultVal
+  {
+    std::string copyto;
+    bool copy;
+    std::string owner;
+    std::list<std::string> precipitation;
+    std::string list;
+    milog::LogLevel loglevel;
 
-      StationInfo::TDelayList delay;
-      std::string delayConf;
-      int code;
+    StationInfo::TDelayList delay;
+    std::string delayConf;
+    int code;
 
-      DefaultVal(): copy(false), loglevel(milog::INFO), code(-1) {
+    DefaultVal()
+      : copy(false)
+      , loglevel(milog::INFO)
+      , code(-1)
+    {
+    }
+
+    DefaultVal(const DefaultVal& dv)
+      : copyto(dv.copyto)
+      , copy(dv.copy)
+      , owner(dv.owner)
+      , precipitation(dv.precipitation)
+      , list(dv.list)
+      , loglevel(dv.loglevel)
+      , delayConf(dv.delayConf)
+      , code(dv.code)
+    {
+    }
+
+    DefaultVal& operator=(const DefaultVal& dv)
+    {
+      if (&dv != this) {
+        copyto = dv.copyto;
+        copy = dv.copy;
+        owner = dv.owner;
+        precipitation = dv.precipitation;
+        list = dv.list;
+        delay = dv.delay;
+        delayConf = dv.delayConf;
+        loglevel = dv.loglevel;
+        code = dv.code;
       }
+      return *this;
+    }
 
-      DefaultVal(const DefaultVal &dv)
-      :copyto(dv.copyto), copy(dv.copy),owner(dv.owner),
-       precipitation(dv.precipitation), list(dv.list),
-       loglevel(dv.loglevel), delayConf( dv.delayConf ),
-       code( dv.code )
-      {
-      }
+    bool valid() const;
+  };
 
-      DefaultVal& operator=(const DefaultVal &dv){
-         if(&dv!=this){
-            copyto=dv.copyto;
-            copy=dv.copy;
-            owner=dv.owner;
-            precipitation=dv.precipitation;
-            list=dv.list;
-            delay=dv.delay;
-            delayConf = dv.delayConf;
-            loglevel=dv.loglevel;
-            code = dv.code;
-         }
-         return *this;
-      }
+  bool doDefault(miconf::ConfSection* stationConf);
 
-      bool valid()const;
-   };
+  std::string doDefList(miconf::ValElementList& vl);
 
-   bool doDefault( miconf::ConfSection *stationConf);
+  int doDefCode(miconf::ValElementList& vl);
 
-   std::string doDefList( miconf::ValElementList &vl );
+  std::string doDefOwner(miconf::ValElementList& vl);
 
-   int  doDefCode( miconf::ValElementList &vl );
+  std::list<std::string> doDefPrecip(miconf::ValElementList& vl);
 
-   std::string doDefOwner( miconf::ValElementList &vl );
+  milog::LogLevel doDefLogLevel(miconf::ValElementList& vl);
 
-   std::list<std::string> doDefPrecip( miconf::ValElementList &vl);
+  bool doDefCopy(miconf::ValElementList& vl, bool* copyIsSet = 0);
 
-   milog::LogLevel doDefLogLevel( miconf::ValElementList &vl);
+  std::string doDefCopyto(miconf::ValElementList& vl);
 
-   bool doDefCopy(miconf::ValElementList &vl, bool *copyIsSet=0 );
+  StationInfo::TDelayList doDefDelay(const miconf::ValElementList& vl,
+                                     std::string& confDelay,
+                                     miconf::ConfSection* stationConf);
 
-   std::string doDefCopyto( miconf::ValElementList &vl );
+  bool doStationid(const std::string& key,
+                   miconf::ValElementList& vl,
+                   StationInfo& st);
 
-   StationInfo::TDelayList doDefDelay(const miconf::ValElementList &vl,
-                                      std::string &confDelay,
-                                      miconf::ConfSection *stationConf );
+  bool doDelay(const std::string& key,
+               miconf::ValElementList& vl,
+               StationInfo& st,
+               miconf::ConfSection* conf,
+               bool mayUseDefaultValues = true);
 
-   bool doStationid(const std::string &key,
-                    miconf::ValElementList &vl,
-                    StationInfo &st);
+  bool doPrecip(const std::string& key,
+                miconf::ValElementList& vl,
+                StationInfo& st);
 
-   bool doDelay(const std::string &key,
-                miconf::ValElementList &vl,
-                StationInfo &st, miconf::ConfSection *conf,
-                bool mayUseDefaultValues=true);
+  bool doTypePri(const std::string& key,
+                 miconf::ValElementList& vl,
+                 StationInfo& st);
 
+  void doIntList(std::list<int>& iList, const miconf::ValElementList& val);
 
-   bool doPrecip(const std::string &key,
-                 miconf::ValElementList &vl,
-                 StationInfo &st);
+  void doInt(int& i,
+             const miconf::ValElementList& val,
+             const int defaultVal = INT_MAX);
+  void doFloat(float& f, const miconf::ValElementList& val);
 
+  StationInfo* parseSection(miconf::ConfSection* stationConf,
+                            const std::string& id,
+                            bool useDefaultValues);
+  void parseStationDefSections(miconf::ConfSection* conf,
+                               std::list<StationInfoPtr>& stationList,
+                               bool useDefaultValues);
 
-   bool doTypePri(const std::string &key,
-                  miconf::ValElementList &vl,
-                  StationInfo &st);
+  DefaultVal defVal;
+  bool ignoreMissingValues;
 
-   void doIntList( std::list<int> &iList,
-                   const miconf::ValElementList &val );
+  // The following values is used
+  // for error reporting while parsing a section.
+  std::stringstream curErr;
+  std::string curSectionName;
 
-   void   doInt( int &i, const miconf::ValElementList &val );
-   void doFloat( float &f, const miconf::ValElementList &val );
-
-
-   StationInfo* parseSection(miconf::ConfSection *stationConf,
-                             const std::string &id,  bool useDefaultValues );
-   void parseStationDefSections( miconf::ConfSection *conf,
-                                 std::list<StationInfoPtr> &stationList,
-                                 bool useDefaultValues );
-
-
-   DefaultVal defVal;
-   bool ignoreMissingValues;
-
-   //The following values is used
-   //for error reporting while parsing a section.
-   std::stringstream curErr;
-   std::string  curSectionName;
-
-   std::stringstream errors;
+  std::stringstream errors;
 
 public:
-   StationInfoParse(bool ignoreMissingValue_=false)
-    : ignoreMissingValues( ignoreMissingValue_ ){}
-   ~StationInfoParse(){}
+  StationInfoParse(bool ignoreMissingValue_ = false)
+    : ignoreMissingValues(ignoreMissingValue_)
+  {
+  }
+  ~StationInfoParse() {}
 
-   StationInfoPtr defaultVal()const;
-   bool parse(miconf::ConfSection *stationConf,
-              std::list<StationInfoPtr> &stationList, bool useDefaultValues=true );
+  StationInfoPtr defaultVal() const;
+  bool parse(miconf::ConfSection* stationConf,
+             std::list<StationInfoPtr>& stationList,
+             bool useDefaultValues = true);
 
-   std::string getErrors()const { return errors.str(); }
+  std::string getErrors() const { return errors.str(); }
 };
 
-
 #endif
-

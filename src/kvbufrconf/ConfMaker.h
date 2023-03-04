@@ -44,17 +44,28 @@ class ConfMaker
   std::list<StationInfoPtr> templateStationList;
   StationInfoPtr defaultVal;
 
+  StationInfoPtr newStationFrom(int searchForBufrCode,
+                                StationInfoPtr st,
+                                int newBufrCode,
+                                const std::string& wigosid,
+                                int wmono,
+                                int stationid,
+                                const std::string& callsign);
+
   // StationInfoPtr findStation( int wmono, bool &newStation );
   StationInfoPtr findStation(int wmono,
                              int stationid,
                              const std::string& callsign,
                              int bufrCode,
                              bool& newStation);
-  StationInfoPtr findStation(const std::string &wigosid,
+
+  // The first bufrCode in the bufrCodeList must be the code
+  // we are generating configuration to.
+  StationInfoPtr findStation(const std::string& wigosid,
                              int wmono,
                              int stationid,
                              const std::string& callsign,
-                             int bufrCode,
+                             const std::list<int>& bufrCodeList,
                              bool& newStation);
   void removeStation(StationInfoPtr station);
 
@@ -79,10 +90,10 @@ class ConfMaker
                             const TblStInfoSysWigosStation& wigosStation,
                             StationInfoPtr station);
 
-    bool precipConfFromParams(StationInfoPtr station,
-                              const std::list<int>& precipParams,
-                              int stationid,
-                              int typeid_);
+  bool precipConfFromParams(StationInfoPtr station,
+                            const std::list<int>& precipParams,
+                            int stationid,
+                            int typeid_);
 
   std::string stationIdToConfString(StationInfoPtr station) const;
   std::string typepriorityToConfString(StationInfoPtr station) const;
@@ -92,7 +103,7 @@ class ConfMaker
                     StInfoSysNetworkStationList::iterator itNetworkStation);
   bool setShipProductCouplingAndDelay(StationInfoPtr station);
 
-  bool doPrintStationConf( const std::string &file);
+  bool doPrintStationConf(const std::string& file);
   std::string doStationConf(StationInfoPtr station) const;
 
 public:
