@@ -44,6 +44,7 @@
 
 using namespace std;
 using namespace miutil::conf;
+std::string DefaultName("default");
 
 namespace {
 const string NoteSection = "__NOTE_INTERNAL__";
@@ -185,10 +186,93 @@ StationInfoParse::parseStationDefSections(
                 << " line: " << sec->getLineno() << "." << endl
                 << "Reason: " << sErr);
       }
-      
+
       stationList.push_back(StationInfoPtr(info));
     }
   }
+}
+
+struct defMapping
+{
+  const char* section;
+  const char* name;
+};
+
+bool
+StationInfoParse::parseDefaultSections(miconf::ConfSection* conf,
+                                       bool useDefaultValues)
+{
+  // Must be in sync with the constructor and the idType in
+  // teh method parseStationDefSections.
+
+  if (!useDefaultValues) {
+    return true;
+  }
+
+  const struct defMapping defConfSections[] = { { "wmo_default", "WMO" },
+                                                { "id_default", "ID" },
+                                                { "callsign_default",
+                                                  "CALLSIGN" },
+                                                { "wsi_default", "WSI" },
+                                                { 0, 0 } };
+
+  bool ret = true;
+  ConfSection* defaultConf = 0;
+
+  // Only let useDafault controll
+  // ignoreMissingValues if it is not explicit
+  // set to true.
+  if (!ignoreMissingValues) {
+    ignoreMissingValues = false;
+  }
+
+  DefaultValPtr defaultVal(new DefaultVal());
+  defaultConf = conf->getSection(DefaultName);
+  if (defaultConf ) {
+    if( doDefault(defaultVal, defaultConf)) {
+      defVals[DefaultName] = defaultVal;
+    } else {
+      LOGERROR("Failed to parse default section '"
+              << DefaultName << "'in the configuration file! Ignoring!")
+      ret = false;
+    }
+  }
+
+  for (int i = 0; defConfSections[i].section; i++) {
+    defaultConf = conf->getSection(defConfSections[i].section);
+    if (!defaultConf) {
+      if (defaultVal->defined) {
+        defVals[defConfSections[i].name] =
+        DefaultValPtr(new DefaultVal(*defaultVal));
+      }
+      continue;
+    }
+    DefaultValPtr defVal = defVals[defConfSections[i].name];
+    bool replace = false;
+    if (defaultVal->defined) {
+      replace = true;
+      defVal = DefaultValPtr(new DefaultVal(*defaultVal));
+    }
+
+    if (!doDefault(defVal, defaultConf)) {
+      LOGERROR("Failed to parse default section '"
+               << defConfSections[i].section
+               << "'in the configuration file! Setting to 'default' if "
+                  "defined else ignoring.");
+      ret = false;
+      if (defaultVal->defined) {
+        defVals[defConfSections[i].name] = defaultVal;
+      }
+      continue;
+    }
+
+    defVal->defined = true;
+    if (replace) {
+      defVals[defConfSections[i].name] = defVal;
+    }
+  }
+
+  return ret;
 }
 
 bool
@@ -196,60 +280,32 @@ StationInfoParse::parse(miconf::ConfSection* conf,
                         std::list<StationInfoPtr>& stationList,
                         bool useDefaultValues)
 {
-  string defaultConfName("wmo_default");
-  ConfSection* defaultConf = 0;
 
   stationList.clear();
-
-  // Only let useDafault controll
-  // ignoreMissingValues if it is not explicit
-  // set to true.
-  if (!ignoreMissingValues) {
-    if (useDefaultValues) {
-      ignoreMissingValues = false;
-    } else {
-      ignoreMissingValues = true;
-    }
-  }
-
-  defaultConf = conf->getSection(defaultConfName);
-
-  if (!defaultConf) {
-    defaultConfName = "default";
-    defaultConf = conf->getSection(defaultConfName);
-  }
-
-  if (!defaultConf && useDefaultValues) {
-    useDefaultValues = false;
-    LOGWARN("Missing section 'wmo_default' or 'default' section in the "
-            "configuration file!");
-  }
-
-  if (useDefaultValues && !doDefault(defaultConf)) {
-    LOGFATAL("Fatal errors in default section '"
-             << defaultConfName << "' in the configuration file!");
-    return false;
-  }
-  list<string> sect = conf->getSubSections();
-
-  if (defaultConf) {
-    LOGDEBUG("Sections: (" << sect.size() << ")" << endl
-                           << "default: " << endl
-                           << *defaultConf << endl);
-  } else {
-    LOGDEBUG("Sections: (" << sect.size() << ")" << endl
-                           << "Not using default values. " << endl);
-  }
-
+  parseDefaultSections(conf, useDefaultValues);
   parseStationDefSections(conf, stationList, useDefaultValues);
 
   return true;
 }
 
+StationInfoParse::DefaultValPtr
+StationInfoParse::getDefaultValue(const std::string& typeName)
+{
+  DefaultValPtr ret;
+
+  for (auto it : defVals) {
+    if (it.first == typeName) {
+      return it.second;
+    }
+  }
+
+  return defVals[DefaultName];
+}
+
 StationInfo*
 StationInfoParse::parseSection(miconf::ConfSection* stationConf,
                                const std::string& id,
-                               bool useDefaultValues)
+                               bool useDefaultValues_)
 {
   const char* keywords[] = { "stationid",
                              "delay",
@@ -286,7 +342,7 @@ StationInfoParse::parseSection(miconf::ConfSection* stationConf,
   string idType;
   ValElementList idTypeValue;
   bool ok;
-
+  bool useDefaultValues = false;
   idTypeValue = stationConf->getValue(NoteSection + "." + IdType);
 
   //   cerr << "Note: "<< NoteSection+"."+IdType << " Size: " <<
@@ -331,8 +387,12 @@ StationInfoParse::parseSection(miconf::ConfSection* stationConf,
     st->sectionType_ = StationInfo::ST_WSI;
   }
 
+  DefaultValPtr defVal = getDefaultValue(idType);
+
   if (stationConf->ignoreThisSection())
     st->ignore = true;
+
+  useDefaultValues = useDefaultValues_ && defVal;
 
   for (i = 0; keywords[i]; i++) {
     value = stationConf->getValue(keywords[i]);
@@ -342,42 +402,43 @@ StationInfoParse::parseSection(miconf::ConfSection* stationConf,
         LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType
                                         << " section <" << id
                                         << ">! Using default value!" << endl);
-        st->precipitation_ = defVal.precipitation;
+        st->precipitation_ = defVal->precipitation;
       } else if (strcmp(keywords[i], "list") == 0) {
         LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType
                                         << " section <" << id
                                         << ">! Using default value!" << endl);
-        st->list_ = defVal.list;
+        st->list_ = defVal->list;
       } else if (strcmp(keywords[i], "copy") == 0) {
         LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType
                                         << " section <" << id
                                         << ">! Using default value!" << endl);
-        st->copy_ = defVal.copy;
+        st->copyIsSet_ = defVal->copyIsSet;
+        st->copy_ = defVal->copy;
       } else if (strcmp(keywords[i], "copyto") == 0) {
         LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType
                                         << "  section <" << id
                                         << ">! Using default value!" << endl);
-        st->copyto_ = defVal.copyto;
+        st->copyto_ = defVal->copyto;
       } else if (strcmp(keywords[i], "owner") == 0) {
         LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType
                                         << " section <" << id
                                         << ">! Using default value!" << endl);
-        st->owner_ = defVal.owner;
+        st->owner_ = defVal->owner;
       } else if (strcmp(keywords[i], "delay") == 0) {
         LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType
                                         << " section <" << id
                                         << ">! Using default value!");
-        st->delayList_ = defVal.delay;
+        st->delayList_ = defVal->delay;
       } else if (strcmp(keywords[i], "loglevel") == 0) {
         LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType
                                         << " section <" << id
                                         << ">! Using default value!");
-        st->loglevel_ = defVal.loglevel;
+        st->loglevel_ = defVal->loglevel;
       } else if (strcmp(keywords[i], "code") == 0) {
         LOGDEBUG6("NO VALUE: for key <" << keywords[i] << "> in " << idType
                                         << " section <" << id
                                         << ">! Using default value!");
-        st->code(defVal.code, true);
+        st->code(defVal->code, true);
       } else if (strcmp(keywords[i], "height") == 0 ||
                  strcmp(keywords[i], "height_precip") == 0 ||
                  strcmp(keywords[i], "height_pressure") == 0 ||
@@ -410,8 +471,8 @@ StationInfoParse::parseSection(miconf::ConfSection* stationConf,
       if (strcmp(keywords[i], "stationid") == 0) {
         ok = doStationid(keywords[i], value, *st);
       } else if (strcmp(keywords[i], "delay") == 0) {
-        ok =
-          doDelay(keywords[i], value, *st, stationConf, !ignoreMissingValues);
+        ok = doDelay(
+          keywords[i], value, *st, stationConf, defVal, !ignoreMissingValues);
       } else if (strcmp(keywords[i], "precipitation") == 0) {
         ok = doPrecip(keywords[i], value, *st);
       } else if (strcmp(keywords[i], "typepriority") == 0) {
@@ -506,31 +567,46 @@ StationInfoParse::parseSection(miconf::ConfSection* stationConf,
   return st;
 }
 
-StationInfoPtr
-StationInfoParse::defaultVal() const
+std::map<string, StationInfoPtr>
+StationInfoParse::getDefaultVals()
 {
-  StationInfoPtr p = StationInfoPtr(new StationInfo());
-  p->precipitation_ = defVal.precipitation;
-  p->list_ = defVal.list;
-  p->copy_ = defVal.copy;
-  p->copyto_ = defVal.copyto;
-  p->owner_ = defVal.owner;
-  p->delayList_ = defVal.delay;
-  p->loglevel_ = defVal.loglevel;
-  p->code_ = defVal.code;
+  std::map<string, StationInfoPtr> res;
+  DefaultValPtr defaultVal = defVals[DefaultName];
+  DefaultValPtr defVal;
+  for (auto it : defVals) {
+    if (it.second->defined) {
+      defVal = it.second;
+    } else if (defaultVal->defined) {
+      defVal = defaultVal;
+    } else {
+      continue;
+    }
+    StationInfoPtr p(new StationInfo());
+    p->precipitation_ = defVal->precipitation;
+    p->list_ = defVal->list;
+    p->copy_ = defVal->copy;
+    p->copyIsSet_ = defVal->copyIsSet;
+    p->copyto_ = defVal->copyto;
+    p->owner_ = defVal->owner;
+    p->delayList_ = defVal->delay;
+    p->loglevel_ = defVal->loglevel;
+    p->code_ = defVal->code;
+    res[it.first] = p;
+  }
 
-  return p;
+  return res;
 }
 
 bool
-StationInfoParse::doDefault(miutil::conf::ConfSection* stationConf)
+StationInfoParse::doDefault(DefaultValPtr defVal,
+                            miutil::conf::ConfSection* stationConf)
 {
   list<std::string> keys;
   list<std::string>::iterator it;
   ValElementList value;
   bool ok;
   keys = stationConf->getKeys();
-
+  defVal->defined = false;
   for (it = keys.begin(); it != keys.end(); it++) {
     value = stationConf->getValue(*it);
 
@@ -543,27 +619,28 @@ StationInfoParse::doDefault(miutil::conf::ConfSection* stationConf)
     ok = true;
 
     if (*it == "list") {
-      defVal.list = doDefList(value);
-      ok = !defVal.list.empty();
+      defVal->list = doDefList(value);
+      ok = !defVal->list.empty();
     } else if (*it == "owner") {
-      defVal.owner = doDefOwner(value);
-      ok = !defVal.owner.empty();
+      defVal->owner = doDefOwner(value);
+      ok = !defVal->owner.empty();
     } else if (*it == "precipitation") {
-      defVal.precipitation = doDefPrecip(value);
-      ok = !defVal.precipitation.empty();
+      defVal->precipitation = doDefPrecip(value);
+      ok = !defVal->precipitation.empty();
     } else if (*it == "copy") {
-      defVal.copy = doDefCopy(value, &ok);
+      defVal->copy = doDefCopy(value, &defVal->copyIsSet);
+      ok = defVal->copyIsSet;
     } else if (*it == "copyto") {
-      defVal.copyto = doDefCopyto(value);
-      ok = !defVal.copyto.empty();
+      defVal->copyto = doDefCopyto(value);
+      ok = !defVal->copyto.empty();
     } else if (*it == "delay") {
-      defVal.delay = doDefDelay(value, defVal.delayConf, stationConf);
-      ok = !defVal.delay.empty();
+      defVal->delay = doDefDelay(value, defVal->delayConf, stationConf);
+      ok = !defVal->delay.empty();
     } else if (*it == "loglevel") {
-      defVal.loglevel = doDefLogLevel(value);
+      defVal->loglevel = doDefLogLevel(value);
     } else if (*it == "code") {
-      defVal.code = doDefCode(value); // Default value 0 is SYNOP.
-      ok = defVal.code >= 0;
+      defVal->code = doDefCode(value); // Default value 0 is SYNOP.
+      ok = defVal->code >= 0;
     } else {
       LOGWARN("UNKNOWN KEY: in <" << curSectionName
                                   << "> section! Ignoring it.");
@@ -574,7 +651,7 @@ StationInfoParse::doDefault(miutil::conf::ConfSection* stationConf)
       return false;
     }
   }
-
+  defVal->defined = true;
   return true;
 }
 
@@ -644,7 +721,7 @@ StationInfoParse::doDefOwner(miconf::ValElementList& vl)
   if (it == vl.end())
     return string();
 
-  if (it->type() != STRING) {
+  if (it->type() != STRING && it->type() != ID) {
     curErr << "INVALID TYPE: key <owner>, expecting STRING." << endl;
     return string();
   }
@@ -1008,19 +1085,30 @@ StationInfoParse::doDelay(const std::string& key,
                           miconf::ValElementList& vl,
                           StationInfo& st,
                           miconf::ConfSection* conf,
+                          DefaultValPtr defVal,
                           bool mayUseDefaultValues)
 {
 
   st.delayList_ = doDefDelay(vl, st.delayConf, conf);
 
-  if (st.delayList_.empty() && mayUseDefaultValues) {
+  if (st.delayList_.empty() && mayUseDefaultValues && defVal->defined) {
     curErr << "No value for <delay>, using default!";
-    st.delayList_ = defVal.delay;
-    st.delayConf = defVal.delayConf;
+    st.delayList_ = defVal->delay;
+    st.delayConf = defVal->delayConf;
   }
 
   return (vl.empty() && st.delayList_.empty()) ||
          (!vl.empty() && !st.delayList_.empty());
+}
+
+bool
+StationInfoParse::doDelayConfMaker(const std::string& key,
+                                   miconf::ValElementList& vl,
+                                   StationInfo& st,
+                                   miconf::ConfSection* conf)
+{
+  DefaultValPtr dummy(new DefaultVal());
+  return doDelay(key, vl, st, conf, dummy, false);
 }
 
 bool

@@ -8,9 +8,9 @@ AM_CPPFLAGS = \
 	-DPREFIX="\""$(prefix)"\""  
 
 
-bin_PROGRAMS = kvbufrconf kvbufrconfcmp
+bin_PROGRAMS = kvbufrconf2 kvbufrconfcmp2
 
-kvbufrconf_SOURCES = \
+kvbufrconf2_SOURCES = \
 		../StationInfo.cc ../StationInfo.h \
 		../StationInfoParse.cc ../StationInfoParse.h \
 		../splitstr.h ../splitstr.cc \
@@ -30,11 +30,11 @@ kvbufrconf_SOURCES = \
 		kvbufrconfOptions.cc kvbufrconfOptions.h \
 		kvbufrconf.cc
 
-kvbufrconf_LDFLAGS = -pthread $(BOOST_LDFLAGS)
+kvbufrconf2_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 
 if KVSTATIC
-kvbufrconf_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrconf_LDADD = \
+kvbufrconf2_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
+kvbufrconf2_LDADD = \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
@@ -53,14 +53,14 @@ kvbufrconf_LDADD = \
 	$(BOOST_SYSTEM_LIB) \
    	-lm -ldl
 else
-  kvbufrconf_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-  kvbufrconf_LDADD = \
+  kvbufrconf2_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
+  kvbufrconf2_LDADD = \
  	  $(kvsubscribe_LIBS) $(putools_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
  	  $(BOOST_SYSTEM_LIB) \
     -lm -ldl
 endif
                    
-kvbufrconfcmp_SOURCES = \
+kvbufrconfcmp2_SOURCES = \
 	../StationInfo.cc ../StationInfo.h \
 	../StationInfoParse.cc ../StationInfoParse.h \
    ../checkfile.h ../checkfile.cc \
@@ -69,11 +69,11 @@ kvbufrconfcmp_SOURCES = \
 	../parseMilogLogLevel.cc ../parseMilogLogLevel.h \
 	kvbufrconfcmpOptions.cc kvbufrconfcmpOptions.h \
 	kvbufrconfcmp.cc
-kvbufrconfcmp_LDFLAGS = -pthread $(BOOST_LDFLAGS)
+kvbufrconfcmp2_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 
 if KVSTATIC
-kvbufrconfcmp_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrconfcmp_LDADD = \
+kvbufrconfcmp2_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
+kvbufrconfcmp2_LDADD = \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
@@ -92,8 +92,8 @@ kvbufrconfcmp_LDADD = \
 	$(BOOST_SYSTEM_LIB) \
     -lm
 else
-kvbufrconfcmp_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrconfcmp_LDADD = \
+kvbufrconfcmp2_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
+kvbufrconfcmp2_LDADD = \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \

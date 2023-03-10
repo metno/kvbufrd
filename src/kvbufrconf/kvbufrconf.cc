@@ -120,10 +120,10 @@ main(int argn, char** argv)
       ret = confMaker.doShipConf(opt.outconf, templateConf);
       break;
     case Options::SYNOP:
-      ret = confMaker.doConf(opt.outconf, templateConf);
+      ret = confMaker.doSynopConf(opt.outconf, templateConf);
       break;
     case Options::SYNOP_WIGOS:
-      ret = confMaker.doConfWigos(opt.outconf, templateConf);
+      ret = confMaker.doWigosConf(opt.outconf, templateConf);
       break;
     case Options::BSTATIONS:
       ret = confMaker.doBStationsConf(opt.outconf, templateConf);

@@ -42,7 +42,9 @@ class ConfMaker
   StInfoSysParamList params;
   std::list<StationInfoPtr> stationList;
   std::list<StationInfoPtr> templateStationList;
-  StationInfoPtr defaultVal;
+  std::map<std::string,StationInfoPtr> defaultVals;
+
+  StationInfoPtr getDefaultVal(int bufrCode );
 
   StationInfoPtr newStationFrom(int searchForBufrCode,
                                 StationInfoPtr st,
@@ -125,9 +127,9 @@ public:
   ConfMaker(ConfApp& app);
 
   void setParams(const StInfoSysParamList& params);
-  bool doConf(const std::string& outfile,
+  bool doSynopConf(const std::string& outfile,
               miutil::conf::ConfSection* templateConf);
-  bool doConfWigos(const std::string& outfile,
+  bool doWigosConf(const std::string& outfile,
                    miutil::conf::ConfSection* templateConf);
   bool doSVVConf(const std::string& outfile,
                  miutil::conf::ConfSection* templateConf);

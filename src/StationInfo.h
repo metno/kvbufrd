@@ -483,12 +483,12 @@ public:
    void           owner(const std::string &o){ owner_=o;}
    milog::LogLevel loglevel()const { return loglevel_;}
    //IntList        code()const { return code_; }
-   int        code()const; 
+   int            code()const; 
 
    //Set the BUFR code to use. If a value is allready set and replace is true it replace the value 
    //and if false it leave the value untouched.
-   void       code( int c_ , bool replace=true);
-   std::string    codeToString()const;
+   void        code( int c_ , bool replace=true);
+   std::string codeToString()const;
 
 
    int       height()const{ return height_; }
@@ -650,7 +650,7 @@ public:
    friend std::ostream& operator<<(std::ostream& ost,
                                    const StationInfo& sd);
 
-   std::string keyToString(const std::string &key);
+   std::string keyToString(const std::string &key)const;
 
    bool makeConfSection( std::string &confSection )const;
    /**
@@ -663,7 +663,7 @@ public:
    *  \param st The StationInfo to compare against this.
    *  \return true if they are equal and false otherwise.
    */
-   bool equalTo(const StationInfo &st);
+   bool equalTo(const StationInfo &st) const;
    bool cacheReloaded48()const{ return cacheReloaded48_;}
    void cacheReloaded48(bool reloaded){ cacheReloaded48_=reloaded;}
 

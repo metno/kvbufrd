@@ -951,16 +951,41 @@ StationInfo::toIdentString() const
 }
 
 bool
-StationInfo::equalTo(const StationInfo& st)
+StationInfo::equalTo(const StationInfo& st)const
 {
+const char* keywords[] = {   "delay",
+                             "precipitation",
+                             "typepriority",
+                             "list",
+                             "copy",
+                             "copyto",
+                             "owner",
+                             "loglevel",
+                             "latitude",
+                             "longitude",
+                             "height",
+                             "height_visibility",
+                             "height_precip",
+                             "height_pressure",
+                             "height_temperature",
+                             "height_wind",
+                             "height_wind_above_sea",
+                             "name",
+                             "station_id",
+                             "wigos_id",
+                             "code",
+                             "buoy_type",
+                             0 };
+
+
   if (&st == this)
     return true;
 
-  if (wmono_ == st.wmono_ && stationID_ == st.stationID_ &&
+  if (wsiId_==st.wsiId_ && wmono_ == st.wmono_ && stationID_ == st.stationID_ &&
       callsign_ == st.callsign_ && name_ == st.name_ && code_ == st.code_ &&
       definedStationid_ == st.definedStationid_ &&
       typepriority_ == st.typepriority_ &&
-      precipitation_ == st.precipitation_ && delayList_ == st.delayList_ &&
+      precipitation_ == st.precipitation_ && keyToString("delay") == st.keyToString("delay") &&
       list_ == st.list_ && copy_ == st.copy_ && copyto_ == st.copyto_ &&
       owner_ == st.owner_ && loglevel_ == st.loglevel_ &&
       heightPrecip_ == st.heightPrecip_ &&
@@ -970,10 +995,19 @@ StationInfo::equalTo(const StationInfo& st)
       heightWind_ == st.heightWind_ &&
       heightWindAboveSea_ == st.heightWindAboveSea_ && height_ == st.height_ &&
       latitude_ == st.latitude_ && longitude_ == st.longitude_ &&
-      buoyType_ == st.buoyType_ && wsiId_ == st.wsiId_)
+      buoyType_ == st.buoyType_ && wsiId_ == st.wsiId_) {
     return true;
-  else
+  } else {
+    cerr << "Changed: " << toIdentString() << " and " << st.toIdentString() << "\n";
+
+    for(int i=0; keywords[i]; i++ ){
+      if( keyToString(keywords[i]) != st.keyToString(keywords[i])) {
+        cerr << "   " << keywords[i]<<": " <<keyToString(keywords[i]) << " (" <<   st.keyToString(keywords[i]) << ")\n";
+      }
+
+    }
     return false;
+  }
 }
 
 bool
@@ -1007,7 +1041,7 @@ StationInfo::operator==(const StationInfo& rhs) const
 }
 
 std::string
-StationInfo::keyToString(const std::string& key)
+StationInfo::keyToString(const std::string& key) const
 {
   ostringstream ost;
 
@@ -1347,7 +1381,7 @@ operator<<(std::ostream& ost, const StationInfo& sd)
   ost << "height_wind_above_sea: " << printOut(sd.heightWindAboveSea()) << endl;
   ost << "             buoy_type: " << printOut(sd.buoyType()) << endl;
   ost << "                 list: " << sd.list_ << endl;
-  ost << "                 copy: " << (sd.copy_ ? "TRUE" : "FALSE") << endl;
+  ost << "                 copy: " << (sd.copy_ ? "TRUE" : "FALSE") << " (Copy set in conf: " << (sd.isCopySetInConfSection()?"true":"false")<< ")" << endl;
   ost << "               copyto: " << sd.copyto_ << endl;
   ost << "                owner: " << sd.owner_ << endl;
   ost << "           delayLogic: "

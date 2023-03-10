@@ -514,20 +514,37 @@ loadWigosStationData( int stationid,
    gate.select( sensors, q.str() );
 
 
-   //Lookup in the network_station to find the wmo name. Synopdata has networkid=4
+   //Lookup in the network_station to find name. We use the name for networkid = 5 if it exist, else it looks for name with networkid 4 or 44 (synop).
+   // 
    //Search the table obs_network to find the correct networkid. it can not change over time so it is hardcoded to 4 here.
    q.str("");
-   q << " WHERE stationid=" << stationid << " AND networkid IN ( 5 ) AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL) ORDER BY networkid";
+   q << " WHERE stationid=" << stationid << " AND networkid IN ( 4, 5 ) AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL) ORDER BY networkid";
    gate.select( networkStationList, q.str() );
 
+   bool found=true;
    if( ! networkStationList.empty() ) {
-      networkStation = *networkStationList.begin();
-      if( networkStationList.size() > 1 ) {
-         LOGWARN( "More than one record for the station <" << stationid << "> was selected from the 'network_station' table in stinfosys."
-                  << endl << " Using the first selected station (networkid=" << networkStation.networkid() << ").");
+      std::string name;
+      found=false;
+      for ( auto it : networkStationList ) {
+         if ( it.networkid() == 5) {
+            networkStation = it;
+            name=it.name();
+            found=true;
+            break;
+         }
       }
 
-   } else {
+      if( found && name.empty() ) {
+         for ( auto it : networkStationList ) {
+            if ( it.networkid() != 5 && ! it.name().empty() ) {
+               networkStation.name(it.name());
+               break;
+            }
+         }
+      }  
+   } 
+   
+   if( ! found ) {
       LOGWARN("No data in the table 'network_station' for stationid " << stationid << ". ie we are missing any name for the station.");
       networkStation.clean();
    }

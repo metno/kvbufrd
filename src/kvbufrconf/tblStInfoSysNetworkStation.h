@@ -70,6 +70,7 @@ public:
 
   int stationid()const { return stationid_; }
   int networkid()const { return networkid_; }
+  void name(const std::string &n) { name_=n; }
   std::string name()const { return name_; }
   std::string externalStationcode()const { return externalStationcode_; }
   std::string comment()const { return comment_; }

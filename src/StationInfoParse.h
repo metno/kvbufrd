@@ -35,7 +35,9 @@
 #include <climits>
 #include <iostream>
 #include <list>
-#include <miconfparser/miconfparser.h>
+#include <map>
+#include <memory>
+#include <boost/shared_ptr.hpp>
 #include <milog/milog.h>
 #include <string>
 
@@ -46,6 +48,8 @@ namespace miconf = miutil::conf;
 
 class ConfMaker;
 
+extern std::string DefaultName;
+
 class StationInfoParse
 {
   friend class ConfMaker;
@@ -54,18 +58,21 @@ class StationInfoParse
   {
     std::string copyto;
     bool copy;
+    bool copyIsSet;
     std::string owner;
     std::list<std::string> precipitation;
     std::string list;
     milog::LogLevel loglevel;
-
+    bool defined;
     StationInfo::TDelayList delay;
     std::string delayConf;
     int code;
 
     DefaultVal()
       : copy(false)
+      , copyIsSet(false)
       , loglevel(milog::INFO)
+      , defined(false)
       , code(-1)
     {
     }
@@ -73,10 +80,12 @@ class StationInfoParse
     DefaultVal(const DefaultVal& dv)
       : copyto(dv.copyto)
       , copy(dv.copy)
+      , copyIsSet(dv.copyIsSet)
       , owner(dv.owner)
       , precipitation(dv.precipitation)
       , list(dv.list)
       , loglevel(dv.loglevel)
+      , defined(dv.defined)
       , delayConf(dv.delayConf)
       , code(dv.code)
     {
@@ -87,21 +96,44 @@ class StationInfoParse
       if (&dv != this) {
         copyto = dv.copyto;
         copy = dv.copy;
+        copyIsSet=dv.copyIsSet;
         owner = dv.owner;
         precipitation = dv.precipitation;
         list = dv.list;
         delay = dv.delay;
         delayConf = dv.delayConf;
         loglevel = dv.loglevel;
+        defined = dv.defined;
         code = dv.code;
       }
       return *this;
     }
 
+    void print(std::ostream &o ) {
+      o << "  defined: " << (defined?"true":"false") << "\n";
+      o << "           code: " << code << "\n";
+      o << "           copy: " << (copy?"true":"false") << "\n";
+      o << "      copyIsSet: " << (copyIsSet?"true":"false") << "\n";
+      o << "         copyto: '" << copyto << "'\n";
+      o << "          owner: " << owner << "\n";
+      o << "  precipitation: \n";
+      for ( auto p : precipitation) {
+        o << "                " << p << "\n";
+      }
+      o << "           list: " << list << "\n";
+      o << "       loglevel: " << loglevel << "\n";
+      o << "          delay: \n";
+      for ( auto d : delay ) {
+        o << "                " << d << "\n";
+      }
+      o << "      dealyConf: " << delayConf << "\n";
+    }
+
     bool valid() const;
   };
 
-  bool doDefault(miconf::ConfSection* stationConf);
+  typedef boost::shared_ptr<DefaultVal> DefaultValPtr;
+  bool doDefault(DefaultValPtr def, miconf::ConfSection* stationConf);
 
   std::string doDefList(miconf::ValElementList& vl);
 
@@ -129,7 +161,13 @@ class StationInfoParse
                miconf::ValElementList& vl,
                StationInfo& st,
                miconf::ConfSection* conf,
+               DefaultValPtr defVal, 
                bool mayUseDefaultValues = true);
+  bool doDelayConfMaker(const std::string& key,
+               miconf::ValElementList& vl,
+               StationInfo& st,
+               miconf::ConfSection* conf);
+
 
   bool doPrecip(const std::string& key,
                 miconf::ValElementList& vl,
@@ -146,6 +184,8 @@ class StationInfoParse
              const int defaultVal = INT_MAX);
   void doFloat(float& f, const miconf::ValElementList& val);
 
+  bool parseDefaultSections(miconf::ConfSection* conf, bool useDefaultValues);
+
   StationInfo* parseSection(miconf::ConfSection* stationConf,
                             const std::string& id,
                             bool useDefaultValues);
@@ -153,7 +193,8 @@ class StationInfoParse
                                std::list<StationInfoPtr>& stationList,
                                bool useDefaultValues);
 
-  DefaultVal defVal;
+  DefaultValPtr getDefaultValue(const std::string &type);
+  std::map<std::string, DefaultValPtr> defVals;
   bool ignoreMissingValues;
 
   // The following values is used
@@ -167,10 +208,19 @@ public:
   StationInfoParse(bool ignoreMissingValue_ = false)
     : ignoreMissingValues(ignoreMissingValue_)
   {
+    // Must be in sync with the method parse and the idType in
+    // teh method parseStationDefSections.
+    defVals[DefaultName] = DefaultValPtr(new DefaultVal());
+    defVals["WMO"] = DefaultValPtr(new DefaultVal());
+    defVals["ID"] = DefaultValPtr(new DefaultVal());
+    defVals["CALLSIGN"] = DefaultValPtr(new DefaultVal());
+    defVals["WSI"] = DefaultValPtr(new DefaultVal());
+    //  defVal = defVals[DefaultName];
   }
   ~StationInfoParse() {}
 
-  StationInfoPtr defaultVal() const;
+  std::map<std::string, StationInfoPtr> getDefaultVals();
+  StationInfoPtr defaultVal(const std::string& defaultSectionName);
   bool parse(miconf::ConfSection* stationConf,
              std::list<StationInfoPtr>& stationList,
              bool useDefaultValues = true);

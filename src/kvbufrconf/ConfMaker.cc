@@ -57,6 +57,37 @@ stationLessThan(StationInfoPtr s1, StationInfoPtr s2)
 }
 }
 
+
+StationInfoPtr ConfMaker::getDefaultVal(int bufrCode ){
+  std::string name;
+  switch( bufrCode ) {
+    case 1:
+    case 2:
+    case 4:
+      name="ID";
+      break;
+    case 0:
+      name="WMO";
+      break;
+    case 3:
+    case 5:
+       name="CALLSIGN";
+       break;
+    case 6:
+      name="WSI";
+      break;
+    default:
+      name=DefaultName;
+  }
+
+  auto it = defaultVals.find(name);
+  if ( it == defaultVals.end()) {
+    return StationInfoPtr();
+  }
+
+  return it->second;
+}
+
 StationInfoPtr
 ConfMaker::findStation(int wmono,
                        int stationid,
@@ -89,7 +120,7 @@ ConfMaker::findStation(int wmono,
   }
 
   newStation = true;
-
+  StationInfoPtr defaultVal=getDefaultVal(bufrCode);
   StationInfoPtr ptr;
 
   if (defaultVal) {
@@ -217,13 +248,10 @@ ConfMaker::findStation(const std::string& wigosid,
   }
 
   newStation = true;
-
+  StationInfoPtr defaultVal=getDefaultVal(bufrCode);
   StationInfoPtr ptr;
 
   if (defaultVal) {
-    // cerr << "New Station using default values owner='" << defaultVal->owner()
-    //      << "' list='" << defaultVal->list() << "'\n ";
-
     ptr.reset(new StationInfo(*defaultVal));
   } else {
     ptr.reset(new StationInfo());
@@ -260,8 +288,19 @@ ConfMaker::parseTemplate(miutil::conf::ConfSection* templateConf)
   stationList.clear();
 
   if (stationInfoParser.parse(templateConf, templateStationList, true)) {
-    defaultVal = stationInfoParser.defaultVal();
+    defaultVals = stationInfoParser.getDefaultVals();
+    // for( auto it :  defaultVals ){
+    //    cerr << "----------- " << it.first << " -------------------\n ";
+    //    cerr << *it.second  << "\n";
+    // }  
+    
+    // for( StationInfoPtr it : templateStationList ){
+    //    cerr << "----------- " << it->toIdentString() << " -------------------\n ";
+    //    cerr << *it  << "\n";
+    // }  
+    
     return true;
+
   } else {
     return false;
   }
@@ -462,8 +501,8 @@ ConfMaker::decodeCouplingDelay(const std::string& val_, StationInfoPtr station)
   valElement = result->getValue("delay");
 
   if (valElement.size() > 0) {
-    if (!stationInfoParser.doDelay(
-          "delay", valElement, *station, result, false)) {
+    if (!stationInfoParser.doDelayConfMaker(
+          "delay", valElement, *station, result)) {
       LOGWARN("Coupling delay: Failed to parse: <" << o.str() << ">" << endl);
       ok = false;
     }
@@ -1498,7 +1537,7 @@ ConfMaker::doBStationsConf(const std::string& outfile,
 }
 
 bool
-ConfMaker::doConf(const std::string& outfile,
+ConfMaker::doSynopConf(const std::string& outfile,
                   miutil::conf::ConfSection* templateConf)
 {
   StationInfoPtr pStation;
@@ -1608,7 +1647,7 @@ findStationOutmessage(int stationid, const StInfoSysStationOutmessageList& list)
 }
 
 bool
-ConfMaker::doConfWigos(const std::string& outfile,
+ConfMaker::doWigosConf(const std::string& outfile,
                        miutil::conf::ConfSection* templateConf)
 {
   StationInfoPtr pStation;
@@ -1657,7 +1696,10 @@ ConfMaker::doConfWigos(const std::string& outfile,
     pStation = findStation(
       wigosStation.wigosid(), wmono, 0, "", { bufrCode, 0 }, newStation);
 
-    if (!wigosStation.name().empty()) {
+    if (!networkStation.name().empty()) {
+      pStation->name(networkStation.name());
+      nValues++;
+    } else if( !wigosStation.name().empty()) {
       pStation->name(wigosStation.name());
       nValues++;
     }

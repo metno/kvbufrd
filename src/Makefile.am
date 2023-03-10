@@ -15,7 +15,7 @@ clean-local:
 
 noinst_PROGRAMS = base64Test kvxmltest kvmd5sum kvconftest
 
-bin_PROGRAMS = kvbufrd kvbufrdbclt  kvbufrdparse kvbase64 
+bin_PROGRAMS = kvbufrd kvbufrdbclt  kvbufrdparse2 kvbase64 
 
 kvbufrd_SOURCES = \
    kvevents.h  kvevents.cc \
@@ -219,15 +219,15 @@ kvbufrdbclt_LDADD = \
    -lm -ldl
 endif                     
 
-kvbufrdparse_SOURCES = kvbufrdparse.cc \
+kvbufrdparse2_SOURCES = kvbufrdparse.cc \
                         StationInfo.cc StationInfo.h \
                         parseMilogLogLevel.cc parseMilogLogLevel.h \
                         StationInfoParse.cc StationInfoParse.h
-kvbufrdparse_LDFLAGS = -pthread $(BOOST_LDFLAGS)
+kvbufrdparse2_LDFLAGS = -pthread $(BOOST_LDFLAGS)
 
 if KVSTATIC
-kvbufrdparse_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrdparse_LDADD = \
+kvbufrdparse2_CPPFLAGS = -I$(KVINCLUDEDIR) $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
+kvbufrdparse2_LDADD = \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvcpp.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_milog.a \
 	$(KVLIBDIR)/${KVLIBPREFIX}_kvalobs.a \
@@ -248,8 +248,8 @@ kvbufrdparse_LDADD = \
   -lm
 
 else
-kvbufrdparse_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
-kvbufrdparse_LDADD = \
+kvbufrdparse2_CPPFLAGS = $(kvcpp_CFLAGS) $(AM_CPPFLAGS)
+kvbufrdparse2_LDADD = \
    $(kvsubscribe_LIBS) $(BOOST_THREAD_LIB) $(BOOST_DATE_TIME_LIB) \
    $(BOOST_SYSTEM_LIB) \
    -lm
