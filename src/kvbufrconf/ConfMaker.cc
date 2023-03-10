@@ -1279,6 +1279,15 @@ ConfMaker::setShipProductCouplingAndDelay(StationInfoPtr station)
   return ret != 0;
 }
 
+bool networkStationHasStationid(const StInfoSysNetworkStationList &list, int stationid ){
+  for( auto &it : list) {
+    if( it.stationid() == stationid){
+      return true;
+    } 
+  }
+  return false;
+}
+
 bool
 ConfMaker::doShipConf(const std::string& outfile,
                       miutil::conf::ConfSection* templateConf)
@@ -1286,12 +1295,13 @@ ConfMaker::doShipConf(const std::string& outfile,
   StationInfoPtr pStation;
   StInfoSysStationOutmessageList tblWmoList;
   TblStInfoSysStation tblStation;
-  StInfoSysNetworkStationList networkStations;
+  StInfoSysNetworkStationList shipStations;
+  StInfoSysNetworkStationList wsiStations;
   StInfoSysSensorInfoList tblSensors;
   list<int> codeList;
   int nValues;
   bool newStation;
-  ;
+  
   string callsign;
 
   if (templateConf) {
@@ -1306,12 +1316,23 @@ ConfMaker::doShipConf(const std::string& outfile,
   boost::assign::push_back(networksids)(6);
   int bufrCode = 3; // BUFR template for SHIP
 
-  app.loadNetworkStation(networkStations, networksids);
+  //app.loadNetworkStation(networkStations, networksids);
 
-  for (StInfoSysNetworkStationList::iterator it = networkStations.begin();
-       it != networkStations.end();
+
+  app.loadNetworkStation(wsiStations, {5});
+  //networkid 6 has callsigns, ie ship, platforms, etc. 
+  app.loadNetworkStation(shipStations, {6});
+
+  for (StInfoSysNetworkStationList::iterator it = shipStations.begin();
+       it != shipStations.end();
        ++it) {
     nValues = 0;
+
+    if( networkStationHasStationid(wsiStations, it->stationid())) {
+      //Do not include stations that is defined for networkid 5, ie wsi stations.
+      continue;
+    }
+    
     if (!app.loadStationData(it->stationid(), tblStation, tblSensors)) {
       LOGINFO("No metadata for station <" << it->stationid() << ">.");
       continue;
@@ -1319,7 +1340,7 @@ ConfMaker::doShipConf(const std::string& outfile,
 
     if (it->externalStationcode().empty())
       continue;
-
+    
     callsign = it->externalStationcode();
 
     pStation =
@@ -1567,9 +1588,7 @@ ConfMaker::doSynopConf(const std::string& outfile,
        ++it) {
     nValues = 0;
 
-    if (app.isPlatformOrShip(it->stationid()))
-      continue;
-
+    
     if (!app.loadStationData(
           it->stationid(), tblStation, tblSensors, networkStation)) {
       LOGINFO("No metadata for station <" << it->stationid() << ">.");
@@ -1578,6 +1597,10 @@ ConfMaker::doSynopConf(const std::string& outfile,
 
     if (tblStation.wmono() == kvDbBase::INT_NULL) {
       LOGWARN("Station: " << it->stationid() << " Missising wmono.");
+      continue;
+    }
+    
+    if( networkStation.networkid() == INT_MAX ) {
       continue;
     }
 
@@ -1675,9 +1698,6 @@ ConfMaker::doWigosConf(const std::string& outfile,
   app.loadNetworkStation(wigosStations, { 5 });
   for (auto& station : wigosStations) {
     nValues = 0;
-
-    if (app.isPlatformOrShip(station.stationid()))
-      continue;
 
     if (!app.loadWigosStationData(
           station.stationid(), wigosStation, sensors, networkStation)) {
