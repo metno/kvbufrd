@@ -2,7 +2,7 @@
 
 export DOCKER_BUILDKIT=1
 
-kvcpp_registry="registry.met.no/obs/kvalobs/kvbuild"
+kvcpp_registry="registry.met.no/met/obsklim/kvalobs/kvbuild"
 kvcpp_tag=latest
 kvuser=kvalobs
 kvuserid=5010
@@ -11,7 +11,7 @@ targets=kvbufrd
 tag=latest
 os=focal
 #os=bionic
-registry="registry.met.no/obs/kvalobs/kvbuild"
+registry="registry.met.no/met/obsklim/kvalobs/kvbuild"
 nocache=
 only_build=
 
