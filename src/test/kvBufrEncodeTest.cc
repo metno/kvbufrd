@@ -446,7 +446,7 @@ TEST_F(BufrEncodeTest, UseCorrected_SA)
 }
 
 
-#if 0
+
 
 TEST_F(BufrEncodeTest, BUOY_basic) 
 {
@@ -505,7 +505,7 @@ TEST_F(BufrEncodeTest, BUOY_basic)
 }
 
 
-
+#if 0
 
 TEST_F( BufrEncodeTest, GustFrom_FG_1_or_FG_010 )
 {
