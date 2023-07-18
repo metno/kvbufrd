@@ -521,10 +521,9 @@ loadWigosStationData( int stationid,
    q << " WHERE stationid=" << stationid << " AND networkid IN ( 4, 5 ) AND fromtime<='today' AND ( totime >= 'now' OR totime IS NULL) ORDER BY networkid";
    gate.select( networkStationList, q.str() );
 
-   bool found=true;
+   bool found=false;
    if( ! networkStationList.empty() ) {
       std::string name;
-      found=false;
       for ( auto it : networkStationList ) {
          if ( it.networkid() == 5) {
             networkStation = it;
