@@ -456,7 +456,9 @@ TEST_F(BufrEncodeTest, BUOY_basic)
    StationInfoPtr  stInfo;
    boost::posix_time::ptime dt;
    BufrDataPtr bufr( new BufrData() );
-   kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   //kvdatacheck::Validate validData( kvdatacheck::Validate::NoCheck );
+   kvdatacheck::Validate validData(kvdatacheck::Validate::UseOnlyUseInfo);
+   
    string id="6301001";
    stInfo = findCallsign( id );
 

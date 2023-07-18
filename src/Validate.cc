@@ -246,6 +246,8 @@ validDataUseOnlyUseInfo( const Data &data, bool *useCorrected )
       return false;
    }
 
+   
+
    //Flagg kriterier for å godkjenne en observasjon fra Pål.
    // original != -32767  && 
    // useinfo(0) != 9 && useinfo(1)=0,1,9 && 
@@ -260,6 +262,15 @@ validDataUseOnlyUseInfo( const Data &data, bool *useCorrected )
       if( fmis == 4 && useCorrected != nullptr) {
          *useCorrected = true;
       }
+      return true;
+   }
+
+   //As a hack until the checks for level and sensor > 0 is working
+   //we accept all values for level and sensors > 0.
+   if ( (data.sensor() > 0 || data.level() > 0) && atoi(data.corrected().c_str()) != -32766 && uf_0==9 ) {
+      if( useCorrected != nullptr) {
+         *useCorrected=false;
+      } 
       return true;
    }
 

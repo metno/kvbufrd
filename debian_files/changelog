@@ -1,3 +1,9 @@
+kvbufrd (3.0.10~rc1-1) focal; urgency=low
+  * kvbufrd: Accept levels and sensor > 0. If original is not the missing vale.
+
+ -- Kvalobs <kvalobs@met.no>  Tue, 18 Jul 2023 13:15:00 +0200
+
+
 kvbufrd (3.0.9c-1) focal; urgency=low
   * kvbufrconf: fix name
 
