@@ -25,7 +25,7 @@ use() {
 
   usage="\
 Usage: $0 [--help] [--staging|--prod|--test] [--tag tag] [--no-cache] [--only-build] 
-          [--tag-and-latest tag] [--tag-version] arget-list
+          [--tag-and-latest tag] [--tag-version] target-list
 
 This script build a kvbufrd container. 
 Stop at build stage 'stage'. Default $target.
