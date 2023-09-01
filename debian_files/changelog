@@ -1,3 +1,10 @@
+kvbufrd (3.0.10~rc2-1) focal; urgency=low
+  * kvbufrd: Accept 'wmo_default' as default values if no 'default' section 
+    is defined (old behavior).
+
+ -- Kvalobs <kvalobs@met.no>  Fri, 1 Sep 2023 11:45:00 +0200
+
+
 kvbufrd (3.0.10~rc1-1) focal; urgency=low
   * kvbufrd: Accept levels and sensor > 0. If original is not the missing value.
 
