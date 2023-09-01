@@ -236,7 +236,20 @@ StationInfoParse::parseDefaultSections(miconf::ConfSection* conf,
               << DefaultName << "'in the configuration file! Ignoring!")
       ret = false;
     }
+  } else {
+    //Use the default from 'wmo_default'. This is the old behavior.
+    LOGERROR("No 'default' section defined. Using 'wmo_default' if it exist (as kvbufrd version before 3.0.10).")
+    defaultConf = conf->getSection("wmo_default");
+    if (defaultConf ) {
+      if( doDefault(defaultVal, defaultConf)) {
+        defVals[DefaultName] = defaultVal;
+      } else {
+        LOGERROR("Failed to parse default section 'wmo_default'in the configuration file! Ignoring!")
+        ret = false;
+     }
+    }
   }
+
 
   for (int i = 0; defConfSections[i].section; i++) {
     defaultConf = conf->getSection(defConfSections[i].section);
