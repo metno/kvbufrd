@@ -3,7 +3,8 @@
 export DOCKER_BUILDKIT=1
 
 #kvcpp_registry="registry.met.no/obs/kvalobs/kvbuild"
-kvcpp_registry="registry.met.no/met/obsklim/kvalobs/kvbuild"
+#kvcpp_registry="registry.met.no/met/obsklim/kvalobs/kvbuild"
+kvcpp_registry="registry.met.no/met/obsklim/bakkeobservasjoner/data-og-kvalitet/kvalobs/kvbuild"
 kvcpp_tag=latest
 kvuser=kvalobs
 kvuserid=5010
@@ -14,7 +15,8 @@ tag_and_latest="false"
 os=focal
 #os=bionic
 #registry="registry.met.no/obs/kvalobs/kvbuild"
-registry="registry.met.no/met/obsklim/kvalobs/kvbuild"
+#registry="registry.met.no/met/obsklim/kvalobs/kvbuild"
+registry="registry.met.no/met/obsklim/bakkeobservasjoner/data-og-kvalitet/kvalobs/kvbuild"
 nocache=
 only_build=
 VERSION="$(./version.sh)"
@@ -97,9 +99,10 @@ echo "targets: $targets"
 if [ "$mode" = "test" ]; then 
   kvuserid=$(id -u)
   registry=""
-  if [ -n "$kvcpp_registry" ]; then
-    kvcpp_registry="$kvcpp_registry/staging/"
-  fi
+  kvcpp_registry=""
+  # if [ -n "$kvcpp_registry" ]; then
+  #   kvcpp_registry="$kvcpp_registry/staging/"
+  # fi
 else 
   if [ -n "$kvcpp_registry" ]; then
     kvcpp_registry="$kvcpp_registry/$mode/"
