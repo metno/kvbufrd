@@ -2,8 +2,6 @@
 
 export DOCKER_BUILDKIT=1
 
-#kvcpp_registry="registry.met.no/obs/kvalobs/kvbuild"
-#kvcpp_registry="registry.met.no/met/obsklim/kvalobs/kvbuild"
 kvcpp_registry="registry.met.no/met/obsklim/bakkeobservasjoner/data-og-kvalitet/kvalobs/kvbuild"
 kvcpp_tag=latest
 kvuser=kvalobs
@@ -13,13 +11,11 @@ targets=kvbufrd
 tag=latest
 tag_and_latest="false"
 os=focal
-#os=bionic
-#registry="registry.met.no/obs/kvalobs/kvbuild"
-#registry="registry.met.no/met/obsklim/kvalobs/kvbuild"
 registry="registry.met.no/met/obsklim/bakkeobservasjoner/data-og-kvalitet/kvalobs/kvbuild"
 nocache=
 only_build=
 VERSION="$(./version.sh)"
+BUILDDATE=$(date +'%Y%m%d')
 
 gitref=$(git rev-parse --show-toplevel)/gitref.sh
 
@@ -27,7 +23,7 @@ use() {
 
   usage="\
 Usage: $0 [--help] [--staging|--prod|--test] [--tag tag] [--no-cache] [--only-build] 
-          [--tag-and-latest tag] [--tag-version] target-list
+          [--tag-and-latest tag] [--tag-version] [--tag-with-build-date] target-list
 
 This script build a kvbufrd container. 
 Stop at build stage 'stage'. Default $target.
@@ -43,6 +39,9 @@ Options:
   --tag tagname tag the image with the name tagname, default $tag.
   --tag-and-latest tagname tag the image with the name tagname  and also create latest tag.
   --tag-version Use version from configure.ac as tag. Also tag latest.
+  --tag-with-build-date 
+                tag with version and build date on the form version-YYYYMMDD 
+                and set latest.
   --staging     build and push to staging.
   --prod        build and push to prod.
   --test        only build. Default.
@@ -68,6 +67,9 @@ while test $# -ne 0; do
         shift;;
     --tag-version) 
         tag="$VERSION"
+        tag_and_latest=true;;
+    --tag-with-build-date)
+        tag="$VERSION-$BUILDDATE"
         tag_and_latest=true;;
     --help) 
         use
