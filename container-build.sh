@@ -13,7 +13,8 @@ tag_and_latest="false"
 os=focal
 registry="registry.met.no/met/obsklim/bakkeobservasjoner/data-og-kvalitet/kvalobs/kvbuild"
 nocache=
-only_build=
+build="true"
+push="true"
 VERSION="$(./version.sh)"
 BUILDDATE=$(date +'%Y%m%d')
 
@@ -48,6 +49,7 @@ Options:
   --stage stage stop at build stage. Default $targets.
   --no-cache    Do not use the docker build cache.
   --only-build  Stop after building.
+  --only-push   Push previous build to registry. Must use the same flag as when building.
   --kvcpp-local Use local docker registry for kvcpp. Default: $kvcpp_registry
   --kvcpp-tag tagname Use tagname. Default: $kvcpp_tag
 
@@ -81,8 +83,8 @@ while test $# -ne 0; do
     --prod) mode=prod;;
     --test) mode=test;;
     --no-cache) nocache="--no-cache";;
-    --only-build)
-        only_build="--target build";;
+    --only-build) push="false" ;;
+    --only-push) build="false" ;;
     -*) use
       echo "Invalid option $1"
       exit 1;;  
@@ -96,15 +98,14 @@ echo "mode: $mode"
 echo "os: $os"
 echo "Build mode: $mode"
 echo "targets: $targets"
+echo "build: $build"
+echo "push: $push"
 
 
 if [ "$mode" = "test" ]; then 
   kvuserid=$(id -u)
   registry=""
   kvcpp_registry=""
-  # if [ -n "$kvcpp_registry" ]; then
-  #   kvcpp_registry="$kvcpp_registry/staging/"
-  # fi
 else 
   if [ -n "$kvcpp_registry" ]; then
     kvcpp_registry="$kvcpp_registry/$mode/"
@@ -121,18 +122,20 @@ echo "kvcpp tag: $kvcpp_tag"
 $gitref 
 
 for target in $targets ; do
-  docker build $nocache --target $target --build-arg "REGISTRY=${kvcpp_registry}" --build-arg="BASE_IMAGE_TAG=${kvcpp_tag}" \
-    --build-arg "kvuser=$kvuser" --build-arg "kvuserid=$kvuserid" \
-    -f docker/${os}/${target}.dockerfile ${only_build} --tag ${registry}${target}:$tag .
+  if [ "$build" = "true" ]; then
+    docker build $nocache --target $target --build-arg "REGISTRY=${kvcpp_registry}" --build-arg="BASE_IMAGE_TAG=${kvcpp_tag}" \
+      --build-arg "kvuser=$kvuser" --build-arg "kvuserid=$kvuserid" \
+      -f docker/${os}/${target}.dockerfile --tag ${registry}${target}:$tag .
 
-  if [ "$tag_and_latest" = "true" ]; then
+    if [ "$tag_and_latest" = "true" ] && [ "$tag" != "latest" ]; then
       docker tag "${registry}${target}:$tag" "${registry}${target}:latest"
+    fi
   fi
 
 
-  if [ $mode != test ]; then 
+  if [ $mode != test ] && [ "$push" = "true" ]; then 
     docker push ${registry}${target}:$tag
-    if [ "$tag_and_latest" = "true" ]; then
+    if [ "$tag_and_latest" = "true" ] && [ "$tag" != "latest" ]; then
       docker push "${registry}${target}:latest"
     fi
   fi
