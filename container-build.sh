@@ -17,6 +17,11 @@ build="true"
 push="true"
 VERSION="$(./version.sh)"
 BUILDDATE=$(date +'%Y%m%d')
+KV_BUILD_DATE=${KV_BUILD_DATE:-}
+
+if [ -n "${KV_BUILD_DATE}" ]; then
+  BUILDDATE=$KV_BUILD_DATE
+fi
 
 gitref=$(git rev-parse --show-toplevel)/gitref.sh
 
@@ -42,7 +47,8 @@ Options:
   --tag-version Use version from configure.ac as tag. Also tag latest.
   --tag-with-build-date 
                 tag with version and build date on the form version-YYYYMMDD 
-                and set latest.
+                and set latest. If the enviroment variable KV_BUILD_DATE is set use
+                this as the build date. Format KV_BUILD_DATE YYYYMMDD.
   --staging     build and push to staging.
   --prod        build and push to prod.
   --test        only build. Default.
