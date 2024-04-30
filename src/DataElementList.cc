@@ -179,7 +179,7 @@ DataElement():
     MLON( params, "MLON", 402 ),
     WDMT( params, "WDMT", 68 ),
     WTZ( params, "WTZ", 160 ),
-    Pwa( params, "Pwa", 154 ),
+    PWA( params, "PWA", 154 ),
     Pw( params, "Pw", 151 ),
     CD(params, "CD",290),
 		CV(params, "CV", 291),   //Havstrøm, fart

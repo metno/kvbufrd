@@ -175,7 +175,7 @@ private:
   	KvParam MLON; //Longitude of ship/platform.
   	KvParam WDMT; //Mean wave direction.
   	KvParam WTZ; //Mean wave period.
-  	KvParam Pwa;  //Period of waves.
+  	KvParam PWA;  //Period of waves.
   	KvParam Pw;   //Period of wind waves.
 		KvParam CD;   //Havstrøm, retning
 		KvParam CV;   //Havstrøm, fart

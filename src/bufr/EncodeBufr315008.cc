@@ -91,7 +91,7 @@ encode(  )
    //Basic wave measurements
    if( data->WHM0.hasValidValues() || data->WHMAX.hasValidValues() || data->WTZ.hasValidValues() 
     || data->WTP.hasValidValues() || data->WDP1.hasValidValues() || data->WSPRTP.hasValidValues() 
-    || data->WTM02.hasValidValues() ) {
+    || data->WTM02.hasValidValues() || data->PWA.hasValidValues()) {
     bufr->addDelayedReplicationFactor(31000, 1, "Encode TM306039");
     encodeTemplate( 306039 );
   } else {

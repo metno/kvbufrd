@@ -1,3 +1,9 @@
+kvbufrd (3.0.11~rc1-1) focal; urgency=low
+  * BUOY: Take also PWA into account for 022074 (average wave period)
+
+ -- Kvalobs <kvalobs@met.no>  Tue, 30 Apr 2024 07:+0:00 +0200
+
+
 kvbufrd (3.0.10-1) focal; urgency=low
   * New relase. No change since last rc. 
 

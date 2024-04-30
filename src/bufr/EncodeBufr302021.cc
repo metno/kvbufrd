@@ -71,7 +71,7 @@ void
 EncodeBufr302021::
 encode( )
 {
-   float pw=data->Pwa;
+   float pw=data->PWA;
    float wa=data->Hwa;
 
    if( pw == FLT_MAX )

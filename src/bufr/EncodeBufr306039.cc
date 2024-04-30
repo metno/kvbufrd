@@ -71,7 +71,15 @@ encode( )
   v=data->WHMAX.getFirstValueAtLevel(0);
   bufr->addValue(22073, v, "MAXIMUM WAVE HEIGHT [M]", count(v));
 
-  v=data->WTZ.getFirstValueAtLevel(0);
+  //Prority of 'average wave period' (22074).
+  // PWA 
+  // WTZ
+  // WTM02
+  v=data->PWA.getFirstValueAtLevel(0);
+
+  if ( v == FLT_MAX ) {
+    v=data->WTZ.getFirstValueAtLevel(0);
+  }
   if( v == FLT_MAX ){ 
     v=data->WTM02.getFirstValueAtLevel(0); 
   }
