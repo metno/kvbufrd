@@ -16,7 +16,7 @@
 # 	cp gtest/$@ .
 # endif
 
-if ENABLE_GTEST
+if MUST_COMPILE_GTEST
 gtest_version = googletest-release-1.10.0
 gtest_src = $(gtest_version).tar.gz
 

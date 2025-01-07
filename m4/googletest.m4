@@ -4,49 +4,110 @@
 # automatically compiled in the given location - but you need to provide 
 # makefiles/rules for that yourself. The path will be relative to top_builddir 
 
-AC_DEFUN([BUILD_GTEST],
+AC_DEFUN([GMOCK_DIST_CHECK],
 [
-AC_ARG_WITH([disable-gtest],
-    [AS_HELP_STRING([--disable-gtest], [Do not build the gtest library and disable testing])],
-    [enable_test=false],
-    [enable_test=true])
+AC_ARG_WITH([gmock-dist],
+    [AS_HELP_STRING([--with-gmock-dist], [Specify google gmock directory (gtest is included and compiled)])],
+    [gmock_base=${with_gmock_dist}],
+    [gmock_base=/usr])
 
-AS_IF([test "x${enable_test} = xtrue"],
-	[AC_MSG_NOTICE([enable gtest])],
-	[AC_MSG_NOTICE([disable gtest])])
+AC_LANG_PUSH(C++)
 
-gtest_includes="-I$(pwd)/src/gtest/gtest/googletest/include"
-gmock_includes="-I$(pwd)/src/gtest/gtest/googlemock/include"
-#CPPFLAGS="${gtest_includes} ${gmock_includes} $CPPFLAGS"
-gtest_CFLAGS="${gtest_includes}"
-gmock_CFLAGS="${gtest_includes} ${gmock_includes}"
-gtest_LIBS="-L$(pwd)/src/gtest -lgtest"
-gmock_LIBS="-L$(pwd)/src/gtest -lgmock -lgtest "
+CPPFLAGS_SAVED="$CPPFLAGS"
+AS_IF([test "x$gmock_base" = "x/usr"],
+    [gtest_src="${gmock_base}/src/gtest"],
+    [gtest_includes="-I${gmock_base}/gtest/include"
+     gtest_src="${gmock_base}/gtest"])
 
-
-
-
-
-#Disable testing for the moment, fix this later. Must fix the build in bionic
-AM_CONDITIONAL(ENABLE_GTEST, [test x${enable_test} = xtrue])
-AM_CONDITIONAL(HAVE_GTEST, [test x${enable_test} = xtrue])
-AM_CONDITIONAL(HAVE_GMOCK, [test x${enable_test} = xtrue])
+CPPFLAGS="${gtest_includes} $CPPFLAGS"
+AC_CHECK_HEADER([gtest/gtest.h],
+    [gtest_CFLAGS=${gtest_includes}
+    have_gtest=true],
+    [AC_MSG_WARN([Unable to find header gtest/gtest.h])])
 
 
-#AM_CONDITIONAL(HAVE_GTEST, [test x${have_gtest} = xtrue])
-#AM_CONDITIONAL(HAVE_GMOCK, [test x${have_gmock} = xtrue])
-#AM_CONDITIONAL(MUST_COMPILE_GTEST, [test x${must_compile_gtest} = xtrue -a x${have_gtest} = xtrue])
-#AM_CONDITIONAL(MUST_COMPILE_GMOCK, [test x${must_compile_gmock} = xtrue -a x${have_gmock} = xtrue])
+AS_IF([test "x$gmock_base" = "x/usr"],
+    [gmock_src="${gmock_base}/src/gmock"],
+    [gmock_includes="-I${gmock_base}/include";gmock_src="${gmock_base}"])
 
+CPPFLAGS="${gmock_includes} $CPPFLAGS"
+AC_CHECK_HEADER([gmock/gmock.h],
+    [gmock_CFLAGS=${gmock_includes}
+    have_gmock=true],
+    [AC_MSG_WARN([Unable to find header gmock/gmock.h])])
+
+CPPFLAGS=$CPPFLAGS_SAVED
+
+
+ldflags_old="${LDFLAGS}"
+AS_IF([test "x$gmock_base" = "x/usr"],
+    [],
+    [gtest_ldflags="-L${gtest_base}/lib"])
+LDFLAGS="${LDFLAGS} ${gtest_ldflags}"
+OLD_LIBS=${LIBS}
+LIBS="${LIBS} -lgtest"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <gtest/gtest.h>], [])],
+	[gtest_LIBS=-lgtest],
+	[
+	if test -n "$1"; then
+		AC_MSG_NOTICE([Unable to find precompiled googletest libraries - must compile own version])
+		must_compile_gtest=true
+		gtest_LIBS="-L\$(top_builddir)/$1 -lgtest"
+	else
+		AC_MSG_WARN([Found headers but no precompiled googletest libraries - unable to use googletest])
+		have_gtest=false
+	fi
+])
+
+AS_IF([test "x$gmock_base" = "x/usr"],
+    [],
+    [gmock_ldflags="-L${gmock_base}/lib"])
+LDFLAGS="${LDFLAGS} ${gmock_ldflags}"
+LIBS="${OLD_LIBS} -lgmock"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <gmock/gmock.h>], [])],
+	[gmock_LIBS=-lgmock],
+	[
+	if test -n "$1"; then
+		AC_MSG_NOTICE([Unable to find precompiled googlemock libraries - must compile own version])
+		must_compile_gmock=true
+		gmock_LIBS="-L\$(top_builddir)/$1 -lgmock"
+		AC_PATH_PROG(CMAKE, cmake)
+	else
+		AC_MSG_WARN([Found headers but no precompiled googlemock libraries - unable to use googlemock])
+		have_gmock=false
+	fi
+])
+
+LIBS=${OLD_LIBS}
+LDFLAGS=${ldflags_old}
+
+AM_CONDITIONAL(HAVE_GTEST, [test x${have_gtest} = xtrue])
+AM_CONDITIONAL(HAVE_GMOCK, [test x${have_gmock} = xtrue])
+AM_CONDITIONAL(MUST_COMPILE_GTEST, [test x${must_compile_gtest} = xtrue -a x${have_gtest} = xtrue])
+AM_CONDITIONAL(MUST_COMPILE_GMOCK, [test x${must_compile_gmock} = xtrue -a x${have_gmock} = xtrue])
+
+AC_SUBST(gtest_src)
+AC_SUBST(gmock_src)
 AC_SUBST(gtest_CFLAGS)
 AC_SUBST(gtest_LIBS)
 AC_SUBST(gmock_CFLAGS)
 AC_SUBST(gmock_LIBS)
+
+
+AC_LANG_POP
 ])
 
 
 
-
+AC_DEFUN([GTEST_CHECK],
+[
+	have_gtest=false
+	PKG_CHECK_MODULES([gtest], [gtest], [have_gtest=true], [])
+	AM_CONDITIONAL(HAVE_GTEST, [test x${have_gtest} = xtrue])
+  AC_MSG_RESULT([gtest_LIBS: ${gtest_LIBS}])
+  AC_MSG_RESULT([gtest_CFLAGS: ${gtest_CFLAGS}])
+	AC_MSG_RESULT([HAVE_GTEST: ${have_gtest}])
+])
 
 
 

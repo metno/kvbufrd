@@ -1,39 +1,34 @@
-AC_PREREQ([2.59])
-AC_INIT([kvbufrd], [3.0.11], [kvoss@met.no])
+AC_PREREQ([2.71])
+AC_INIT([kvbufrd],[3.0.11],[kvoss@met.no])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 #AM_INIT_AUTOMAKE([foreign]) 
 AC_CONFIG_MACRO_DIR([m4])
 
-AC_PROG_LIBTOOL
+LT_INIT
 #LT_INIT([dlopen])
-AM_PROG_LEX
+#AM_PROG_LEX
 AM_PROG_CC_C_O
-AC_PROG_YACC
+#AC_PROG_YACC
 AC_PROG_CXX
 AC_PROG_INSTALL
 
-AX_CXX_COMPILE_STDCXX_11(noext)
+#AX_CXX_COMPILE_STDCXX_11(noext)
+AX_CXX_COMPILE_STDCXX([20],[noext],[mandatory])
 
 AC_CONFIG_HEADERS(config.h)
 PKG_PROG_PKG_CONFIG
 
 AC_SUBST([BUFRTABLES],[`pwd`/src/bufrtables])
 
-#KV_FIND_OMNIORB4
 PKG_CHECK_MODULES(putools, puTools)
-LIBKVCPP4
-PKG_CHECK_MODULES(sqlite3, sqlite3)
-#PKG_CHECK_MODULES(kvsubscribe, libkvsubscribe)
+LIBKVCPP
 
-#Build always static
-#AM_CONDITIONAL([KVSTATIC], true )
-
-#GTEST_CHECK
-#GMOCK_CHECK
+#PKG_CHECK_MODULES(sqlite3, sqlite3)
 AC_PATH_PROG(CMAKE, cmake, false)
 
-BUILD_GTEST
 #GMOCK_DIST_CHECK([src/gtest])
+#GMOCK_DIST_CHECK([.])
+GTEST_CHECK
 
 AX_BOOST_BASE
 AX_BOOST_THREAD
@@ -53,7 +48,6 @@ AC_CONFIG_FILES([Makefile
                  ecmwf/Makefile
                  debian_files/Makefile
                  share/bufrtables/Makefile
-                 src/gtest/Makefile
                  check_kvbufrd.sh
                  src/kvbufrd_initdb
                  src/bufr/Makefile
@@ -61,6 +55,7 @@ AC_CONFIG_FILES([Makefile
                  src/kvbufrconf/Makefile
 ])
 
+# src/gtest/Makefile
 
 
 
