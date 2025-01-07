@@ -1,0 +1,95 @@
+diff -ur bufrdc_000409/config/config.linux_gfortranA64.in bufrdc_000409_update/config/config.linux_gfortranA64.in
+--- bufrdc_000409/config/config.linux_gfortranA64.in	2016-06-29 09:59:13.452256942 +0200
++++ bufrdc_000409_update/config/config.linux_gfortranA64.in	2025-01-07 08:15:40.889205240 +0100
+@@ -17,7 +17,7 @@
+ FASTCFLAGS = $(CFLAGS)
+ #
+ FC      = gfortran
+-FFLAGS = $(DEBUG) $(PROFILE) $(CC_A32) -fcray-pointer -Dlinux $(USE_NO_POINTERS) -Dgfortran -DTABLE_PATH=\"emos\" -DLITTLE_ENDIAN
++FFLAGS = $(FFLAGS_EXTRA) $(DEBUG) $(PROFILE) $(CC_A32) -fcray-pointer -Dlinux $(USE_NO_POINTERS) -Dgfortran -DTABLE_PATH=\"emos\" -DLITTLE_ENDIAN
+ VECTFFLAGS = $(FFLAGS)
+ #              |
+ #              v
+diff -ur bufrdc_000409/config/config.linux_gfortran.in bufrdc_000409_update/config/config.linux_gfortran.in
+--- bufrdc_000409/config/config.linux_gfortran.in	2016-06-29 09:59:13.452256942 +0200
++++ bufrdc_000409_update/config/config.linux_gfortran.in	2025-01-07 08:15:38.232213798 +0100
+@@ -17,7 +17,7 @@
+ FASTCFLAGS = $(CFLAGS)
+ #
+ FC      = gfortran
+-FFLAGS = $(DEBUG) $(PROFILE) $(CC_A32) -fcray-pointer -Dlinux $(USE_NO_POINTERS) -Dgfortran -DTABLE_PATH=\"emos\" -DLITTLE_ENDIAN
++FFLAGS = $(FFLAGS_EXTRA) $(DEBUG) $(PROFILE) $(CC_A32) -fcray-pointer -Dlinux $(USE_NO_POINTERS) -Dgfortran -DTABLE_PATH=\"emos\" -DLITTLE_ENDIAN
+ VECTFFLAGS = $(FFLAGS)
+ #              |
+ #              v
+diff -ur bufrdc_000409/config/config.linux_gfortranR64.in bufrdc_000409_update/config/config.linux_gfortranR64.in
+--- bufrdc_000409/config/config.linux_gfortranR64.in	2016-06-29 09:59:13.452256942 +0200
++++ bufrdc_000409_update/config/config.linux_gfortranR64.in	2025-01-07 08:17:35.153821030 +0100
+@@ -16,7 +16,7 @@
+ FASTCFLAGS = $(CFLAGS)
+ #
+ FC      = gfortran
+-FFLAGS = $(DEBUG) $(PROFILE) $(CC_A32) -fdefault-real-8 -fcray-pointer -Dlinux $(USE_NO_POINTERS) -DREAL_8 -DREAL_BIGGER_THAN_INTEGER -Dgfortran -DTABLE_PATH=\"emos\" -DLITTLE_ENDIAN
++FFLAGS = $(FFLAGS_EXTRA) $(DEBUG) $(PROFILE) $(CC_A32) -fdefault-real-8 -fcray-pointer -Dlinux $(USE_NO_POINTERS) -DREAL_8 -DREAL_BIGGER_THAN_INTEGER -Dgfortran -DTABLE_PATH=\"emos\" -DLITTLE_ENDIAN
+ VECTFFLAGS = $(FFLAGS)
+ #              |
+ #              v
+diff -ur bufrdc_000409/config/config.linux_gnuA64.in bufrdc_000409_update/config/config.linux_gnuA64.in
+--- bufrdc_000409/config/config.linux_gnuA64.in	2016-06-29 09:59:13.452256942 +0200
++++ bufrdc_000409_update/config/config.linux_gnuA64.in	2025-01-07 08:16:24.447062384 +0100
+@@ -14,7 +14,7 @@
+ FASTCFLAGS = $(CFLAGS)
+ #
+ FC      = g77
+-FFLAGS = $(DEBUG) -I. -Dlinux -DUSE_NO_POINTERS  -DTABLE_PATH=\"emos\"
++FFLAGS = $(FFLAGS_EXTRA) $(DEBUG) -I. -Dlinux -DUSE_NO_POINTERS  -DTABLE_PATH=\"emos\"
+ VECTFFLAGS = $(FFLAGS)
+ #              |
+ #              v
+diff -ur bufrdc_000409/config/config.linux_gnu.in bufrdc_000409_update/config/config.linux_gnu.in
+--- bufrdc_000409/config/config.linux_gnu.in	2016-06-29 09:59:13.452256942 +0200
++++ bufrdc_000409_update/config/config.linux_gnu.in	2025-01-07 08:16:18.198083166 +0100
+@@ -13,7 +13,7 @@
+ FASTCFLAGS = $(CFLAGS)
+ #
+ FC      = g77
+-FFLAGS = $(DEBUG) -I. -Dlinux -DUSE_NO_POINTERS -g -fzeros -DTABLE_PATH=\"emos\"
++FFLAGS = $(FFLAGS_EXTRA) $(DEBUG) -I. -Dlinux -DUSE_NO_POINTERS -g -fzeros -DTABLE_PATH=\"emos\"
+ VECTFFLAGS = $(FFLAGS)
+ #              |
+ #              v
+diff -ur bufrdc_000409/config/config.linux_gnuR64A64.in bufrdc_000409_update/config/config.linux_gnuR64A64.in
+--- bufrdc_000409/config/config.linux_gnuR64A64.in	2016-06-29 09:59:13.452256942 +0200
++++ bufrdc_000409_update/config/config.linux_gnuR64A64.in	2025-01-07 08:16:49.335978698 +0100
+@@ -14,7 +14,7 @@
+ FASTCFLAGS = $(DEBUG)
+ #
+ FC      = g77
+-FFLAGS = $(DEBUG) -I. -Dlinux -DUSE_NO_POINTERS -DREAL_8 -DREAL_BIGGER_THAN_INTEGER -DTABLE_PATH=\"emos\"
++FFLAGS = $(FFLAGS_EXTRA) $(DEBUG) -I. -Dlinux -DUSE_NO_POINTERS -DREAL_8 -DREAL_BIGGER_THAN_INTEGER -DTABLE_PATH=\"emos\"
+ VECTFFLAGS = $(FFLAGS)
+ #              |
+ #              v
+diff -ur bufrdc_000409/config/config.linux_gnuR64.in bufrdc_000409_update/config/config.linux_gnuR64.in
+--- bufrdc_000409/config/config.linux_gnuR64.in	2016-06-29 09:59:13.452256942 +0200
++++ bufrdc_000409_update/config/config.linux_gnuR64.in	2025-01-07 08:16:33.051033618 +0100
+@@ -14,7 +14,7 @@
+ FASTCFLAGS = $(CFLAGS)
+ #
+ FC      = g77
+-FFLAGS = $(DEBUG) -I. -Dlinux -DUSE_NO_POINTERS -DREAL_8 -DREAL_BIGGER_THAN_INTEGER -DTABLE_PATH=\"emos\"
++FFLAGS = $(FFLAGS_EXTRA) $(DEBUG) -I. -Dlinux -DUSE_NO_POINTERS -DREAL_8 -DREAL_BIGGER_THAN_INTEGER -DTABLE_PATH=\"emos\"
+ VECTFFLAGS = $(FFLAGS)
+ #              |
+ #              v
+diff -ur bufrdc_000409/test.sh bufrdc_000409_update/test.sh
+--- bufrdc_000409/test.sh	2016-06-29 09:59:13.466257056 +0200
++++ bufrdc_000409_update/test.sh	2019-08-23 10:55:09.365639447 +0200
+@@ -7,7 +7,6 @@
+ 
+ 
+ BUFR_TABLES=$path/bufrtables/
+-BUFR_TABLES=/var/tmp/mac/p4/bufrdc/releases/bufrtables/
+ export BUFR_TABLES
+ 
+ $TOOLS/bufr_decode_all -i data/temp_101.bufr | sed '/bufrtables/ d' | sed '/BUFR DECODING SOFTWARE VERSION/d'  > test.log
