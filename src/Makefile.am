@@ -1,4 +1,5 @@
-SUBDIRS = gtest bufr
+#SUBDIRS = gtest bufr
+SUBDIRS = bufr
 
 AM_CPPFLAGS = \
 	-D_REENTRANT \

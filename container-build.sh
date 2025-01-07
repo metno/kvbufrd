@@ -2,7 +2,7 @@
 
 export DOCKER_BUILDKIT=1
 
-kvcpp_registry="registry.met.no/met/obsklim/bakkeobservasjoner/data-og-kvalitet/kvalobs/kvbuild"
+registry="registry.met.no/met/obsklim/bakkeobservasjoner/data-og-kvalitet/kvalobs/kvbuild"
 kvcpp_tag=latest
 kvuser=kvalobs
 kvuserid=5010
@@ -10,8 +10,8 @@ mode="test"
 targets=kvbufrd
 tag=latest
 tag_and_latest="false"
-os=focal
-registry="registry.met.no/met/obsklim/bakkeobservasjoner/data-og-kvalitet/kvalobs/kvbuild"
+default_os=focal
+os=noble
 nocache=
 build="true"
 push="true"
@@ -82,12 +82,11 @@ while test $# -ne 0; do
     --help) 
         use
         exit 0;;
-    --kvcpp-local) kvcpp_registry="";;
     --kvcpp-tag) 
         kvcpp_tag=$2; shift;;
-    --staging) mode=staging;;
-    --prod) mode=prod;;
-    --test) mode=test;;
+    --staging) mode="staging";;
+    --prod) mode="prod";;
+    --test) mode="test";;
     --no-cache) nocache="--no-cache";;
     --only-build) push="false" ;;
     --only-push) build="false" ;;
@@ -106,30 +105,27 @@ echo "Build mode: $mode"
 echo "targets: $targets"
 echo "build: $build"
 echo "push: $push"
+echo "tag: $tag"
+echo "kvcpp tag: $kvcpp_tag"
 
 
 if [ "$mode" = "test" ]; then 
   kvuserid=$(id -u)
-  registry=""
-  kvcpp_registry=""
-else 
-  if [ -n "$kvcpp_registry" ]; then
-    kvcpp_registry="$kvcpp_registry/$mode/"
-  fi
+  registry="$os/"
+elif  [ "$os" = "$default_os" ]; then
   registry="$registry/$mode/"
+else
+  registry="$registry/$mode-$os/"
 fi
 
 echo "registry: $registry"
-echo "tag: $tag"
-echo "kvcpp registry: $kvcpp_registry"
-echo "kvcpp tag: $kvcpp_tag"
 
 
 $gitref 
 
 for target in $targets ; do
   if [ "$build" = "true" ]; then
-    docker build $nocache --target $target --build-arg "REGISTRY=${kvcpp_registry}" --build-arg="BASE_IMAGE_TAG=${kvcpp_tag}" \
+    docker build $nocache --target "$target" --build-arg "REGISTRY=${registry}" --build-arg="BASE_IMAGE_TAG=${kvcpp_tag}" \
       --build-arg "kvuser=$kvuser" --build-arg "kvuserid=$kvuserid" \
       -f docker/${os}/${target}.dockerfile --tag ${registry}${target}:$tag .
 

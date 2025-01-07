@@ -1,5 +1,6 @@
 BUFRSRC=$(top_srcdir)/ecmwf/bufrdc_000409.tar.gz
 BUFRSRCDIR=$(top_builddir)/ecmwf/bufrdc_000409
+FFLAGS_EXTRA ="-fallow-argument-mismatch"
 
 libbufrdir=${bufrdir}
 libbufr_LIBRARIES = libbufr.a
@@ -13,8 +14,11 @@ unpack_bufr:
 libbufr.a: unpack_bufr
 	if ! test -f $@ ; then \
 		cp $(top_srcdir)/ecmwf/my_build_library $(BUFRSRCDIR) ; \
+		cp $(top_srcdir)/ecmwf/patch.p1 $(BUFRSRCDIR) ; \
 		chmod +x $(BUFRSRCDIR)/test.sh ; \
-		(cd $(BUFRSRCDIR) && INSTALLDIR=$(pkgdatadir) R64=no CNAME=_gfortran ./my_build_library) ; \
+		(cd $(BUFRSRCDIR) && \
+		 patch -p1 < patch.p1 && \
+		 INSTALLDIR=$(pkgdatadir) R64=no CNAME=_gfortran FFLAGS_EXTRA="$(FFLAGS_EXTRA)" ./my_build_library) ; \
 		cp $(BUFRSRCDIR)/$@ . ;\
 	fi 
 
@@ -29,5 +33,6 @@ libbufr.a: unpack_bufr
 
 EXTRA_DIST=\
 	bufrdc_000409.tar.gz \
+	patch.p1 \
 	my_build_library \
 	test.sh
