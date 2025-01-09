@@ -64,6 +64,7 @@ ARG kvuserid=5010
 
 RUN apt-get install -y gpg software-properties-common apt-utils
 
+#FIXME this when metno-bufrtables is in the noble repo
 #Add intertn repos and postgres repo 
 RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4e8a0c1418494cf45d1b8533799e9fe74bb0156c &&\
   add-apt-repository 'deb [arch=amd64] http://internrepo.met.no/focal focal main contrib'

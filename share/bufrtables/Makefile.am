@@ -1,7 +1,8 @@
 #bufrtables_source = 
 #EXTRA_DIST = bufrtables_000400.tar.gz
 #tables=bufrtables_000400.tar.gz
-tables=bufrdc_tables_wmo_v33.tar.gz
+#tables=bufrdc_tables_wmo_v33.tar.gz
+tables=bufrdc-wmo-v40-v41.tar.gz
 
 EXTRA_DIST = $(tables)
 
