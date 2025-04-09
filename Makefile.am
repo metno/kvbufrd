@@ -11,8 +11,9 @@ kvbufrdbadmin: kvbufrdbadmin.sh
 	$(SED_SUBST)
 	
 EXTRA_DIST = \
-	cleanbufrdb.sql kvbufrdbadmin.sh changelog \
-	src/gtest/*tar*
+	cleanbufrdb.sql kvbufrdbadmin.sh changelog 
+	
+#src/gtest/*tar*
 	
 CLEANFILES = kvbufrdbadmin
 
@@ -24,6 +25,6 @@ install-data-hook:
 	$(install_sh) -m 755 -d $(DESTDIR)/$(localstatedir)/log/kvalobs/kvbufr
 	$(install_sh) -m 755 -d $(DESTDIR)/$(datadir)/@PACKAGE_NAME@
 	$(install_sh) -m 755 -d $(DESTDIR)/$(pkgdatadir)/bufrtables
-	tar zxpf $(top_srcdir)/share/bufrtables/bufrdc_tables_wmo_v33.tar.gz --strip-components=1 -C $(DESTDIR)/$(pkgdatadir)/bufrtables
+	tar zxpf $(top_srcdir)/share/bufrtables/bufrdc-wmo-v40-v41.tar.gz --strip-components=1 -C $(DESTDIR)/$(pkgdatadir)/bufrtables
 
 include mk/debian.mk

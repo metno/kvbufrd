@@ -64,13 +64,13 @@ ARG kvuserid=5010
 
 RUN apt-get install -y gpg software-properties-common apt-utils
 
-#FIXME this when metno-bufrtables is in the noble repo
+
 #Add intertn repos and postgres repo 
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4e8a0c1418494cf45d1b8533799e9fe74bb0156c &&\
-  add-apt-repository 'deb [arch=amd64] http://internrepo.met.no/focal focal main contrib'
+COPY docker/keys/internrepo-4E8A0C14.asc  /tmp/
+RUN apt-key add /tmp/internrepo-4E8A0C14.asc && rm /tmp/internrepo-4E8A0C14.asc && \
+  add-apt-repository 'deb [arch=amd64] http://internrepo.met.no/noble noble main contrib'
 
 RUN apt-get update && apt-get install -y sqlite3 libgfortran5  metno-bufrtables
-#metno-bufrtables
 
 RUN apt-get install -y gdb
 

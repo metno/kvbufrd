@@ -58,7 +58,8 @@ Options:
   --only-push   Push previous build to registry. Must use the same flag as when building.
   --kvcpp-local Use local docker registry for kvcpp. Default: $kvcpp_registry
   --kvcpp-tag tagname Use tagname. Default: $kvcpp_tag
-
+  --print-version-tag 
+                Print the version tag and exit.
 
 "
 echo -e "$usage\n\n"
@@ -90,6 +91,9 @@ while test $# -ne 0; do
     --no-cache) nocache="--no-cache";;
     --only-build) push="false" ;;
     --only-push) build="false" ;;
+    --print-version-tag)
+        echo "$VERSION-$BUILDDATE"
+        exit 0;;
     -*) use
       echo "Invalid option $1"
       exit 1;;  
