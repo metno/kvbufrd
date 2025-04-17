@@ -9,7 +9,6 @@ kvuserid=5010
 mode="test"
 targets=kvbufrd
 tag=latest
-tag_and_latest="false"
 default_os=noble
 os=noble
 nocache=
@@ -17,7 +16,9 @@ build="true"
 push="true"
 VERSION="$(./version.sh)"
 BUILDDATE=$(date +'%Y%m%d')
-KV_BUILD_DATE=${KV_BUILD_DATE:-}
+KV_BUILD_DATE="${KV_BUILD_DATE:-}"
+tags=""
+tag_counter=0
 
 if [ -n "${KV_BUILD_DATE}" ]; then
   BUILDDATE=$KV_BUILD_DATE
@@ -28,8 +29,7 @@ gitref=$(git rev-parse --show-toplevel)/gitref.sh
 use() {
 
   usage="\
-Usage: $0 [--help] [--staging|--prod|--test] [--tag tag] [--no-cache] [--only-build] 
-          [--tag-and-latest tag] [--tag-version] [--tag-with-build-date] target-list
+Usage: $0 [--help] [options] 
 
 This script build a kvbufrd container. 
 Stop at build stage 'stage'. Default $target.
@@ -44,22 +44,25 @@ Options:
   --help        display this help and exit.
   --tag tagname tag the image with the name tagname, default $tag.
   --tag-and-latest tagname tag the image with the name tagname  and also create latest tag.
-  --tag-version Use version from configure.ac as tag. Also tag latest.
   --tag-with-build-date 
-                tag with version and build date on the form version-YYYYMMDD 
-                and set latest. If the enviroment variable KV_BUILD_DATE is set use
+                Creates three tags: ${VERSION}, latest and a ${VERSION}-${BUILDDATE}.
+                If the enviroment variable KV_BUILD_DATE is set use
                 this as the build date. Format KV_BUILD_DATE YYYYMMDD.
   --staging     build and push to staging.
   --prod        build and push to prod.
   --test        only build. Default.
   --stage stage stop at build stage. Default $targets.
   --no-cache    Do not use the docker build cache.
-  --only-build  Stop after building.
-  --only-push   Push previous build to registry. Must use the same flag as when building.
+  --build-only  Stop after building.
+  --push-only   Push previous build to registry. Must use the same flag as when building.
   --kvcpp-local Use local docker registry for kvcpp. Default: $kvcpp_registry
   --kvcpp-tag tagname Use tagname. Default: $kvcpp_tag
   --print-version-tag 
                 Print the version tag and exit.
+                
+  The following opptions is mutally exclusive: --tag, --tag-and-latest, --tag-with-build-date
+  The following options is mutally exclusive: --build-only, --push-only
+  The following options is mutally exclusive: --staging, --prod, --test
 
 "
 echo -e "$usage\n\n"
@@ -69,17 +72,19 @@ echo -e "$usage\n\n"
 
 while test $# -ne 0; do
   case $1 in
-    --tag) tag=$2; shift;;
+    --tag) 
+        tag=$2
+        tag_counter=$((tag_counter + 1)) 
+        shift;;
     --tag-and-latest) 
         tag="$2"
-        tag_and_latest=true
+        tags="latest"
+        tag_counter=$((tag_counter + 1))
         shift;;
-    --tag-version) 
-        tag="$VERSION"
-        tag_and_latest=true;;
     --tag-with-build-date)
-        tag="$VERSION-$BUILDDATE"
-        tag_and_latest=true;;
+        tags="latest $VERSION-$BUILDDATE"
+        tag_counter=$((tag_counter + 1))
+        ;;
     --help) 
         use
         exit 0;;
@@ -89,8 +94,8 @@ while test $# -ne 0; do
     --prod) mode="prod";;
     --test) mode="test";;
     --no-cache) nocache="--no-cache";;
-    --only-build) push="false" ;;
-    --only-push) build="false" ;;
+    --build-only) push="false" ;;
+    --push-only) build="false" ;;
     --print-version-tag)
         echo "$VERSION-$BUILDDATE"
         exit 0;;
@@ -102,6 +107,11 @@ while test $# -ne 0; do
   shift
 done
 
+if [ $tag_counter -gt 1 ]; then
+  echo "You can only use one of --tag, --tag-and-latest or --tag-with-build-date"
+  exit 1
+fi
+
 echo "VERSION: $VERSION"
 echo "mode: $mode"
 echo "os: $os"
@@ -110,6 +120,7 @@ echo "targets: $targets"
 echo "build: $build"
 echo "push: $push"
 echo "tag: $tag"
+echo "tags: $tags"
 echo "kvcpp tag: $kvcpp_tag"
 
 
@@ -133,17 +144,19 @@ for target in $targets ; do
       --build-arg "kvuser=$kvuser" --build-arg "kvuserid=$kvuserid" \
       -f docker/${os}/${target}.dockerfile --tag ${registry}${target}:$tag .
 
-    if [ "$tag_and_latest" = "true" ] && [ "$tag" != "latest" ]; then
-      docker tag "${registry}${target}:$tag" "${registry}${target}:latest"
-    fi
+    for tagname in $tags; do
+      docker tag "${registry}${target}:$tag" "${registry}${target}:$tagname"
+    done
   fi
 
 
   if [ $mode != test ] && [ "$push" = "true" ]; then 
+    echo "Pushing: ${registry}${target}:$tag"
     docker push ${registry}${target}:$tag
-    if [ "$tag_and_latest" = "true" ] && [ "$tag" != "latest" ]; then
-      docker push "${registry}${target}:latest"
-    fi
+    for tagname in $tags; do
+      echo "Pushing: ${registry}${target}:$tagname"
+      docker push "${registry}${target}:$tagname"
+    done
   fi
 done
 
