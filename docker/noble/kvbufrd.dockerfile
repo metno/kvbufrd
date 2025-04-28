@@ -32,7 +32,19 @@ WORKDIR /build
 
 ENTRYPOINT [ "/bin/bash" ]
 
-RUN --mount=type=cache,target=/build cd /src \
+# RUN --mount=type=cache,target=/build cd /src \
+#   && autoreconf -if && cd /build &&\
+#   /src/configure \
+#   --prefix=/usr \
+#   --localstatedir=/var \
+#   --mandir=/usr/share/man \
+#   --sysconfdir=/etc \
+#   --with-boost-libdir=/usr/lib/x86_64-linux-gnu/ \
+#   LDFLAGS="-Wl,-z,defs" CFLAGS=-g &&\
+#   make && make install
+
+
+RUN cd /src \
   && autoreconf -if && cd /build &&\
   /src/configure \
   --prefix=/usr \
@@ -42,6 +54,7 @@ RUN --mount=type=cache,target=/build cd /src \
   --with-boost-libdir=/usr/lib/x86_64-linux-gnu/ \
   LDFLAGS="-Wl,-z,defs" CFLAGS=-g &&\
   make && make install
+
 
 # ENTRYPOINT [ "/bin/bash" ]
 
