@@ -1,10 +1,10 @@
 ARG REGISTRY
-ARG BASE_IMAGE_TAG=
+ARG BASE_IMAGE_TAG
 
-#FROM registry.met.no/obs/kvalobs/kvbuild/staging/focal-kvcpp-dev AS build
 FROM ${REGISTRY}kvcpp-dev:${BASE_IMAGE_TAG} AS build
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y gfortran gpg software-properties-common apt-utils
+RUN apt-get update && apt-get install -y gfortran gpg software-properties-common apt-utils \
+  metno-bufrtables
 
 COPY configure.ac  \
   check_kvbufrd.sh.in changelog cleanbufrdb.sql \
@@ -23,14 +23,6 @@ COPY src /src/src
 VOLUME /src
 VOLUME /build
 WORKDIR /build
-
-# RUN --mount=type=cache,target=/build cd /src/ && autoreconf -if && cd /build && \
-#       /src/configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info  \
-# 	    --localstatedir=/var --sysconfdir=/etc  \
-#       CFLAGS=-g && make && make install
-
-
-ENTRYPOINT [ "/bin/bash" ]
 
 # RUN --mount=type=cache,target=/build cd /src \
 #   && autoreconf -if && cd /build &&\
@@ -56,17 +48,7 @@ RUN cd /src \
   make && make install
 
 
-# ENTRYPOINT [ "/bin/bash" ]
-
-
-#Get metno-bufrtables from the repository
-# FROM ubuntu:focal AS bufrtables
-# RUN apt-get update && apt-get install -y git
-# #Get the metno-bufrtables
-
-# RUN mkdir -p /usr/share/metno-bufrtables/tmp && cd /usr/share/metno-bufrtables/tmp && \
-#   git clone https://gitlab.met.no/it-geo/metno-bufrtables.git && \
-#   cp metno-bufrtables/bufrtables/* .. && cd .. && rm -rf tmp/
+ENTRYPOINT [ "/bin/bash" ]
 
 
 
@@ -78,7 +60,7 @@ ARG kvuserid=5010
 RUN apt-get install -y gpg software-properties-common apt-utils
 
 
-#Add intertn repos and postgres repo 
+# Add intertn repos and postgres repo 
 COPY docker/keys/internrepo-4E8A0C14.asc  /tmp/
 RUN apt-key add /tmp/internrepo-4E8A0C14.asc && rm /tmp/internrepo-4E8A0C14.asc && \
   add-apt-repository 'deb [arch=amd64] http://internrepo.met.no/noble noble main contrib'
