@@ -28,33 +28,19 @@
   with KVALOBS; if not, write to the Free Software Foundation Inc.,
   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include <float.h>
-#include <boost/assign.hpp>
 #include "EncodeBufr302021.h"
+#include <boost/assign.hpp>
+#include <float.h>
 
-EncodeBufr302021::
-EncodeBufr302021()
-{
+EncodeBufr302021::EncodeBufr302021() {}
+std::string EncodeBufr302021::logIdentifier() const { return "302021"; }
 
+std::list<int> EncodeBufr302021::encodeIds() const {
+  std::list<int> ids;
+  boost::assign::push_back(ids)(302021);
+
+  return ids;
 }
-std::string
-EncodeBufr302021::
-logIdentifier() const
-{
-   return "302021";
-}
-
-std::list<int>
-EncodeBufr302021::
-encodeIds()const
-{
-   std::list<int> ids;
-   boost::assign::push_back( ids )(302021);
-
-   return ids;
-}
-
-
 
 /**
  * Encode Waves data as amplitude and direction.
@@ -67,21 +53,27 @@ encodeIds()const
  * If both parameters exist for the amplitude, Pwa has priority.
  * If both parameters exist for direction, Hwa has priority.
  */
-void
-EncodeBufr302021::
-encode( )
-{
-   float pw=data->PWA;
-   float wa=data->Hwa;
+void EncodeBufr302021::encode() {
+  float pw = data->PWA;
+  float wa = data->Hwa;
+  std::string usedWindWaveParam("Pwa");
 
-   if( pw == FLT_MAX )
-	   pw = data->WTZ;
+  if (pw == FLT_MAX) {
+    usedWindWaveParam = "WTZ";
+    pw = data->WTZ;
+  }
 
-   if( wa == FLT_MAX )
-	   wa = data->WHM0;
+  if (pw == FLT_MAX) {
+    pw = data->WTM02;
+    usedWindWaveParam = "WTM02";
+  }
 
-   bufr->addValue( 22001, data->WDMT, "WDMT, direction of waves" );
-   bufr->addValue( 22011, pw, "Pwa, period of wind waves. Automatic observation." );
-   bufr->addValue( 22021, wa, "Hwa, height of waves. Automatic observation." );
+  if (wa == FLT_MAX)
+    wa = data->WHM0;
+
+  bufr->addValue(22001, data->WDMT, "WDMT, direction of waves");
+  bufr->addValue(22011, pw,
+                 usedWindWaveParam +
+                     ", period of wind waves. Automatic observation.");
+  bufr->addValue(22021, wa, "Hwa, height of waves. Automatic observation.");
 }
-
